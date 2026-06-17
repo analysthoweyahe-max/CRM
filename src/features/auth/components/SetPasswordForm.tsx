@@ -3,7 +3,10 @@ import { useForm, type UseFormRegisterReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
-import { setPasswordSchema, type SetPasswordFormValues } from '@/features/auth/schemas/setPassword.schema';
+import {
+  setPasswordSchema,
+  type SetPasswordFormValues,
+} from '@/features/auth/schemas/setPassword.schema';
 import { useSetPassword } from '@/features/auth/hooks/useSetPassword';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { authTranslations } from '@/features/auth/i18n';
@@ -16,13 +19,20 @@ interface PasswordFieldProps {
   onToggle: () => void;
 }
 
-function PasswordField({ label, error, inputProps, isVisible, onToggle }: PasswordFieldProps) {
+function PasswordField({
+  label,
+  error,
+  inputProps,
+  isVisible,
+  onToggle,
+}: PasswordFieldProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-sm font-semibold text-[#5c5c5c]">
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-gray-700">
         {label}
-        <span className="ms-0.5 text-red-500">*</span>
+        <span className="text-red-500 ms-0.5">*</span>
       </label>
+
       <div className="relative">
         <input
           {...inputProps}
@@ -30,26 +40,33 @@ function PasswordField({ label, error, inputProps, isVisible, onToggle }: Passwo
           placeholder="***************"
           autoComplete="new-password"
           dir="ltr"
-          className="h-11 w-full rounded-md border border-[#d9d9d9] bg-white ps-11 pe-11 text-sm text-[#353535]
-                     outline-none transition placeholder:text-[#8f8f8f]
-                     focus:border-[#9bd130] focus:ring-2 focus:ring-[#9bd130]/20"
+          className="w-full rounded-lg border border-gray-300 bg-white py-2.5 ps-11 pe-11
+                     text-sm outline-none focus:border-brand-500 focus:ring-2
+                     focus:ring-brand-500/20 transition placeholder:text-gray-400"
         />
-        {/* Eye button — logical start */}
+
+        {/* Eye toggle — logical start */}
         <button
           type="button"
           onClick={onToggle}
-          className="absolute inset-y-0 inset-s-0 flex w-11 items-center justify-center text-[#686b73] transition hover:text-[#3e424a]"
-          aria-label={isVisible ? 'Hide password' : 'Show password'}
+          className="absolute inset-y-0 inset-s-0 flex items-center ps-3 text-gray-400 hover:text-gray-600 transition-colors"
           tabIndex={-1}
+          aria-label={isVisible ? 'Hide password' : 'Show password'}
         >
-          {isVisible ? <EyeOff size={21} /> : <Eye size={21} />}
+          {isVisible ? <EyeOff size={17} /> : <Eye size={17} />}
         </button>
+
         {/* Lock icon — logical end */}
-        <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex w-11 items-center justify-center text-[#686b73]">
-          <Lock size={18} fill="currentColor" strokeWidth={0} />
+        <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex items-center pe-3 text-gray-400">
+          <Lock size={17} />
         </span>
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      {error && (
+        <p className="mt-0.5 text-xs text-red-500">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -59,7 +76,9 @@ interface SetPasswordFormProps {
   employeeId?: string;
 }
 
-export function SetPasswordForm({ inviteToken = '' }: SetPasswordFormProps) {
+export function SetPasswordForm({
+  inviteToken = '',
+}: SetPasswordFormProps) {
   const { lang } = useLang();
   const t = authTranslations[lang];
   const v = t.validation;
@@ -67,41 +86,56 @@ export function SetPasswordForm({ inviteToken = '' }: SetPasswordFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const { submit, error: submitError } = useSetPassword(inviteToken, rememberMe);
+
+  const { submit, error: submitError } = useSetPassword(
+    inviteToken,
+    rememberMe
+  );
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SetPasswordFormValues>({ resolver: zodResolver(setPasswordSchema) });
+  } = useForm<SetPasswordFormValues>({
+    resolver: zodResolver(setPasswordSchema),
+  });
 
   const fieldErr = (msg: string | undefined) =>
     msg ? (v[msg as keyof typeof v] ?? msg) : undefined;
 
   return (
-    <form onSubmit={handleSubmit(submit)} noValidate className="w-full space-y-7">
-      <div className="text-right">
-        <h2 className="text-[26px] font-semibold leading-tight text-[#3d3d3d]">
+    <form
+      onSubmit={handleSubmit(submit)}
+      noValidate
+      className="w-full space-y-5"
+    >
+      {/* Title */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">
           {t.setPassword.title}
         </h2>
-        <p className="mt-1 text-sm text-[#7b7b7b]">
+        <p className="mt-1 text-sm text-gray-500">
           {t.setPassword.subtitle}
         </p>
       </div>
 
+      {/* Server error */}
       {submitError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {lang === 'ar' ? 'حدث خطأ. حاول مرة أخرى.' : 'Something went wrong. Please try again.'}
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {lang === 'ar'
+            ? 'حدث خطأ. حاول مرة أخرى.'
+            : 'Something went wrong. Please try again.'}
         </div>
       )}
 
+      {/* Password fields */}
       <div className="space-y-5">
         <PasswordField
           label={t.setPassword.password}
           error={fieldErr(errors.password?.message)}
           inputProps={register('password')}
           isVisible={showPassword}
-          onToggle={() => setShowPassword((value) => !value)}
+          onToggle={() => setShowPassword((prev) => !prev)}
         />
 
         <PasswordField
@@ -109,35 +143,45 @@ export function SetPasswordForm({ inviteToken = '' }: SetPasswordFormProps) {
           error={fieldErr(errors.confirmPassword?.message)}
           inputProps={register('confirmPassword')}
           isVisible={showConfirm}
-          onToggle={() => setShowConfirm((value) => !value)}
+          onToggle={() => setShowConfirm((prev) => !prev)}
         />
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <a href={ROUTES.AUTH.FORGOT_PASSWORD} className="text-[#2f2f2f] underline underline-offset-2 hover:text-[#80b51c]">
+      {/* Remember me + Forgot password */}
+      <div className="flex items-center justify-between">
+        <a
+          href={ROUTES.AUTH.FORGOT_PASSWORD}
+          className="text-sm text-gray-500 hover:text-brand-600 transition-colors"
+        >
           {t.setPassword.forgotPassword}
         </a>
-        <label className="flex cursor-pointer items-center gap-2 text-[#4f4f4f]">
-          <span>{t.setPassword.rememberMe}</span>
+
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <span className="text-sm text-gray-600">
+            {t.setPassword.rememberMe}
+          </span>
+
           <input
             type="checkbox"
             checked={rememberMe}
-            onChange={(event) => setRememberMe(event.target.checked)}
-            className="h-[18px] w-[18px] rounded border border-[#d6d6d6] accent-[#9bd130]"
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="w-4 h-4 rounded accent-brand-500"
           />
         </label>
       </div>
 
+      {/* Submit */}
       <button
         type="submit"
         disabled={isSubmitting}
-        className="h-11 w-full rounded-md bg-[#9bd130] text-base font-medium text-[#26300f]
-                   transition hover:bg-[#8cc51f] active:bg-[#7ab018]
-                   disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-lg bg-brand-500 hover:bg-brand-600 active:bg-brand-700
+                   text-white font-semibold py-3 text-sm transition-colors
+                   disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {isSubmitting ? t.setPassword.activating : t.setPassword.submit}
+        {isSubmitting
+          ? t.setPassword.activating
+          : t.setPassword.submit}
       </button>
     </form>
   );
 }
-

@@ -5,36 +5,22 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  createColumnHelper,
   flexRender,
   type SortingState,
 } from '@tanstack/react-table';
-import {
-  Plus, Search, ChevronDown, ChevronUp,
-  ChevronsUpDown, ChevronLeft, ChevronRight,
-  BadgeDollarSign, Zap, PenLine,
-} from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronsUpDown, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES } from '@/app/router/routes';
+import { Card }             from '@/shared/components/ui/Card';
+import { PageHeader }       from '@/shared/components/ui/PageHeader';
+import { FilterBar }        from '@/shared/components/tables/FilterBar';
+import { TablePagination }  from '@/shared/components/tables/TablePagination';
+import { DeductionStats }   from '@/features/payroll/components/DeductionStats';
 import { DeductionsSkeleton } from '@/features/payroll/components/DeductionsSkeleton';
+import { getDeductionColumns, type Deduction } from '@/features/payroll/components/deductionColumns';
 
-/* ─── Types ─────────────────────────────────────── */
-interface Deduction {
-  id:             string;
-  employeeName:   string;
-  department:     string;
-  initial:        string;
-  avatarColor:    string;
-  type:           string;
-  amount:         number;
-  reason:         string;
-  date:           string;
-  financialMonth: string;
-  source:         'auto' | 'manual';
-}
-
-/* ─── Dummy data (replace with API call) ───────── */
+/* ─── Data ──────────────────────────────────────── */
 const DUMMY_DATA: Deduction[] = [
   { id: '1',  employeeName: 'حسن الخطيب',  department: 'الموارد البشرية',  initial: 'ح', avatarColor: 'bg-red-400',    type: 'تجاوز حد الإجازات', amount: 200,  reason: 'تجاوز رصيد الإجازات المسموح',            date: '2026/06/14', financialMonth: 'يونيو 2026', source: 'auto'   },
   { id: '2',  employeeName: 'حسن الخطيب',  department: 'تقنية المعلومات', initial: 'ح', avatarColor: 'bg-red-400',    type: 'غياب',               amount: 400,  reason: 'غياب بدون إذن مسبق',                     date: '2026/06/12', financialMonth: 'يونيو 2026', source: 'auto'   },
@@ -55,25 +41,22 @@ const DUMMY_DATA: Deduction[] = [
 const DEPARTMENTS = ['كل الأقسام', ...Array.from(new Set(DUMMY_DATA.map((d) => d.department)))];
 const TYPES       = ['كل الأنواع', ...Array.from(new Set(DUMMY_DATA.map((d) => d.type)))];
 
-const col = createColumnHelper<Deduction>();
-
 /* ─── Component ─────────────────────────────────── */
 export function DeductionsPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading,   setIsLoading]   = useState(true);
+  const [sorting,     setSorting]     = useState<SortingState>([{ id: 'date', desc: true }]);
+  const [search,      setSearch]      = useState('');
+  const [deptFilter,  setDeptFilter]  = useState('كل الأقسام');
+  const [typeFilter,  setTypeFilter]  = useState('كل الأنواع');
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 1400);
     return () => clearTimeout(t);
   }, []);
-
-  const [sorting,     setSorting]     = useState<SortingState>([{ id: 'date', desc: true }]);
-  const [search,      setSearch]      = useState('');
-  const [deptFilter,  setDeptFilter]  = useState('كل الأقسام');
-  const [typeFilter,  setTypeFilter]  = useState('كل الأنواع');
 
   const filtered = useMemo(() => DUMMY_DATA.filter((r) => {
     const matchSearch = r.employeeName.includes(search);
@@ -82,67 +65,11 @@ export function DeductionsPage() {
     return matchSearch && matchDept && matchType;
   }), [search, deptFilter, typeFilter]);
 
-  /* stats from full dataset */
   const total   = DUMMY_DATA.reduce((s, r) => s + r.amount, 0);
   const autoC   = DUMMY_DATA.filter((r) => r.source === 'auto').length;
   const manualC = DUMMY_DATA.filter((r) => r.source === 'manual').length;
 
-  const columns = useMemo(() => [
-    col.accessor('employeeName', {
-      header: isAr ? 'الموظف' : 'Employee',
-      cell: ({ row: r }) => (
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-full ${r.original.avatarColor} flex items-center justify-center shrink-0`}>
-            <span className="text-sm font-bold text-white">{r.original.initial}</span>
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{r.original.employeeName}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">{r.original.department}</p>
-          </div>
-        </div>
-      ),
-    }),
-    col.accessor('type', {
-      header: isAr ? 'نوع الخصم' : 'Type',
-      cell: (i) => <span className="text-sm text-gray-700 dark:text-gray-300">{i.getValue()}</span>,
-    }),
-    col.accessor('amount', {
-      header: isAr ? 'المبلغ' : 'Amount',
-      cell: (i) => (
-        <span className="text-sm font-semibold text-red-500 dark:text-red-400">
-          {i.getValue().toLocaleString('ar-EG')} {isAr ? 'ج.م' : 'EGP'}
-        </span>
-      ),
-    }),
-    col.accessor('reason', {
-      header: isAr ? 'السبب' : 'Reason',
-      enableSorting: false,
-      cell: (i) => <span className="text-sm text-gray-500 dark:text-gray-400 max-w-50 block truncate" title={i.getValue()}>{i.getValue()}</span>,
-    }),
-    col.accessor('date', {
-      header: isAr ? 'التاريخ' : 'Date',
-      cell: (i) => <span className="text-sm text-gray-600 dark:text-gray-400">{i.getValue()}</span>,
-    }),
-    col.accessor('financialMonth', {
-      header: isAr ? 'الشهر المالي' : 'Month',
-      enableSorting: false,
-      cell: (i) => <span className="text-sm text-gray-600 dark:text-gray-400">{i.getValue()}</span>,
-    }),
-    col.accessor('source', {
-      header: isAr ? 'المصدر' : 'Source',
-      enableSorting: false,
-      cell: (i) => i.getValue() === 'auto'
-        ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700/50">
-            <Zap size={11} />{isAr ? 'تلقائي' : 'Auto'}
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-            <PenLine size={11} />{isAr ? 'يدوي' : 'Manual'}
-          </span>
-        ),
-    }),
-  ], [isAr]);
+  const columns = useMemo(() => getDeductionColumns(isAr), [isAr]);
 
   const table = useReactTable({
     data:                  filtered,
@@ -166,73 +93,37 @@ export function DeductionsPage() {
   return (
     <div className="space-y-5">
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <button
-          type="button"
-          onClick={() => navigate(ROUTES.PAYROLL.DEDUCTIONS_NEW)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg shrink-0
-                     bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors"
-        >
-          <Plus size={16} />
-          {isAr ? 'إضافة خصم' : 'Add Deduction'}
-        </button>
-        <div className="text-end">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{isAr ? 'الخصومات' : 'Deductions'}</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            {isAr ? 'إدارة الخصومات التلقائية واليدوية' : 'Manage automatic and manual deductions'}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={isAr ? 'الخصومات' : 'Deductions'}
+        subtitle={isAr ? 'إدارة الخصومات التلقائية واليدوية' : 'Manage automatic and manual deductions'}
+        actions={
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.PAYROLL.DEDUCTIONS_NEW)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg shrink-0
+                       bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors"
+          >
+            <Plus size={16} />
+            {isAr ? 'إضافة خصم' : 'Add Deduction'}
+          </button>
+        }
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 divide-x divide-x-reverse divide-gray-100 dark:divide-gray-700
-                      rounded-2xl border border-gray-100 dark:border-gray-700
-                      bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
-        <StatCard
-          label={isAr ? 'إجمالي الخصومات' : 'Total'}
-          value={`${total.toLocaleString('ar-EG')} ${isAr ? 'ج.م' : 'EGP'}`}
-          valueClass="text-red-500 dark:text-red-400"
-          icon={<BadgeDollarSign size={17} className="text-red-400" />}
+      <DeductionStats total={total} autoC={autoC} manualC={manualC} isAr={isAr} />
+
+      <Card overflow>
+        <FilterBar
+          search={{
+            value: search,
+            placeholder: isAr ? 'ابحث باسم الموظف...' : 'Search employee...',
+            onChange: (v) => { setSearch(v); table.setPageIndex(0); },
+          }}
+          filters={[
+            { key: 'dept', value: deptFilter, options: DEPARTMENTS, onChange: (v) => { setDeptFilter(v); table.setPageIndex(0); } },
+            { key: 'type', value: typeFilter, options: TYPES,       onChange: (v) => { setTypeFilter(v); table.setPageIndex(0); } },
+          ]}
         />
-        <StatCard
-          label={isAr ? 'خصومات تلقائية' : 'Automatic'}
-          value={String(autoC)}
-          icon={<Zap size={17} className="text-brand-500" />}
-        />
-        <StatCard
-          label={isAr ? 'خصومات يدويّة' : 'Manual'}
-          value={String(manualC)}
-          icon={<PenLine size={17} className="text-gray-400" />}
-        />
-      </div>
 
-      {/* Table card */}
-      <div className="rounded-2xl border border-gray-100 dark:border-gray-700
-                      bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
-
-        {/* Filters row */}
-        <div className="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-          <div className="relative flex-1 min-w-45">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); table.setPageIndex(0); }}
-              placeholder={isAr ? 'ابحث باسم الموظف...' : 'Search employee...'}
-              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-600
-                         bg-gray-50 dark:bg-gray-700/50 ps-4 pe-9
-                         text-sm text-gray-800 dark:text-gray-200
-                         outline-none focus:border-brand-400 focus:ring-2
-                         focus:ring-brand-400/20 transition placeholder:text-gray-400 dark:placeholder:text-gray-500"
-            />
-            <Search size={14} className="absolute inset-y-0 my-auto inset-e-3 text-gray-400 pointer-events-none" />
-          </div>
-
-          <FilterSelect value={deptFilter} onChange={(v) => { setDeptFilter(v); table.setPageIndex(0); }} options={DEPARTMENTS} />
-          <FilterSelect value={typeFilter} onChange={(v) => { setTypeFilter(v); table.setPageIndex(0); }} options={TYPES} />
-        </div>
-
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700/40 border-b border-gray-100 dark:border-gray-700">
@@ -281,92 +172,21 @@ export function DeductionsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight size={16} />
-            </button>
+        <TablePagination
+          pageIndex={pageIndex}
+          pageCount={table.getPageCount()}
+          totalRows={totalRows}
+          firstRow={firstRow}
+          lastRow={lastRow}
+          canPrev={table.getCanPreviousPage()}
+          canNext={table.getCanNextPage()}
+          onPrev={() => table.previousPage()}
+          onNext={() => table.nextPage()}
+          onPage={(i) => table.setPageIndex(i)}
+          isAr={isAr}
+        />
+      </Card>
 
-            {Array.from({ length: table.getPageCount() }, (_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => table.setPageIndex(i)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                  pageIndex === i
-                    ? 'bg-brand-500 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft size={16} />
-            </button>
-          </div>
-
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            {isAr
-              ? `عرض ${firstRow}–${lastRow} من ${totalRows}`
-              : `Showing ${firstRow}–${lastRow} of ${totalRows}`}
-          </p>
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-/* ─── Sub-components ────────────────────────────── */
-function StatCard({ label, value, valueClass = 'text-gray-900 dark:text-gray-100', icon }: {
-  label:       string;
-  value:       string;
-  valueClass?: string;
-  icon:        React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-2 py-5 px-4 text-center">
-      <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-medium">
-        {icon}
-        <span>{label}</span>
-      </div>
-      <p className={`text-xl font-bold ${valueClass}`}>{value}</p>
-    </div>
-  );
-}
-
-function FilterSelect({ value, onChange, options }: {
-  value:    string;
-  onChange: (v: string) => void;
-  options:  string[];
-}) {
-  return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-9 rounded-lg border border-gray-200 dark:border-gray-600
-                   bg-white dark:bg-gray-700/50 ps-3 pe-8 text-sm
-                   text-gray-700 dark:text-gray-300
-                   outline-none focus:border-brand-400 focus:ring-2
-                   focus:ring-brand-400/20 transition appearance-none cursor-pointer"
-      >
-        {options.map((o) => <option key={o}>{o}</option>)}
-      </select>
-      <ChevronDown size={14} className="absolute inset-y-0 my-auto inset-e-2 text-gray-400 pointer-events-none" />
     </div>
   );
 }
