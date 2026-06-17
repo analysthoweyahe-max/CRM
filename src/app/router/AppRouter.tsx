@@ -18,6 +18,7 @@ import { EmployeeDetailPage }from '@/features/employees/pages/EmployeeDetailPage
 import { AttendancePage }    from '@/features/attendance/pages/AttendancePage';
 import { LeavesPage }        from '@/features/leaves/pages/LeavesPage';
 import { DeductionsPage }    from '@/features/payroll/pages/DeductionsPage';
+import { AddDeductionPage }  from '@/features/payroll/pages/AddDeductionPage';
 import { BonusesPage }       from '@/features/payroll/pages/BonusesPage';
 import { MessagesPage }      from '@/features/messages/pages/MessagesPage';
 import { SettingsPage }      from '@/features/settings/pages/SettingsPage';
@@ -58,7 +59,8 @@ export function AppRouter() {
             <Route path={ROUTES.ATTENDANCE.LOG}       element={<ComingSoon label="سجل الحضور" />} />
             <Route path={ROUTES.LEAVES}               element={<LeavesPage />} />
 
-            <Route path={ROUTES.PAYROLL.DEDUCTIONS}   element={<DeductionsPage />} />
+            <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
+            <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
             <Route path={ROUTES.PAYROLL.BONUSES}      element={<BonusesPage />} />
 
             <Route path={ROUTES.MESSAGES}             element={<MessagesPage />} />

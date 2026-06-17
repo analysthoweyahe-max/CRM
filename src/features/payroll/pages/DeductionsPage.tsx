@@ -14,7 +14,9 @@ import {
   ChevronsUpDown, ChevronLeft, ChevronRight,
   BadgeDollarSign, Zap, PenLine,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useLang } from '@/app/providers/LanguageProvider';
+import { ROUTES } from '@/app/router/routes';
 
 /* ─── Types ─────────────────────────────────────── */
 interface Deduction {
@@ -57,7 +59,8 @@ const col = createColumnHelper<Deduction>();
 /* ─── Component ─────────────────────────────────── */
 export function DeductionsPage() {
   const { lang } = useLang();
-  const isAr = lang === 'ar';
+  const isAr     = lang === 'ar';
+  const navigate = useNavigate();
 
   const [sorting,     setSorting]     = useState<SortingState>([{ id: 'date', desc: true }]);
   const [search,      setSearch]      = useState('');
@@ -157,6 +160,7 @@ export function DeductionsPage() {
       <div className="flex items-start justify-between gap-4">
         <button
           type="button"
+          onClick={() => navigate(ROUTES.PAYROLL.DEDUCTIONS_NEW)}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg shrink-0
                      bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors"
         >
@@ -185,7 +189,7 @@ export function DeductionsPage() {
           icon={<Zap size={17} className="text-brand-500" />}
         />
         <StatCard
-          label={isAr ? 'خصومات يدوية' : 'Manual'}
+          label={isAr ? 'خصومات يدويّة' : 'Manual'}
           value={String(manualC)}
           icon={<PenLine size={17} className="text-gray-400" />}
         />

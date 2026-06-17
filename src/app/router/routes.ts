@@ -17,8 +17,9 @@ export const ROUTES = {
   },
   LEAVES:  '/leaves',
   PAYROLL: {
-    DEDUCTIONS: '/payroll/deductions',
-    BONUSES:    '/payroll/bonuses',
+    DEDUCTIONS:     '/payroll/deductions',
+    DEDUCTIONS_NEW: '/payroll/deductions/new',
+    BONUSES:        '/payroll/bonuses',
   },
   MESSAGES: '/messages',
   SETTINGS: '/settings',
