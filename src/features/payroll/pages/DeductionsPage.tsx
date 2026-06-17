@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -17,6 +17,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES } from '@/app/router/routes';
+import { DeductionsSkeleton } from '@/features/payroll/components/DeductionsSkeleton';
 
 /* ─── Types ─────────────────────────────────────── */
 interface Deduction {
@@ -61,6 +62,13 @@ export function DeductionsPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 1400);
+    return () => clearTimeout(t);
+  }, []);
 
   const [sorting,     setSorting]     = useState<SortingState>([{ id: 'date', desc: true }]);
   const [search,      setSearch]      = useState('');
@@ -152,6 +160,8 @@ export function DeductionsPage() {
   const totalRows = filtered.length;
   const firstRow  = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
   const lastRow   = Math.min((pageIndex + 1) * pageSize, totalRows);
+
+  if (isLoading) return <DeductionsSkeleton />;
 
   return (
     <div className="space-y-5">
