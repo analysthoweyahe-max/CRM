@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { AuthUser, LoginCredentials, SetPasswordPayload } from '@/features/auth/types/auth.types';
+import type { Permission } from '@/shared/types/role.types';
 
 export interface AuthContextValue {
   user:            AuthUser | null;
@@ -8,6 +9,7 @@ export interface AuthContextValue {
   login:           (credentials: LoginCredentials) => Promise<void>;
   setPassword:     (payload: SetPasswordPayload)   => Promise<void>;
   logout:          () => Promise<void>;
+  hasPermission:   (permission: Permission) => boolean;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

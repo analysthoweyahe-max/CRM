@@ -26,13 +26,30 @@ function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
 }
 
+function b64Encode(str: string): string {
+  return btoa(
+    encodeURIComponent(str).replace(/%([0-9A-F]{2})/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    ),
+  );
+}
+
+function b64Decode(b64: string): string {
+  return decodeURIComponent(
+    atob(b64)
+      .split('')
+      .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+      .join(''),
+  );
+}
+
 function decodeUser(token: string): AuthUser | null {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1])) as Record<string, unknown>;
+    const payload = JSON.parse(b64Decode(token.split('.')[1])) as Record<string, unknown>;
     return {
-      id:         String(payload['sub'] ?? ''),
+      id:         String(payload['sub']        ?? ''),
       employeeId: String(payload['employeeId'] ?? ''),
-      fullName:   String(payload['fullName'] ?? ''),
+      fullName:   String(payload['fullName']   ?? ''),
       role:       payload['role'] as AuthUser['role'],
       avatarUrl:  payload['avatarUrl'] as string | undefined,
     };
@@ -41,59 +58,53 @@ function decodeUser(token: string): AuthUser | null {
   }
 }
 
-function buildDevMockResponse(credentials: LoginCredentials): AuthLoginResponse {
-  const mockUser: AuthUser = {
-    id:         '1',
-    employeeId: credentials.employeeId,
-    fullName:   'مستخدم تجريبي',
-    role:       'admin',
-  };
-  const payloadB64 = btoa(JSON.stringify({
-    sub:        mockUser.id,
-    employeeId: mockUser.employeeId,
-    fullName:   mockUser.fullName,
-    role:       mockUser.role,
+function buildMockToken(user: AuthUser): string {
+  const payloadB64 = b64Encode(JSON.stringify({
+    sub:        user.id,
+    employeeId: user.employeeId,
+    fullName:   user.fullName,
+    role:       user.role,
     exp:        Math.floor(Date.now() / 1000) + 86_400,
   }));
-  // Format: header.payload.sig — compatible with decodeUser()
-  const mockToken = `eyJhbGciOiJIUzI1NiJ9.${payloadB64}.dev`;
-  storeToken(mockToken, credentials.rememberMe ?? false);
+
+  return `eyJhbGciOiJIUzI1NiJ9.${payloadB64}.dev`;
+}
+
+function buildDevMockResponse(employeeId: string, rememberMe: boolean): AuthLoginResponse {
+  const mockUser: AuthUser = {
+    id: '1',
+    employeeId,
+    fullName: 'مستخدم تجريبي',
+    role: 'admin',
+  };
+  const mockToken = buildMockToken(mockUser);
+  storeToken(mockToken, rememberMe);
   return { token: mockToken, user: mockUser };
 }
 
 async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> {
-  if (env.isDev) return buildDevMockResponse(credentials);
+  if (env.isDev) return buildDevMockResponse(credentials.employeeId, credentials.rememberMe ?? false);
   const { data } = await authApi.login(credentials);
   storeToken(data.token, credentials.rememberMe ?? false);
   return data;
 }
 
 async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginResponse> {
-  if (env.isDev) {
-    const mockUser: AuthUser = {
-      id:         '1',
-      employeeId: 'EMP-DEV-001',
-      fullName:   'مستخدم تجريبي',
-      role:       'admin',
-    };
-    const payloadB64 = btoa(JSON.stringify({
-      sub: mockUser.id, employeeId: mockUser.employeeId,
-      fullName: mockUser.fullName, role: mockUser.role,
-      exp: Math.floor(Date.now() / 1000) + 86_400,
-    }));
-    const mockToken = `eyJhbGciOiJIUzI1NiJ9.${payloadB64}.dev`;
-    storeToken(mockToken, false);
-    return { token: mockToken, user: mockUser };
-  }
+  if (env.isDev) return buildDevMockResponse('EMP-DEV-001', payload.rememberMe ?? false);
   const { data } = await authApi.setPassword(payload);
-  storeToken(data.token, false);
+  storeToken(data.token, payload.rememberMe ?? false);
   return data;
 }
 
 async function validateInvite(token: string): Promise<InviteTokenPayload> {
   if (env.isDev) {
-    return { employeeId: token || 'EMP-DEV-001', fullName: 'موظف تجريبي', exp: Math.floor(Date.now() / 1000) + 86_400 };
+    return {
+      employeeId: token || 'EMP-DEV-001',
+      fullName: 'موظف تجريبي',
+      exp: Math.floor(Date.now() / 1000) + 86_400,
+    };
   }
+
   const { data } = await authApi.validateInvite(token);
   return data;
 }

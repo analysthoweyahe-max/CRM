@@ -25,6 +25,7 @@ export interface SetPasswordPayload {
   token:           string;
   password:        string;
   confirmPassword: string;
+  rememberMe?:     boolean;
 }
 
 export interface AuthLoginResponse {

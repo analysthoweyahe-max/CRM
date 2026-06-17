@@ -4,7 +4,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import type { SetPasswordFormValues } from '@/features/auth/schemas/setPassword.schema';
 import { DEFAULT_AFTER_LOGIN } from '@/app/config/constants';
 
-export function useSetPassword(inviteToken: string) {
+export function useSetPassword(inviteToken: string, rememberMe = false) {
   const { setPassword } = useAuth();
   const navigate        = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +12,7 @@ export function useSetPassword(inviteToken: string) {
   async function submit(values: SetPasswordFormValues) {
     setError(null);
     try {
-      await setPassword({ token: inviteToken, ...values });
+      await setPassword({ token: inviteToken, rememberMe, ...values });
       navigate(DEFAULT_AFTER_LOGIN, { replace: true });
     } catch {
       setError('setPasswordFailed');

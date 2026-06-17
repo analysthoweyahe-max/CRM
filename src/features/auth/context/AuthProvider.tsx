@@ -2,6 +2,7 @@ import { useReducer, useEffect, useCallback, type ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
 import { authService } from '@/features/auth/services/auth.service';
 import type { AuthUser, LoginCredentials, SetPasswordPayload } from '@/features/auth/types/auth.types';
+import { Permission, type Role } from '@/shared/types/role.types';
 
 interface State {
   user:      AuthUser | null;
@@ -22,6 +23,36 @@ function reducer(state: State, action: Action): State {
     case 'LOGOUT':  return { user: null,           isLoading: false };
   }
 }
+
+const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  admin: Object.values(Permission),
+  hr: [
+    Permission.ViewEmployees,
+    Permission.ManageEmployees,
+    Permission.ViewAttendance,
+    Permission.ManageAttendance,
+    Permission.ViewLeaves,
+    Permission.ManageLeaves,
+    Permission.ViewPayroll,
+    Permission.ManagePayroll,
+    Permission.ViewMessages,
+    Permission.SendMessages,
+  ],
+  manager: [
+    Permission.ViewEmployees,
+    Permission.ViewAttendance,
+    Permission.ViewLeaves,
+    Permission.ManageLeaves,
+    Permission.ViewMessages,
+    Permission.SendMessages,
+  ],
+  employee: [
+    Permission.ViewAttendance,
+    Permission.ViewLeaves,
+    Permission.ViewMessages,
+    Permission.SendMessages,
+  ],
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, { user: null, isLoading: true });
@@ -49,6 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'LOGOUT' });
   }, []);
 
+  const hasPermission = useCallback((permission: Permission) => {
+    if (!state.user) return false;
+    return ROLE_PERMISSIONS[state.user.role]?.includes(permission) ?? false;
+  }, [state.user]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -58,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         setPassword,
         logout,
+        hasPermission,
       }}
     >
       {children}

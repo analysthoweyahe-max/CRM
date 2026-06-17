@@ -1,174 +1,139 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type UseFormRegisterReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Lock, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Lock } from 'lucide-react';
+import { ROUTES } from '@/app/router/routes';
 import { setPasswordSchema, type SetPasswordFormValues } from '@/features/auth/schemas/setPassword.schema';
 import { useSetPassword } from '@/features/auth/hooks/useSetPassword';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { authTranslations } from '@/features/auth/i18n';
 
 interface SetPasswordFormProps {
-  inviteToken: string;
-  employeeId:  string;
+  inviteToken?: string;
+  employeeId?: string;
 }
 
-export function SetPasswordForm({ inviteToken, employeeId }: SetPasswordFormProps) {
+export function SetPasswordForm({ inviteToken = '' }: SetPasswordFormProps) {
   const { lang } = useLang();
   const t = authTranslations[lang];
   const v = t.validation;
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm,  setShowConfirm]  = useState(false);
-  const { submit, error: submitError } = useSetPassword(inviteToken);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const { submit, error: submitError } = useSetPassword(inviteToken, rememberMe);
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<SetPasswordFormValues>({ resolver: zodResolver(setPasswordSchema) });
-
-  const password = watch('password', '');
 
   const fieldErr = (msg: string | undefined) =>
     msg ? (v[msg as keyof typeof v] ?? msg) : undefined;
 
-  const strengthChecks = [
-    { label: lang === 'ar' ? '٨ أحرف على الأقل' : '8+ characters', pass: password.length >= 8 },
-    { label: lang === 'ar' ? 'حرف كبير'         : 'Uppercase',      pass: /[A-Z]/.test(password) },
-    { label: lang === 'ar' ? 'حرف صغير'         : 'Lowercase',      pass: /[a-z]/.test(password) },
-    { label: lang === 'ar' ? 'رقم'              : 'Number',         pass: /[0-9]/.test(password) },
-  ];
-
   return (
-    <form onSubmit={handleSubmit(submit)} noValidate className="space-y-5">
-
-      {/* Title */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{t.setPassword.title}</h2>
-        <p className="text-sm text-gray-500 mt-1">{t.setPassword.subtitle}</p>
+    <form onSubmit={handleSubmit(submit)} noValidate className="w-full space-y-7">
+      <div className="text-right">
+        <h2 className="text-[26px] font-semibold leading-tight text-[#3d3d3d]">
+          {t.setPassword.title}
+        </h2>
+        <p className="mt-1 text-sm text-[#7b7b7b]">
+          {t.setPassword.subtitle}
+        </p>
       </div>
 
-      {/* Employee ID badge */}
-      <div className="flex items-center gap-3 rounded-lg bg-white border border-gray-200 px-4 py-3">
-        <div className="shrink-0 w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center">
-          <span className="text-xs font-bold text-brand-700">{employeeId.slice(0, 2).toUpperCase()}</span>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">{t.setPassword.employeeIdLabel}</p>
-          <p className="text-sm font-semibold text-gray-800">{employeeId}</p>
-        </div>
-      </div>
-
-      {/* Server error */}
       {submitError && (
-        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-          {lang === 'ar' ? 'حدث خطأ. حاول مجددًا.' : 'Something went wrong. Please try again.'}
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {lang === 'ar' ? 'حدث خطأ. حاول مرة أخرى.' : 'Something went wrong. Please try again.'}
         </div>
       )}
 
-      {/* New password */}
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
-          {t.setPassword.password}
-          <span className="text-red-500 ms-0.5">*</span>
-        </label>
-        <div className="relative">
-          <input
-            {...register('password')}
-            type={showPassword ? 'text' : 'password'}
-            placeholder="••••••••"
-            autoComplete="new-password"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 ps-11 pe-11
-                       text-sm outline-none focus:border-brand-500 focus:ring-2
-                       focus:ring-brand-500/20 transition placeholder:text-gray-400"
-          />
-          {/* Lock icon — logical end (right in RTL) */}
-          <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex items-center pe-3 text-gray-400">
-            <Lock size={17} />
-          </span>
-          {/* Eye toggle — logical start (left in RTL) */}
-          <button
-            type="button"
-            onClick={() => setShowPassword((p) => !p)}
-            className="absolute inset-y-0 inset-s-0 flex items-center ps-3 text-gray-400 hover:text-gray-600 transition-colors"
-            tabIndex={-1}
-          >
-            {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-          </button>
-        </div>
-        {errors.password && (
-          <p className="mt-0.5 text-xs text-red-500">{fieldErr(errors.password.message)}</p>
-        )}
+      <div className="space-y-5">
+        <PasswordField
+          label={t.setPassword.password}
+          error={fieldErr(errors.password?.message)}
+          inputProps={register('password')}
+          isVisible={showPassword}
+          onToggle={() => setShowPassword((value) => !value)}
+        />
+
+        <PasswordField
+          label={t.setPassword.confirmPassword}
+          error={fieldErr(errors.confirmPassword?.message)}
+          inputProps={register('confirmPassword')}
+          isVisible={showConfirm}
+          onToggle={() => setShowConfirm((value) => !value)}
+        />
       </div>
 
-      {/* Strength checklist */}
-      {password.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-          {strengthChecks.map((c) => (
-            <div key={c.label} className="flex items-center gap-2">
-              <span className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center
-                               ${c.pass ? 'bg-brand-500' : 'bg-gray-200'}`}>
-                {c.pass && (
-                  <svg viewBox="0 0 8 6" fill="none" className="w-2 h-2">
-                    <path d="M1 3l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </span>
-              <span className={`text-xs ${c.pass ? 'text-brand-700 font-medium' : 'text-gray-400'}`}>
-                {c.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Confirm password */}
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
-          {t.setPassword.confirmPassword}
-          <span className="text-red-500 ms-0.5">*</span>
-        </label>
-        <div className="relative">
+      <div className="flex items-center justify-between text-sm">
+        <a href={ROUTES.AUTH.FORGOT_PASSWORD} className="text-[#2f2f2f] underline underline-offset-2 hover:text-[#80b51c]">
+          {t.setPassword.forgotPassword}
+        </a>
+        <label className="flex cursor-pointer items-center gap-2 text-[#4f4f4f]">
+          <span>{t.setPassword.rememberMe}</span>
           <input
-            {...register('confirmPassword')}
-            type={showConfirm ? 'text' : 'password'}
-            placeholder="••••••••"
-            autoComplete="new-password"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 ps-11 pe-11
-                       text-sm outline-none focus:border-brand-500 focus:ring-2
-                       focus:ring-brand-500/20 transition placeholder:text-gray-400"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(event) => setRememberMe(event.target.checked)}
+            className="h-[18px] w-[18px] rounded border border-[#d6d6d6] accent-[#9bd130]"
           />
-          <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex items-center pe-3 text-gray-400">
-            <Lock size={17} />
-          </span>
-          <button
-            type="button"
-            onClick={() => setShowConfirm((p) => !p)}
-            className="absolute inset-y-0 inset-s-0 flex items-center ps-3 text-gray-400 hover:text-gray-600 transition-colors"
-            tabIndex={-1}
-          >
-            {showConfirm ? <EyeOff size={17} /> : <Eye size={17} />}
-          </button>
-        </div>
-        {errors.confirmPassword && (
-          <p className="mt-0.5 text-xs text-red-500">{fieldErr(errors.confirmPassword.message)}</p>
-        )}
+        </label>
       </div>
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-lg bg-brand-500 hover:bg-brand-600 active:bg-brand-700
-                   text-white font-semibold py-3 text-sm transition-colors
-                   disabled:opacity-60 disabled:cursor-not-allowed"
+        className="h-11 w-full rounded-md bg-[#9bd130] text-base font-medium text-[#26300f]
+                   transition hover:bg-[#8cc51f] active:bg-[#7ab018]
+                   disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting
-          ? (lang === 'ar' ? 'جارٍ التفعيل...' : 'Activating...')
-          : t.setPassword.submit}
+        {isSubmitting ? t.setPassword.activating : t.setPassword.submit}
       </button>
-
     </form>
+  );
+}
+
+interface PasswordFieldProps {
+  label: string;
+  error?: string;
+  inputProps: UseFormRegisterReturn;
+  isVisible: boolean;
+  onToggle: () => void;
+}
+
+function PasswordField({ label, error, inputProps, isVisible, onToggle }: PasswordFieldProps) {
+  return (
+    <div className="flex flex-col gap-2 text-right">
+      <label className="text-sm font-semibold text-[#5c5c5c]">
+        {label}
+        <span className="me-0.5 text-red-500">*</span>
+      </label>
+      <div className="relative">
+        <input
+          {...inputProps}
+          type={isVisible ? 'text' : 'password'}
+          placeholder="***************"
+          autoComplete="new-password"
+          className="h-11 w-full rounded-md border border-[#d9d9d9] bg-white px-11 text-right text-sm text-[#353535]
+                     outline-none transition placeholder:text-[#8f8f8f]
+                     focus:border-[#9bd130] focus:ring-2 focus:ring-[#9bd130]/20"
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute inset-y-0 left-0 flex w-11 items-center justify-center text-[#686b73] transition hover:text-[#3e424a]"
+          aria-label={isVisible ? 'Hide password' : 'Show password'}
+          tabIndex={-1}
+        >
+          {isVisible ? <EyeOff size={21} /> : <Eye size={21} />}
+        </button>
+        <span className="pointer-events-none absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#686b73]">
+          <Lock size={18} fill="currentColor" strokeWidth={0} />
+        </span>
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
   );
 }
