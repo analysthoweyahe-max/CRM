@@ -74,7 +74,7 @@ function buildDevMockResponse(employeeId: string, rememberMe: boolean): AuthLogi
   const mockUser: AuthUser = {
     id: '1',
     employeeId,
-    fullName: 'مستخدم تجريبي',
+    fullName: 'نور أحمد',
     role: 'admin',
   };
   const mockToken = buildMockToken(mockUser);

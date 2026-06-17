@@ -11,12 +11,15 @@ export const ROUTES = {
     NEW:    '/employees/new',
     DETAIL: (id = ':id') => `/employees/${id}`,
   },
-  ATTENDANCE: '/attendance',
-  LEAVES:     '/leaves',
+  ATTENDANCE: {
+    DAILY: '/attendance',
+    LOG:   '/attendance/log',
+  },
+  LEAVES:  '/leaves',
   PAYROLL: {
     DEDUCTIONS: '/payroll/deductions',
     BONUSES:    '/payroll/bonuses',
   },
-  MESSAGES:  '/messages',
-  SETTINGS:  '/settings',
+  MESSAGES: '/messages',
+  SETTINGS: '/settings',
 } as const;

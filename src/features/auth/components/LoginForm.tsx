@@ -142,7 +142,7 @@ export function LoginForm() {
       <p className="text-center text-sm text-gray-500">
         {t.login.activationPrompt}{' '}
         <Link
-          to={ROUTES.AUTH.INVITE}
+          to={ROUTES.AUTH.SET_PASSWORD}
           className="text-brand-600 font-medium hover:text-brand-700 transition-colors"
         >
           {t.login.activationAction}

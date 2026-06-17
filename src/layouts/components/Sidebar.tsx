@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Clock, CalendarDays,
+  LayoutDashboard, Users, Clock,
   Banknote, MessageSquare, Settings, X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -20,47 +20,66 @@ interface NavGroupDef {
   children?: (NavChild & { labelAr: string; labelEn: string })[];
 }
 
-const MAIN_NAV: NavGroupDef[] = [
+interface NavSection {
+  sectionAr?: string;
+  sectionEn?: string;
+  items: NavGroupDef[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
   {
-    key: 'dashboard', labelAr: 'لوحة التحكم', labelEn: 'Dashboard',
-    icon: LayoutDashboard, path: ROUTES.DASHBOARD,
-  },
-  {
-    key: 'employees', labelAr: 'الموظفون', labelEn: 'Employees', icon: Users,
-    children: [
-      { key: 'emp-list', labelAr: 'قائمة الموظفين', labelEn: 'Employee List', label: '', path: ROUTES.EMPLOYEES.LIST },
-      { key: 'emp-new',  labelAr: 'إضافة موظف',     labelEn: 'Add Employee',   label: '', path: ROUTES.EMPLOYEES.NEW },
+    items: [
+      {
+        key: 'dashboard', labelAr: 'الصفحة الرئيسية', labelEn: 'Dashboard',
+        icon: LayoutDashboard, path: ROUTES.DASHBOARD,
+      },
+      {
+        key: 'employees', labelAr: 'إدارة الموظفين', labelEn: 'Employees', icon: Users,
+        children: [
+          { key: 'emp-list', labelAr: 'الموظفين',    labelEn: 'Employees',    label: '', path: ROUTES.EMPLOYEES.LIST },
+          { key: 'emp-new',  labelAr: 'إضافة موظف',  labelEn: 'Add Employee', label: '', path: ROUTES.EMPLOYEES.NEW },
+        ],
+      },
+      {
+        key: 'attendance', labelAr: 'الحضور والإجازات', labelEn: 'Attendance & Leaves', icon: Clock,
+        children: [
+          { key: 'att-daily', labelAr: 'الحضور اليومي', labelEn: 'Daily Attendance', label: '', path: ROUTES.ATTENDANCE.DAILY },
+          { key: 'att-log',   labelAr: 'سجل الحضور',    labelEn: 'Attendance Log',   label: '', path: ROUTES.ATTENDANCE.LOG },
+          { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', label: '', path: ROUTES.LEAVES },
+        ],
+      },
+      {
+        key: 'payroll', labelAr: 'الرواتب', labelEn: 'Payroll', icon: Banknote,
+        children: [
+          { key: 'deductions', labelAr: 'الخصومات',          labelEn: 'Deductions', label: '', path: ROUTES.PAYROLL.DEDUCTIONS },
+          { key: 'bonuses',    labelAr: 'المكافآت والحوافز',  labelEn: 'Bonuses',    label: '', path: ROUTES.PAYROLL.BONUSES },
+        ],
+      },
     ],
   },
   {
-    key: 'attendance', labelAr: 'الحضور والانصراف', labelEn: 'Attendance',
-    icon: Clock, path: ROUTES.ATTENDANCE,
-  },
-  {
-    key: 'leaves', labelAr: 'الإجازات', labelEn: 'Leave Management',
-    icon: CalendarDays, path: ROUTES.LEAVES,
-  },
-  {
-    key: 'payroll', labelAr: 'الرواتب', labelEn: 'Payroll', icon: Banknote,
-    children: [
-      { key: 'deductions', labelAr: 'الخصومات', labelEn: 'Deductions', label: '', path: ROUTES.PAYROLL.DEDUCTIONS },
-      { key: 'bonuses',    labelAr: 'المكافآت',  labelEn: 'Bonuses',    label: '', path: ROUTES.PAYROLL.BONUSES },
+    sectionAr: 'التواصل',
+    sectionEn: 'Communication',
+    items: [
+      {
+        key: 'messages', labelAr: 'الرسائل', labelEn: 'Messages',
+        icon: MessageSquare, path: ROUTES.MESSAGES,
+      },
     ],
   },
   {
-    key: 'messages', labelAr: 'الرسائل', labelEn: 'Messages',
-    icon: MessageSquare, path: ROUTES.MESSAGES,
+    sectionAr: 'النظام',
+    sectionEn: 'System',
+    items: [
+      {
+        key: 'settings', labelAr: 'الإعدادات', labelEn: 'Settings',
+        icon: Settings, path: ROUTES.SETTINGS,
+      },
+    ],
   },
 ];
 
-const BOTTOM_NAV: NavGroupDef[] = [
-  {
-    key: 'settings', labelAr: 'الإعدادات', labelEn: 'Settings',
-    icon: Settings, path: ROUTES.SETTINGS,
-  },
-];
-
-const ALL_NAV = [...MAIN_NAV, ...BOTTOM_NAV];
+const ALL_ITEMS = NAV_SECTIONS.flatMap((s) => s.items);
 
 interface SidebarProps {
   isOpen:  boolean;
@@ -73,7 +92,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location        = useLocation();
 
   const findActiveParent = () =>
-    ALL_NAV.find((item) =>
+    ALL_ITEMS.find((item) =>
       item.children?.some((c) => location.pathname.startsWith(c.path)),
     );
 
@@ -108,7 +127,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/40 lg:hidden"
@@ -116,7 +134,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar panel */}
       <aside
         dir={isRTL ? 'rtl' : 'ltr'}
         className={[
@@ -127,7 +144,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           'lg:translate-x-0',
         ].join(' ')}
       >
-        {/* Logo header */}
+        {/* Logo */}
         <div className="flex items-center justify-between px-4 py-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center shrink-0">
@@ -149,38 +166,39 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Main navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-          <p className="px-4 mb-3 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-            {lang === 'ar' ? 'القائمة الرئيسية' : 'Main Menu'}
-          </p>
-          {MAIN_NAV.map((item) => (
-            <NavItem
-              key={item.key}
-              label={lang === 'ar' ? item.labelAr : item.labelEn}
-              icon={item.icon}
-              path={item.path}
-              children={navChildren(item)}
-              isOpen={expanded.has(item.key)}
-              onToggle={() => toggle(item.key)}
-            />
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+          {NAV_SECTIONS.map((section, si) => (
+            <div key={si} className="space-y-0.5">
+              {(section.sectionAr || section.sectionEn) && (
+                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                  {lang === 'ar' ? section.sectionAr : section.sectionEn}
+                </p>
+              )}
+              {si === 0 && (
+                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                  {lang === 'ar' ? 'القائمة الرئيسية' : 'Main Menu'}
+                </p>
+              )}
+              {section.items.map((item) => (
+                <NavItem
+                  key={item.key}
+                  label={lang === 'ar' ? item.labelAr : item.labelEn}
+                  icon={item.icon}
+                  path={item.path}
+                  children={navChildren(item)}
+                  isOpen={expanded.has(item.key)}
+                  onToggle={() => toggle(item.key)}
+                />
+              ))}
+            </div>
           ))}
         </nav>
 
-        {/* Bottom section */}
-        <div className="px-3 pt-3 pb-4 border-t border-gray-100 space-y-0.5">
-          {BOTTOM_NAV.map((item) => (
-            <NavItem
-              key={item.key}
-              label={lang === 'ar' ? item.labelAr : item.labelEn}
-              icon={item.icon}
-              path={item.path}
-            />
-          ))}
-
-          {/* User chip */}
-          {user && (
-            <div className="flex items-center gap-3 px-3 py-2.5 mt-2 rounded-xl bg-gray-50 border border-gray-100">
+        {/* User chip */}
+        {user && (
+          <div className="px-3 pt-3 pb-4 border-t border-gray-100">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
               <div className="shrink-0 w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center">
                 <span className="text-xs font-bold text-brand-700">
                   {user.fullName?.slice(0, 1).toUpperCase()}
@@ -191,8 +209,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <p className="text-[11px] text-gray-400 truncate">{user.employeeId}</p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </aside>
     </>
   );

@@ -22,14 +22,21 @@ import { BonusesPage }       from '@/features/payroll/pages/BonusesPage';
 import { MessagesPage }      from '@/features/messages/pages/MessagesPage';
 import { SettingsPage }      from '@/features/settings/pages/SettingsPage';
 
+function ComingSoon({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
+      <p className="text-lg font-medium">{label}</p>
+      <p className="text-sm">قريباً</p>
+    </div>
+  );
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Root redirect */}
         <Route path="/" element={<Navigate to={ROUTES.AUTH.LOGIN} replace />} />
 
-        {/* Auth routes — guests only */}
         <Route element={<GuestGuard />}>
           <Route element={<AuthLayout />}>
             <Route path={ROUTES.AUTH.LOGIN}           element={<LoginPage />} />
@@ -39,27 +46,26 @@ export function AppRouter() {
           </Route>
         </Route>
 
-        {/* Protected routes — inside DashboardLayout */}
         <Route element={<AuthGuard />}>
           <Route element={<DashboardLayout />}>
-            <Route path={ROUTES.DASHBOARD}          element={<DashboardPage />} />
+            <Route path={ROUTES.DASHBOARD}            element={<DashboardPage />} />
 
-            <Route path={ROUTES.EMPLOYEES.LIST}     element={<EmployeeListPage />} />
-            <Route path={ROUTES.EMPLOYEES.NEW}      element={<NewEmployeePage />} />
-            <Route path={ROUTES.EMPLOYEES.DETAIL()} element={<EmployeeDetailPage />} />
+            <Route path={ROUTES.EMPLOYEES.LIST}       element={<EmployeeListPage />} />
+            <Route path={ROUTES.EMPLOYEES.NEW}        element={<NewEmployeePage />} />
+            <Route path={ROUTES.EMPLOYEES.DETAIL()}   element={<EmployeeDetailPage />} />
 
-            <Route path={ROUTES.ATTENDANCE}         element={<AttendancePage />} />
-            <Route path={ROUTES.LEAVES}             element={<LeavesPage />} />
+            <Route path={ROUTES.ATTENDANCE.DAILY}     element={<AttendancePage />} />
+            <Route path={ROUTES.ATTENDANCE.LOG}       element={<ComingSoon label="سجل الحضور" />} />
+            <Route path={ROUTES.LEAVES}               element={<LeavesPage />} />
 
-            <Route path={ROUTES.PAYROLL.DEDUCTIONS} element={<DeductionsPage />} />
-            <Route path={ROUTES.PAYROLL.BONUSES}    element={<BonusesPage />} />
+            <Route path={ROUTES.PAYROLL.DEDUCTIONS}   element={<DeductionsPage />} />
+            <Route path={ROUTES.PAYROLL.BONUSES}      element={<BonusesPage />} />
 
-            <Route path={ROUTES.MESSAGES}           element={<MessagesPage />} />
-            <Route path={ROUTES.SETTINGS}           element={<SettingsPage />} />
+            <Route path={ROUTES.MESSAGES}             element={<MessagesPage />} />
+            <Route path={ROUTES.SETTINGS}             element={<SettingsPage />} />
           </Route>
         </Route>
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to={ROUTES.AUTH.LOGIN} replace />} />
       </Routes>
     </BrowserRouter>

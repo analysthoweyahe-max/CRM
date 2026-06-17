@@ -1,64 +1,66 @@
-import { Menu, Bell, LogOut, Globe } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Menu, Bell, Moon, Sun, LogOut } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useLang } from '@/app/providers/LanguageProvider';
-
-const PAGE_TITLES: Record<string, { ar: string; en: string }> = {
-  '/dashboard':          { ar: 'لوحة التحكم',        en: 'Dashboard' },
-  '/employees':          { ar: 'قائمة الموظفين',       en: 'Employee List' },
-  '/employees/new':      { ar: 'إضافة موظف جديد',      en: 'Add Employee' },
-  '/attendance':         { ar: 'الحضور والانصراف',     en: 'Attendance' },
-  '/leaves':             { ar: 'إدارة الإجازات',        en: 'Leave Management' },
-  '/payroll/deductions': { ar: 'الخصومات',             en: 'Deductions' },
-  '/payroll/bonuses':    { ar: 'المكافآت',             en: 'Bonuses' },
-  '/messages':           { ar: 'الرسائل',              en: 'Messages' },
-  '/settings':           { ar: 'الإعدادات',             en: 'Settings' },
-};
 
 interface TopbarProps {
   onMenuToggle: () => void;
 }
 
 export function Topbar({ onMenuToggle }: TopbarProps) {
-  const { user, logout } = useAuth();
-  const { lang, toggleLang } = useLang();
-  const location = useLocation();
+  const { user, logout }      = useAuth();
+  const { lang }              = useLang();
+  const [darkMode, setDarkMode] = useState(false);
 
-  const pathMatch = Object.keys(PAGE_TITLES).find((p) =>
-    location.pathname === p || location.pathname.startsWith(p + '/'),
-  );
-  const titleEntry = pathMatch ? PAGE_TITLES[pathMatch] : { ar: 'لوحة التحكم', en: 'Dashboard' };
-  const pageTitle  = lang === 'ar' ? titleEntry.ar : titleEntry.en;
+  const initial = user?.fullName?.slice(0, 1).toUpperCase() ?? '?';
 
   return (
-    <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 md:px-6 h-14 flex items-center gap-3">
+    <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 md:px-6 h-16 flex items-center gap-3">
 
-      {/* Mobile menu toggle */}
-      <button
-        type="button"
-        onClick={onMenuToggle}
-        className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-        aria-label="Toggle sidebar"
-      >
-        <Menu size={20} />
-      </button>
+      {/* ── Logo + company (RTL: appears on the RIGHT) ── */}
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center">
+          <img src="/logo.png" alt="Howaya HR" className="w-7 h-7 object-contain" />
+        </div>
+        <div className="hidden sm:block leading-tight">
+          <p className="text-sm font-bold text-gray-900">Howaya HR</p>
+          <p className="text-[11px] text-gray-400">
+            {lang === 'ar' ? 'نظام الموارد البشرية' : 'HR System'}
+          </p>
+        </div>
+      </div>
 
-      {/* Page title */}
-      <h1 className="flex-1 text-base font-semibold text-gray-900 truncate">{pageTitle}</h1>
+      {/* ── Greeting (center, flex-1) ── */}
+      <div className="flex-1 text-end px-2">
+        <p className="text-[11px] text-gray-400 leading-tight">
+          {lang === 'ar' ? 'مرحبا بعودتك 👋' : 'Welcome back 👋'}
+        </p>
+        <p className="text-sm font-bold text-gray-900 leading-tight">
+          {user?.fullName ?? '—'}
+        </p>
+      </div>
 
-      {/* Right-side actions */}
-      <div className="flex items-center gap-1.5">
+      {/* ── Actions (RTL: appears on the LEFT) ── */}
+      <div className="flex items-center gap-1 shrink-0">
 
-        {/* Language toggle */}
+        {/* Mobile menu toggle */}
         <button
           type="button"
-          onClick={toggleLang}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
-                     text-gray-600 border border-gray-200
-                     hover:border-brand-400 hover:text-brand-600 transition-all"
+          onClick={onMenuToggle}
+          className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+          aria-label="Toggle sidebar"
         >
-          <Globe size={13} />
-          {lang === 'ar' ? 'EN' : 'AR'}
+          <Menu size={18} />
+        </button>
+
+        {/* Dark mode toggle */}
+        <button
+          type="button"
+          onClick={() => setDarkMode((p) => !p)}
+          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+          aria-label="Toggle dark mode"
+        >
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
         {/* Notifications */}
@@ -68,32 +70,30 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
           aria-label="Notifications"
         >
           <Bell size={18} />
-          <span className="absolute top-1.5 inset-e-1.5 w-2 h-2 rounded-full bg-brand-500 border-2 border-white" />
+          <span className="absolute top-1 inset-e-1 min-w-4 h-4 px-0.5 rounded-full
+                           bg-red-500 text-white text-[10px] font-bold
+                           flex items-center justify-center leading-none">
+            2
+          </span>
         </button>
 
         {/* Divider */}
         <span className="w-px h-6 bg-gray-200 mx-1" />
 
-        {/* User + logout */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-brand-700">
-              {user?.fullName?.slice(0, 1).toUpperCase() ?? '?'}
-            </span>
-          </div>
-          <div className="hidden md:block leading-none">
-            <p className="text-xs font-semibold text-gray-800">{user?.fullName}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">{user?.employeeId}</p>
-          </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="p-1.5 ms-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-            title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
-          >
-            <LogOut size={16} />
-          </button>
+        {/* User avatar */}
+        <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center shrink-0">
+          <span className="text-xs font-bold text-white">{initial}</span>
         </div>
+
+        {/* Logout */}
+        <button
+          type="button"
+          onClick={logout}
+          className="p-1.5 ms-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+        >
+          <LogOut size={16} />
+        </button>
 
       </div>
     </header>
