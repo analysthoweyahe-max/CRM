@@ -59,8 +59,9 @@ export function AuthLayout() {
         <button
           type="button"
           onClick={toggleLang}
-          className="absolute left-6 top-6 flex h-9 items-center gap-2 rounded-lg border border-[#e3e3e3] bg-white px-3
-                     text-sm text-[#59657a] transition hover:border-[#9bd130] hover:text-[#537319] lg:left-[184px]"
+          dir={lang === 'ar' ? 'rtl' : 'ltr'}
+          className="absolute inset-s-6 top-6 flex h-9 items-center gap-2 rounded-lg border border-[#e3e3e3] bg-white px-3
+                     text-sm text-[#59657a] transition hover:border-[#9bd130] hover:text-[#537319] lg:inset-s-46"
         >
           <Globe size={15} />
           {t.langToggle}

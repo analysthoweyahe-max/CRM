@@ -8,6 +8,52 @@ import { useSetPassword } from '@/features/auth/hooks/useSetPassword';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { authTranslations } from '@/features/auth/i18n';
 
+interface PasswordFieldProps {
+  label: string;
+  error?: string;
+  inputProps: UseFormRegisterReturn;
+  isVisible: boolean;
+  onToggle: () => void;
+}
+
+function PasswordField({ label, error, inputProps, isVisible, onToggle }: PasswordFieldProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-semibold text-[#5c5c5c]">
+        {label}
+        <span className="ms-0.5 text-red-500">*</span>
+      </label>
+      <div className="relative">
+        <input
+          {...inputProps}
+          type={isVisible ? 'text' : 'password'}
+          placeholder="***************"
+          autoComplete="new-password"
+          dir="ltr"
+          className="h-11 w-full rounded-md border border-[#d9d9d9] bg-white ps-11 pe-11 text-sm text-[#353535]
+                     outline-none transition placeholder:text-[#8f8f8f]
+                     focus:border-[#9bd130] focus:ring-2 focus:ring-[#9bd130]/20"
+        />
+        {/* Eye button — logical start */}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute inset-y-0 inset-s-0 flex w-11 items-center justify-center text-[#686b73] transition hover:text-[#3e424a]"
+          aria-label={isVisible ? 'Hide password' : 'Show password'}
+          tabIndex={-1}
+        >
+          {isVisible ? <EyeOff size={21} /> : <Eye size={21} />}
+        </button>
+        {/* Lock icon — logical end */}
+        <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex w-11 items-center justify-center text-[#686b73]">
+          <Lock size={18} fill="currentColor" strokeWidth={0} />
+        </span>
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
 interface SetPasswordFormProps {
   inviteToken?: string;
   employeeId?: string;
@@ -95,45 +141,3 @@ export function SetPasswordForm({ inviteToken = '' }: SetPasswordFormProps) {
   );
 }
 
-interface PasswordFieldProps {
-  label: string;
-  error?: string;
-  inputProps: UseFormRegisterReturn;
-  isVisible: boolean;
-  onToggle: () => void;
-}
-
-function PasswordField({ label, error, inputProps, isVisible, onToggle }: PasswordFieldProps) {
-  return (
-    <div className="flex flex-col gap-2 text-right">
-      <label className="text-sm font-semibold text-[#5c5c5c]">
-        {label}
-        <span className="me-0.5 text-red-500">*</span>
-      </label>
-      <div className="relative">
-        <input
-          {...inputProps}
-          type={isVisible ? 'text' : 'password'}
-          placeholder="***************"
-          autoComplete="new-password"
-          className="h-11 w-full rounded-md border border-[#d9d9d9] bg-white px-11 text-right text-sm text-[#353535]
-                     outline-none transition placeholder:text-[#8f8f8f]
-                     focus:border-[#9bd130] focus:ring-2 focus:ring-[#9bd130]/20"
-        />
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute inset-y-0 left-0 flex w-11 items-center justify-center text-[#686b73] transition hover:text-[#3e424a]"
-          aria-label={isVisible ? 'Hide password' : 'Show password'}
-          tabIndex={-1}
-        >
-          {isVisible ? <EyeOff size={21} /> : <Eye size={21} />}
-        </button>
-        <span className="pointer-events-none absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#686b73]">
-          <Lock size={18} fill="currentColor" strokeWidth={0} />
-        </span>
-      </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
-    </div>
-  );
-}

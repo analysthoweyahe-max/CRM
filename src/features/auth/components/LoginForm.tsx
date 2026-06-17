@@ -20,6 +20,7 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -28,6 +29,8 @@ export function LoginForm() {
 
   const fieldErr = (msg: string | undefined) =>
     msg ? (v[msg as keyof typeof v] ?? msg) : undefined;
+
+  const empIdDir = /[؀-ۿ]/.test(watch('employeeId') ?? '') ? 'rtl' : 'ltr';
 
   return (
     <form onSubmit={handleSubmit(submit)} noValidate className="space-y-5">
@@ -53,17 +56,17 @@ export function LoginForm() {
           {t.login.employeeId}
           <span className="text-red-500 ms-0.5">*</span>
         </label>
-        <div className="relative">
+        <div className="relative" dir={empIdDir}>
           <input
             {...register('employeeId')}
             type="text"
             placeholder={t.login.employeeIdPlaceholder}
             autoComplete="username"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 ps-4 pe-11
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 ps-11 pe-4
                        text-sm outline-none focus:border-brand-500 focus:ring-2
                        focus:ring-brand-500/20 transition placeholder:text-gray-400"
           />
-          <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex items-center pe-3 text-gray-400">
+          <span className="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center ps-3 text-gray-400">
             <User size={17} />
           </span>
         </div>
@@ -84,15 +87,12 @@ export function LoginForm() {
             type={showPassword ? 'text' : 'password'}
             placeholder={t.login.passwordPlaceholder}
             autoComplete="current-password"
+            dir="ltr"
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 ps-11 pe-11
                        text-sm outline-none focus:border-brand-500 focus:ring-2
                        focus:ring-brand-500/20 transition placeholder:text-gray-400"
           />
-          {/* Lock icon — logical start (right in RTL) */}
-          <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex items-center pe-3 text-gray-400">
-            <Lock size={17} />
-          </span>
-          {/* Eye toggle — logical end (left in RTL) */}
+          {/* Eye toggle — logical start */}
           <button
             type="button"
             onClick={() => setShowPassword((p) => !p)}
@@ -101,6 +101,10 @@ export function LoginForm() {
           >
             {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
           </button>
+          {/* Lock icon — logical end */}
+          <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex items-center pe-3 text-gray-400">
+            <Lock size={17} />
+          </span>
         </div>
         {errors.password && (
           <p className="mt-0.5 text-xs text-red-500">{fieldErr(errors.password.message)}</p>

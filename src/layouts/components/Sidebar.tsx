@@ -148,9 +148,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-4 py-5 border-b border-gray-100 dark:border-gray-700/60">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center shrink-0">
-              <img src="/logo.png" alt="Howaya HR" className="w-7 h-7 object-contain" />
-            </div>
+              <img src="/logo.png" alt="Howaya HR" className="w-20 h-12 object-contain" />
+         
             <div>
               <p className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">Howaya HR</p>
               <p className="text-[11px] text-gray-400 dark:text-gray-500">

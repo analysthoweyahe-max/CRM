@@ -1,31 +1,51 @@
-import { useState } from 'react';
-import { Menu, Bell, Moon, Sun, LogOut, Globe, ChevronDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Menu, Bell, Globe, LogOut, User, ChevronDown, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { ROUTES } from '@/app/router/routes';
+
+const ROLE_LABELS: Record<string, { ar: string; en: string }> = {
+  admin:    { ar: 'مدير النظام',      en: 'System Admin' },
+  hr:       { ar: 'مدير موارد بشرية', en: 'HR Manager' },
+  manager:  { ar: 'مدير',             en: 'Manager' },
+  employee: { ar: 'موظف',             en: 'Employee' },
+};
 
 interface TopbarProps {
   onMenuToggle: () => void;
 }
 
 export function Topbar({ onMenuToggle }: TopbarProps) {
-  const { user, logout }         = useAuth();
-  const { lang, toggleLang }     = useLang();
-  const { isDark, toggleTheme }  = useTheme();
-  const [menuOpen, setMenuOpen]  = useState(false);
+  const { user, logout }     = useAuth();
+  const { lang, toggleLang } = useLang();
+  const { isDark, toggleTheme } = useTheme();
+  const navigate             = useNavigate();
+  const [open, setOpen]      = useState(false);
+  const dropdownRef          = useRef<HTMLDivElement>(null);
 
-  const initial = user?.fullName?.slice(0, 1).toUpperCase() ?? '?';
+  const initial   = user?.fullName?.slice(0, 1).toUpperCase() ?? '?';
+  const roleLabel = user?.role ? (ROLE_LABELS[user.role]?.[lang] ?? user.role) : '';
+
+  useEffect(() => {
+    function onOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onOutside);
+    return () => document.removeEventListener('mousedown', onOutside);
+  }, []);
 
   return (
     <header className="sticky top-0 z-10 h-16 flex items-center gap-3 px-4 md:px-6
                        bg-white dark:bg-gray-900
                        border-b border-gray-100 dark:border-gray-700/60">
 
-      {/* ── Logo + company (RTL: appears on the RIGHT) ── */}
+      {/* Logo */}
       <div className="flex items-center gap-3 shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center">
-          <img src="/logo.png" alt="Howaya HR" className="w-7 h-7 object-contain" />
-        </div>
+        <img src="/logo.png" alt="Howaya HR" className="w-14 h-14 object-contain" />
         <div className="hidden sm:block leading-tight">
           <p className="text-sm font-bold text-gray-900 dark:text-gray-100">Howaya HR</p>
           <p className="text-[11px] text-gray-400 dark:text-gray-500">
@@ -34,14 +54,10 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
         </div>
       </div>
 
-      {/* ── Greeting (center, flex-1) ── */}
-      <div className="flex-1 text-end px-2">
-      
-     
-      </div>
+      <div className="flex-1" />
 
-      {/* ── Actions (RTL: appears on the LEFT) ── */}
-      <div className="flex items-center gap-0.5 shrink-0">
+      {/* Actions */}
+      <div className="flex items-center gap-1 shrink-0">
 
         {/* Mobile menu toggle */}
         <button
@@ -52,28 +68,6 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
           aria-label="Toggle sidebar"
         >
           <Menu size={18} />
-        </button>
-
-        {/* Language toggle */}
-        <button
-          type="button"
-          onClick={toggleLang}
-          title={lang === 'ar' ? 'Switch to English' : 'تبديل للعربية'}
-          className="p-2 rounded-lg text-gray-500 dark:text-gray-400
-                     hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <Globe size={18} />
-        </button>
-
-        {/* Dark / light mode toggle */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label="Toggle dark mode"
-          className="p-2 rounded-lg text-gray-500 dark:text-gray-400
-                     hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
         {/* Notifications */}
@@ -91,36 +85,93 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
           </span>
         </button>
 
-        {/* Divider */}
-        <span className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
-
-        {/* Avatar + dropdown chevron */}
+        {/* Theme toggle */}
         <button
           type="button"
-          onClick={() => setMenuOpen((p) => !p)}
-          className="flex items-center gap-1 px-1.5 py-1 rounded-lg
+          onClick={toggleTheme}
+          aria-label="Toggle dark mode"
+          className="p-2 rounded-lg text-gray-500 dark:text-gray-400
                      hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
-          <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-white">{initial}</span>
-          </div>
-          <ChevronDown
-            size={14}
-            className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
-          />
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        {/* Logout */}
-        <button
-          type="button"
-          onClick={logout}
-          title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
-          className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500
-                     hover:text-red-500 dark:hover:text-red-400
-                     hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-        >
-          <LogOut size={16} />
-        </button>
+        <span className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+
+        {/* Avatar + dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setOpen((p) => !p)}
+            className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg
+                       hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-white">{initial}</span>
+            </div>
+            <ChevronDown
+              size={14}
+              className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {open && (
+            <div className="absolute inset-e-0 top-full mt-2 w-56 rounded-xl bg-white dark:bg-gray-800
+                            shadow-lg border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+
+              {/* User info */}
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                <div className="w-9 h-9 rounded-full bg-violet-500 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-white">{initial}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    {user?.fullName}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{roleLabel}</p>
+                </div>
+              </div>
+
+              {/* Profile */}
+              <button
+                type="button"
+                onClick={() => { navigate(ROUTES.SETTINGS); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm
+                           text-gray-700 dark:text-gray-300
+                           hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              >
+                <User size={16} className="text-gray-400 shrink-0" />
+                <span>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+              </button>
+
+              {/* Change language */}
+              <button
+                type="button"
+                onClick={() => { toggleLang(); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm
+                           text-gray-700 dark:text-gray-300
+                           hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              >
+                <Globe size={16} className="text-gray-400 shrink-0" />
+                <span>{lang === 'ar' ? 'تغيير اللغة' : 'Change Language'}</span>
+              </button>
+
+              <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
+
+              {/* Logout */}
+              <button
+                type="button"
+                onClick={async () => { await logout(); navigate(ROUTES.AUTH.LOGIN); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm
+                           text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                <LogOut size={16} className="shrink-0" />
+                <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+              </button>
+
+            </div>
+          )}
+        </div>
 
       </div>
     </header>
