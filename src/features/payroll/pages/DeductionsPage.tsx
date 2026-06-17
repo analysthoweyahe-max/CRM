@@ -88,20 +88,20 @@ export function DeductionsPage() {
             <span className="text-sm font-bold text-white">{r.original.initial}</span>
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800">{r.original.employeeName}</p>
-            <p className="text-xs text-gray-400">{r.original.department}</p>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{r.original.employeeName}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{r.original.department}</p>
           </div>
         </div>
       ),
     }),
     col.accessor('type', {
       header: isAr ? 'نوع الخصم' : 'Type',
-      cell: (i) => <span className="text-sm text-gray-700">{i.getValue()}</span>,
+      cell: (i) => <span className="text-sm text-gray-700 dark:text-gray-300">{i.getValue()}</span>,
     }),
     col.accessor('amount', {
       header: isAr ? 'المبلغ' : 'Amount',
       cell: (i) => (
-        <span className="text-sm font-semibold text-red-500">
+        <span className="text-sm font-semibold text-red-500 dark:text-red-400">
           {i.getValue().toLocaleString('ar-EG')} {isAr ? 'ج.م' : 'EGP'}
         </span>
       ),
@@ -109,27 +109,27 @@ export function DeductionsPage() {
     col.accessor('reason', {
       header: isAr ? 'السبب' : 'Reason',
       enableSorting: false,
-      cell: (i) => <span className="text-sm text-gray-500 max-w-50 block truncate" title={i.getValue()}>{i.getValue()}</span>,
+      cell: (i) => <span className="text-sm text-gray-500 dark:text-gray-400 max-w-50 block truncate" title={i.getValue()}>{i.getValue()}</span>,
     }),
     col.accessor('date', {
       header: isAr ? 'التاريخ' : 'Date',
-      cell: (i) => <span className="text-sm text-gray-600">{i.getValue()}</span>,
+      cell: (i) => <span className="text-sm text-gray-600 dark:text-gray-400">{i.getValue()}</span>,
     }),
     col.accessor('financialMonth', {
       header: isAr ? 'الشهر المالي' : 'Month',
       enableSorting: false,
-      cell: (i) => <span className="text-sm text-gray-600">{i.getValue()}</span>,
+      cell: (i) => <span className="text-sm text-gray-600 dark:text-gray-400">{i.getValue()}</span>,
     }),
     col.accessor('source', {
       header: isAr ? 'المصدر' : 'Source',
       enableSorting: false,
       cell: (i) => i.getValue() === 'auto'
         ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700/50">
             <Zap size={11} />{isAr ? 'تلقائي' : 'Auto'}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
             <PenLine size={11} />{isAr ? 'يدوي' : 'Manual'}
           </span>
         ),
@@ -168,19 +168,21 @@ export function DeductionsPage() {
           {isAr ? 'إضافة خصم' : 'Add Deduction'}
         </button>
         <div className="text-end">
-          <h1 className="text-2xl font-bold text-gray-900">{isAr ? 'الخصومات' : 'Deductions'}</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{isAr ? 'الخصومات' : 'Deductions'}</h1>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
             {isAr ? 'إدارة الخصومات التلقائية واليدوية' : 'Manage automatic and manual deductions'}
           </p>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 divide-x divide-x-reverse divide-gray-100 rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+      <div className="grid grid-cols-3 divide-x divide-x-reverse divide-gray-100 dark:divide-gray-700
+                      rounded-2xl border border-gray-100 dark:border-gray-700
+                      bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
         <StatCard
           label={isAr ? 'إجمالي الخصومات' : 'Total'}
           value={`${total.toLocaleString('ar-EG')} ${isAr ? 'ج.م' : 'EGP'}`}
-          valueClass="text-red-500"
+          valueClass="text-red-500 dark:text-red-400"
           icon={<BadgeDollarSign size={17} className="text-red-400" />}
         />
         <StatCard
@@ -196,19 +198,22 @@ export function DeductionsPage() {
       </div>
 
       {/* Table card */}
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-gray-100 dark:border-gray-700
+                      bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
 
         {/* Filters row */}
-        <div className="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-gray-100">
+        <div className="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
           <div className="relative flex-1 min-w-45">
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); table.setPageIndex(0); }}
               placeholder={isAr ? 'ابحث باسم الموظف...' : 'Search employee...'}
-              className="w-full h-9 rounded-lg border border-gray-200 bg-gray-50 ps-4 pe-9
-                         text-sm outline-none focus:border-brand-400 focus:ring-2
-                         focus:ring-brand-400/20 transition placeholder:text-gray-400"
+              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-600
+                         bg-gray-50 dark:bg-gray-700/50 ps-4 pe-9
+                         text-sm text-gray-800 dark:text-gray-200
+                         outline-none focus:border-brand-400 focus:ring-2
+                         focus:ring-brand-400/20 transition placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
             <Search size={14} className="absolute inset-y-0 my-auto inset-e-3 text-gray-400 pointer-events-none" />
           </div>
@@ -220,22 +225,22 @@ export function DeductionsPage() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-gray-50 dark:bg-gray-700/40 border-b border-gray-100 dark:border-gray-700">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((h) => (
-                    <th key={h.id} className="px-5 py-3 text-start text-xs font-semibold text-gray-500 whitespace-nowrap">
+                    <th key={h.id} className="px-5 py-3 text-start text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {h.isPlaceholder ? null : (
                         <button
                           type="button"
                           onClick={h.column.getToggleSortingHandler()}
-                          className={`inline-flex items-center gap-1.5 ${h.column.getCanSort() ? 'cursor-pointer select-none hover:text-gray-800' : 'cursor-default'}`}
+                          className={`inline-flex items-center gap-1.5 ${h.column.getCanSort() ? 'cursor-pointer select-none hover:text-gray-800 dark:hover:text-gray-200' : 'cursor-default'}`}
                         >
                           {flexRender(h.column.columnDef.header, h.getContext())}
                           {h.column.getCanSort() && (
                             h.column.getIsSorted() === 'asc'  ? <ChevronUp   size={13} className="text-brand-500" /> :
                             h.column.getIsSorted() === 'desc' ? <ChevronDown size={13} className="text-brand-500" /> :
-                            <ChevronsUpDown size={13} className="text-gray-300" />
+                            <ChevronsUpDown size={13} className="text-gray-300 dark:text-gray-600" />
                           )}
                         </button>
                       )}
@@ -244,16 +249,16 @@ export function DeductionsPage() {
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
               {table.getRowModel().rows.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="py-12 text-center text-sm text-gray-400">
+                  <td colSpan={columns.length} className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                     {isAr ? 'لا توجد نتائج' : 'No results found'}
                   </td>
                 </tr>
               ) : (
                 table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-gray-50/60 transition-colors">
+                  <tr key={row.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-700/20 transition-colors">
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-5 py-3.5 whitespace-nowrap">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -267,13 +272,13 @@ export function DeductionsPage() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100">
+        <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight size={16} />
             </button>
@@ -286,7 +291,7 @@ export function DeductionsPage() {
                 className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                   pageIndex === i
                     ? 'bg-brand-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {i + 1}
@@ -297,13 +302,13 @@ export function DeductionsPage() {
               type="button"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
           </div>
 
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             {isAr
               ? `عرض ${firstRow}–${lastRow} من ${totalRows}`
               : `Showing ${firstRow}–${lastRow} of ${totalRows}`}
@@ -316,7 +321,7 @@ export function DeductionsPage() {
 }
 
 /* ─── Sub-components ────────────────────────────── */
-function StatCard({ label, value, valueClass = 'text-gray-900', icon }: {
+function StatCard({ label, value, valueClass = 'text-gray-900 dark:text-gray-100', icon }: {
   label:       string;
   value:       string;
   valueClass?: string;
@@ -324,7 +329,7 @@ function StatCard({ label, value, valueClass = 'text-gray-900', icon }: {
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-5 px-4 text-center">
-      <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+      <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-medium">
         {icon}
         <span>{label}</span>
       </div>
@@ -343,8 +348,10 @@ function FilterSelect({ value, onChange, options }: {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 rounded-lg border border-gray-200 bg-white ps-3 pe-8 text-sm
-                   text-gray-700 outline-none focus:border-brand-400 focus:ring-2
+        className="h-9 rounded-lg border border-gray-200 dark:border-gray-600
+                   bg-white dark:bg-gray-700/50 ps-3 pe-8 text-sm
+                   text-gray-700 dark:text-gray-300
+                   outline-none focus:border-brand-400 focus:ring-2
                    focus:ring-brand-400/20 transition appearance-none cursor-pointer"
       >
         {options.map((o) => <option key={o}>{o}</option>)}

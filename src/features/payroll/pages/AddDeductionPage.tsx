@@ -79,16 +79,18 @@ export function AddDeductionPage() {
         <button
           type="button"
           onClick={goBack}
-          className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-lg text-gray-400 dark:text-gray-500
+                     hover:text-gray-700 dark:hover:text-gray-300
+                     hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           aria-label={isAr ? 'رجوع' : 'Back'}
         >
           <BackIcon size={18} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {isAr ? 'إضافة خصم' : 'Add Deduction'}
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {isAr ? 'تسجيل خصم يدوي على موظف' : 'Register a manual deduction for an employee'}
           </p>
         </div>
@@ -99,15 +101,16 @@ export function AddDeductionPage() {
 
         {/* ── Info panel ── */}
         <aside className="lg:w-64 shrink-0">
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 space-y-4">
-            <h3 className="text-sm font-bold text-gray-800">
+          <div className="rounded-2xl border border-gray-100 dark:border-gray-700
+                          bg-white dark:bg-gray-800 shadow-sm p-5 space-y-4">
+            <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">
               {isAr ? 'معلومات' : 'Information'}
             </h3>
             <ul className="space-y-3">
               {INFO_ITEMS.map((item, i) => (
                 <li key={i} className="flex items-start gap-2.5">
                   <CircleCheck size={16} className="text-brand-500 mt-0.5 shrink-0" />
-                  <span className="text-xs text-gray-600 leading-relaxed">{item}</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{item}</span>
                 </li>
               ))}
             </ul>
@@ -118,7 +121,8 @@ export function AddDeductionPage() {
         <form
           onSubmit={handleSubmit(onSubmit)}
           noValidate
-          className="flex-1 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 space-y-5"
+          className="flex-1 rounded-2xl border border-gray-100 dark:border-gray-700
+                     bg-white dark:bg-gray-800 shadow-sm p-6 space-y-5"
         >
 
           {/* Employee */}
@@ -247,7 +251,9 @@ export function AddDeductionPage() {
               type="button"
               onClick={goBack}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
-                         border border-gray-200 text-gray-600 hover:bg-gray-50
+                         border border-gray-200 dark:border-gray-600
+                         text-gray-600 dark:text-gray-400
+                         hover:bg-gray-50 dark:hover:bg-gray-700/50
                          text-sm font-medium transition-colors"
             >
               <X size={15} />
@@ -264,11 +270,13 @@ export function AddDeductionPage() {
 /* ─── Helpers ────────────────────────────────────── */
 function inputCls(hasError: boolean) {
   return [
-    'w-full h-11 rounded-lg border px-4 text-sm text-gray-800 bg-white',
-    'outline-none transition placeholder:text-gray-400',
+    'w-full h-11 rounded-lg border px-4 text-sm',
+    'text-gray-800 dark:text-gray-200',
+    'bg-white dark:bg-gray-700/50',
+    'outline-none transition placeholder:text-gray-400 dark:placeholder:text-gray-500',
     hasError
       ? 'border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20'
-      : 'border-gray-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20',
+      : 'border-gray-200 dark:border-gray-600 focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20',
   ].join(' ');
 }
 
@@ -290,7 +298,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+      <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300">
         {icon}
         {label}
         {required && <span className="text-red-500">*</span>}

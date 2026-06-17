@@ -137,22 +137,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside
         dir={isRTL ? 'rtl' : 'ltr'}
         className={[
-          'fixed inset-y-0 inset-s-0 z-30 flex flex-col w-64 bg-white',
-          'border-e border-gray-100 shadow-sm',
+          'fixed inset-y-0 inset-s-0 z-30 flex flex-col w-64',
+          'bg-white dark:bg-gray-900',
+          'border-e border-gray-100 dark:border-gray-700/60 shadow-sm',
           'transition-transform duration-300 ease-in-out',
           isOpen ? 'translate-x-0' : slideOut,
           'lg:translate-x-0',
         ].join(' ')}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between px-4 py-5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-5 border-b border-gray-100 dark:border-gray-700/60">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center shrink-0">
               <img src="/logo.png" alt="Howaya HR" className="w-7 h-7 object-contain" />
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900 leading-tight">Howaya HR</p>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">Howaya HR</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">
                 {lang === 'ar' ? 'نظام الموارد البشرية' : 'HR System'}
               </p>
             </div>
@@ -160,7 +161,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <button
             type="button"
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"
+            className="lg:hidden p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <X size={17} />
           </button>
@@ -171,12 +172,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {NAV_SECTIONS.map((section, si) => (
             <div key={si} className="space-y-0.5">
               {(section.sectionAr || section.sectionEn) && (
-                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
                   {lang === 'ar' ? section.sectionAr : section.sectionEn}
                 </p>
               )}
               {si === 0 && (
-                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
                   {lang === 'ar' ? 'القائمة الرئيسية' : 'Main Menu'}
                 </p>
               )}
@@ -197,16 +198,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* User chip */}
         {user && (
-          <div className="px-3 pt-3 pb-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
+          <div className="px-3 pt-3 pb-4 border-t border-gray-100 dark:border-gray-700/60">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
               <div className="shrink-0 w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center">
                 <span className="text-xs font-bold text-brand-700">
                   {user.fullName?.slice(0, 1).toUpperCase()}
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-gray-800 truncate">{user.fullName}</p>
-                <p className="text-[11px] text-gray-400 truncate">{user.employeeId}</p>
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{user.fullName}</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{user.employeeId}</p>
               </div>
             </div>
           </div>

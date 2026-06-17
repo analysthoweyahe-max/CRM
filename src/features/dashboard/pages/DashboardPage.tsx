@@ -137,8 +137,8 @@ export function DashboardPage() {
 
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900">{greeting}</h2>
-        <p className="mt-0.5 text-sm text-gray-500">{subtext}</p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{greeting}</h2>
+        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{subtext}</p>
       </div>
 
       {/* Stat cards */}
@@ -151,14 +151,14 @@ export function DashboardPage() {
           return (
             <div
               key={stat.labelEn}
-              className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+              className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gray-500">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {isAr ? stat.labelAr : stat.labelEn}
                   </p>
-                  <p className="mt-1.5 text-2xl font-bold text-gray-900">
+                  <p className="mt-1.5 text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {stat.value}
                   </p>
                 </div>
@@ -176,13 +176,13 @@ export function DashboardPage() {
       </div>
 
       {/* Recent activity */}
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <h3 className="text-sm font-semibold text-gray-900">
+      <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+        <div className="border-b border-gray-100 dark:border-gray-700 px-5 py-4">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {isAr ? 'آخر النشاطات' : 'Recent Activity'}
           </h3>
         </div>
-        <ul className="divide-y divide-gray-50">
+        <ul className="divide-y divide-gray-50 dark:divide-gray-700/50">
           {ACTIVITY.map((item, i) => {
             const Icon = item.icon;
             return (
@@ -191,10 +191,10 @@ export function DashboardPage() {
                   <Icon size={14} className={item.color} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
                     {isAr ? item.textAr : item.textEn}
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-400">
+                  <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                     {isAr ? item.timeAr : item.timeEn}
                   </p>
                 </div>
