@@ -33,6 +33,7 @@ export function NavItem({ label, icon: Icon, path, children, isOpen, onToggle }:
   if (!children) {
     return (
       <NavLink
+        
         to={path!}
         end
         className={({ isActive }) => `${base} ${isActive ? active : inactive}`}
