@@ -43,22 +43,9 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
                        bg-white dark:bg-gray-900
                        border-b border-gray-100 dark:border-gray-700/60">
 
-      {/* Greeting */}
-      <div className="hidden sm:block leading-tight shrink-0">
-        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-          {lang === 'ar'
-            ? `مرحباً بعودتك، ${user?.fullName ?? ''}`
-            : `Welcome back, ${user?.fullName ?? ''}`}
-        </p>
-       
-      </div>
-
-      <div className="flex-1" />
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 shrink-0">
-
-        {/* Mobile menu toggle */}
+      {/* Greeting + hamburger (right/start side) */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Mobile menu toggle — stays with greeting on the start side */}
         <button
           type="button"
           onClick={onMenuToggle}
@@ -68,6 +55,22 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
         >
           <Menu size={18} />
         </button>
+
+        <div className="hidden sm:flex flex-col leading-snug">
+          <span className="flex items-center gap-1" style={{ fontSize: '12px', fontWeight: 400, color: '#595959' }}>
+            {lang === 'ar' ? 'مرحباً بعودتك' : 'Welcome back'}
+            <span style={{ color: '#A0CD39', fontSize: '14px' }}>👋</span>
+          </span>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: '#1E293B' }}>
+            {user?.fullName ?? ''}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex-1" />
+
+      {/* Actions (left/end side) */}
+      <div className="flex items-center gap-1 shrink-0">
 
         {/* Notifications */}
         <button
@@ -105,8 +108,8 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
             className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg
                        hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center shrink-0">
-              <span className="text-xs font-bold text-white">{initial}</span>
+            <div className="w-8 h-8 rounded-full bg-[#A0CD39] flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-gray-900">{initial}</span>
             </div>
             <ChevronDown
               size={14}
@@ -120,8 +123,8 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
 
               {/* User info */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                <div className="w-9 h-9 rounded-full bg-violet-500 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-white">{initial}</span>
+                <div className="w-9 h-9 rounded-full bg-[#A0CD39] flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-gray-900">{initial}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">

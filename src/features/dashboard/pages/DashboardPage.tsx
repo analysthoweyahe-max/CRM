@@ -31,11 +31,7 @@ export function DashboardPage() {
             ? `مرحباً بعودتك، ${user?.fullName ?? ''}`
             : `Welcome back, ${user?.fullName ?? ''}`}
         </h2>
-        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-          {isAr
-            ? 'نظرة عامة على أداء الموارد البشرية اليوم'
-            : "Overview of today's HR performance"}
-        </p>
+      
       </div>
 
       <StatCards     isAr={isAr} />

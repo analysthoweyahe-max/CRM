@@ -40,7 +40,7 @@ export function TablePagination({
             onClick={() => onPage(i)}
             className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
               pageIndex === i
-                ? 'bg-brand-500 text-white'
+                ? 'bg-[#A0CD39] text-gray-900'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
