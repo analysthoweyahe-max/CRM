@@ -50,11 +50,7 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
             ? `مرحباً بعودتك، ${user?.fullName ?? ''}`
             : `Welcome back, ${user?.fullName ?? ''}`}
         </p>
-        <p className="text-[11px] text-gray-400 dark:text-gray-500">
-          {lang === 'ar'
-            ? 'نظرة عامة على أداء الموارد البشرية اليوم'
-            : "Today's HR performance overview"}
-        </p>
+       
       </div>
 
       <div className="flex-1" />

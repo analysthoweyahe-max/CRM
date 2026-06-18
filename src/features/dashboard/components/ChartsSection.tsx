@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 /* ── Constants ─────────────────────────────────────────────────────── */
 const DEPARTMENTS = [
   { nameAr: 'التسويق',        nameEn: 'Marketing',    count: 4, color: '#A0CD39' },
@@ -10,43 +12,22 @@ const DEPARTMENTS = [
   { nameAr: 'المالية',        nameEn: 'Finance',       count: 2, color: '#C9E28A' },
 ];
 
-const ATTENDANCE_LINE = [
-  { dayAr: 'السبت',    dayEn: 'Sat', value: 92 },
-  { dayAr: 'الأحد',    dayEn: 'Sun', value: 90 },
-  { dayAr: 'الإثنين',  dayEn: 'Mon', value: 93 },
-  { dayAr: 'الثلاثاء', dayEn: 'Tue', value: 88 },
-  { dayAr: 'الأربعاء', dayEn: 'Wed', value: 87 },
-  { dayAr: 'الخميس',   dayEn: 'Thu', value: 92 },
+const ATTENDANCE_BAR = [
+  { dayAr: 'الأحد',    dayEn: 'Sun', present: 130, absent: 5, late: 3 },
+  { dayAr: 'الإثنين',  dayEn: 'Mon', present: 142, absent: 3, late: 5 },
+  { dayAr: 'الثلاثاء', dayEn: 'Tue', present: 55,  absent: 4, late: 3 },
+  { dayAr: 'الأربعاء', dayEn: 'Wed', present: 140, absent: 2, late: 3 },
+  { dayAr: 'الخميس',   dayEn: 'Thu', present: 128, absent: 4, late: 7 },
 ];
 
-/* ── SVG helpers ────────────────────────────────────────────────────── */
-const W = 500, H = 210;
-const PL = 44, PR = 14, PT = 18, PB = 36;
-const IW = W - PL - PR;
-const IH = H - PT - PB;
-const GRID_Y = [0, 25, 50, 75, 100];
-
-function toXY(i: number, val: number, count: number) {
-  return {
-    x: PL + (i / (count - 1)) * IW,
-    y: PT + (1 - val / 100) * IH,
-  };
-}
-
-function smoothPath(pts: { x: number; y: number }[]) {
-  let d = `M ${pts[0].x},${pts[0].y}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const c1x = pts[i].x + (pts[i + 1].x - pts[i].x) * 0.45;
-    const c2x = pts[i + 1].x - (pts[i + 1].x - pts[i].x) * 0.45;
-    d += ` C ${c1x},${pts[i].y} ${c2x},${pts[i + 1].y} ${pts[i + 1].x},${pts[i + 1].y}`;
-  }
-  return d;
-}
+const BAR_COLORS   = ['#A0CD39', '#ef4444', '#f59e0b'] as const;
+const BAR_KEYS_AR  = ['حاضر', 'غائب', 'متأخر'] as const;
+const BAR_KEYS_EN  = ['Present', 'Absent', 'Late'] as const;
 
 /* ── Donut Chart ────────────────────────────────────────────────────── */
 function DonutChart() {
   const r = 62, cx = 82, cy = 82;
-  const circ = 2 * Math.PI * r;
+  const circ  = 2 * Math.PI * r;
   const total = DEPARTMENTS.reduce((s, d) => s + d.count, 0);
 
   const dashes  = DEPARTMENTS.map((d) => (d.count / total) * circ);
@@ -67,32 +48,43 @@ function DonutChart() {
         />
       ))}
       <circle cx={cx} cy={cy} r={r - 18} fill="white" className="dark:fill-gray-800" />
-      <text x={cx} y={cy - 5} textAnchor="middle" fontSize={19} fontWeight="bold" className="fill-gray-800 dark:fill-gray-100">{total}</text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fontSize={9} className="fill-gray-400">موظف</text>
+      <text x={cx} y={cy - 5} textAnchor="middle" fontSize={19} fontWeight="bold"
+            className="fill-gray-800 dark:fill-gray-100">{total}</text>
+      <text x={cx} y={cy + 12} textAnchor="middle" fontSize={9}
+            className="fill-gray-400">موظف</text>
     </svg>
   );
 }
 
-/* ── Area Line Chart ────────────────────────────────────────────────── */
-function AreaChart({ isAr }: { isAr: boolean }) {
-  const pts = ATTENDANCE_LINE.map((d, i) => toXY(i, d.value, ATTENDANCE_LINE.length));
-  const line = smoothPath(pts);
-  const bottom = PT + IH;
-  const area = `${line} L ${pts[pts.length - 1].x},${bottom} L ${pts[0].x},${bottom} Z`;
+/* ── Bar Chart ──────────────────────────────────────────────────────── */
+function BarChart({ isAr }: { isAr: boolean }) {
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  const W = 500, H = 210;
+  const PL = 44, PR = 14, PT = 20, PB = 36;
+  const IW = W - PL - PR;
+  const IH = H - PT - PB;
+  const MAX_Y    = 160;
+  const GRID_Y   = [0, 40, 80, 120, 160];
+  const N        = ATTENDANCE_BAR.length;
+  const groupW   = IW / N;
+  const barW     = 12;
+  const barGap   = 3;
+  const totalBW  = 3 * barW + 2 * barGap;
+  const gOffset  = (groupW - totalBW) / 2;
+
+  function toBarY(v: number) { return PT + (1 - v / MAX_Y) * IH; }
+  function barX(gi: number, bi: number) {
+    return PL + gi * groupW + gOffset + bi * (barW + barGap);
+  }
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 200 }}>
-        <defs>
-          <linearGradient id="aGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#84cc16" stopOpacity={0.22} />
-            <stop offset="100%" stopColor="#84cc16" stopOpacity={0.01} />
-          </linearGradient>
-        </defs>
 
         {/* Grid lines + Y labels */}
         {GRID_Y.map((v) => {
-          const y = PT + (1 - v / 100) * IH;
+          const y = toBarY(v);
           return (
             <g key={v}>
               <line x1={PL} x2={W - PR} y1={y} y2={y}
@@ -102,46 +94,98 @@ function AreaChart({ isAr }: { isAr: boolean }) {
           );
         })}
 
-        {/* Area fill */}
-        <path d={area} fill="url(#aGrad)"
-          style={{ animation: 'fadeArea 0.9s ease 0.3s both' }} />
+        {/* Groups */}
+        {ATTENDANCE_BAR.map((d, gi) => {
+          const vals = [d.present, d.absent, d.late];
+          const isHov = hovered === gi;
+          return (
+            <g key={gi}
+               onMouseEnter={() => setHovered(gi)}
+               onMouseLeave={() => setHovered(null)}
+               style={{ cursor: 'default' }}
+            >
+              {/* Hover background */}
+              <rect
+                x={PL + gi * groupW + 2} y={PT}
+                width={groupW - 4} height={IH}
+                rx={4}
+                fill={isHov ? 'rgba(160,205,57,0.07)' : 'transparent'}
+              />
 
-        {/* Line */}
-        <path
-          d={line} fill="none"
-          stroke="#84cc16" strokeWidth={2.5}
-          strokeLinecap="round" strokeLinejoin="round"
-          pathLength={1}
-          style={{
-            strokeDasharray: 1, strokeDashoffset: 1,
-            animation: 'drawLine 1.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards',
-          }}
-        />
+              {/* Bars */}
+              {vals.map((v, bi) => {
+                const bh = (v / MAX_Y) * IH;
+                const x  = barX(gi, bi);
+                const y  = PT + IH - bh;
+                return (
+                  <rect
+                    key={bi}
+                    x={x} y={y}
+                    width={barW} height={bh}
+                    rx={3}
+                    fill={BAR_COLORS[bi]}
+                    opacity={hovered !== null && !isHov ? 0.35 : 1}
+                    style={{ transition: 'opacity 0.15s' }}
+                  />
+                );
+              })}
 
-        {/* Data points */}
-        {pts.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={4}
-            fill="white" stroke="#84cc16" strokeWidth={2.5}
-            style={{ animation: `fadeArea 0.4s ease ${0.4 + i * 0.12}s both` }} />
-        ))}
-
-        {/* Tooltip on last point */}
-        <rect x={pts[pts.length - 1].x - 22} y={pts[pts.length - 1].y - 28}
-          width={44} height={18} rx={5} fill="#84cc16" />
-        <text x={pts[pts.length - 1].x} y={pts[pts.length - 1].y - 15}
-          textAnchor="middle" fontSize={9.5} fill="white" fontWeight="bold">
-          {ATTENDANCE_LINE[ATTENDANCE_LINE.length - 1].value}%
-        </text>
-
-        {/* X-axis labels */}
-        {ATTENDANCE_LINE.map((d, i) => (
-          <text key={i}
-            x={PL + (i / (ATTENDANCE_LINE.length - 1)) * IW}
-            y={H - 6} textAnchor="middle" fontSize={10} fill="#9ca3af">
-            {isAr ? d.dayAr : d.dayEn}
-          </text>
-        ))}
+              {/* X-axis label */}
+              <text
+                x={PL + gi * groupW + groupW / 2}
+                y={H - 8}
+                textAnchor="middle"
+                fontSize={10}
+                fill={isHov ? '#374151' : '#9ca3af'}
+              >
+                {isAr ? d.dayAr : d.dayEn}
+              </text>
+            </g>
+          );
+        })}
       </svg>
+
+      {/* Tooltip */}
+      {hovered !== null && (() => {
+        const d    = ATTENDANCE_BAR[hovered];
+        const pct  = ((PL + hovered * groupW + groupW / 2) / W) * 100;
+        const clampedPct = Math.min(Math.max(pct, 14), 86);
+        return (
+          <div
+            className="absolute pointer-events-none z-10
+                       bg-white dark:bg-gray-800
+                       border border-gray-100 dark:border-gray-700
+                       rounded-xl shadow-lg px-3 py-2.5 min-w-27.5"
+            style={{ left: `${clampedPct}%`, top: '8%', transform: 'translateX(-50%)' }}
+          >
+            <p className="text-xs font-bold text-gray-900 dark:text-gray-100 mb-1.5">
+              {isAr ? d.dayAr : d.dayEn}
+            </p>
+            {[
+              { label: isAr ? BAR_KEYS_AR[0] : BAR_KEYS_EN[0], val: d.present, color: BAR_COLORS[0] },
+              { label: isAr ? BAR_KEYS_AR[1] : BAR_KEYS_EN[1], val: d.absent,  color: BAR_COLORS[1] },
+              { label: isAr ? BAR_KEYS_AR[2] : BAR_KEYS_EN[2], val: d.late,    color: BAR_COLORS[2] },
+            ].map(({ label, val, color }) => (
+              <div key={label} className="flex items-center gap-1.5 text-xs leading-5">
+                <span className="font-semibold" style={{ color }}>{label}</span>
+                <span className="text-gray-400 dark:text-gray-500">: {val}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-4 mt-1">
+        {BAR_COLORS.map((color, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: color }} />
+            <span className="text-[11px] text-gray-500 dark:text-gray-400">
+              {isAr ? BAR_KEYS_AR[i] : BAR_KEYS_EN[i]}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -151,7 +195,7 @@ export function ChartsSection({ isAr }: { isAr: boolean }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
-      {/* Attendance area chart — first in HTML → RIGHT in RTL */}
+      {/* Bar chart — first in HTML → RIGHT in RTL */}
       <div className="fade-in-up rounded-2xl border border-gray-100 dark:border-gray-700
                       bg-white dark:bg-gray-800 p-5 shadow-sm"
            style={{ animationDelay: '0.1s' }}>
@@ -159,9 +203,9 @@ export function ChartsSection({ isAr }: { isAr: boolean }) {
           {isAr ? 'نسبة الحضور الأسبوعية' : 'Weekly Attendance Rate'}
         </h3>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 mb-4">
-          {isAr ? 'آخر 6 أيام عمل' : 'Last 6 working days'}
+          {isAr ? 'آخر 5 أيام عمل' : 'Last 5 working days'}
         </p>
-        <AreaChart isAr={isAr} />
+        <BarChart isAr={isAr} />
       </div>
 
       {/* Donut chart — second in HTML → LEFT in RTL */}
