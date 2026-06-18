@@ -8,6 +8,7 @@ export interface NavChild {
   path:  string;
 }
 
+
 interface NavItemProps {
   label:     string;
   icon:      LucideIcon;
