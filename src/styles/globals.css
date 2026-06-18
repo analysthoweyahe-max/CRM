@@ -4,18 +4,28 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* ── Brand scale (primary = #A0CD39) ─────────────── */
   --color-brand-50:  #f4fce8;
-  --color-brand-100: #e6f5ca;
+  --color-brand-100: #D8EBAE;   /* background-primary  */
   --color-brand-200: #cce99c;
   --color-brand-300: #afd968;
   --color-brand-400: #a4d448;
-  --color-brand-500: #9bd130;
-  --color-brand-600: #7dab28;
-  --color-brand-700: #618620;
-  --color-brand-800: #425c16;
+  --color-brand-500: #A0CD39;   /* primary-color       */
+  --color-brand-600: #709028;   /* hover-color / text-primaryColor */
+  --color-brand-700: #587324;
+  --color-brand-800: #3d521a;
   --color-brand-900: #2a3c0d;
 
   --font-sans: 'Cairo', system-ui, sans-serif;
+}
+
+:root {
+  /* ── Design system tokens ─────────────────────────── */
+  --color-body-text:       #302F33;
+  --color-label-text:      #595959;
+  --color-border:          #D4D4D4;
+  --color-card-border:     #F1F5F9;
+  --color-page-bg:         #F8FAFC;
 }
 
 @keyframes fadeInUp {
