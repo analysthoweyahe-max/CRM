@@ -29,8 +29,6 @@ export function EmployeeListPage() {
     return () => clearTimeout(t);
   }, []);
 
-  if (isLoading) return <EmployeeListSkeleton />;
-
   const allDepts   = isAr ? 'كل الأقسام'  : 'All Departments';
   const allTitles  = isAr ? 'كل المسميات' : 'All Titles';
   const allStat    = isAr ? 'كل الحالات'  : 'All Statuses';
@@ -70,6 +68,8 @@ export function EmployeeListPage() {
   const paged     = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
   const firstRow  = filtered.length === 0 ? 0 : safePage * PAGE_SIZE + 1;
   const lastRow   = Math.min((safePage + 1) * PAGE_SIZE, filtered.length);
+
+  if (isLoading) return <EmployeeListSkeleton />;
 
   function resetPage() { setPage(0); }
 

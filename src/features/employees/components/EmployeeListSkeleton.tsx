@@ -5,26 +5,26 @@ function CardSkeleton() {
   return (
     <div className="rounded-2xl border border-gray-100 dark:border-gray-700
                     bg-white dark:bg-gray-800 shadow-sm flex flex-col">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 p-4">
-        <Skeleton width={52} height={22} borderRadius={999} />
+      {/* Header — avatar+name first (right in RTL), badge second (left in RTL) */}
+      <div className="flex items-center justify-between gap-3 p-4">
         <div className="flex items-center gap-2.5">
-          <div className="text-end space-y-1">
+          <Skeleton width={40} height={40} circle />
+          <div className="space-y-1">
             <Skeleton width={90} height={13} />
             <Skeleton width={65} height={11} />
           </div>
-          <Skeleton width={36} height={36} circle />
         </div>
+        <Skeleton width={52} height={22} borderRadius={999} />
       </div>
 
       <div className="h-px bg-gray-100 dark:bg-gray-700 mx-4" />
 
-      {/* Fields */}
+      {/* Fields — text first (right in RTL), icon second (left in RTL) */}
       <div className="px-4 py-3 space-y-2.5 flex-1">
         {[130, 110, 100, 115, 90].map((w, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Skeleton width={13} height={13} circle />
+          <div key={i} className="flex items-center justify-between gap-2">
             <Skeleton width={w}  height={12} />
+            <Skeleton width={13} height={13} circle />
           </div>
         ))}
       </div>

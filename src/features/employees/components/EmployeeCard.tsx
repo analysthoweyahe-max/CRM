@@ -1,4 +1,4 @@
-import { Mail, Phone, Building2, Briefcase, CalendarDays, Eye, Pencil, XCircle } from 'lucide-react';
+import { Mail, Phone, Building2, Briefcase, CalendarDays, Eye, SquarePen, XCircle } from 'lucide-react';
 import type { Employee } from '../data/employeeData';
 import { STATUS_STYLES }  from '../data/employeeData';
 
@@ -15,61 +15,92 @@ export function EmployeeCard({ emp, isAr, onView, onEdit }: EmployeeCardProps) {
   const title = isAr ? emp.jobTitle   : emp.jobTitleEn;
   const st    = STATUS_STYLES[emp.status];
 
+  /* In RTL flex: first child → RIGHT, second child → LEFT */
+  const fields = [
+    { icon: <Mail size={14} />,         text: emp.email    },
+    { icon: <Phone size={14} />,        text: emp.phone    },
+    { icon: <Building2 size={14} />,    text: dept         },
+    { icon: <Briefcase size={14} />,    text: title        },
+    { icon: <CalendarDays size={14} />, text: emp.hireDate },
+  ];
+
   return (
-    <div className="rounded-2xl border border-gray-100 dark:border-gray-700
-                    bg-white dark:bg-gray-800 shadow-sm flex flex-col
-                    transition-all duration-200 ease-out
-                    hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-md">
+    <div
+      className="rounded-2xl bg-white dark:bg-gray-800 flex flex-col
+                 transition-all duration-200 ease-out
+                 hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-md"
+      style={{ border: '1px solid #F1F5F9' }}
+    >
+      {/* ── Header ────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 p-4">
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 p-4">
-        <span
-          className="mt-0.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0"
-          style={{ background: st.bg, color: st.text }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: st.dot }} />
-          {isAr ? st.labelAr : st.labelEn}
-        </span>
-
+        {/* Avatar + Name — first in DOM = RIGHT in RTL */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="text-end min-w-0">
-            <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{name}</p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{dept}</p>
-          </div>
-          <div className={`w-9 h-9 rounded-full ${emp.avatarBg} flex items-center justify-center shrink-0`}>
+          <div
+            className={`w-10 h-10 rounded-full ${emp.avatarBg}
+                        flex items-center justify-center shrink-0`}
+          >
             <span className="text-sm font-bold text-white">{emp.initial}</span>
           </div>
+          <div className="min-w-0">
+            <p
+              className="text-sm font-bold truncate"
+              style={{ color: '#302F33' }}
+            >
+              {name}
+            </p>
+            <p
+              className="text-[11px] truncate mt-0.5"
+              style={{ color: '#595959' }}
+            >
+              {dept}
+            </p>
+          </div>
         </div>
+
+        {/* Status badge — second in DOM = LEFT in RTL */}
+        <span
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full
+                     text-[11px] font-semibold shrink-0"
+          style={{ background: st.bg, color: st.text }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full shrink-0"
+            style={{ background: st.dot }}
+          />
+          {isAr ? st.labelAr : st.labelEn}
+        </span>
       </div>
 
-      <div className="h-px bg-gray-100 dark:bg-gray-700 mx-4" />
+      {/* ── Separator ─────────────────────────────────── */}
+      <div className="h-px mx-4" style={{ background: '#F1F5F9' }} />
 
-      {/* Fields */}
-      <div className="px-4 py-3 space-y-2 flex-1">
-        {[
-          { icon: <Mail size={13} />,         text: emp.email    },
-          { icon: <Phone size={13} />,        text: emp.phone    },
-          { icon: <Building2 size={13} />,    text: dept         },
-          { icon: <Briefcase size={13} />,    text: title        },
-          { icon: <CalendarDays size={13} />, text: emp.hireDate },
-        ].map(({ icon, text }, i) => (
-          <div key={i} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-            <span className="text-gray-400 dark:text-gray-500 shrink-0">{icon}</span>
-            <span className="truncate">{text}</span>
+      {/* ── Fields ────────────────────────────────────── */}
+      <div className="px-4 py-3 space-y-2.5 flex-1">
+        {fields.map(({ icon, text }, i) => (
+          <div
+            key={i}
+            className="flex items-center justify-between gap-2 text-xs"
+          >
+            {/* text — first = RIGHT in RTL */}
+            <span className="truncate" style={{ color: '#302F33' }}>{text}</span>
+            {/* icon — second = LEFT in RTL */}
+            <span className="shrink-0" style={{ color: '#595959' }}>{icon}</span>
           </div>
         ))}
       </div>
 
-      <div className="h-px bg-gray-100 dark:bg-gray-700 mx-4" />
+      {/* ── Separator ─────────────────────────────────── */}
+      <div className="h-px mx-4" style={{ background: '#F1F5F9' }} />
 
-      {/* Actions */}
+      {/* ── Actions ───────────────────────────────────── */}
       <div className="flex items-center gap-1 px-4 py-3">
         <button
           type="button"
           onClick={() => onView(emp.id)}
           className="flex items-center justify-center w-8 h-8 rounded-lg
-                     text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]
-                     transition-colors"
+                     transition-colors hover:bg-[#D8EBAE]"
+          style={{ color: '#595959' }}
         >
           <Eye size={15} />
         </button>
@@ -77,16 +108,16 @@ export function EmployeeCard({ emp, isAr, onView, onEdit }: EmployeeCardProps) {
           type="button"
           onClick={() => onEdit(emp.id)}
           className="flex items-center justify-center w-8 h-8 rounded-lg
-                     text-gray-400 hover:text-blue-600 hover:bg-blue-50
-                     dark:hover:bg-blue-900/20 transition-colors"
+                     transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          style={{ color: '#595959' }}
         >
-          <Pencil size={14} />
+          <SquarePen size={14} />
         </button>
         <button
           type="button"
           className="flex items-center justify-center w-8 h-8 rounded-lg
-                     text-gray-400 hover:text-[#861700] hover:bg-[#F0A696]
-                     transition-colors"
+                     transition-colors hover:bg-[#F0A696]"
+          style={{ color: '#BE123C' }}
         >
           <XCircle size={15} />
         </button>
