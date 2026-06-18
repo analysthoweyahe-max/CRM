@@ -43,15 +43,18 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
                        bg-white dark:bg-gray-900
                        border-b border-gray-100 dark:border-gray-700/60">
 
-      {/* Logo */}
-      <div className="flex items-center gap-3 shrink-0">
-        <img src="/logo.png" alt="Howaya HR" className="w-14 h-14 object-contain" />
-        <div className="hidden sm:block leading-tight">
-          <p className="text-sm font-bold text-gray-900 dark:text-gray-100">Howaya HR</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">
-            {lang === 'ar' ? 'نظام الموارد البشرية' : 'HR System'}
-          </p>
-        </div>
+      {/* Greeting */}
+      <div className="hidden sm:block leading-tight shrink-0">
+        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+          {lang === 'ar'
+            ? `مرحباً بعودتك، ${user?.fullName ?? ''}`
+            : `Welcome back, ${user?.fullName ?? ''}`}
+        </p>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500">
+          {lang === 'ar'
+            ? 'نظرة عامة على أداء الموارد البشرية اليوم'
+            : "Today's HR performance overview"}
+        </p>
       </div>
 
       <div className="flex-1" />

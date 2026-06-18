@@ -74,25 +74,41 @@ export function OvertimeSettings() {
           </div>
         </div>
 
-        {/* Toggle */}
-        <div className="flex items-center justify-end gap-3">
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-            {isAr ? 'تفعيل الإضافي' : 'Enable Overtime'}
-          </span>
+        {/* Toggle row + Save button */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Toggle group — first child = RIGHT in RTL */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+              {isAr ? 'تفعيل الإضافي' : 'Enable Overtime'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setEnabled((p) => !p)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                enabled ? 'bg-[#A0CD39]' : 'bg-gray-200 dark:bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                  isRTL
+                    ? enabled ? '-translate-x-6' : '-translate-x-1'
+                    : enabled ? 'translate-x-6'  : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Save button — second child = LEFT in RTL */}
           <button
             type="button"
-            onClick={() => setEnabled((p) => !p)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-              enabled ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-600'
-            }`}
+            onClick={handleSave}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg
+                       border border-gray-200 dark:border-gray-600
+                       bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700
+                       text-sm font-semibold text-gray-800 dark:text-gray-200 transition-colors"
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                isRTL
-                  ? enabled ? '-translate-x-6' : '-translate-x-1'
-                  : enabled ? 'translate-x-6'  : 'translate-x-1'
-              }`}
-            />
+            <Check size={15} className={saved ? 'text-[#A0CD39]' : 'text-gray-400'} />
+            {isAr ? (saved ? 'تم الحفظ' : 'حفظ') : (saved ? 'Saved' : 'Save')}
           </button>
         </div>
 
@@ -104,19 +120,6 @@ export function OvertimeSettings() {
               : `Overtime calculated after ${dailyLimit} hrs/day at ${multiplier} of hourly rate.`}
           </p>
         )}
-
-        {/* Save */}
-        <button
-          type="button"
-          onClick={handleSave}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg
-                     border border-gray-200 dark:border-gray-600
-                     bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700
-                     text-sm font-semibold text-gray-800 dark:text-gray-200 transition-colors"
-        >
-          <Check size={15} className={saved ? 'text-brand-500' : 'text-gray-400'} />
-          {isAr ? (saved ? 'تم الحفظ' : 'حفظ') : (saved ? 'Saved' : 'Save')}
-        </button>
 
       </div>
     </Card>

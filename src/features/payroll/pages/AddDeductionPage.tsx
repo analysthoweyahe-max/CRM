@@ -195,7 +195,7 @@ export function AddDeductionPage() {
                 type="submit"
                 disabled={isSubmitting}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
-                           bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white
+                           bg-[#A0CD39] hover:bg-[#90BA33] active:bg-[#83AA2F] text-gray-900
                            text-sm font-semibold transition-colors
                            disabled:opacity-60 disabled:cursor-not-allowed"
               >

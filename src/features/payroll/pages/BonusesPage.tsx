@@ -73,7 +73,7 @@ export function BonusesPage() {
             type="button"
             onClick={() => navigate(ROUTES.PAYROLL.BONUSES_NEW)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg shrink-0
-                       bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors"
+                       bg-[#A0CD39] hover:bg-[#90BA33] text-gray-900 text-sm font-semibold transition-colors"
           >
             <Plus size={16} />
             {isAr ? 'إضافة مكافأة' : 'Add Bonus'}
