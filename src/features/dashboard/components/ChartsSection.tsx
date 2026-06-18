@@ -1,13 +1,13 @@
 /* ── Constants ─────────────────────────────────────────────────────── */
 const DEPARTMENTS = [
-  { nameAr: 'التسويق',        nameEn: 'Marketing',    count: 4, color: '#84cc16' },
-  { nameAr: 'تقنية المعلومات', nameEn: 'IT',           count: 3, color: '#3b82f6' },
-  { nameAr: 'المبيعات',       nameEn: 'Sales',         count: 5, color: '#f59e0b' },
-  { nameAr: 'الموارد البشرية', nameEn: 'HR',           count: 3, color: '#4ade80' },
-  { nameAr: 'المالية',        nameEn: 'Finance',       count: 2, color: '#8b5cf6' },
-  { nameAr: 'خدمة العملاء',   nameEn: 'Customer Svc', count: 3, color: '#f97316' },
-  { nameAr: 'العمليات',       nameEn: 'Operations',    count: 3, color: '#6b7280' },
-  { nameAr: 'التصميم',        nameEn: 'Design',        count: 1, color: '#1f2937' },
+  { nameAr: 'التسويق',        nameEn: 'Marketing',    count: 4, color: '#A0CD39' },
+  { nameAr: 'المبيعات',       nameEn: 'Sales',         count: 5, color: '#BCDC72' },
+  { nameAr: 'تقنية المعلومات', nameEn: 'IT',           count: 3, color: '#4C6320' },
+  { nameAr: 'الموارد البشرية', nameEn: 'HR',           count: 3, color: '#709028' },
+  { nameAr: 'العمليات',       nameEn: 'Operations',    count: 3, color: '#A8D149' },
+  { nameAr: 'التصميم',        nameEn: 'Design',        count: 1, color: '#587324' },
+  { nameAr: 'خدمة العملاء',   nameEn: 'Customer Svc', count: 3, color: '#D4E9A6' },
+  { nameAr: 'المالية',        nameEn: 'Finance',       count: 2, color: '#C9E28A' },
 ];
 
 const ATTENDANCE_LINE = [
@@ -48,27 +48,24 @@ function DonutChart() {
   const r = 62, cx = 82, cy = 82;
   const circ = 2 * Math.PI * r;
   const total = DEPARTMENTS.reduce((s, d) => s + d.count, 0);
-  let offset = 0;
+
+  const dashes  = DEPARTMENTS.map((d) => (d.count / total) * circ);
+  const offsets = dashes.map((_, i) => dashes.slice(0, i).reduce((a, b) => a + b, 0));
 
   return (
     <svg width={164} height={164} className="shrink-0">
-      {DEPARTMENTS.map((d) => {
-        const dash = (d.count / total) * circ;
-        const el = (
-          <circle
-            key={d.nameEn}
-            cx={cx} cy={cy} r={r}
-            fill="none"
-            stroke={d.color}
-            strokeWidth={22}
-            strokeDasharray={`${dash} ${circ - dash}`}
-            strokeDashoffset={-offset}
-            style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px` }}
-          />
-        );
-        offset += dash;
-        return el;
-      })}
+      {DEPARTMENTS.map((d, i) => (
+        <circle
+          key={d.nameEn}
+          cx={cx} cy={cy} r={r}
+          fill="none"
+          stroke={d.color}
+          strokeWidth={22}
+          strokeDasharray={`${dashes[i]} ${circ - dashes[i]}`}
+          strokeDashoffset={-offsets[i]}
+          style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px` }}
+        />
+      ))}
       <circle cx={cx} cy={cy} r={r - 18} fill="white" className="dark:fill-gray-800" />
       <text x={cx} y={cy - 5} textAnchor="middle" fontSize={19} fontWeight="bold" className="fill-gray-800 dark:fill-gray-100">{total}</text>
       <text x={cx} y={cy + 12} textAnchor="middle" fontSize={9} className="fill-gray-400">موظف</text>

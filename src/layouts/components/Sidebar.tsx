@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Clock,
@@ -90,24 +90,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { lang, isRTL } = useLang();
   const location        = useLocation();
 
-  const findActiveParent = () =>
-    ALL_ITEMS.find((item) =>
-      item.children?.some((c) => location.pathname.startsWith(c.path)),
-    );
+  const activeParentKey = ALL_ITEMS.find((item) =>
+    item.children?.some((c) => location.pathname.startsWith(c.path)),
+  )?.key;
 
-  const [expanded, setExpanded] = useState<Set<string>>(() => {
-    const parent = findActiveParent();
-    return new Set(parent ? [parent.key] : []);
-  });
+  const [manualExpanded, setManualExpanded] = useState<Set<string>>(
+    () => new Set(activeParentKey ? [activeParentKey] : []),
+  );
 
-  useEffect(() => {
-    const parent = findActiveParent();
-    if (parent) setExpanded((prev) => new Set([...prev, parent.key]));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  const expanded = useMemo(
+    () => new Set([...manualExpanded, ...(activeParentKey ? [activeParentKey] : [])]),
+    [manualExpanded, activeParentKey],
+  );
 
   function toggle(key: string) {
-    setExpanded((prev) => {
+    setManualExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(key)) { next.delete(key); } else { next.add(key); }
       return next;
@@ -175,11 +172,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {lang === 'ar' ? section.sectionAr : section.sectionEn}
                 </p>
               )}
-              {si === 0 && (
-                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-                  {lang === 'ar' ? 'القائمة الرئيسية' : 'Main Menu'}
-                </p>
-              )}
+          
               {section.items.map((item) => (
                 <NavItem
                   key={item.key}

@@ -20,6 +20,7 @@ export const ROUTES = {
     DEDUCTIONS:     '/payroll/deductions',
     DEDUCTIONS_NEW: '/payroll/deductions/new',
     BONUSES:        '/payroll/bonuses',
+    BONUSES_NEW:    '/payroll/bonuses/new',
   },
   MESSAGES: '/messages',
   SETTINGS: '/settings',

@@ -8,7 +8,9 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
+import { useNavigate }       from 'react-router-dom';
 import { useLang }           from '@/app/providers/LanguageProvider';
+import { ROUTES }            from '@/app/router/routes';
 import { PageHeader }        from '@/shared/components/ui/PageHeader';
 import { DataTable }         from '@/shared/components/tables/DataTable';
 import { BonusStats }        from '@/features/payroll/components/BonusStats';
@@ -19,7 +21,8 @@ import { BONUS_DATA, BONUS_DEPARTMENTS, BONUS_TYPES } from '@/features/payroll/d
 
 export function BonusesPage() {
   const { lang } = useLang();
-  const isAr = lang === 'ar';
+  const isAr     = lang === 'ar';
+  const navigate = useNavigate();
 
   const [isLoading,  setIsLoading]  = useState(true);
   const [sorting,    setSorting]    = useState<SortingState>([{ id: 'date', desc: true }]);
@@ -68,6 +71,7 @@ export function BonusesPage() {
         actions={
           <button
             type="button"
+            onClick={() => navigate(ROUTES.PAYROLL.BONUSES_NEW)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg shrink-0
                        bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors"
           >
