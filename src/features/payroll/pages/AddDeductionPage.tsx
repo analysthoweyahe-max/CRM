@@ -11,21 +11,22 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES } from '@/app/router/routes';
 import { Card }      from '@/shared/components/ui/Card';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
+import { Input }     from '@/shared/components/ui/Input';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
 
 /* ─── Schema ─────────────────────────────────────── */
-const schema = z.object({
-  employeeId: z.string().min(1, 'يرجى اختيار الموظف'),
-  date:       z.string().min(1, 'يرجى تحديد تاريخ الخصم'),
+const makeSchema = (isAr: boolean) => z.object({
+  employeeId: z.string().min(1, isAr ? 'يرجى اختيار الموظف' : 'Please select an employee'),
+  date:       z.string().min(1, isAr ? 'يرجى تحديد تاريخ الخصم' : 'Please select a deduction date'),
   amount:     z.string()
-               .min(1, 'يرجى إدخال المبلغ')
-               .refine((v) => Number(v) > 0, 'يجب أن يكون المبلغ أكبر من صفر'),
-  reason:     z.string().min(3, 'يرجى إدخال سبب الخصم'),
+               .min(1, isAr ? 'يرجى إدخال المبلغ' : 'Please enter an amount')
+               .refine((v) => Number(v) > 0, isAr ? 'يجب أن يكون المبلغ أكبر من صفر' : 'Amount must be greater than zero'),
+  reason:     z.string().min(3, isAr ? 'يرجى إدخال سبب الخصم (٣ أحرف على الأقل)' : 'Please enter a reason (min 3 chars)'),
   notes:      z.string().optional(),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<ReturnType<typeof makeSchema>>;
 
 /* ─── Data ───────────────────────────────────────── */
 const EMPLOYEE_ITEMS = [
@@ -70,7 +71,8 @@ export function AddDeductionPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: (values, context, options) =>
+      zodResolver(makeSchema(isAr))(values, context, options),
     defaultValues: { notes: '' },
   });
 
@@ -146,14 +148,12 @@ export function AddDeductionPage() {
                 icon={<CalendarDays size={15} className="text-gray-400" />}
                 error={errors.date?.message}
               >
-                <div className="relative">
-                  <input
-                    {...register('date')}
-                    type="month"
-                    className={inputCls(!!errors.date)}
-                  />
-                  <CalendarDays size={15} className="absolute inset-y-0 my-auto inset-s-3 text-gray-400 pointer-events-none" />
-                </div>
+                <Input
+                  {...register('date')}
+                  type="month"
+                  hasError={!!errors.date}
+                  startIcon={<CalendarDays size={15} />}
+                />
               </FormField>
 
               <FormField
@@ -162,16 +162,15 @@ export function AddDeductionPage() {
                 icon={<BadgeDollarSign size={15} className="text-gray-400" />}
                 error={errors.amount?.message}
               >
-                <div className="relative">
-                  <input
-                    {...register('amount')}
-                    type="number"
-                    min="1"
-                    placeholder="0"
-                    className={`${inputCls(!!errors.amount)} text-end`}
-                  />
-                  <BadgeDollarSign size={15} className="absolute inset-y-0 my-auto inset-e-3 text-gray-400 pointer-events-none" />
-                </div>
+                <Input
+                  {...register('amount')}
+                  type="number"
+                  min="1"
+                  placeholder="0"
+                  hasError={!!errors.amount}
+                  endIcon={<BadgeDollarSign size={15} />}
+                  className="text-end"
+                />
               </FormField>
             </div>
 
@@ -182,11 +181,11 @@ export function AddDeductionPage() {
               icon={<FileText size={15} className="text-gray-400" />}
               error={errors.reason?.message}
             >
-              <input
+              <Input
                 {...register('reason')}
                 type="text"
                 placeholder={isAr ? 'مثال: غياب بدون إذن' : 'e.g. Absence without permission'}
-                className={inputCls(!!errors.reason)}
+                hasError={!!errors.reason}
               />
             </FormField>
 
