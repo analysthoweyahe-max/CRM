@@ -9,7 +9,6 @@ import type { LucideIcon } from 'lucide-react';
 import { NavItem } from './NavItem';
 import type { NavChild } from './NavItem';
 import { useLang } from '@/app/providers/LanguageProvider';
-import { useAuth } from '@/features/auth/context/AuthContext';
 import { ROUTES } from '@/app/router/routes';
 
 interface NavGroupDef {
@@ -89,7 +88,6 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { lang, isRTL } = useLang();
-  const { user }        = useAuth();
   const location        = useLocation();
 
   const findActiveParent = () =>
@@ -197,22 +195,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           ))}
         </nav>
 
-        {/* User chip */}
-        {user && (
-          <div className="px-3 pt-3 pb-4 border-t border-gray-100 dark:border-gray-700/60">
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-              <div className="shrink-0 w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center">
-                <span className="text-xs font-bold text-brand-700">
-                  {user.fullName?.slice(0, 1).toUpperCase()}
-                </span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{user.fullName}</p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{user.employeeId}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Footer */}
+        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700/60">
+          <p className="text-[11px] text-center text-gray-400 dark:text-gray-500">
+            © 2026 Howaya — {lang === 'ar' ? 'الإصدار 1.0' : 'Version 1.0'}
+          </p>
+        </div>
       </aside>
     </>
   );
