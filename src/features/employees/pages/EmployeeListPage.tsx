@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
-import { useNavigate }          from 'react-router-dom';
-import { Plus }                 from 'lucide-react';
-import { useLang }              from '@/app/providers/LanguageProvider';
-import { ROUTES }               from '@/app/router/routes';
-import { PageHeader }           from '@/shared/components/ui/PageHeader';
-import { TablePagination }      from '@/shared/components/tables/TablePagination';
-import { EmployeeCard }         from '../components/EmployeeCard';
-import { EmployeeFilters }      from '../components/EmployeeFilters';
-import { EMPLOYEES }            from '../data/employeeData';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate }               from 'react-router-dom';
+import { Plus }                      from 'lucide-react';
+import { useLang }                   from '@/app/providers/LanguageProvider';
+import { ROUTES }                    from '@/app/router/routes';
+import { PageHeader }                from '@/shared/components/ui/PageHeader';
+import { TablePagination }           from '@/shared/components/tables/TablePagination';
+import { EmployeeCard }              from '../components/EmployeeCard';
+import { EmployeeFilters }           from '../components/EmployeeFilters';
+import { EmployeeListSkeleton }      from '../components/EmployeeListSkeleton';
+import { EMPLOYEES }                 from '../data/employeeData';
 
 const PAGE_SIZE = 8;
 
@@ -16,11 +17,19 @@ export function EmployeeListPage() {
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
 
+  const [isLoading,    setIsLoading]    = useState(true);
   const [search,       setSearch]       = useState('');
   const [deptFilter,   setDeptFilter]   = useState('');
   const [titleFilter,  setTitleFilter]  = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page,         setPage]         = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (isLoading) return <EmployeeListSkeleton />;
 
   const allDepts   = isAr ? 'كل الأقسام'  : 'All Departments';
   const allTitles  = isAr ? 'كل المسميات' : 'All Titles';
