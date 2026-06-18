@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Clock,
   Banknote, MessageSquare, Settings, X,
+  UserPlus, FileText, CalendarDays, TrendingDown, Gift,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavItem } from './NavItem';
@@ -36,23 +37,23 @@ const NAV_SECTIONS: NavSection[] = [
       {
         key: 'employees', labelAr: 'إدارة الموظفين', labelEn: 'Employees', icon: Users,
         children: [
-          { key: 'emp-list', labelAr: 'الموظفين',    labelEn: 'Employees',    label: '', path: ROUTES.EMPLOYEES.LIST },
-          { key: 'emp-new',  labelAr: 'إضافة موظف',  labelEn: 'Add Employee', label: '', path: ROUTES.EMPLOYEES.NEW },
+          { key: 'emp-list', labelAr: 'الموظفين',    labelEn: 'Employees',    label: '', path: ROUTES.EMPLOYEES.LIST, icon: Users },
+          { key: 'emp-new',  labelAr: 'إضافة موظف',  labelEn: 'Add Employee', label: '', path: ROUTES.EMPLOYEES.NEW, icon: UserPlus },
         ],
       },
       {
         key: 'attendance', labelAr: 'الحضور والإجازات', labelEn: 'Attendance & Leaves', icon: Clock,
         children: [
-          { key: 'att-daily', labelAr: 'الحضور اليومي', labelEn: 'Daily Attendance', label: '', path: ROUTES.ATTENDANCE.DAILY },
-          { key: 'att-log',   labelAr: 'سجل الحضور',    labelEn: 'Attendance Log',   label: '', path: ROUTES.ATTENDANCE.LOG },
-          { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', label: '', path: ROUTES.LEAVES },
+          { key: 'att-daily', labelAr: 'الحضور اليومي', labelEn: 'Daily Attendance', label: '', path: ROUTES.ATTENDANCE.DAILY, icon: Clock },
+          { key: 'att-log',   labelAr: 'سجل الحضور',    labelEn: 'Attendance Log',   label: '', path: ROUTES.ATTENDANCE.LOG,   icon: FileText },
+          { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', label: '', path: ROUTES.LEAVES,          icon: CalendarDays },
         ],
       },
       {
         key: 'payroll', labelAr: 'الرواتب', labelEn: 'Payroll', icon: Banknote,
         children: [
-          { key: 'deductions', labelAr: 'الخصومات',          labelEn: 'Deductions', label: '', path: ROUTES.PAYROLL.DEDUCTIONS },
-          { key: 'bonuses',    labelAr: 'المكافآت والحوافز',  labelEn: 'Bonuses',    label: '', path: ROUTES.PAYROLL.BONUSES },
+          { key: 'deductions', labelAr: 'الخصومات',          labelEn: 'Deductions', label: '', path: ROUTES.PAYROLL.DEDUCTIONS, icon: TrendingDown },
+          { key: 'bonuses',    labelAr: 'المكافآت والحوافز',  labelEn: 'Bonuses',    label: '', path: ROUTES.PAYROLL.BONUSES,    icon: Gift },
         ],
       },
     ],
@@ -120,6 +121,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       key:   c.key,
       label: lang === 'ar' ? c.labelAr : c.labelEn,
       path:  c.path,
+      icon:  c.icon,
     }));
   }
 

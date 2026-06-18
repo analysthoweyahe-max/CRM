@@ -6,6 +6,7 @@ export interface NavChild {
   key:   string;
   label: string;
   path:  string;
+  icon?: LucideIcon;
 }
 
 
@@ -63,23 +64,29 @@ export function NavItem({ label, icon: Icon, path, children, isOpen, onToggle }:
       </button>
 
       {isOpen && (
-        <div className="mt-1 ps-11 space-y-0.5">
-          {children.map((child) => (
-            <NavLink
-              key={child.key}
-              to={child.path}
-              end
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all duration-150
-                 ${isActive
-                   ? 'bg-brand-500 text-white font-semibold shadow-sm'
-                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`
-              }
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
-              {child.label}
-            </NavLink>
-          ))}
+        <div className="mt-1 ps-4 space-y-0.5">
+          {children.map((child) => {
+            const ChildIcon = child.icon;
+            return (
+              <NavLink
+                key={child.key}
+                to={child.path}
+                end
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-2 rounded-xl text-sm transition-all duration-150
+                   ${isActive
+                     ? 'bg-brand-500 text-white font-semibold shadow-sm'
+                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`
+                }
+              >
+                {ChildIcon
+                  ? <ChildIcon size={16} className="shrink-0" />
+                  : <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+                }
+                {child.label}
+              </NavLink>
+            );
+          })}
         </div>
       )}
     </div>
