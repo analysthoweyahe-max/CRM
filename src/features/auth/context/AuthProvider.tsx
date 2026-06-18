@@ -76,8 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await authService.logout();
-    dispatch({ type: 'LOGOUT' });
+    try {
+      await authService.logout();
+    } finally {
+      dispatch({ type: 'LOGOUT' });
+    }
   }, []);
 
   const hasPermission = useCallback((permission: Permission) => {

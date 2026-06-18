@@ -1,6 +1,5 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight, ArrowLeft, Check, X,
@@ -14,19 +13,8 @@ import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
-
-/* ─── Schema ─────────────────────────────────────── */
-const makeSchema = (isAr: boolean) => z.object({
-  employeeId: z.string().min(1, isAr ? 'يرجى اختيار الموظف' : 'Please select an employee'),
-  date:       z.string().min(1, isAr ? 'يرجى تحديد تاريخ الخصم' : 'Please select a deduction date'),
-  amount:     z.string()
-               .min(1, isAr ? 'يرجى إدخال المبلغ' : 'Please enter an amount')
-               .refine((v) => Number(v) > 0, isAr ? 'يجب أن يكون المبلغ أكبر من صفر' : 'Amount must be greater than zero'),
-  reason:     z.string().min(3, isAr ? 'يرجى إدخال سبب الخصم (٣ أحرف على الأقل)' : 'Please enter a reason (min 3 chars)'),
-  notes:      z.string().optional(),
-});
-
-type FormValues = z.infer<ReturnType<typeof makeSchema>>;
+import { makeDeductionSchema } from '../schemas/addDeduction.schema';
+import type { AddDeductionFormValues } from '../types/addDeduction.types';
 
 /* ─── Data ───────────────────────────────────────── */
 const EMPLOYEE_ITEMS = [
@@ -70,13 +58,13 @@ export function AddDeductionPage() {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
+  } = useForm<AddDeductionFormValues>({
     resolver: (values, context, options) =>
-      zodResolver(makeSchema(isAr))(values, context, options),
+      zodResolver(makeDeductionSchema(isAr))(values, context, options),
     defaultValues: { notes: '' },
   });
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(values: AddDeductionFormValues) {
     await new Promise((r) => setTimeout(r, 700));
     console.log('Deduction payload:', values);
     toast.success(isAr ? 'تم حفظ الخصم بنجاح' : 'Deduction saved successfully');
@@ -152,7 +140,6 @@ export function AddDeductionPage() {
                   {...register('date')}
                   type="month"
                   hasError={!!errors.date}
-                  startIcon={<CalendarDays size={15} />}
                 />
               </FormField>
 
@@ -169,7 +156,7 @@ export function AddDeductionPage() {
                   placeholder="0"
                   hasError={!!errors.amount}
                   endIcon={<BadgeDollarSign size={15} />}
-                  className="text-end"
+                  className="text-clip"
                 />
               </FormField>
             </div>
@@ -196,7 +183,7 @@ export function AddDeductionPage() {
             >
               <textarea
                 {...register('notes')}
-                rows={5}
+                rows={10}
                 placeholder={isAr ? 'تفاصيل إضافية' : 'Additional details'}
                 className={`${inputCls(false)} resize-none`}
               />
