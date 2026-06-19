@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { BadgeDollarSign, Zap, PenLine } from 'lucide-react';
 import { Card } from '@/shared/components/ui/Card';
 

@@ -27,9 +27,9 @@ export function EmployeeCard({ emp, isAr, onView, onEdit }: EmployeeCardProps) {
   return (
     <div
       className="rounded-2xl bg-white dark:bg-gray-800 flex flex-col
+                 border border-[#F1F5F9]
                  transition-all duration-200 ease-out
-                 hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-md"
-      style={{ border: '1px solid #F1F5F9' }}
+                 hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-lg"
     >
       {/* ── Header ────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 p-4">
@@ -73,7 +73,7 @@ export function EmployeeCard({ emp, isAr, onView, onEdit }: EmployeeCardProps) {
       </div>
 
       {/* ── Separator ─────────────────────────────────── */}
-      <div className="h-px mx-4" style={{ background: '#F1F5F9' }} />
+      <div className="h-px mx-4" style={{ background: '#D8EBAE' }} />
 
       {/* ── Fields ────────────────────────────────────── */}
       <div className="px-4 py-3 space-y-2.5 flex-1">
@@ -91,7 +91,7 @@ export function EmployeeCard({ emp, isAr, onView, onEdit }: EmployeeCardProps) {
       </div>
 
       {/* ── Separator ─────────────────────────────────── */}
-      <div className="h-px mx-4" style={{ background: '#F1F5F9' }} />
+      <div className="h-px mx-4" style={{ background: '#D8EBAE' }} />
 
       {/* ── Actions ───────────────────────────────────── */}
       <div className="flex items-center gap-1 px-4 py-3">

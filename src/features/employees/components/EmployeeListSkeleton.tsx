@@ -3,8 +3,8 @@ import { useTheme } from '@/app/providers/ThemeProvider';
 
 function CardSkeleton() {
   return (
-    <div className="rounded-2xl border border-gray-100 dark:border-gray-700
-                    bg-white dark:bg-gray-800 shadow-sm flex flex-col">
+    <div className="rounded-2xl bg-white dark:bg-gray-800 flex flex-col"
+         style={{ border: '1px solid #F1F5F9' }}>
       {/* Header — avatar+name first (right in RTL), badge second (left in RTL) */}
       <div className="flex items-center justify-between gap-3 p-4">
         <div className="flex items-center gap-2.5">
@@ -17,7 +17,7 @@ function CardSkeleton() {
         <Skeleton width={52} height={22} borderRadius={999} />
       </div>
 
-      <div className="h-px bg-gray-100 dark:bg-gray-700 mx-4" />
+      <div className="h-px mx-4" style={{ background: '#D8EBAE' }} />
 
       {/* Fields — text first (right in RTL), icon second (left in RTL) */}
       <div className="px-4 py-3 space-y-2.5 flex-1">
@@ -29,7 +29,7 @@ function CardSkeleton() {
         ))}
       </div>
 
-      <div className="h-px bg-gray-100 dark:bg-gray-700 mx-4" />
+      <div className="h-px mx-4" style={{ background: '#D8EBAE' }} />
 
       {/* Actions */}
       <div className="flex items-center gap-1 px-4 py-3">

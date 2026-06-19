@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, MessageSquare } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
