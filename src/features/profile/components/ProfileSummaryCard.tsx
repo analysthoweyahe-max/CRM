@@ -1,4 +1,4 @@
-import { useRef }        from 'react';
+import { useRef, useState } from 'react';
 import { SquarePen, Building2, Briefcase, CalendarDays, Hash } from 'lucide-react';
 import type { AuthUser } from '@/features/auth/types/auth.types';
 import { EMPLOYEES }     from '@/features/employees/data/employeeData';
@@ -17,9 +17,17 @@ interface Props {
 }
 
 export function ProfileSummaryCard({ user, isAr }: Props) {
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileRef   = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const emp = EMPLOYEES.find((e) => e.id === user.employeeId);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+  }
 
   const initial   = user.fullName.slice(0, 1).toUpperCase();
   const roleLabel = ROLE_LABELS[user.role]?.[isAr ? 'ar' : 'en'] ?? user.role;
@@ -53,10 +61,18 @@ export function ProfileSummaryCard({ user, isAr }: Props) {
 
       {/* Avatar */}
       <div className="relative mt-2">
-        <div className={`w-20 h-20 rounded-full ${avatarBg}
-                        flex items-center justify-center`}>
-          <span className="text-2xl font-bold text-white">{initial}</span>
-        </div>
+        {preview ? (
+          <img
+            src={preview}
+            alt={user.fullName}
+            className="w-20 h-20 rounded-full object-cover"
+          />
+        ) : (
+          <div className={`w-20 h-20 rounded-full ${avatarBg}
+                          flex items-center justify-center`}>
+            <span className="text-2xl font-bold text-white">{initial}</span>
+          </div>
+        )}
       </div>
 
       {/* Name & role */}
@@ -77,7 +93,7 @@ export function ProfileSummaryCard({ user, isAr }: Props) {
         <SquarePen size={14} />
         {isAr ? 'تغيير الصورة' : 'Change Photo'}
       </button>
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" />
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
       {/* Divider */}
       <div className="w-full h-px" style={{ background: '#D8EBAE' }} />
