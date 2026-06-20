@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Bell, Globe, LogOut, User, ChevronDown, Moon, Sun } from 'lucide-react';
+import { Menu, Bell, Globe, LogOut, User, ChevronDown, Moon, Sun, KeyRound } from 'lucide-react';
+import { ChangePasswordModal } from '@/features/auth/components/ChangePasswordModal';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -22,7 +23,8 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
   const { lang, toggleLang } = useLang();
   const { isDark, toggleTheme } = useTheme();
   const navigate             = useNavigate();
-  const [open, setOpen]      = useState(false);
+  const [open, setOpen]           = useState(false);
+  const [showChangePwd, setShowChangePwd] = useState(false);
   const dropdownRef          = useRef<HTMLDivElement>(null);
 
   const initial   = user?.fullName?.slice(0, 1).toUpperCase() ?? '?';
@@ -39,6 +41,7 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
   }, []);
 
   return (
+    <>
     <header className="sticky top-0 z-10 h-16 flex items-center gap-3 px-4 md:px-6
                        bg-white dark:bg-gray-900
                        border-b border-gray-100 dark:border-gray-700/60">
@@ -146,6 +149,18 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
                 <span>{lang === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
               </button>
 
+              {/* Change password */}
+              <button
+                type="button"
+                onClick={() => { setShowChangePwd(true); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm
+                           text-gray-700 dark:text-gray-300
+                           hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              >
+                <KeyRound size={16} className="text-gray-400 shrink-0" />
+                <span>{lang === 'ar' ? 'تغيير كلمة المرور' : 'Change Password'}</span>
+              </button>
+
               {/* Change language */}
               <button
                 type="button"
@@ -177,5 +192,12 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
 
       </div>
     </header>
+
+    <ChangePasswordModal
+      open={showChangePwd}
+      onClose={() => setShowChangePwd(false)}
+      isAr={lang === 'ar'}
+    />
+    </>
   );
 }
