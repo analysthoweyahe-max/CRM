@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactElement } from 'react';
 import { BadgeDollarSign, Zap, PenLine } from 'lucide-react';
 import { Card } from '@/shared/components/ui/Card';
 
@@ -38,7 +38,7 @@ function StatItem({ label, value, valueClass = 'text-gray-900 dark:text-gray-100
   label:       string;
   value:       string;
   valueClass?: string;
-  icon:        ReactNode;
+  icon:        ReactElement;
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-5 px-4 text-center">

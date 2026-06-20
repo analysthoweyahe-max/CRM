@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, MessageSquare } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
@@ -41,10 +41,10 @@ function SectionCard({
   title, action, badge, delay, children,
 }: {
   title:    string;
-  action?:  ReactNode;
-  badge?:   ReactNode;
+  action?:  ReactElement;
+  badge?:   ReactElement;
   delay:    string;
-  children: ReactNode;
+  children: ReactElement | ReactElement[];
 }) {
   return (
     <Card overflow className="fade-in-up" style={{ animationDelay: delay }}>
