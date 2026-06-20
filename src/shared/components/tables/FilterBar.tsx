@@ -1,4 +1,5 @@
-import { ChevronDown, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { Combobox, type ComboboxItem } from '@/shared/components/form/Combobox';
 
 interface SearchConfig {
   value:       string;
@@ -7,10 +8,14 @@ interface SearchConfig {
 }
 
 export interface FilterConfig {
-  key:     string;
-  value:   string;
-  onChange: (v: string) => void;
-  options: string[];
+  key:                string;
+  value:              string;
+  onChange:           (v: string) => void;
+  options?:           string[];       // simple list — id and label are the same string
+  items?:             ComboboxItem[]; // full items when id ≠ label
+  searchPlaceholder?: string;
+  noResultsText?:     string;
+  width?:             string;         // tailwind width class, e.g. "w-44"
 }
 
 interface FilterBarProps {
@@ -39,22 +44,23 @@ export function FilterBar({ search, filters, className = '' }: FilterBarProps) {
           <Search size={14} className="absolute inset-y-0 my-auto inset-e-3 text-gray-400 pointer-events-none" />
         </div>
       )}
-      {filters?.map((f) => (
-        <div key={f.key} className="relative">
-          <select
-            value={f.value}
-            onChange={(e) => f.onChange(e.target.value)}
-            className="h-9 rounded-lg border border-gray-200 dark:border-gray-600
-                       bg-white dark:bg-gray-700/50 ps-3 pe-8 text-sm
-                       text-gray-700 dark:text-gray-300
-                       outline-none focus:border-brand-400 focus:ring-2
-                       focus:ring-brand-400/20 transition appearance-none cursor-pointer"
-          >
-            {f.options.map((o) => <option key={o}>{o}</option>)}
-          </select>
-          <ChevronDown size={14} className="absolute inset-y-0 my-auto inset-e-2 text-gray-400 pointer-events-none" />
-        </div>
-      ))}
+
+      {filters?.map((f) => {
+        const items: ComboboxItem[] =
+          f.items ?? (f.options ?? []).map((o) => ({ id: o, label: o }));
+
+        return (
+          <div key={f.key} className={f.width ?? 'w-44'}>
+            <Combobox
+              items={items}
+              value={f.value}
+              onChange={f.onChange}
+              searchPlaceholder={f.searchPlaceholder ?? 'بحث...'}
+              noResultsText={f.noResultsText ?? 'لا نتائج'}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

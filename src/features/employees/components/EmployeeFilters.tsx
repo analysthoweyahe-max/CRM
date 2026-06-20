@@ -1,29 +1,5 @@
-import { Search, ChevronDown } from 'lucide-react';
-
-interface FilterSelectProps {
-  value:    string;
-  options:  string[];
-  onChange: (v: string) => void;
-}
-
-function FilterSelect({ value, options, onChange }: FilterSelectProps) {
-  return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="appearance-none h-10 ps-3 pe-8 rounded-xl border border-gray-200
-                   dark:border-gray-600 bg-white dark:bg-gray-800
-                   text-sm text-gray-700 dark:text-gray-200
-                   focus:outline-none focus:ring-2 focus:ring-[#A0CD39]/30
-                   focus:border-[#A0CD39] transition cursor-pointer"
-      >
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <ChevronDown size={13} className="pointer-events-none absolute inset-y-0 my-auto inset-e-2.5 text-gray-400" />
-    </div>
-  );
-}
+import { Search } from 'lucide-react';
+import { Combobox } from '@/shared/components/form/Combobox';
 
 interface EmployeeFiltersProps {
   isAr:          boolean;
@@ -41,10 +17,13 @@ interface EmployeeFiltersProps {
 }
 
 export function EmployeeFilters({
-  isAr, search, deptFilter, titleFilter, statusFilter,
+  isAr, search,
+  deptFilter, titleFilter, statusFilter,
   deptOptions, titleOptions, statusOptions,
   onSearch, onDept, onTitle, onStatus,
 }: EmployeeFiltersProps) {
+  const toItems = (opts: string[]) => opts.map((o) => ({ id: o, label: o }));
+
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* Search */}
@@ -63,9 +42,34 @@ export function EmployeeFilters({
         />
       </div>
 
-      <FilterSelect value={deptFilter}   options={deptOptions}   onChange={onDept}   />
-      <FilterSelect value={titleFilter}  options={titleOptions}  onChange={onTitle}  />
-      <FilterSelect value={statusFilter} options={statusOptions} onChange={onStatus} />
+      {/* Searchable dropdowns */}
+      <div className="w-44">
+        <Combobox
+          items={toItems(deptOptions)}
+          value={deptFilter}
+          onChange={onDept}
+          searchPlaceholder={isAr ? 'ابحث عن قسم...'   : 'Search department...'}
+          noResultsText={isAr    ? 'لا نتائج'           : 'No results'}
+        />
+      </div>
+      <div className="w-44">
+        <Combobox
+          items={toItems(titleOptions)}
+          value={titleFilter}
+          onChange={onTitle}
+          searchPlaceholder={isAr ? 'ابحث عن مسمى...'  : 'Search title...'}
+          noResultsText={isAr    ? 'لا نتائج'           : 'No results'}
+        />
+      </div>
+      <div className="w-36">
+        <Combobox
+          items={toItems(statusOptions)}
+          value={statusFilter}
+          onChange={onStatus}
+          searchPlaceholder={isAr ? 'ابحث عن حالة...'  : 'Search status...'}
+          noResultsText={isAr    ? 'لا نتائج'           : 'No results'}
+        />
+      </div>
     </div>
   );
 }

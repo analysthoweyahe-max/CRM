@@ -8,12 +8,13 @@ import {
   flexRender,
   type SortingState,
 } from '@tanstack/react-table';
-import { ChevronUp, ChevronDown, ChevronsUpDown, Download, Search } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronsUpDown, Download } from 'lucide-react';
 import { useLang }         from '@/app/providers/LanguageProvider';
 import { PageHeader }      from '@/shared/components/ui/PageHeader';
 import { Card }            from '@/shared/components/ui/Card';
 import { Button }          from '@/shared/components/ui/Button';
-import { Combobox, type ComboboxItem } from '@/shared/components/form/Combobox';
+import { FilterBar }       from '@/shared/components/tables/FilterBar';
+import { type ComboboxItem } from '@/shared/components/form/Combobox';
 import { TablePagination } from '@/shared/components/tables/TablePagination';
 import { AttendanceLogSkeleton }  from '@/features/attendance/components/AttendanceLogSkeleton';
 import { getAttendanceLogColumns, type AttendanceLogRecord } from '@/features/attendance/components/attendanceLogColumns';
@@ -194,54 +195,41 @@ export function AttendanceLogPage() {
       />
 
       <Card overflow>
-        {/* ── Filter row ── */}
-        <div className="flex flex-wrap items-center gap-3 px-5 py-4
-                        border-b border-gray-100 dark:border-gray-700">
-          {/* Search */}
-          <div className="relative flex-1 min-w-48">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); table.setPageIndex(0); }}
-              placeholder={isAr ? 'اسم الموظف...' : 'Employee name...'}
-              className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-600
-                         bg-gray-50 dark:bg-gray-700/50 ps-4 pe-9
-                         text-sm text-gray-800 dark:text-gray-200
-                         outline-none focus:border-brand-400 focus:ring-2
-                         focus:ring-brand-400/20 transition placeholder:text-gray-400"
-            />
-            <Search size={14} className="absolute inset-y-0 my-auto inset-e-3 text-gray-400 pointer-events-none" />
-          </div>
-
-          {/* Combobox filters */}
-          <div className="w-44">
-            <Combobox
-              items={EMP_ITEMS}
-              value={empFilter}
-              onChange={(v) => { setEmpFilter(v); table.setPageIndex(0); }}
-              searchPlaceholder={isAr ? 'ابحث عن موظف...' : 'Search employee...'}
-              noResultsText={isAr ? 'لا نتائج' : 'No results'}
-            />
-          </div>
-          <div className="w-40">
-            <Combobox
-              items={MONTH_ITEMS}
-              value={monthFilter}
-              onChange={(v) => { setMonthFilter(v); table.setPageIndex(0); }}
-              searchPlaceholder={isAr ? 'ابحث عن شهر...' : 'Search month...'}
-              noResultsText={isAr ? 'لا نتائج' : 'No results'}
-            />
-          </div>
-          <div className="w-36">
-            <Combobox
-              items={STATUS_ITEMS}
-              value={statFilter}
-              onChange={(v) => { setStatFilter(v); table.setPageIndex(0); }}
-              searchPlaceholder={isAr ? 'ابحث عن حالة...' : 'Search status...'}
-              noResultsText={isAr ? 'لا نتائج' : 'No results'}
-            />
-          </div>
-        </div>
+        <FilterBar
+          search={{
+            value:       search,
+            placeholder: isAr ? 'اسم الموظف...' : 'Employee name...',
+            onChange:    (v) => { setSearch(v); table.setPageIndex(0); },
+          }}
+          filters={[
+            {
+              key:               'emp',
+              value:             empFilter,
+              items:             EMP_ITEMS,
+              onChange:          (v) => { setEmpFilter(v);   table.setPageIndex(0); },
+              searchPlaceholder: isAr ? 'ابحث عن موظف...' : 'Search employee...',
+              noResultsText:     isAr ? 'لا نتائج'         : 'No results',
+            },
+            {
+              key:               'month',
+              value:             monthFilter,
+              items:             MONTH_ITEMS,
+              onChange:          (v) => { setMonthFilter(v); table.setPageIndex(0); },
+              searchPlaceholder: isAr ? 'ابحث عن شهر...'  : 'Search month...',
+              noResultsText:     isAr ? 'لا نتائج'         : 'No results',
+              width:             'w-40',
+            },
+            {
+              key:               'status',
+              value:             statFilter,
+              items:             STATUS_ITEMS,
+              onChange:          (v) => { setStatFilter(v);  table.setPageIndex(0); },
+              searchPlaceholder: isAr ? 'ابحث عن حالة...' : 'Search status...',
+              noResultsText:     isAr ? 'لا نتائج'         : 'No results',
+              width:             'w-36',
+            },
+          ]}
+        />
 
         {/* ── Table ── */}
         <div className="overflow-x-auto">
