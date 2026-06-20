@@ -18,6 +18,7 @@ import { EmployeeDetailPage }from '@/features/employees/pages/EmployeeDetailPage
 import { ProfilePage }       from '@/features/profile/pages/ProfilePage';
 import { EmployeeEditPage }  from '@/features/employees/pages/EmployeeEditPage';
 import { AttendancePage }    from '@/features/attendance/pages/AttendancePage';
+import { AttendanceLogPage } from '@/features/attendance/pages/AttendanceLogPage';
 import { LeavesPage }        from '@/features/leaves/pages/LeavesPage';
 import { DeductionsPage }    from '@/features/payroll/pages/DeductionsPage';
 import { AddDeductionPage }  from '@/features/payroll/pages/AddDeductionPage';
@@ -26,14 +27,6 @@ import { AddBonusPage }     from '@/features/payroll/pages/AddBonusPage';
 import { MessagesPage }      from '@/features/messages/pages/MessagesPage';
 import { SettingsPage }      from '@/features/settings/pages/SettingsPage';
 
-function ComingSoon({ label }: { label: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
-      <p className="text-lg font-medium">{label}</p>
-      <p className="text-sm">قريباً</p>
-    </div>
-  );
-}
 
 export function AppRouter() {
   return (
@@ -60,7 +53,7 @@ export function AppRouter() {
             <Route path={ROUTES.EMPLOYEES.EDIT()}     element={<EmployeeEditPage />} />
 
             <Route path={ROUTES.ATTENDANCE.DAILY}     element={<AttendancePage />} />
-            <Route path={ROUTES.ATTENDANCE.LOG}       element={<ComingSoon label="سجل الحضور" />} />
+            <Route path={ROUTES.ATTENDANCE.LOG}       element={<AttendanceLogPage />} />
             <Route path={ROUTES.LEAVES}               element={<LeavesPage />} />
 
             <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
