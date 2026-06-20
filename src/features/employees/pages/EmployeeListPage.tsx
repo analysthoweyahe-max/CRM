@@ -4,6 +4,7 @@ import { Plus }                      from 'lucide-react';
 import { useLang }                   from '@/app/providers/LanguageProvider';
 import { ROUTES }                    from '@/app/router/routes';
 import { PageHeader }                from '@/shared/components/ui/PageHeader';
+import { Button }                    from '@/shared/components/ui/Button';
 import { TablePagination }           from '@/shared/components/tables/TablePagination';
 import { EmployeeCard }              from '../components/EmployeeCard';
 import { EmployeeFilters }           from '../components/EmployeeFilters';
@@ -80,15 +81,12 @@ export function EmployeeListPage() {
         title={isAr ? 'الموظفون' : 'Employees'}
         subtitle={isAr ? `إدارة بيانات ${EMPLOYEES.length} موظف` : `Managing ${EMPLOYEES.length} employees`}
         actions={
-          <button
-            type="button"
+          <Button
             onClick={() => navigate(ROUTES.EMPLOYEES.NEW)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl shrink-0
-                       bg-[#A0CD39] hover:bg-[#90BA33] text-gray-900 text-sm font-semibold transition-colors"
+            startIcon={<Plus size={16} />}
           >
-            <Plus size={16} />
             {isAr ? 'إضافة موظف' : 'Add Employee'}
-          </button>
+          </Button>
         }
       />
 
@@ -119,7 +117,7 @@ export function EmployeeListPage() {
               emp={emp}
               isAr={isAr}
               onView={(id) => navigate(ROUTES.EMPLOYEES.DETAIL(id))}
-              onEdit={(id) => navigate(ROUTES.EMPLOYEES.DETAIL(id))}
+              onEdit={(id) => navigate(ROUTES.EMPLOYEES.EDIT(id))}
             />
           ))}
         </div>

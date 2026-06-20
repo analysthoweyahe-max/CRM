@@ -14,6 +14,7 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES } from '@/app/router/routes';
 import { Card }             from '@/shared/components/ui/Card';
 import { PageHeader }       from '@/shared/components/ui/PageHeader';
+import { Button }           from '@/shared/components/ui/Button';
 import { FilterBar }        from '@/shared/components/tables/FilterBar';
 import { TablePagination }  from '@/shared/components/tables/TablePagination';
 import { DeductionStats }   from '@/features/payroll/components/DeductionStats';
@@ -97,15 +98,12 @@ export function DeductionsPage() {
         title={isAr ? 'الخصومات' : 'Deductions'}
         subtitle={isAr ? 'إدارة الخصومات التلقائية واليدوية' : 'Manage automatic and manual deductions'}
         actions={
-          <button
-            type="button"
+          <Button
             onClick={() => navigate(ROUTES.PAYROLL.DEDUCTIONS_NEW)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg shrink-0
-                       bg-[#A0CD39] hover:bg-[#90BA33] text-gray-900 text-sm font-semibold transition-colors"
+            startIcon={<Plus size={16} />}
           >
-            <Plus size={16} />
             {isAr ? 'إضافة خصم' : 'Add Deduction'}
-          </button>
+          </Button>
         }
       />
 

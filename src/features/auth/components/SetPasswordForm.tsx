@@ -10,6 +10,7 @@ import {
 import { useSetPassword } from '@/features/auth/hooks/useSetPassword';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { authTranslations } from '@/features/auth/i18n';
+import { Button } from '@/shared/components/ui/Button';
 
 interface PasswordFieldProps {
   label: string;
@@ -171,17 +172,14 @@ export function SetPasswordForm({
       </div>
 
       {/* Submit */}
-      <button
+      <Button
         type="submit"
-        disabled={isSubmitting}
-        className="w-full rounded-lg bg-brand-500 hover:bg-brand-600 active:bg-brand-700
-                   text-white font-semibold py-3 text-sm transition-colors
-                   disabled:opacity-60 disabled:cursor-not-allowed"
+        size="lg"
+        fullWidth
+        isLoading={isSubmitting}
       >
-        {isSubmitting
-          ? t.setPassword.activating
-          : t.setPassword.submit}
-      </button>
+        {isSubmitting ? t.setPassword.activating : t.setPassword.submit}
+      </Button>
     </form>
   );
 }

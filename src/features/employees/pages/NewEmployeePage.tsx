@@ -6,6 +6,7 @@ import { useLang }    from '@/app/providers/LanguageProvider';
 import { ROUTES }     from '@/app/router/routes';
 import { Card }       from '@/shared/components/ui/Card';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
+import { Button }     from '@/shared/components/ui/Button';
 import { StepIndicator }  from '../components/NewEmployeeForm/StepWizard';
 import { Step1BasicData } from '../components/NewEmployeeForm/Step1BasicData';
 import { Step2JobType }   from '../components/NewEmployeeForm/Step2JobType';
@@ -41,16 +42,15 @@ export function NewEmployeePage() {
         title={isAr ? 'إضافة موظف جديد' : 'Add New Employee'}
         subtitle={isAr ? 'أنشئ حساب موظف وأرسل دعوة التفعيل' : 'Create an employee account and send an activation invitation'}
         start={
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => navigate(ROUTES.EMPLOYEES.LIST)}
-            className="p-2 rounded-lg text-gray-400 dark:text-gray-500
-                       hover:text-gray-700 dark:hover:text-gray-300
-                       hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2"
             aria-label={isAr ? 'رجوع' : 'Back'}
           >
             <BackIcon size={18} />
-          </button>
+          </Button>
         }
       />
 

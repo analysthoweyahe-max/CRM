@@ -4,6 +4,7 @@ import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES } from '@/app/router/routes';
+import { Button } from '@/shared/components/ui/Button';
 
 export function ForgotPasswordPage() {
   const { lang, isRTL } = useLang();
@@ -66,17 +67,17 @@ export function ForgotPasswordPage() {
           </div>
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={isSubmitting || !employeeId.trim()}
-          className="w-full rounded-lg bg-brand-500 hover:bg-brand-600 active:bg-brand-700
-                     text-white font-semibold py-3 text-sm transition-colors
-                     disabled:opacity-60 disabled:cursor-not-allowed"
+          size="lg"
+          fullWidth
+          disabled={!employeeId.trim()}
+          isLoading={isSubmitting}
         >
           {isSubmitting
             ? (isAr ? 'جاري الإرسال...' : 'Sending...')
             : (isAr ? 'إرسال رابط الاستعادة' : 'Send Recovery Link')}
-        </button>
+        </Button>
       </form>
 
       <Link

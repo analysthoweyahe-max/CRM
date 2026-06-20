@@ -8,6 +8,7 @@ import { useLogin } from '@/features/auth/hooks/useLogin';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { authTranslations } from '@/features/auth/i18n';
 import { ROUTES } from '@/app/router/routes';
+import { Button } from '@/shared/components/ui/Button';
 
 export function LoginForm() {
   const { lang } = useLang();
@@ -130,17 +131,16 @@ export function LoginForm() {
       </div>
 
       {/* Submit */}
-      <button
+      <Button
         type="submit"
-        disabled={isSubmitting}
-        className="w-full rounded-lg bg-brand-500 hover:bg-brand-600 active:bg-brand-700
-                   text-white font-semibold py-3 text-sm transition-colors
-                   disabled:opacity-60 disabled:cursor-not-allowed"
+        size="lg"
+        fullWidth
+        isLoading={isSubmitting}
       >
         {isSubmitting
           ? (lang === 'ar' ? 'جارٍ تسجيل الدخول...' : 'Signing in...')
           : t.login.submit}
-      </button>
+      </Button>
 
       {/* Activation link */}
       <p className="text-center text-sm text-gray-500">

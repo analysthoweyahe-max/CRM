@@ -31,7 +31,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <input ref={ref} className={cls} {...props} />
         {endIcon && (
-          <span className="absolute inset-y-0 end-3 flex items-center pointer-events-none text-gray-400">
+          <span className="absolute inset-y-0 inset-e-3 flex items-center pointer-events-none text-gray-400">
             {endIcon}
           </span>
         )}

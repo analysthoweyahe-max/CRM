@@ -15,6 +15,7 @@ import { DashboardPage }     from '@/features/dashboard/pages/DashboardPage';
 import { EmployeeListPage }  from '@/features/employees/pages/EmployeeListPage';
 import { NewEmployeePage }   from '@/features/employees/pages/NewEmployeePage';
 import { EmployeeDetailPage }from '@/features/employees/pages/EmployeeDetailPage';
+import { EmployeeEditPage }  from '@/features/employees/pages/EmployeeEditPage';
 import { AttendancePage }    from '@/features/attendance/pages/AttendancePage';
 import { LeavesPage }        from '@/features/leaves/pages/LeavesPage';
 import { DeductionsPage }    from '@/features/payroll/pages/DeductionsPage';
@@ -55,6 +56,7 @@ export function AppRouter() {
             <Route path={ROUTES.EMPLOYEES.LIST}       element={<EmployeeListPage />} />
             <Route path={ROUTES.EMPLOYEES.NEW}        element={<NewEmployeePage />} />
             <Route path={ROUTES.EMPLOYEES.DETAIL()}   element={<EmployeeDetailPage />} />
+            <Route path={ROUTES.EMPLOYEES.EDIT()}     element={<EmployeeEditPage />} />
 
             <Route path={ROUTES.ATTENDANCE.DAILY}     element={<AttendancePage />} />
             <Route path={ROUTES.ATTENDANCE.LOG}       element={<ComingSoon label="سجل الحضور" />} />

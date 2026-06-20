@@ -10,6 +10,7 @@ import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
 import { Card }        from '@/shared/components/ui/Card';
 import { PageHeader }  from '@/shared/components/ui/PageHeader';
+import { Button }      from '@/shared/components/ui/Button';
 import { Input }       from '@/shared/components/ui/Input';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox }    from '@/shared/components/form/Combobox';
@@ -82,16 +83,15 @@ export function AddBonusPage() {
         title={isAr ? 'إضافة مكافأة' : 'Add Bonus'}
         subtitle={isAr ? 'منح مكافأة أو حافز لموظف' : 'Grant a bonus or incentive to an employee'}
         start={
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => navigate(ROUTES.PAYROLL.BONUSES)}
-            className="p-2 rounded-lg text-gray-400 dark:text-gray-500
-                       hover:text-gray-700 dark:hover:text-gray-300
-                       hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2"
             aria-label={isAr ? 'رجوع' : 'Back'}
           >
             <BackIcon size={18} />
-          </button>
+          </Button>
         }
       />
 

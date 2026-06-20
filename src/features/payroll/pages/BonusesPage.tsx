@@ -12,6 +12,7 @@ import { useNavigate }       from 'react-router-dom';
 import { useLang }           from '@/app/providers/LanguageProvider';
 import { ROUTES }            from '@/app/router/routes';
 import { PageHeader }        from '@/shared/components/ui/PageHeader';
+import { Button }            from '@/shared/components/ui/Button';
 import { DataTable }         from '@/shared/components/tables/DataTable';
 import { BonusStats }        from '@/features/payroll/components/BonusStats';
 import { BonusesSkeleton }   from '@/features/payroll/components/BonusesSkeleton';
@@ -69,15 +70,12 @@ export function BonusesPage() {
         title={isAr ? 'المكافآت والحوافز' : 'Bonuses & Incentives'}
         subtitle={isAr ? 'إدارة المكافآت وإعدادات الساعات الإضافية' : 'Manage bonuses and overtime settings'}
         actions={
-          <button
-            type="button"
+          <Button
             onClick={() => navigate(ROUTES.PAYROLL.BONUSES_NEW)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg shrink-0
-                       bg-[#A0CD39] hover:bg-[#90BA33] text-gray-900 text-sm font-semibold transition-colors"
+            startIcon={<Plus size={16} />}
           >
-            <Plus size={16} />
             {isAr ? 'إضافة مكافأة' : 'Add Bonus'}
-          </button>
+          </Button>
         }
       />
 

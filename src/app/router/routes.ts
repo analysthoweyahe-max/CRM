@@ -10,6 +10,7 @@ export const ROUTES = {
     LIST:   '/employees',
     NEW:    '/employees/new',
     DETAIL: (id = ':id') => `/employees/${id}`,
+    EDIT:   (id = ':id') => `/employees/${id}/edit`,
   },
   ATTENDANCE: {
     DAILY: '/attendance',
