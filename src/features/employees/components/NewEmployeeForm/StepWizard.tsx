@@ -1,12 +1,9 @@
-import { ChevronLeft, ChevronRight, Check, User, Briefcase, Banknote, Clock, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, User, Briefcase } from 'lucide-react';
 
 /* ─── Step config (local — only needed for rendering) */
 const STEPS = [
-  { labelAr: 'البيانات الأساسية', labelEn: 'Basic Data',  Icon: User     },
-  { labelAr: 'نوع التوظيف',       labelEn: 'Job Type',    Icon: Briefcase},
-  { labelAr: 'معلومات الراتب',    labelEn: 'Salary Info', Icon: Banknote },
-  { labelAr: 'معلومات الدوام',    labelEn: 'Attendance',  Icon: Clock    },
-  { labelAr: 'مراجعة وإرسال',     labelEn: 'Review',      Icon: Send     },
+  { labelAr: 'البيانات',     labelEn: 'Data',   Icon: User      },
+  { labelAr: 'نوع التوظيف', labelEn: 'Review', Icon: Briefcase },
 ];
 
 /* ─── StepIndicator ──────────────────────────────── */

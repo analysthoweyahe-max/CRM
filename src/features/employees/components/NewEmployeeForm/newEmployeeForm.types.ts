@@ -2,6 +2,18 @@ import { z } from 'zod';
 import type { LucideIcon } from 'lucide-react';
 import { User, Briefcase, Clock } from 'lucide-react';
 
+/* ─── Currencies ─────────────────────────────────── */
+export const CURRENCIES = [
+  { id: 'EGP', label: 'EGP', detail: 'جنيه مصري'    },
+  { id: 'USD', label: 'USD', detail: 'دولار أمريكي'  },
+  { id: 'EUR', label: 'EUR', detail: 'يورو'          },
+  { id: 'SAR', label: 'SAR', detail: 'ريال سعودي'    },
+  { id: 'AED', label: 'AED', detail: 'درهم إماراتي'  },
+  { id: 'GBP', label: 'GBP', detail: 'جنيه إسترليني' },
+  { id: 'QAR', label: 'QAR', detail: 'ريال قطري'     },
+  { id: 'KWD', label: 'KWD', detail: 'دينار كويتي'   },
+];
+
 /* ─── Combobox data ──────────────────────────────── */
 export const DEPARTMENTS = [
   { id: 'hr',        label: 'الموارد البشرية' },
@@ -109,9 +121,31 @@ export type Step2Values = z.infer<typeof step2Schema>;
 export type Step3Values = z.infer<ReturnType<typeof makeStep3Schema>>;
 export type Step4Values = z.infer<typeof step4Schema>;
 
+/* ─── Combined 2-step schema ─────────────────────── */
+export function makeAllDataSchema(ar: boolean) {
+  return z.object({
+    fullName:   z.string().min(1, ar ? 'الاسم الكامل مطلوب'          : 'Full name is required'),
+    email:      z.string()
+                  .min(1,  ar ? 'البريد الإلكتروني مطلوب'            : 'Email is required')
+                  .email(  ar ? 'البريد الإلكتروني غير صحيح'         : 'Invalid email'),
+    phone:      z.string().min(1, ar ? 'رقم الهاتف مطلوب'            : 'Phone is required'),
+    department: z.string().min(1, ar ? 'القسم مطلوب'                  : 'Department is required'),
+    jobTitle:   z.string().min(1, ar ? 'المسمى الوظيفي مطلوب'        : 'Job title is required'),
+    hireDate:   z.string().min(1, ar ? 'تاريخ الالتحاق مطلوب'        : 'Hire date is required'),
+    managerId:  z.string().optional(),
+    jobType:    z.enum(['full-time', 'part-time', 'freelance'], {
+                  message: ar ? 'نوع التوظيف مطلوب' : 'Job type is required',
+                }),
+    salary:     z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
+                  .min(1, ar ? 'الراتب يجب أن يكون أكبر من صفر' : 'Salary must be > 0'),
+    currency:   z.string().min(1),
+    startTime:  z.string().min(1),
+    endTime:    z.string().min(1),
+  });
+}
+
+export type AllDataValues = z.infer<ReturnType<typeof makeAllDataSchema>>;
+
 export interface AllFormData {
-  step1?: Step1Values;
-  step2?: Step2Values;
-  step3?: Step3Values;
-  step4?: Step4Values;
+  step1?: AllDataValues;
 }

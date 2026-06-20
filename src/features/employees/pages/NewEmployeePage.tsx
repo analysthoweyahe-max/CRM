@@ -9,8 +9,7 @@ import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button }     from '@/shared/components/ui/Button';
 import { StepIndicator }  from '../components/NewEmployeeForm/StepWizard';
 import { Step1BasicData } from '../components/NewEmployeeForm/Step1BasicData';
-import { Step2JobType }   from '../components/NewEmployeeForm/Step2JobType';
-import { Step3Salary, Step4Attendance, Step5Review } from '../components/NewEmployeeForm/Steps3to5';
+import { Step2Review }    from '../components/NewEmployeeForm/Steps3to5';
 import type { AllFormData } from '../components/NewEmployeeForm/newEmployeeForm.types';
 
 export function NewEmployeePage() {
@@ -21,8 +20,6 @@ export function NewEmployeePage() {
 
   const [step, setStep]         = useState(1);
   const [formData, setFormData] = useState<AllFormData>({});
-
-  function go(n: number) { setStep(n); }
 
   async function handleFinalSubmit() {
     await new Promise((r) => setTimeout(r, 800));
@@ -62,44 +59,16 @@ export function NewEmployeePage() {
         <Step1BasicData
           isAr={isAr} isRTL={isRTL}
           defaultValues={formData.step1}
-          onNext={(d) => { setFormData((p) => ({ ...p, step1: d })); go(2); }}
+          onNext={(d) => { setFormData({ step1: d }); setStep(2); }}
           onBack={() => navigate(ROUTES.EMPLOYEES.LIST)}
         />
       )}
 
       {step === 2 && (
-        <Step2JobType
-          isAr={isAr} isRTL={isRTL}
-          defaultValues={formData.step2}
-          onNext={(d) => { setFormData((p) => ({ ...p, step2: d })); go(3); }}
-          onBack={() => go(1)}
-        />
-      )}
-
-      {step === 3 && (
-        <Step3Salary
-          isAr={isAr} isRTL={isRTL}
-          jobType={formData.step2?.jobType}
-          defaultValues={formData.step3}
-          onNext={(d) => { setFormData((p) => ({ ...p, step3: d })); go(4); }}
-          onBack={() => go(2)}
-        />
-      )}
-
-      {step === 4 && (
-        <Step4Attendance
-          isAr={isAr} isRTL={isRTL}
-          defaultValues={formData.step4}
-          onNext={(d) => { setFormData((p) => ({ ...p, step4: d })); go(5); }}
-          onBack={() => go(3)}
-        />
-      )}
-
-      {step === 5 && (
-        <Step5Review
+        <Step2Review
           isAr={isAr} isRTL={isRTL}
           formData={formData}
-          onBack={() => go(4)}
+          onBack={() => setStep(1)}
           onSubmit={handleFinalSubmit}
         />
       )}
