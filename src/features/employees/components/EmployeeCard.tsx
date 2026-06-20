@@ -34,7 +34,7 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete }: EmployeeCa
     <>
       <div
         className="rounded-2xl bg-white dark:bg-gray-800 flex flex-col
-                   border border-[#F1F5F9]
+                   border border-[#F1F5F9] dark:border-gray-700
                    transition-all duration-200 ease-out
                    hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-lg"
       >
@@ -50,10 +50,10 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete }: EmployeeCa
               <span className="text-sm font-bold text-white">{emp.initial}</span>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold truncate" style={{ color: '#302F33' }}>
+              <p className="text-sm font-bold truncate text-gray-800 dark:text-gray-100">
                 {name}
               </p>
-              <p className="text-[11px] truncate mt-0.5" style={{ color: '#595959' }}>
+              <p className="text-[11px] truncate mt-0.5 text-gray-500 dark:text-gray-400">
                 {dept}
               </p>
             </div>
@@ -71,20 +71,20 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete }: EmployeeCa
         </div>
 
         {/* ── Separator ─────────────────────────────────── */}
-        <div className="h-px mx-4" style={{ background: '#D8EBAE' }} />
+        <div className="h-px mx-4 bg-[#D8EBAE] dark:bg-gray-700" />
 
         {/* ── Fields ────────────────────────────────────── */}
         <div className="px-4 py-3 space-y-2.5 flex-1">
           {fields.map(({ icon, text }, i) => (
             <div key={i} className="flex items-center justify-between gap-2 text-xs">
-              <span className="truncate" style={{ color: '#302F33' }}>{text}</span>
-              <span className="shrink-0" style={{ color: '#595959' }}>{icon}</span>
+              <span className="truncate text-gray-700 dark:text-gray-300">{text}</span>
+              <span className="shrink-0 text-gray-400 dark:text-gray-500">{icon}</span>
             </div>
           ))}
         </div>
 
         {/* ── Separator ─────────────────────────────────── */}
-        <div className="h-px mx-4" style={{ background: '#D8EBAE' }} />
+        <div className="h-px mx-4 bg-[#D8EBAE] dark:bg-gray-700" />
 
         {/* ── Actions ───────────────────────────────────── */}
         <div className="flex items-center gap-1 px-4 py-3">
