@@ -83,21 +83,21 @@ function buildDevMockResponse(employeeId: string, rememberMe: boolean): AuthLogi
 }
 
 async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> {
-  if (env.isDev) return buildDevMockResponse(credentials.employeeId, credentials.rememberMe ?? false);
+  if (env.isDev || env.useMock) return buildDevMockResponse(credentials.employeeId, credentials.rememberMe ?? false);
   const { data } = await authApi.login(credentials);
   storeToken(data.token, credentials.rememberMe ?? false);
   return data;
 }
 
 async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginResponse> {
-  if (env.isDev) return buildDevMockResponse('EMP-DEV-001', payload.rememberMe ?? false);
+  if (env.isDev || env.useMock) return buildDevMockResponse('EMP-DEV-001', payload.rememberMe ?? false);
   const { data } = await authApi.setPassword(payload);
   storeToken(data.token, payload.rememberMe ?? false);
   return data;
 }
 
 async function validateInvite(token: string): Promise<InviteTokenPayload> {
-  if (env.isDev) {
+  if (env.isDev || env.useMock) {
     return {
       employeeId: token || 'EMP-DEV-001',
       fullName: 'موظف تجريبي',
@@ -110,6 +110,7 @@ async function validateInvite(token: string): Promise<InviteTokenPayload> {
 }
 
 async function logout(): Promise<void> {
+  if (env.isDev || env.useMock) { clearToken(); return; }
   try {
     await authApi.logout();
   } finally {
