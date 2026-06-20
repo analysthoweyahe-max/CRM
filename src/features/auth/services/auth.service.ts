@@ -16,6 +16,7 @@ function storeToken(token: string, rememberMe: boolean): void {
 }
 
 
+
 function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(TOKEN_KEY);
