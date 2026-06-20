@@ -1,26 +1,26 @@
 import { useForm, Controller } from 'react-hook-form';
 import { Building2, Mail, Globe, Check } from 'lucide-react';
-import { toast }      from 'sonner';
-import { Card }       from '@/shared/components/ui/Card';
-import { Input }      from '@/shared/components/ui/Input';
-import { Button }     from '@/shared/components/ui/Button';
-import { FormField }  from '@/shared/components/form/FormField';
-import { Combobox }   from '@/shared/components/form/Combobox';
+import { toast } from 'sonner';
+import { Card } from '@/shared/components/ui/Card';
+import { Input } from '@/shared/components/ui/Input';
+import { Button } from '@/shared/components/ui/Button';
+import { FormField } from '@/shared/components/form/FormField';
+import { Combobox } from '@/shared/components/form/Combobox';
 
 interface CompanyValues {
-  name:     string;
-  email:    string;
+  name: string;
+  email: string;
   timezone: string;
 }
 
 const TIMEZONES = [
   { id: 'africa/cairo', label: 'توقيت القاهرة (GMT+2)' },
-  { id: 'asia/riyadh',  label: 'توقيت الرياض (GMT+3)'  },
-  { id: 'asia/dubai',   label: 'توقيت دبي (GMT+4)'     },
-  { id: 'utc',          label: 'UTC (GMT+0)'             },
+  { id: 'asia/riyadh', label: 'توقيت الرياض (GMT+3)' },
+  { id: 'asia/dubai', label: 'توقيت دبي (GMT+4)' },
+  { id: 'utc', label: 'UTC (GMT+0)' },
 ];
 
-export function CompanyCard({ isAr }: { isAr: boolean }) {
+export function CompanyCard({ isAr }: { isAr: boolean; }) {
   const { register, control, handleSubmit, formState: { isSubmitting } } =
     useForm<CompanyValues>({
       defaultValues: { name: 'هوية', email: 'aa436436@gmail.com', timezone: 'africa/cairo' },
@@ -34,8 +34,8 @@ export function CompanyCard({ isAr }: { isAr: boolean }) {
   }
 
   const cbProps = {
-    searchPlaceholder: isAr ? 'ابحث...'  : 'Search...',
-    noResultsText:     isAr ? 'لا نتائج' : 'No results',
+    searchPlaceholder: isAr ? 'ابحث...' : 'Search...',
+    noResultsText: isAr ? 'لا نتائج' : 'No results',
   };
 
   return (
@@ -69,8 +69,9 @@ export function CompanyCard({ isAr }: { isAr: boolean }) {
             {...register('email')}
             type="email"
             dir="ltr"
-            endIcon={<Mail size={15} />}
             placeholder="company@example.com"
+            endIcon={<Mail size={15} />}
+            className={isAr ? 'text-right' : 'text-left'}
           />
         </FormField>
 

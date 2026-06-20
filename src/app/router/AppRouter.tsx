@@ -15,6 +15,7 @@ import { DashboardPage }     from '@/features/dashboard/pages/DashboardPage';
 import { EmployeeListPage }  from '@/features/employees/pages/EmployeeListPage';
 import { NewEmployeePage }   from '@/features/employees/pages/NewEmployeePage';
 import { EmployeeDetailPage }from '@/features/employees/pages/EmployeeDetailPage';
+import { ProfilePage }       from '@/features/profile/pages/ProfilePage';
 import { EmployeeEditPage }  from '@/features/employees/pages/EmployeeEditPage';
 import { AttendancePage }    from '@/features/attendance/pages/AttendancePage';
 import { LeavesPage }        from '@/features/leaves/pages/LeavesPage';
@@ -67,6 +68,7 @@ export function AppRouter() {
             <Route path={ROUTES.PAYROLL.BONUSES}      element={<BonusesPage />} />
             <Route path={ROUTES.PAYROLL.BONUSES_NEW}  element={<AddBonusPage />} />
 
+            <Route path={ROUTES.PROFILE}              element={<ProfilePage />} />
             <Route path={ROUTES.MESSAGES}             element={<MessagesPage />} />
             <Route path={ROUTES.SETTINGS}             element={<SettingsPage />} />
           </Route>

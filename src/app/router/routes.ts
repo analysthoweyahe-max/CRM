@@ -23,6 +23,7 @@ export const ROUTES = {
     BONUSES:        '/payroll/bonuses',
     BONUSES_NEW:    '/payroll/bonuses/new',
   },
+  PROFILE:  '/profile',
   MESSAGES: '/messages',
   SETTINGS: '/settings',
 } as const;
