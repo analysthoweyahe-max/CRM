@@ -41,10 +41,10 @@ export function CompanyCard({ isAr }: { isAr: boolean; }) {
   return (
     <Card padding="lg">
       <div className="mb-5">
-        <h2 className="text-base font-bold" style={{ color: '#302F33' }}>
+        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">
           {isAr ? 'بيانات الشركة' : 'Company Data'}
         </h2>
-        <p className="text-xs mt-0.5" style={{ color: '#595959' }}>
+        <p className="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
           {isAr ? 'المعلومات الأساسية' : 'Basic information'}
         </p>
       </div>

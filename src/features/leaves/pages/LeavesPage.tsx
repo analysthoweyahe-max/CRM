@@ -85,7 +85,7 @@ export function LeavesPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold" style={{ color: '#302F33' }}>
+        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
           {isAr ? 'إدارة الإجازات' : 'Leave Management'}
         </h1>
         <p className="text-sm mt-0.5 text-gray-500">

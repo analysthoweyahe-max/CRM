@@ -82,7 +82,7 @@ export function EmployeeDetailPage() {
           >
             <BackIcon size={18} />
           </button>
-          <h1 className="text-xl font-bold" style={{ color: '#302F33' }}>
+          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
             {isAr ? 'الملف الوظيفي' : 'Employee Profile'}
           </h1>
         </div>
@@ -128,7 +128,7 @@ export function EmployeeDetailPage() {
             {/* Name + status */}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-bold" style={{ color: '#302F33' }}>{name}</h2>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{name}</h2>
                 <span
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
                   style={{ background: st.bg, color: st.text }}
@@ -137,7 +137,7 @@ export function EmployeeDetailPage() {
                   {isAr ? st.labelAr : st.labelEn}
                 </span>
               </div>
-              <p className="text-sm mt-0.5" style={{ color: '#595959' }}>
+              <p className="text-sm mt-0.5 text-gray-500 dark:text-gray-400">
                 {title} · {dept}
               </p>
             </div>
@@ -145,19 +145,19 @@ export function EmployeeDetailPage() {
             {/* Quick stats */}
             <div className="flex items-center gap-5 text-sm">
               <div className="text-center">
-                <p className="font-bold" style={{ color: '#302F33' }}>
+                <p className="font-bold text-gray-800 dark:text-gray-100">
                   {isAr ? 'دوام كامل' : 'Full Time'}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#595959' }}>
+                <p className="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
                   {isAr ? 'نوع التوظيف' : 'Employment Type'}
                 </p>
               </div>
               <div className="w-px h-8 bg-gray-200 dark:bg-gray-600" />
               <div className="text-center">
-                <p className="font-bold" style={{ color: '#302F33' }}>
+                <p className="font-bold text-gray-800 dark:text-gray-100">
                   {leaveRemaining} {isAr ? 'يوم' : 'days'}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#595959' }}>
+                <p className="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
                   {isAr ? 'رصيد الإجازات' : 'Leave Balance'}
                 </p>
               </div>

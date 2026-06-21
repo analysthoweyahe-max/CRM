@@ -77,7 +77,7 @@ export function LeaveDetailPage() {
             <BackIcon size={18} />
           </button>
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#302F33' }}>
+            <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
               {isAr ? 'تفاصيل طلب الإجازة' : 'Leave Request Details'}
             </h1>
             <p className="text-xs text-gray-400 mt-0.5">

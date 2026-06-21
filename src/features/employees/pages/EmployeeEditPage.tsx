@@ -99,10 +99,10 @@ export function EmployeeEditPage() {
           <BackIcon size={18} />
         </button>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#302F33' }}>
+          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
             {isAr ? 'تعديل بيانات الموظف' : 'Edit Employee Data'}
           </h1>
-          <p className="text-sm mt-0.5" style={{ color: '#595959' }}>{name}</p>
+          <p className="text-sm mt-0.5 text-gray-500 dark:text-gray-400">{name}</p>
         </div>
       </div>
 

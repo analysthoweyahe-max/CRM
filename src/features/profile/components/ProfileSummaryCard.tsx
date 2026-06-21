@@ -77,8 +77,8 @@ export function ProfileSummaryCard({ user, isAr }: Props) {
 
       {/* Name & role */}
       <div>
-        <h2 className="text-lg font-bold" style={{ color: '#302F33' }}>{user.fullName}</h2>
-        <p className="text-sm mt-0.5" style={{ color: '#595959' }}>{roleLabel}</p>
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{user.fullName}</h2>
+        <p className="text-sm mt-0.5 text-gray-500 dark:text-gray-400">{roleLabel}</p>
       </div>
 
       {/* Change photo button */}
@@ -102,10 +102,10 @@ export function ProfileSummaryCard({ user, isAr }: Props) {
       <div className="w-full space-y-3 text-start">
         {infoRows.map((row, i) => (
           <div key={i} className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium truncate" style={{ color: '#302F33' }}>
+            <span className="text-sm font-medium truncate text-gray-800 dark:text-gray-100">
               {row.value}
             </span>
-            <div className="flex items-center gap-1.5 shrink-0" style={{ color: '#595959' }}>
+            <div className="flex items-center gap-1.5 shrink-0 text-gray-500 dark:text-gray-400">
               <span className="text-xs">{row.label}</span>
               <span style={{ color: '#709028' }}>{row.icon}</span>
             </div>
