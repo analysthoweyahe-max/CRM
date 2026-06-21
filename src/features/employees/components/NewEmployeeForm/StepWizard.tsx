@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Check, User, Briefcase } from 'lucide-react'
 /* ─── Step config (local — only needed for rendering) */
 const STEPS = [
   { labelAr: 'البيانات',     labelEn: 'Data',   Icon: User      },
-  { labelAr: 'نوع التوظيف', labelEn: 'Review', Icon: Briefcase },
+  { labelAr: 'مراجعة البيانات', labelEn: 'Data Review', Icon: Briefcase },
 ];
 
 /* ─── StepIndicator ──────────────────────────────── */
