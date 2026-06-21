@@ -90,16 +90,14 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete }: EmployeeCa
         {/* ── Actions ───────────────────────────────────── */}
         <div className="flex items-center gap-1 px-4 py-3">
           {/* مراجعة البيانات */}
-          <button
+          <Button
+            variant="icon-brand"
             type="button"
             onClick={() => onView(emp.id)}
-            className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-semibold
-                       bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028] dark:text-[#A0CD39]
-                       hover:bg-[#A0CD39] hover:text-white transition-colors"
+            aria-label={isAr ? 'عرض' : 'View'}
           >
-            <Eye size={13} />
-            {isAr ? 'مراجعة البيانات' : 'Review Data'}
-          </button>
+            <Eye size={15} />
+          </Button>
 
           <Button
             variant="icon"

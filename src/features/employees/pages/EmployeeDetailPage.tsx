@@ -10,6 +10,10 @@ import { useLang }       from '@/app/providers/LanguageProvider';
 import { ROUTES }        from '@/app/router/routes';
 import { EMPLOYEES, STATUS_STYLES } from '../data/employeeData';
 import { Button }        from '@/shared/components/ui/Button';
+import { EmployeeDetailEmployment } from '../components/detail/EmployeeDetailEmployment';
+import { EmployeeDetailPayroll }    from '../components/detail/EmployeeDetailPayroll';
+import { EmployeeDetailAttendance } from '../components/detail/EmployeeDetailAttendance';
+import { EmployeeDetailLeaves }     from '../components/detail/EmployeeDetailLeaves';
 
 type Tab = 'summary' | 'employment' | 'payroll' | 'attendance' | 'leaves';
 
@@ -57,7 +61,7 @@ export function EmployeeDetailPage() {
   ];
 
   const leaveAnnual    = 21;
-  const leaveUsed      = 0;
+  const leaveUsed      = 4;
   const leaveRemaining = leaveAnnual - leaveUsed;
   const usedPct        = Math.round((leaveUsed / leaveAnnual) * 100);
 
@@ -182,29 +186,26 @@ export function EmployeeDetailPage() {
       </div>
 
       {/* ── Tab content ─────────────────────────────────── */}
-      {activeTab === 'summary' ? (
+
+      {activeTab === 'summary' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* General info */}
-          <div
-            className="lg:col-span-2 rounded-2xl bg-white dark:bg-gray-800
-                       border border-gray-100 dark:border-gray-700 shadow-sm p-6"
-          >
-            <h3 className="text-sm font-bold mb-5" style={{ color: '#302F33' }}>
+          <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-gray-800
+                          border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+            <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
               {isAr ? 'المعلومات العامة' : 'General Information'}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {infoFields.map((field, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <div
-                    className="mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: '#D8EBAE', color: '#709028' }}
-                  >
+                  <div className="mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0
+                                  bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]">
                     {field.icon}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs mb-0.5" style={{ color: '#595959' }}>{field.label}</p>
-                    <p className="text-sm font-medium truncate" style={{ color: '#302F33' }}>{field.value}</p>
+                    <p className="text-xs mb-0.5 text-gray-400 dark:text-gray-500">{field.label}</p>
+                    <p className="text-sm font-medium truncate text-gray-800 dark:text-gray-100">{field.value}</p>
                   </div>
                 </div>
               ))}
@@ -212,56 +213,38 @@ export function EmployeeDetailPage() {
           </div>
 
           {/* Leave balance */}
-          <div
-            className="rounded-2xl bg-white dark:bg-gray-800
-                       border border-gray-100 dark:border-gray-700 shadow-sm p-6"
-          >
-            <h3 className="text-sm font-bold mb-5" style={{ color: '#302F33' }}>
+          <div className="rounded-2xl bg-white dark:bg-gray-800
+                          border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+            <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
               {isAr ? 'رصيد الإجازات' : 'Leave Balance'}
             </h3>
-
             <div className="text-center mb-4">
-              <p className="text-4xl font-bold" style={{ color: '#302F33' }}>{leaveAnnual}</p>
-              <p className="text-xs mt-1" style={{ color: '#595959' }}>
+              <p className="text-4xl font-bold text-gray-800 dark:text-gray-100">{leaveAnnual}</p>
+              <p className="text-xs mt-1 text-gray-400 dark:text-gray-500">
                 {isAr ? 'إجمالي الرصيد السنوي' : 'Total Annual Balance'}
               </p>
             </div>
-
             <div className="space-y-3">
-              <div className="rounded-xl p-4 text-center" style={{ background: '#FEE2E2' }}>
-                <p className="text-2xl font-bold" style={{ color: '#BE123C' }}>{leaveUsed}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#BE123C' }}>
-                  {isAr ? 'المستخدم' : 'Used'}
-                </p>
+              <div className="rounded-xl p-4 text-center bg-red-50 dark:bg-red-900/20">
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{leaveUsed}</p>
+                <p className="text-xs mt-0.5 text-red-400">{isAr ? 'المستخدم' : 'Used'}</p>
               </div>
-
-              <div className="rounded-xl p-4 text-center" style={{ background: '#D8EBAE' }}>
-                <p className="text-2xl font-bold" style={{ color: '#709028' }}>{leaveRemaining}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#709028' }}>
-                  {isAr ? 'المتبقي' : 'Remaining'}
-                </p>
+              <div className="rounded-xl p-4 text-center bg-[#D8EBAE] dark:bg-[#D8EBAE]/10">
+                <p className="text-2xl font-bold text-[#709028] dark:text-[#A0CD39]">{leaveRemaining}</p>
+                <p className="text-xs mt-0.5 text-[#709028]/70">{isAr ? 'المتبقي' : 'Remaining'}</p>
               </div>
             </div>
-
-            <p className="text-xs text-center mt-4" style={{ color: '#595959' }}>
-              {isAr
-                ? `تم استخدام ${usedPct}% من الرصيد السنوي`
-                : `${usedPct}% of annual balance used`}
+            <p className="text-xs text-center mt-4 text-gray-400 dark:text-gray-500">
+              {isAr ? `تم استخدام ${usedPct}% من الرصيد السنوي` : `${usedPct}% of annual balance used`}
             </p>
           </div>
         </div>
-      ) : (
-        <div
-          className="rounded-2xl bg-white dark:bg-gray-800
-                     border border-gray-100 dark:border-gray-700 shadow-sm
-                     flex flex-col items-center justify-center h-60 gap-2 text-gray-400"
-        >
-          <p className="text-sm font-medium">
-            {isAr ? TABS_AR[TAB_KEYS.indexOf(activeTab)] : TABS_EN[TAB_KEYS.indexOf(activeTab)]}
-          </p>
-          <p className="text-xs">{isAr ? 'قريباً' : 'Coming soon'}</p>
-        </div>
       )}
+
+      {activeTab === 'employment' && <EmployeeDetailEmployment emp={emp} isAr={isAr} />}
+      {activeTab === 'payroll'    && <EmployeeDetailPayroll    isAr={isAr} />}
+      {activeTab === 'attendance' && <EmployeeDetailAttendance isAr={isAr} />}
+      {activeTab === 'leaves'     && <EmployeeDetailLeaves     isAr={isAr} />}
 
     </div>
   );

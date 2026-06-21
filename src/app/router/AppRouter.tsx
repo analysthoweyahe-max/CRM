@@ -20,6 +20,7 @@ import { EmployeeEditPage }  from '@/features/employees/pages/EmployeeEditPage';
 import { AttendancePage }    from '@/features/attendance/pages/AttendancePage';
 import { AttendanceLogPage } from '@/features/attendance/pages/AttendanceLogPage';
 import { LeavesPage }        from '@/features/leaves/pages/LeavesPage';
+import { LeaveDetailPage }   from '@/features/leaves/pages/LeaveDetailPage';
 import { DeductionsPage }    from '@/features/payroll/pages/DeductionsPage';
 import { AddDeductionPage }  from '@/features/payroll/pages/AddDeductionPage';
 import { BonusesPage }       from '@/features/payroll/pages/BonusesPage';
@@ -54,7 +55,8 @@ export function AppRouter() {
 
             <Route path={ROUTES.ATTENDANCE.DAILY}     element={<AttendancePage />} />
             <Route path={ROUTES.ATTENDANCE.LOG}       element={<AttendanceLogPage />} />
-            <Route path={ROUTES.LEAVES}               element={<LeavesPage />} />
+            <Route path={ROUTES.LEAVES.LIST}           element={<LeavesPage />} />
+            <Route path={ROUTES.LEAVES.DETAIL()}      element={<LeaveDetailPage />} />
 
             <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
             <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />

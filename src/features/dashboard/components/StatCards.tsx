@@ -36,7 +36,7 @@ const STATS = [
     value: '6', icon: CalendarDays,
     color: 'text-violet-500', bg: 'bg-violet-50',
     trendUp: null, trendAr: '', trendEn: '',
-    path: ROUTES.LEAVES,
+    path: ROUTES.LEAVES.LIST,
   },
 ] as const;
 

@@ -45,7 +45,7 @@ const NAV_SECTIONS: NavSection[] = [
         children: [
           { key: 'att-daily', labelAr: 'الحضور اليومي', labelEn: 'Daily Attendance', label: '', path: ROUTES.ATTENDANCE.DAILY, icon: Clock },
           { key: 'att-log',   labelAr: 'سجل الحضور',    labelEn: 'Attendance Log',   label: '', path: ROUTES.ATTENDANCE.LOG,   icon: FileText },
-          { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', label: '', path: ROUTES.LEAVES,          icon: CalendarDays },
+          { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', label: '', path: ROUTES.LEAVES.LIST,     icon: CalendarDays },
         ],
       },
       {

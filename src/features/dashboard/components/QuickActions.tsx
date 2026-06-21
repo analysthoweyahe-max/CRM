@@ -5,7 +5,7 @@ import { ROUTES } from '@/app/router/routes';
 const QUICK_ACTIONS = [
   { labelAr: 'الرسائل',          labelEn: 'Messages',         icon: MessageSquare, color: 'text-brand-600',   bg: 'bg-brand-50',   path: ROUTES.MESSAGES },
   { labelAr: 'سجل الحضور اليومي', labelEn: 'Daily Attendance', icon: Clock,         color: 'text-amber-500',   bg: 'bg-amber-50',   path: ROUTES.ATTENDANCE.DAILY },
-  { labelAr: 'طلبات الإجازات',   labelEn: 'Leave Requests',   icon: CalendarDays,  color: 'text-violet-500',  bg: 'bg-violet-50',  path: ROUTES.LEAVES },
+  { labelAr: 'طلبات الإجازات',   labelEn: 'Leave Requests',   icon: CalendarDays,  color: 'text-violet-500',  bg: 'bg-violet-50',  path: ROUTES.LEAVES.LIST },
   { labelAr: 'إضافة موظف',       labelEn: 'Add Employee',     icon: Plus,          color: 'text-emerald-600', bg: 'bg-emerald-50', path: ROUTES.EMPLOYEES.NEW },
 ] as const;
 

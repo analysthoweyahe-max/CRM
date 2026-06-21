@@ -16,7 +16,10 @@ export const ROUTES = {
     DAILY: '/attendance',
     LOG:   '/attendance/log',
   },
-  LEAVES:  '/leaves',
+  LEAVES: {
+    LIST:   '/leaves',
+    DETAIL: (id = ':id') => `/leaves/${id}`,
+  },
   PAYROLL: {
     DEDUCTIONS:     '/payroll/deductions',
     DEDUCTIONS_NEW: '/payroll/deductions/new',

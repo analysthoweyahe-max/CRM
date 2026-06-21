@@ -129,7 +129,7 @@ export function RecentData({ isAr }: { isAr: boolean }) {
         title={isAr ? 'أحدث طلبات الإجازات' : 'Recent Leave Requests'}
         delay="0.2s"
         action={
-          <button type="button" onClick={() => navigate(ROUTES.LEAVES)}
+          <button type="button" onClick={() => navigate(ROUTES.LEAVES.LIST)}
             className="text-xs text-brand-600 hover:text-brand-700 font-medium transition-colors">
             {isAr ? 'عرض الكل' : 'View All'}
           </button>
