@@ -57,6 +57,7 @@ export function AttendancePage() {
   const [search,     setSearch]     = useState('');
   const [deptFilter, setDeptFilter] = useState('كل الأقسام');
   const [statFilter, setStatFilter] = useState('كل الحالات');
+  const [cardFilter, setCardFilter] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 1200);
@@ -67,9 +68,14 @@ export function AttendancePage() {
     const q   = search.trim();
     const matchSearch = !q || r.name.includes(q) || r.employeeId.includes(q);
     const matchDept   = deptFilter === 'كل الأقسام' || r.department === deptFilter;
-    const matchStatus = statFilter === 'كل الحالات' || r.dayStatus === STATUS_MAP[statFilter];
+    let matchStatus: boolean;
+    if      (cardFilter === 'checkedIn') matchStatus = r.checkIn !== null;
+    else if (cardFilter === 'working')   matchStatus = r.workStatus === 'working';
+    else if (cardFilter === 'late')      matchStatus = r.dayStatus === 'late';
+    else if (cardFilter === 'absent')    matchStatus = r.dayStatus === 'absent';
+    else matchStatus = statFilter === 'كل الحالات' || r.dayStatus === STATUS_MAP[statFilter];
     return matchSearch && matchDept && matchStatus;
-  }), [search, deptFilter, statFilter]);
+  }), [search, deptFilter, statFilter, cardFilter]);
 
   const columns = useMemo(() => getAttendanceColumns(isAr), [isAr]);
 
@@ -106,7 +112,16 @@ export function AttendancePage() {
           : `Live attendance tracking — ${today}`}
       />
 
-      <AttendanceStats records={RECORDS} isAr={isAr} />
+      <AttendanceStats
+        records={RECORDS}
+        isAr={isAr}
+        activeCard={cardFilter}
+        onFilter={(key) => {
+          setCardFilter(key);
+          setStatFilter('كل الحالات');
+          table.setPageIndex(0);
+        }}
+      />
 
       <Card overflow>
         <FilterBar
@@ -117,7 +132,7 @@ export function AttendancePage() {
           }}
           filters={[
             { key: 'dept',   value: deptFilter, options: DEPARTMENTS, onChange: (v) => { setDeptFilter(v); table.setPageIndex(0); } },
-            { key: 'status', value: statFilter, options: STATUSES,    onChange: (v) => { setStatFilter(v); table.setPageIndex(0); } },
+            { key: 'status', value: statFilter, options: STATUSES,    onChange: (v) => { setStatFilter(v); setCardFilter(null); table.setPageIndex(0); } },
           ]}
         />
 

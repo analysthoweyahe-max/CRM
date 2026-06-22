@@ -127,15 +127,6 @@ export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMar
           ))}
         </div>
 
-        {/* Footer */}
-        {notifications.length > 0 && (
-          <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2.5 text-center">
-            <button type="button"
-              className="text-xs font-medium text-[#709028] dark:text-[#A0CD39] hover:underline">
-              {isAr ? 'عرض كل الإشعارات' : 'View all notifications'}
-            </button>
-          </div>
-        )}
       </div>
     </>
   );

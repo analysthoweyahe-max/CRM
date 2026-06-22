@@ -76,6 +76,9 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               )} />
             </FormField>
 
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <FormField label={isAr ? 'المسمى الوظيفي' : 'Job Title'} required error={errors.jobTitle?.message}>
               <Controller name="jobTitle" control={control} render={({ field }) => (
                 <Combobox items={JOB_TITLES} value={field.value ?? ''} onChange={field.onChange}
@@ -90,16 +93,16 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               <Input {...register('hireDate')} type="date"
                 hasError={!!errors.hireDate} endIcon={<CalendarDays size={15} />} />
             </FormField>
-          </div>
 
-          <FormField label={isAr ? 'المدير المباشر (اختياري)' : 'Direct Manager (optional)'}>
-            <Controller name="managerId" control={control} render={({ field }) => (
-              <Combobox items={MANAGERS} value={field.value ?? 'none'} onChange={field.onChange}
-                placeholder={isAr ? 'بدون مدير مباشر' : 'No direct manager'}
-                searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
-                noResultsText={isAr ? 'لا نتائج' : 'No results'} />
-            )} />
-          </FormField>
+            <FormField label={isAr ? 'المدير المباشر (اختياري)' : 'Direct Manager (optional)'}>
+              <Controller name="managerId" control={control} render={({ field }) => (
+                <Combobox items={MANAGERS} value={field.value ?? 'none'} onChange={field.onChange}
+                  placeholder={isAr ? 'بدون مدير مباشر' : 'No direct manager'}
+                  searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
+                  noResultsText={isAr ? 'لا نتائج' : 'No results'} />
+              )} />
+            </FormField>
+          </div>
         </div>
 
         {/* ── معلومات الدوام ── */}
@@ -150,22 +153,24 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
             </FormField>
           </div>
 
-          <div className="flex items-start gap-3 rounded-xl bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 p-4">
-            <Clock size={15} className="text-[#709028] mt-0.5 shrink-0" />
-            <p className="text-sm text-[#709028] leading-relaxed">
-              {isAr
-                ? 'سيتم احتساب التأخر والانصراف المبكر والساعات الإضافية بناءً على هذه المواعيد.'
-                : 'Late arrivals, early departures, and overtime will be calculated based on these times.'}
-            </p>
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3 rounded-xl bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 p-4">
+              <Clock size={15} className="text-[#709028] mt-0.5 shrink-0" />
+              <p className="text-sm text-[#709028] leading-relaxed">
+                {isAr
+                  ? 'سيتم احتساب التأخر والانصراف المبكر والساعات الإضافية بناءً على هذه المواعيد.'
+                  : 'Late arrivals, early departures, and overtime will be calculated based on these times.'}
+              </p>
+            </div>
 
-          <div className="flex items-start gap-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 p-4">
-            <Info size={15} className="text-blue-500 mt-0.5 shrink-0" />
-            <p className="text-sm text-blue-600 dark:text-blue-300 leading-relaxed">
-              {isAr
-                ? 'سيتم ربط نموذج الراتب تلقائياً بحسابات الحضور والأداء لاحتساب الإضافي والخصومات.'
-                : 'The salary model will automatically link to attendance and performance to calculate overtime and deductions.'}
-            </p>
+            <div className="flex items-start gap-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 p-4">
+              <Info size={15} className="text-blue-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-blue-600 dark:text-blue-300 leading-relaxed">
+                {isAr
+                  ? 'سيتم ربط نموذج الراتب تلقائياً بحسابات الحضور والأداء لاحتساب الإضافي والخصومات.'
+                  : 'The salary model will automatically link to attendance and performance to calculate overtime and deductions.'}
+              </p>
+            </div>
           </div>
         </div>
 
