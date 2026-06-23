@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Outlet }   from 'react-router-dom';
-import { ProjectManagerSidebar } from './components/ProjectManagerSidebar';
-import { Topbar }                from './components/Topbar';
-import { ROUTES }                from '@/app/router/routes';
+import { AppSidebar } from './components/AppSidebar';
+import { Topbar }     from './components/Topbar';
+import { ROUTES }     from '@/app/router/routes';
 
 export function ProjectManagerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -10,12 +10,14 @@ export function ProjectManagerLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <ProjectManagerSidebar
+      <AppSidebar
+        variant="pm"
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(p => !p)}
       />
+
       <div className={[
         'flex flex-col min-h-screen dark:bg-gray-950',
         'transition-all duration-300',

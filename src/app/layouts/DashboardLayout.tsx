@@ -1,21 +1,28 @@
 import { useState } from 'react';
 import { Outlet }   from 'react-router-dom';
-import { Sidebar }  from './components/Sidebar';
-import { Topbar }   from './components/Topbar';
+import { AppSidebar } from './components/AppSidebar';
+import { Topbar }     from './components/Topbar';
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed,   setCollapsed]   = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <Sidebar
+      <AppSidebar
+        variant="hr"
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(p => !p)}
       />
 
-      {/* Main column — offset by sidebar width on large screens */}
-      <div className="flex flex-col min-h-screen lg:ms-64 dark:bg-gray-950">
-        <Topbar onMenuToggle={() => setSidebarOpen((p) => !p)} />
+      <div className={[
+        'flex flex-col min-h-screen dark:bg-gray-950',
+        'transition-all duration-300',
+        collapsed ? 'lg:ms-16' : 'lg:ms-64',
+      ].join(' ')}>
+        <Topbar onMenuToggle={() => setSidebarOpen(p => !p)} />
         <main className="flex-1 p-4 md:p-6">
           <Outlet />
         </main>
