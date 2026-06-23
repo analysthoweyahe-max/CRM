@@ -2,9 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './routes';
 
 import { AuthLayout }      from '@/layouts/AuthLayout';
-import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { GuestGuard }      from './guards/GuestGuard';
-import { AuthGuard }       from './guards/AuthGuard';
+import { DashboardLayout }        from '@/layouts/DashboardLayout';
+import { ProjectManagerLayout }   from '@/layouts/ProjectManagerLayout';
+import { GuestGuard }             from './guards/GuestGuard';
+import { AuthGuard }              from './guards/AuthGuard';
 
 import { LoginPage }            from '@/features/auth/pages/LoginPage';
 import { SetPasswordPage }      from '@/features/auth/pages/SetPasswordPage';
@@ -27,6 +28,11 @@ import { BonusesPage }       from '@/features/payroll/pages/BonusesPage';
 import { AddBonusPage }     from '@/features/payroll/pages/AddBonusPage';
 import { MessagesPage }      from '@/features/messages/pages/MessagesPage';
 import { SettingsPage }      from '@/features/settings/pages/SettingsPage';
+
+import { ProjectDashboardPage } from '@/project-manager/pages/ProjectDashboardPage';
+import { NewProjectPage }       from '@/project-manager/pages/NewProjectPage';
+import { ProjectTeamPage }      from '@/project-manager/pages/ProjectTeamPage';
+import { ProjectReportsPage }   from '@/project-manager/pages/ProjectReportsPage';
 
 
 export function AppRouter() {
@@ -66,6 +72,16 @@ export function AppRouter() {
             <Route path={ROUTES.PROFILE}              element={<ProfilePage />} />
             <Route path={ROUTES.MESSAGES}             element={<MessagesPage />} />
             <Route path={ROUTES.SETTINGS}             element={<SettingsPage />} />
+          </Route>
+        </Route>
+
+        <Route element={<AuthGuard />}>
+          <Route element={<ProjectManagerLayout />}>
+            <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.TEAM}      element={<ProjectTeamPage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<ProfilePage />} />
           </Route>
         </Route>
 

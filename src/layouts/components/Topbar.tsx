@@ -49,10 +49,11 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
 ];
 
 interface TopbarProps {
-  onMenuToggle: () => void;
+  onMenuToggle:  () => void;
+  profileRoute?: string;
 }
 
-export function Topbar({ onMenuToggle }: TopbarProps) {
+export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarProps) {
   const { user, logout }        = useAuth();
   const { lang, toggleLang }    = useLang();
   const { isDark, toggleTheme } = useTheme();
@@ -216,7 +217,7 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
               </div>
 
               <button type="button"
-                onClick={() => { navigate(ROUTES.PROFILE); setOpen(false); }}
+                onClick={() => { navigate(profileRoute); setOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm
                            text-gray-700 dark:text-gray-300
                            hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">

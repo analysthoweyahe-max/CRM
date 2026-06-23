@@ -29,4 +29,11 @@ export const ROUTES = {
   PROFILE:  '/profile',
   MESSAGES: '/messages',
   SETTINGS: '/settings',
+  PROJECT_MANAGER: {
+    DASHBOARD: '/project-manager',
+    NEW:       '/project-manager/new',
+    TEAM:      '/project-manager/team',
+    REPORTS:   '/project-manager/reports',
+    PROFILE:   '/project-manager/profile',
+  },
 } as const;

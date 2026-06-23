@@ -1,0 +1,31 @@
+import { useState } from 'react';
+import { Outlet }   from 'react-router-dom';
+import { ProjectManagerSidebar } from './components/ProjectManagerSidebar';
+import { Topbar }                from './components/Topbar';
+import { ROUTES }                from '@/app/router/routes';
+
+export function ProjectManagerLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed,   setCollapsed]   = useState(false);
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <ProjectManagerSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(p => !p)}
+      />
+      <div className={[
+        'flex flex-col min-h-screen dark:bg-gray-950',
+        'transition-all duration-300',
+        collapsed ? 'lg:ms-16' : 'lg:ms-64',
+      ].join(' ')}>
+        <Topbar onMenuToggle={() => setSidebarOpen(p => !p)} profileRoute={ROUTES.PROJECT_MANAGER.PROFILE} />
+        <main className="flex-1 p-4 md:p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
