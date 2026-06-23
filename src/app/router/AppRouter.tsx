@@ -33,6 +33,7 @@ import { ProjectDashboardPage } from '@/modules/project-manager/dashboard/pages/
 import { NewProjectPage }       from '@/modules/project-manager/projects/pages/NewProjectPage';
 import { ProjectTeamPage }      from '@/modules/project-manager/team/pages/ProjectTeamPage';
 import { ProjectReportsPage }   from '@/modules/project-manager/reports/pages/ProjectReportsPage';
+import { PMProfilePage }        from '@/modules/project-manager/profile/pages/PMProfilePage';
 
 
 export function AppRouter() {
@@ -81,7 +82,7 @@ export function AppRouter() {
             <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
             <Route path={ROUTES.PROJECT_MANAGER.TEAM}      element={<ProjectTeamPage />} />
             <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
-            <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<ProfilePage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
           </Route>
         </Route>
 
