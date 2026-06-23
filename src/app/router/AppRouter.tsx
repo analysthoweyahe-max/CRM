@@ -31,6 +31,7 @@ import { SettingsPage }      from '@/modules/admin/settings/pages/SettingsPage';
 
 import { ProjectDashboardPage } from '@/modules/project-manager/dashboard/pages/ProjectDashboardPage';
 import { NewProjectPage }       from '@/modules/project-manager/projects/pages/NewProjectPage';
+import { ProjectDetailsPage }   from '@/modules/project-manager/projects/pages/ProjectDetailsPage';
 import { ProjectTeamPage }      from '@/modules/project-manager/team/pages/ProjectTeamPage';
 import { ProjectReportsPage }   from '@/modules/project-manager/reports/pages/ProjectReportsPage';
 import { PMProfilePage }        from '@/modules/project-manager/profile/pages/PMProfilePage';
@@ -78,9 +79,10 @@ export function AppRouter() {
 
         <Route element={<AuthGuard />}>
           <Route element={<ProjectManagerLayout />}>
-            <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
-            <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
-            <Route path={ROUTES.PROJECT_MANAGER.TEAM}      element={<ProjectTeamPage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD}  element={<ProjectDashboardPage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.NEW}        element={<NewProjectPage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.DETAILS()}  element={<ProjectDetailsPage />} />
+            <Route path={ROUTES.PROJECT_MANAGER.TEAM}       element={<ProjectTeamPage />} />
             <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
             <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
           </Route>

@@ -32,6 +32,7 @@ export const ROUTES = {
   PROJECT_MANAGER: {
     DASHBOARD: '/project-manager',
     NEW:       '/project-manager/new',
+    DETAILS:   (id = ':id') => `/project-manager/project/${id}`,
     TEAM:      '/project-manager/team',
     REPORTS:   '/project-manager/reports',
     PROFILE:   '/project-manager/profile',

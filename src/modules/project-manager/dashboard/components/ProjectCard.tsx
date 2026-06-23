@@ -1,5 +1,7 @@
-import { Card }   from '@/shared/components/ui/Card';
-import { Button } from '@/shared/components/ui/Button';
+import { useNavigate } from 'react-router-dom';
+import { Card }        from '@/shared/components/ui/Card';
+import { Button }      from '@/shared/components/ui/Button';
+import { ROUTES }      from '@/app/router/routes';
 import type { Project, ProjectStatus } from '../../projects/types/project.types';
 import { TeamAvatars } from './TeamAvatars';
 
@@ -23,8 +25,9 @@ interface Props {
 }
 
 export function ProjectCard({ project, isAr }: Props) {
-  const label = STATUS_LABEL[project.status];
-  const badge = STATUS_BADGE[project.status];
+  const navigate = useNavigate();
+  const label    = STATUS_LABEL[project.status];
+  const badge    = STATUS_BADGE[project.status];
 
   return (
     <Card className="p-5 flex flex-col gap-4 transition-all duration-200
@@ -78,6 +81,7 @@ export function ProjectCard({ project, isAr }: Props) {
       <Button
         variant="secondary"
         fullWidth
+        onClick={() => navigate(ROUTES.PROJECT_MANAGER.DETAILS(project.id))}
         className="hover:border-[#A0CD39] hover:text-[#709028] dark:hover:text-[#A0CD39]"
       >
         {isAr ? 'تفاصيل المشروع' : 'View Details'}
