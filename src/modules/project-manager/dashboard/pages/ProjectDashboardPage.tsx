@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES }   from '@/app/router/routes';
 import { Card }         from '@/shared/components/ui/Card';
-import { useProjects }  from '../store/projectStore';
-import type { Project, ProjectStatus, TeamMember } from '../types/project.types';
+import { useProjects }  from '../../projects/store/projectStore';
+import type { Project, ProjectStatus, TeamMember } from '../../projects/types/project.types';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 

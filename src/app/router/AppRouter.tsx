@@ -29,10 +29,10 @@ import { AddBonusPage }     from '@/modules/hr/payroll/pages/AddBonusPage';
 import { MessagesPage }      from '@/modules/hr/messages/pages/MessagesPage';
 import { SettingsPage }      from '@/modules/admin/settings/pages/SettingsPage';
 
-import { ProjectDashboardPage } from '@/modules/project-manager/pages/ProjectDashboardPage';
-import { NewProjectPage }       from '@/modules/project-manager/pages/NewProjectPage';
-import { ProjectTeamPage }      from '@/modules/project-manager/pages/ProjectTeamPage';
-import { ProjectReportsPage }   from '@/modules/project-manager/pages/ProjectReportsPage';
+import { ProjectDashboardPage } from '@/modules/project-manager/dashboard/pages/ProjectDashboardPage';
+import { NewProjectPage }       from '@/modules/project-manager/projects/pages/NewProjectPage';
+import { ProjectTeamPage }      from '@/modules/project-manager/team/pages/ProjectTeamPage';
+import { ProjectReportsPage }   from '@/modules/project-manager/reports/pages/ProjectReportsPage';
 
 
 export function AppRouter() {
