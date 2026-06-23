@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+﻿import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { LANG_KEY } from '@/app/config/constants';
-import type { AuthLang } from '@/features/auth/i18n';
+import type { AuthLang } from '@/modules/auth/i18n';
 
 interface LangContextValue {
   lang:     AuthLang;

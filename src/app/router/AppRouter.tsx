@@ -1,38 +1,38 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './routes';
 
-import { AuthLayout }      from '@/layouts/AuthLayout';
-import { DashboardLayout }        from '@/layouts/DashboardLayout';
-import { ProjectManagerLayout }   from '@/layouts/ProjectManagerLayout';
-import { GuestGuard }             from './guards/GuestGuard';
-import { AuthGuard }              from './guards/AuthGuard';
+import { AuthLayout }      from '@/app/layouts/AuthLayout';
+import { DashboardLayout }        from '@/app/layouts/DashboardLayout';
+import { ProjectManagerLayout }   from '@/app/layouts/ProjectManagerLayout';
+import { GuestGuard }             from '@/app/guards/GuestGuard';
+import { AuthGuard }              from '@/app/guards/AuthGuard';
 
-import { LoginPage }            from '@/features/auth/pages/LoginPage';
-import { SetPasswordPage }      from '@/features/auth/pages/SetPasswordPage';
-import { InviteValidationPage } from '@/features/auth/pages/InviteValidationPage';
-import { ForgotPasswordPage }   from '@/features/auth/pages/ForgotPasswordPage';
+import { LoginPage }            from '@/modules/auth/pages/LoginPage';
+import { SetPasswordPage }      from '@/modules/auth/pages/SetPasswordPage';
+import { InviteValidationPage } from '@/modules/auth/pages/InviteValidationPage';
+import { ForgotPasswordPage }   from '@/modules/auth/pages/ForgotPasswordPage';
 
-import { DashboardPage }     from '@/features/dashboard/pages/DashboardPage';
-import { EmployeeListPage }  from '@/features/employees/pages/EmployeeListPage';
-import { NewEmployeePage }   from '@/features/employees/pages/NewEmployeePage';
-import { EmployeeDetailPage }from '@/features/employees/pages/EmployeeDetailPage';
-import { ProfilePage }       from '@/features/profile/pages/ProfilePage';
-import { EmployeeEditPage }  from '@/features/employees/pages/EmployeeEditPage';
-import { AttendancePage }    from '@/features/attendance/pages/AttendancePage';
-import { AttendanceLogPage } from '@/features/attendance/pages/AttendanceLogPage';
-import { LeavesPage }        from '@/features/leaves/pages/LeavesPage';
-import { LeaveDetailPage }   from '@/features/leaves/pages/LeaveDetailPage';
-import { DeductionsPage }    from '@/features/payroll/pages/DeductionsPage';
-import { AddDeductionPage }  from '@/features/payroll/pages/AddDeductionPage';
-import { BonusesPage }       from '@/features/payroll/pages/BonusesPage';
-import { AddBonusPage }     from '@/features/payroll/pages/AddBonusPage';
-import { MessagesPage }      from '@/features/messages/pages/MessagesPage';
-import { SettingsPage }      from '@/features/settings/pages/SettingsPage';
+import { DashboardPage }     from '@/modules/hr/dashboard/pages/DashboardPage';
+import { EmployeeListPage }  from '@/modules/hr/employees/pages/EmployeeListPage';
+import { NewEmployeePage }   from '@/modules/hr/employees/pages/NewEmployeePage';
+import { EmployeeDetailPage }from '@/modules/hr/employees/pages/EmployeeDetailPage';
+import { ProfilePage }       from '@/modules/hr/profile/pages/ProfilePage';
+import { EmployeeEditPage }  from '@/modules/hr/employees/pages/EmployeeEditPage';
+import { AttendancePage }    from '@/modules/hr/attendance/pages/AttendancePage';
+import { AttendanceLogPage } from '@/modules/hr/attendance/pages/AttendanceLogPage';
+import { LeavesPage }        from '@/modules/hr/leaves/pages/LeavesPage';
+import { LeaveDetailPage }   from '@/modules/hr/leaves/pages/LeaveDetailPage';
+import { DeductionsPage }    from '@/modules/hr/payroll/pages/DeductionsPage';
+import { AddDeductionPage }  from '@/modules/hr/payroll/pages/AddDeductionPage';
+import { BonusesPage }       from '@/modules/hr/payroll/pages/BonusesPage';
+import { AddBonusPage }     from '@/modules/hr/payroll/pages/AddBonusPage';
+import { MessagesPage }      from '@/modules/hr/messages/pages/MessagesPage';
+import { SettingsPage }      from '@/modules/admin/settings/pages/SettingsPage';
 
-import { ProjectDashboardPage } from '@/project-manager/pages/ProjectDashboardPage';
-import { NewProjectPage }       from '@/project-manager/pages/NewProjectPage';
-import { ProjectTeamPage }      from '@/project-manager/pages/ProjectTeamPage';
-import { ProjectReportsPage }   from '@/project-manager/pages/ProjectReportsPage';
+import { ProjectDashboardPage } from '@/modules/project-manager/pages/ProjectDashboardPage';
+import { NewProjectPage }       from '@/modules/project-manager/pages/NewProjectPage';
+import { ProjectTeamPage }      from '@/modules/project-manager/pages/ProjectTeamPage';
+import { ProjectReportsPage }   from '@/modules/project-manager/pages/ProjectReportsPage';
 
 
 export function AppRouter() {
