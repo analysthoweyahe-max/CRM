@@ -9,6 +9,7 @@ import { useProjects }     from '../store/projectStore';
 import { useProjectTasks } from '../../tasks/store/taskStore';
 import { KanbanBoard }     from '../components/KanbanBoard';
 import { AddTaskModal }    from '../components/AddTaskModal';
+import { ProgressLogTab }  from '../components/ProgressLogTab';
 
 const STATUS_BADGE: Record<string, string> = {
   inProgress: 'bg-[#D8EBAE] text-[#709028] dark:bg-[#A0CD39]/20 dark:text-[#A0CD39]',
@@ -142,9 +143,9 @@ export function ProjectDetailsPage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'tasks' ? (
-        <KanbanBoard tasks={tasks} isAr={isAr} />
-      ) : (
+      {activeTab === 'tasks'    && <KanbanBoard tasks={tasks} isAr={isAr} />}
+      {activeTab === 'progress' && <ProgressLogTab project={project} tasks={tasks} isAr={isAr} />}
+      {activeTab !== 'tasks' && activeTab !== 'progress' && (
         <div className="py-24 text-center">
           <p className="text-sm text-gray-400 dark:text-gray-500">
             {isAr ? 'هذه الميزة قيد التطوير' : 'This feature is under development'}
