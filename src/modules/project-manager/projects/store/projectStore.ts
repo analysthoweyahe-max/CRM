@@ -18,6 +18,20 @@ export function addProject(p: Project): void {
   notify();
 }
 
+export function updateProject(id: string, updates: Partial<Omit<Project, 'id'>>): void {
+  projects = projects.map(p => p.id === id ? { ...p, ...updates } : p);
+  notify();
+}
+
+export function deleteProject(id: string): void {
+  projects = projects.filter(p => p.id !== id);
+  notify();
+}
+
+export function getProject(id: string): Project | undefined {
+  return projects.find(p => p.id === id);
+}
+
 export function useProjects(): Project[] {
   const [state, setState] = useState<Project[]>(projects);
   useEffect(() => {

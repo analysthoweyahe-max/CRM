@@ -12,6 +12,8 @@ export interface Project {
   nameEn:         string;
   categoryAr:     string;
   categoryEn:     string;
+  description?:   string;
+  startDate?:     string;
   progress:       number;
   status:         ProjectStatus;
   tasksCompleted: number;
