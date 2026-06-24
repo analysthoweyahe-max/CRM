@@ -30,7 +30,7 @@ export function SetPasswordPage() {
   return (
     <SetPasswordForm
       inviteToken={token}
-      employeeId={payload.employeeId}
+      inviteType={payload.inviteType}
     />
   );
 }

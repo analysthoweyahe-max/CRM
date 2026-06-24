@@ -1,8 +1,13 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import type { LoginFormValues } from '@/modules/auth/schemas/login.schema';
-import { DEFAULT_AFTER_LOGIN } from '@/app/config/constants';
+import { ROUTES } from '@/app/router/routes';
+
+function redirectForRole(role: string): string {
+  if (role === 'manager') return ROUTES.PROJECT_MANAGER.DASHBOARD;
+  return ROUTES.DASHBOARD;
+}
 
 export function useLogin() {
   const { login } = useAuth();
@@ -12,8 +17,8 @@ export function useLogin() {
   async function submit(values: LoginFormValues) {
     setError(null);
     try {
-      await login({ ...values, rememberMe: values.rememberMe ?? false });
-      navigate(DEFAULT_AFTER_LOGIN, { replace: true });
+      const user = await login({ ...values, rememberMe: values.rememberMe ?? false });
+      navigate(redirectForRole(user.role), { replace: true });
     } catch {
       setError('invalidCredentials');
     }

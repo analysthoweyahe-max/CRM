@@ -21,8 +21,8 @@ export const authTranslations = {
     login: {
       title:                 'تسجيل الدخول',
       subtitle:              'أدخل بياناتك للوصول إلى لوحة التحكم',
-      employeeId:            'معرّف الموظف',
-      employeeIdPlaceholder: 'مثال: EMP-001',
+      employeeId:            'البريد الإلكتروني / معرّف المدير',
+      employeeIdPlaceholder: 'بريدك الإلكتروني أو UUID الخاص بك',
       password:              'كلمة المرور',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'نسيت كلمة المرور؟',
@@ -81,8 +81,8 @@ export const authTranslations = {
     login: {
       title:                 'Sign In',
       subtitle:              'Enter your credentials to access the dashboard',
-      employeeId:            'Employee ID',
-      employeeIdPlaceholder: 'e.g. EMP-001',
+      employeeId:            'Email / Admin ID',
+      employeeIdPlaceholder: 'Your email or admin UUID',
       password:              'Password',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'Forgot password?',

@@ -1,11 +1,11 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { env } from '@/app/config/env';
-import { TOKEN_KEY } from '@/app/config/constants';
+import { TOKEN_KEY, USER_KEY } from '@/app/config/constants';
 
 const http: AxiosInstance = axios.create({
   baseURL: env.apiBaseUrl,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
   timeout: 10_000,
 });
 
@@ -23,6 +23,8 @@ http.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY);
       sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(USER_KEY);
       window.location.href = '/auth/login';
     }
     return Promise.reject(error);

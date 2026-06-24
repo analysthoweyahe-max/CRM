@@ -1,20 +1,55 @@
-﻿import type { LoginCredentials, SetPasswordPayload, AuthLoginResponse, InviteTokenPayload } from '@/modules/auth/types/auth.types';
 import { http } from '@/shared/services/http.service';
+import type {
+  AdminLoginApiResponse,
+  EmployeeLoginApiResponse,
+  AdminInviteApiResponse,
+  EmployeeInviteApiResponse,
+} from '@/modules/auth/types/auth.types';
 
 export const authApi = {
-  login(credentials: LoginCredentials) {
-    return http.post<AuthLoginResponse>('/auth/login', credentials);
+  // ── Admin / HR Manager ───────────────────────────────────────────────────
+
+  adminLogin(credentials: { admin_id: string; password: string }) {
+    return http.post<AdminLoginApiResponse>('/v1/admin/auth/login', credentials);
   },
 
-  setPassword(payload: SetPasswordPayload) {
-    return http.post<AuthLoginResponse>('/auth/set-password', payload);
+  adminLogout() {
+    return http.post<void>('/v1/admin/auth/logout');
   },
 
-  validateInvite(token: string) {
-    return http.get<InviteTokenPayload>(`/auth/invite/${token}`);
+  verifyAdminInvite(token: string) {
+    return http.get<AdminInviteApiResponse>(`/v1/admin/auth/invitations/${token}`);
   },
 
-  logout() {
-    return http.post<void>('/auth/logout');
+  setAdminPassword(token: string, payload: { password: string; password_confirmation: string }) {
+    return http.post<AdminLoginApiResponse>(
+      `/v1/admin/auth/invitations/${token}/set-password`,
+      payload,
+    );
+  },
+
+  // ── Employee ─────────────────────────────────────────────────────────────
+
+  employeeLogin(credentials: { email: string; password: string }) {
+    return http.post<EmployeeLoginApiResponse>('/v1/employee/auth/login', credentials);
+  },
+
+  employeeLogout() {
+    return http.post<void>('/v1/employee/auth/logout');
+  },
+
+  employeeProfile() {
+    return http.get<EmployeeLoginApiResponse>('/v1/employee/auth/profile');
+  },
+
+  verifyEmployeeInvite(token: string) {
+    return http.get<EmployeeInviteApiResponse>(`/v1/employee/auth/invitations/${token}`);
+  },
+
+  setEmployeePassword(token: string, payload: { password: string; password_confirmation: string }) {
+    return http.post<EmployeeLoginApiResponse>(
+      `/v1/employee/auth/invitations/${token}/set-password`,
+      payload,
+    );
   },
 };

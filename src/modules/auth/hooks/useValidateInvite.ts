@@ -1,6 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
 import { authService } from '@/modules/auth/services/auth.service';
-import { env } from '@/app/config/env';
 import type { InviteTokenPayload } from '@/modules/auth/types/auth.types';
 
 type Status = 'loading' | 'valid' | 'expired';
@@ -10,7 +9,7 @@ export function useValidateInvite(token: string) {
   const [payload, setPayload] = useState<InviteTokenPayload | null>(null);
 
   useEffect(() => {
-    if (!token && !env.isDev) { setStatus('expired'); return; }
+    if (!token) { setStatus('expired'); return; }
 
     authService
       .validateInvite(token)

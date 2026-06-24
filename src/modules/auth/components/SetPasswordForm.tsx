@@ -74,11 +74,12 @@ function PasswordField({
 
 interface SetPasswordFormProps {
   inviteToken?: string;
-  employeeId?: string;
+  inviteType?:  'admin' | 'employee';
 }
 
 export function SetPasswordForm({
   inviteToken = '',
+  inviteType  = 'employee',
 }: SetPasswordFormProps) {
   const { lang } = useLang();
   const t = authTranslations[lang];
@@ -90,7 +91,8 @@ export function SetPasswordForm({
 
   const { submit, error: submitError } = useSetPassword(
     inviteToken,
-    rememberMe
+    rememberMe,
+    inviteType,
   );
 
   const {
