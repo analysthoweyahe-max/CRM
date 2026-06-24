@@ -1,16 +1,49 @@
 import { Briefcase, Clock, Wallet, CalendarDays } from 'lucide-react';
-import type { Employee } from '../../data/employeeData';
+import type { ApiEmployee } from '../../types/employee.types';
+import { mapEmploymentType } from '../../types/employee.types';
 
-interface Props { emp: Employee; isAr: boolean }
+interface Props { emp: ApiEmployee; isAr: boolean }
 
 export function EmployeeDetailEmployment({ emp, isAr }: Props) {
+  const requiredHours = emp.shiftStart && emp.shiftEnd
+    ? calcHours(emp.shiftStart, emp.shiftEnd)
+    : null;
+
   const fields = [
-    { icon: <Briefcase size={16} />,    label: isAr ? 'نوع التوظيف'          : 'Employment Type',  value: isAr ? 'دوام كامل'       : 'Full Time'  },
-    { icon: <Clock size={16} />,        label: isAr ? 'وقت بدء الدوام'        : 'Start Time',       value: '09:00'                                  },
-    { icon: <Clock size={16} />,        label: isAr ? 'وقت انتهاء الدوام'     : 'End Time',         value: '17:00'                                  },
-    { icon: <Clock size={16} />,        label: isAr ? 'ساعات العمل المطلوبة' : 'Required Hours',   value: isAr ? '8 ساعات'         : '8 Hours'     },
-    { icon: <Wallet size={16} />,       label: isAr ? 'الراتب الأساسي'        : 'Base Salary',      value: '18,000 ج.م'                             },
-    { icon: <CalendarDays size={16} />, label: isAr ? 'تاريخ الانضمام'        : 'Hire Date',        value: emp.hireDate                             },
+    {
+      icon:  <Briefcase size={16} />,
+      label: isAr ? 'نوع التوظيف'          : 'Employment Type',
+      value: mapEmploymentType(emp.employmentType, isAr),
+    },
+    {
+      icon:  <Clock size={16} />,
+      label: isAr ? 'وقت بدء الدوام'        : 'Start Time',
+      value: emp.shiftStart ?? '–',
+    },
+    {
+      icon:  <Clock size={16} />,
+      label: isAr ? 'وقت انتهاء الدوام'     : 'End Time',
+      value: emp.shiftEnd ?? '–',
+    },
+    {
+      icon:  <Clock size={16} />,
+      label: isAr ? 'ساعات العمل المطلوبة' : 'Required Hours',
+      value: requiredHours != null
+        ? `${requiredHours} ${isAr ? 'ساعات' : 'hours'}`
+        : '–',
+    },
+    {
+      icon:  <Wallet size={16} />,
+      label: isAr ? 'الراتب الأساسي'        : 'Base Salary',
+      value: emp.salary != null
+        ? `${emp.salary.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`
+        : '–',
+    },
+    {
+      icon:  <CalendarDays size={16} />,
+      label: isAr ? 'تاريخ الانضمام'        : 'Hire Date',
+      value: emp.joiningDate ?? '–',
+    },
   ];
 
   return (
@@ -36,4 +69,10 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
       </div>
     </div>
   );
+}
+
+function calcHours(start: string, end: string): number {
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  return Math.round((eh * 60 + em - (sh * 60 + sm)) / 60);
 }

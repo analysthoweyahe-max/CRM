@@ -6,10 +6,12 @@ import {
   Hash, User, SquarePen, MessageSquare,
 } from 'lucide-react';
 
-import { useLang }       from '@/app/providers/LanguageProvider';
-import { ROUTES }        from '@/app/router/routes';
-import { EMPLOYEES, STATUS_STYLES } from '../data/employeeData';
-import { Button }        from '@/shared/components/ui/Button';
+import { useLang }    from '@/app/providers/LanguageProvider';
+import { ROUTES }     from '@/app/router/routes';
+import { Button }     from '@/shared/components/ui/Button';
+import { STATUS_STYLES } from '../data/employeeData';
+import { getAvatarColor, getInitial, mapEmploymentType } from '../types/employee.types';
+import { useEmployee } from '../hooks/useEmployee';
 import { EmployeeDetailEmployment } from '../components/detail/EmployeeDetailEmployment';
 import { EmployeeDetailPayroll }    from '../components/detail/EmployeeDetailPayroll';
 import { EmployeeDetailAttendance } from '../components/detail/EmployeeDetailAttendance';
@@ -22,16 +24,26 @@ const TABS_EN = ['Overview', 'Employment', 'Payroll', 'Attendance', 'Leaves'];
 const TAB_KEYS: Tab[] = ['summary', 'employment', 'payroll', 'attendance', 'leaves'];
 
 export function EmployeeDetailPage() {
-  const { id }       = useParams<{ id: string }>();
-  const { lang }     = useLang();
-  const navigate     = useNavigate();
-  const isAr         = lang === 'ar';
+  const { id }    = useParams<{ id: string }>();
+  const { lang }  = useLang();
+  const navigate  = useNavigate();
+  const isAr      = lang === 'ar';
 
   const [activeTab, setActiveTab] = useState<Tab>('summary');
 
-  const emp = EMPLOYEES.find((e) => e.id === id);
+  const { data: emp, isLoading, isError } = useEmployee(id);
 
-  if (!emp) {
+  const BackIcon = isAr ? ArrowRight : ArrowLeft;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
+        {isAr ? 'جاري التحميل...' : 'Loading...'}
+      </div>
+    );
+  }
+
+  if (isError || !emp) {
     return (
       <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
         {isAr ? 'الموظف غير موجود' : 'Employee not found'}
@@ -39,25 +51,17 @@ export function EmployeeDetailPage() {
     );
   }
 
-  const name    = isAr ? emp.name       : emp.nameEn;
-  const dept    = isAr ? emp.department : emp.deptEn;
-  const title   = isAr ? emp.jobTitle   : emp.jobTitleEn;
-  const st      = STATUS_STYLES[emp.status];
-
-  const manager =
-    emp.id === 'EMP-001'
-      ? (isAr ? 'غير محدد' : 'N/A')
-      : (isAr ? 'حسن الخطيب' : 'Hassan Al-Khatib');
+  const st = STATUS_STYLES[emp.status] ?? STATUS_STYLES.pending;
 
   const infoFields = [
-    { label: isAr ? 'الاسم الكامل'      : 'Full Name',       icon: <User size={15} />,          value: name        },
-    { label: isAr ? 'رقم الهاتف'        : 'Phone',           icon: <Phone size={15} />,         value: emp.phone   },
-    { label: isAr ? 'البريد الإلكتروني' : 'Email',           icon: <Mail size={15} />,          value: emp.email   },
-    { label: isAr ? 'القسم'              : 'Department',      icon: <Building2 size={15} />,     value: dept        },
-    { label: isAr ? 'المسمى الوظيفي'    : 'Job Title',       icon: <Briefcase size={15} />,     value: title       },
-    { label: isAr ? 'المدير المباشر'    : 'Direct Manager',  icon: <User size={15} />,          value: manager     },
-    { label: isAr ? 'معرف الموظف'       : 'Employee ID',     icon: <Hash size={15} />,          value: emp.id      },
-    { label: isAr ? 'تاريخ الانضمام'    : 'Hire Date',       icon: <CalendarDays size={15} />,  value: emp.hireDate },
+    { label: isAr ? 'الاسم الكامل'      : 'Full Name',       icon: <User size={15} />,         value: emp.name                          },
+    { label: isAr ? 'رقم الهاتف'        : 'Phone',           icon: <Phone size={15} />,        value: emp.phone ?? '–'                  },
+    { label: isAr ? 'البريد الإلكتروني' : 'Email',           icon: <Mail size={15} />,         value: emp.email                         },
+    { label: isAr ? 'القسم'             : 'Department',      icon: <Building2 size={15} />,    value: emp.department?.name ?? '–'       },
+    { label: isAr ? 'المسمى الوظيفي'   : 'Job Title',       icon: <Briefcase size={15} />,    value: emp.jobTitle?.name ?? '–'         },
+    { label: isAr ? 'المدير المباشر'   : 'Direct Manager',  icon: <User size={15} />,         value: emp.manager?.name ?? (isAr ? 'غير محدد' : 'N/A') },
+    { label: isAr ? 'معرف الموظف'      : 'Employee ID',     icon: <Hash size={15} />,         value: emp.employeeNumber ?? emp.id       },
+    { label: isAr ? 'تاريخ الانضمام'   : 'Hire Date',       icon: <CalendarDays size={15} />, value: emp.joiningDate ?? '–'            },
   ];
 
   const leaveAnnual    = 21;
@@ -65,15 +69,11 @@ export function EmployeeDetailPage() {
   const leaveRemaining = leaveAnnual - leaveUsed;
   const usedPct        = Math.round((leaveUsed / leaveAnnual) * 100);
 
-  const BackIcon = isAr ? ArrowRight : ArrowLeft;
-
   return (
     <div className="space-y-5">
 
       {/* ── Page header ─────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-
-        {/* Title + back */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(ROUTES.EMPLOYEES.LIST)}
@@ -87,7 +87,6 @@ export function EmployeeDetailPage() {
           </h1>
         </div>
 
-        {/* Action buttons */}
         <div className="flex items-center gap-2">
           <Button variant="secondary" startIcon={<MessageSquare size={15} />}>
             {isAr ? 'مراسلة' : 'Message'}
@@ -102,25 +101,20 @@ export function EmployeeDetailPage() {
       </div>
 
       {/* ── Banner card ─────────────────────────────────── */}
-      <div
-        className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700
-                   bg-white dark:bg-gray-800 shadow-sm"
-      >
+      <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700
+                      bg-white dark:bg-gray-800 shadow-sm">
         {/* Green gradient banner */}
-        <div
-          className="h-28"
-          style={{ background: 'linear-gradient(135deg, #A0CD39 0%, #709028 100%)' }}
-        />
+        <div className="h-28" style={{ background: 'linear-gradient(135deg, #A0CD39 0%, #709028 100%)' }} />
 
         {/* Avatar + info */}
         <div className="px-6 pb-0">
           <div className="-mt-8 mb-4">
             <div
-              className={`w-16 h-16 rounded-full ${emp.avatarBg}
+              className={`w-16 h-16 rounded-full ${getAvatarColor(emp.name)}
                           border-4 border-white dark:border-gray-800
                           flex items-center justify-center`}
             >
-              <span className="text-xl font-bold text-white">{emp.initial}</span>
+              <span className="text-xl font-bold text-white">{getInitial(emp.name)}</span>
             </div>
           </div>
 
@@ -128,7 +122,7 @@ export function EmployeeDetailPage() {
             {/* Name + status */}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{name}</h2>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{emp.name}</h2>
                 <span
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
                   style={{ background: st.bg, color: st.text }}
@@ -138,7 +132,7 @@ export function EmployeeDetailPage() {
                 </span>
               </div>
               <p className="text-sm mt-0.5 text-gray-500 dark:text-gray-400">
-                {title} · {dept}
+                {emp.jobTitle?.name ?? '–'} · {emp.department?.name ?? '–'}
               </p>
             </div>
 
@@ -146,7 +140,7 @@ export function EmployeeDetailPage() {
             <div className="flex items-center gap-5 text-sm">
               <div className="text-center">
                 <p className="font-bold text-gray-800 dark:text-gray-100">
-                  {isAr ? 'دوام كامل' : 'Full Time'}
+                  {mapEmploymentType(emp.employmentType, isAr)}
                 </p>
                 <p className="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
                   {isAr ? 'نوع التوظيف' : 'Employment Type'}

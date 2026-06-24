@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User, Mail, Phone, CalendarDays, Wallet, Clock, Info } from 'lucide-react';
@@ -8,9 +9,10 @@ import { Combobox }  from '@/shared/components/form/Combobox';
 import { NavButtons } from './StepWizard';
 import {
   makeAllDataSchema,
-  DEPARTMENTS, JOB_TITLES, MANAGERS, JOB_TYPES, CURRENCIES,
+  MANAGERS, JOB_TYPES, CURRENCIES,
   type AllDataValues,
 } from './newEmployeeForm.types';
+import { useDepartments, useJobTitles } from '../../hooks/useLookups';
 
 interface Step1Props {
   isAr:           boolean;
@@ -22,14 +24,35 @@ interface Step1Props {
 
 export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: Step1Props) {
   const {
-    register, control, handleSubmit, watch,
+    register, control, handleSubmit, watch, setValue,
     formState: { errors, isSubmitting },
   } = useForm<AllDataValues>({
     resolver: (v, c, o) => zodResolver(makeAllDataSchema(isAr))(v, c, o),
     defaultValues: { managerId: 'none', startTime: '09:00', endTime: '17:00', currency: 'EGP', ...defaultValues },
   });
 
-  const jobType = watch('jobType');
+  const selectedDept = watch('department');
+  const jobType      = watch('jobType');
+
+  // Reset job title when department changes
+  useEffect(() => {
+    setValue('jobTitle', '');
+  }, [selectedDept, setValue]);
+
+  // Lookups from API
+  const { data: departments = [], isLoading: deptsLoading } = useDepartments();
+  const { data: jobTitles   = [], isLoading: titlesLoading } = useJobTitles(selectedDept || undefined);
+
+  const deptItems  = departments.map((d) => ({
+    id:    String(d.id),
+    label: isAr ? (d.nameAr || d.name) : d.name,
+  }));
+
+  const titleItems = jobTitles.map((t) => ({
+    id:    String(t.id),
+    label: isAr ? (t.nameAr || t.name) : t.name,
+  }));
+
   const salaryLabel = jobType === 'part-time'
     ? (isAr ? 'الراتب بالساعة (ج.م)'     : 'Hourly Rate (EGP)')
     : jobType === 'freelance'
@@ -68,22 +91,35 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
 
             <FormField label={isAr ? 'القسم' : 'Department'} required error={errors.department?.message}>
               <Controller name="department" control={control} render={({ field }) => (
-                <Combobox items={DEPARTMENTS} value={field.value ?? ''} onChange={field.onChange}
+                <Combobox
+                  items={deptItems}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
                   error={!!errors.department}
-                  placeholder={isAr ? 'اختر قسم' : 'Select department'}
+                  placeholder={deptsLoading
+                    ? (isAr ? 'جاري التحميل...' : 'Loading...')
+                    : (isAr ? 'اختر قسم' : 'Select department')}
                   searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
                   noResultsText={isAr ? 'لا نتائج' : 'No results'} />
               )} />
             </FormField>
-
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <FormField label={isAr ? 'المسمى الوظيفي' : 'Job Title'} required error={errors.jobTitle?.message}>
               <Controller name="jobTitle" control={control} render={({ field }) => (
-                <Combobox items={JOB_TITLES} value={field.value ?? ''} onChange={field.onChange}
+                <Combobox
+                  items={titleItems}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
                   error={!!errors.jobTitle}
-                  placeholder={isAr ? 'اختر المسمى' : 'Select title'}
+                  placeholder={
+                    !selectedDept
+                      ? (isAr ? 'اختر القسم أولاً' : 'Select department first')
+                      : titlesLoading
+                      ? (isAr ? 'جاري التحميل...' : 'Loading...')
+                      : (isAr ? 'اختر المسمى' : 'Select title')
+                  }
                   searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
                   noResultsText={isAr ? 'لا نتائج' : 'No results'} />
               )} />

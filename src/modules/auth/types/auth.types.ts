@@ -49,8 +49,10 @@ export interface ApiAdmin {
   id:          string;
   name:        string;
   email:       string;
-  role:        string;   // 'super-admin' | 'hr-manager' | ...
+  roles:       string[];   // e.g. ['super-admin'] | ['hr-manager']
   avatar_url?: string;
+  phone?:      string | null;
+  status?:     string;
 }
 
 export interface ApiEmployee {

@@ -58,8 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, { user: null, isLoading: true });
 
   useEffect(() => {
-    const token = authService.getStoredToken();
-    const user  = token ? authService.decodeUser(token) : null;
+    const user = authService.getStoredUser();
     dispatch({ type: 'INIT', payload: user });
   }, []);
 

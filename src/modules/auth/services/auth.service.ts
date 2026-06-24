@@ -15,8 +15,9 @@ function isEmail(value: string): boolean {
   return EMAIL_RE.test(value);
 }
 
-function mapAdminRole(apiRole: string): Role {
-  if (apiRole === 'hr-manager') return 'hr';
+function mapAdminRole(roles: string[]): Role {
+  if (roles.includes('hr-manager')) return 'hr';
+  if (roles.includes('manager'))    return 'manager';
   return 'admin';
 }
 
@@ -73,7 +74,7 @@ async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> 
       id:         admin.id,
       employeeId: admin.id,
       fullName:   admin.name,
-      role:       mapAdminRole(admin.role),
+      role:       mapAdminRole(admin.roles ?? []),
       avatarUrl:  admin.avatar_url,
     };
     storeAuth(accessToken, user, rememberMe);
@@ -92,7 +93,7 @@ async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginRespon
       id:         admin.id,
       employeeId: admin.id,
       fullName:   admin.name,
-      role:       mapAdminRole(admin.role),
+      role:       mapAdminRole(admin.roles ?? []),
       avatarUrl:  admin.avatar_url,
     };
     storeAuth(accessToken, user, rememberMe);

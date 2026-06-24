@@ -10,6 +10,7 @@ import { Button }     from '@/shared/components/ui/Button';
 import { StepIndicator }  from '../components/NewEmployeeForm/StepWizard';
 import { Step1BasicData } from '../components/NewEmployeeForm/Step1BasicData';
 import { Step2Review }    from '../components/NewEmployeeForm/Steps3to5';
+import { useCreateEmployee } from '../hooks/useCreateEmployee';
 import type { AllFormData } from '../components/NewEmployeeForm/newEmployeeForm.types';
 
 export function NewEmployeePage() {
@@ -21,15 +22,34 @@ export function NewEmployeePage() {
   const [step, setStep]         = useState(1);
   const [formData, setFormData] = useState<AllFormData>({});
 
+  const { mutateAsync } = useCreateEmployee();
+
   async function handleFinalSubmit() {
-    await new Promise((r) => setTimeout(r, 800));
-    console.log('New employee payload:', formData);
-    toast.success(
-      isAr
-        ? 'تم إنشاء حساب الموظف وإرسال دعوة التفعيل'
-        : 'Employee account created and activation invite sent',
-    );
-    navigate(ROUTES.EMPLOYEES.LIST);
+    try {
+      await mutateAsync(formData);
+      toast.success(
+        isAr
+          ? 'تم إنشاء حساب الموظف وإرسال دعوة التفعيل'
+          : 'Employee account created and activation invite sent',
+      );
+      navigate(ROUTES.EMPLOYEES.LIST);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
+      const serverMsg = axiosErr?.response?.data?.message;
+      const fieldErrors = axiosErr?.response?.data?.errors;
+
+      // Log full details for debugging
+      console.error('Create employee error:', axiosErr?.response?.data ?? err);
+
+      if (fieldErrors) {
+        // Show each field error as a separate toast
+        Object.entries(fieldErrors).forEach(([field, msgs]) => {
+          toast.error(`${field}: ${msgs.join(', ')}`);
+        });
+      } else {
+        toast.error(serverMsg ?? (isAr ? 'حدث خطأ أثناء الإنشاء، حاول مرة أخرى' : 'Failed to create employee'));
+      }
+    }
   }
 
   return (
