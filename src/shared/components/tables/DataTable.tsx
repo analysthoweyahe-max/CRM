@@ -12,30 +12,58 @@ interface SearchConfig {
   placeholder: string;
 }
 
+export interface ServerPagination {
+  page:     number;
+  lastPage: number;
+  total:    number;
+  firstRow: number;
+  lastRow:  number;
+  onPrev:   () => void;
+  onNext:   () => void;
+  onPage:   (i: number) => void;
+}
+
 interface DataTableProps<TData> {
-  table:      Table<TData>;
-  isAr?:      boolean;
-  search?:    SearchConfig;
-  filters?:   FilterConfig[];
-  emptyText?: string;
+  table:             Table<TData>;
+  isAr?:             boolean;
+  search?:           SearchConfig;
+  filters?:          FilterConfig[];
+  emptyText?:        string;
+  isLoading?:        boolean;
+  serverPagination?: ServerPagination;
+  withCard?:         boolean;
 }
 
 export function DataTable<TData>({
   table,
-  isAr      = false,
+  isAr             = false,
   search,
   filters,
   emptyText,
+  isLoading        = false,
+  serverPagination,
+  withCard         = true,
 }: DataTableProps<TData>) {
-  const { pageIndex, pageSize } = table.getState().pagination;
-  const totalRows = table.getFilteredRowModel().rows.length;
-  const firstRow  = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
-  const lastRow   = Math.min((pageIndex + 1) * pageSize, totalRows);
-  const colCount  = table.getVisibleLeafColumns().length;
+  const colCount = table.getVisibleLeafColumns().length;
 
-  return (
-    <Card overflow>
-      {(search || filters?.length) && (
+  const clientPageIndex = table.getState().pagination.pageIndex;
+  const clientPageSize  = table.getState().pagination.pageSize;
+  const clientTotal     = table.getFilteredRowModel().rows.length;
+
+  const pageIndex  = serverPagination ? serverPagination.page - 1                          : clientPageIndex;
+  const totalRows  = serverPagination ? serverPagination.total                             : clientTotal;
+  const firstRow   = serverPagination ? serverPagination.firstRow                         : (clientTotal === 0 ? 0 : clientPageIndex * clientPageSize + 1);
+  const lastRow    = serverPagination ? serverPagination.lastRow                           : Math.min((clientPageIndex + 1) * clientPageSize, clientTotal);
+  const pageCount  = serverPagination ? serverPagination.lastPage                         : table.getPageCount();
+  const canPrev    = serverPagination ? serverPagination.page > 1                         : table.getCanPreviousPage();
+  const canNext    = serverPagination ? serverPagination.page < serverPagination.lastPage  : table.getCanNextPage();
+  const handlePrev = serverPagination ? serverPagination.onPrev : () => table.previousPage();
+  const handleNext = serverPagination ? serverPagination.onNext : () => table.nextPage();
+  const handlePage = serverPagination ? serverPagination.onPage : (i: number) => table.setPageIndex(i);
+
+  const inner = (
+    <>
+      {(search || (filters && filters.length > 0)) && (
         <FilterBar search={search} filters={filters} />
       )}
 
@@ -74,7 +102,13 @@ export function DataTable<TData>({
           </thead>
 
           <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-            {table.getRowModel().rows.length === 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={colCount} className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+                  {isAr ? 'جاري التحميل...' : 'Loading...'}
+                </td>
+              </tr>
+            ) : table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td colSpan={colCount} className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                   {emptyText ?? (isAr ? 'لا توجد نتائج' : 'No results found')}
@@ -97,17 +131,20 @@ export function DataTable<TData>({
 
       <TablePagination
         pageIndex={pageIndex}
-        pageCount={table.getPageCount()}
+        pageCount={pageCount}
         totalRows={totalRows}
         firstRow={firstRow}
         lastRow={lastRow}
-        canPrev={table.getCanPreviousPage()}
-        canNext={table.getCanNextPage()}
-        onPrev={() => table.previousPage()}
-        onNext={() => table.nextPage()}
-        onPage={(i) => table.setPageIndex(i)}
+        canPrev={canPrev}
+        canNext={canNext}
+        onPrev={handlePrev}
+        onNext={handleNext}
+        onPage={handlePage}
         isAr={isAr}
       />
-    </Card>
+    </>
   );
+
+  if (!withCard) return inner;
+  return <Card overflow>{inner}</Card>;
 }
