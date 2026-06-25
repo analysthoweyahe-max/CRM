@@ -42,6 +42,9 @@ function formDefaults(emp: EditEmployeeModalProps['emp']): FormValues {
 export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeModalProps) {
   const queryClient = useQueryClient();
 
+  // Onboarding step 5 = submitted — step-specific POST endpoints are locked by the API
+  const onboardingLocked = (emp.onboardingStep ?? 0) >= 5;
+
   const { register, control, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: formDefaults(emp),
   });
@@ -65,30 +68,24 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
 
   const mutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      const calls: Promise<unknown>[] = [];
+      if (onboardingLocked) return;
 
-      calls.push(
-        employeeApi.update(emp.id, {
-          name:          data.fullName,
-          email:         data.email,
-          phone:         data.phone,
-          department_id: data.department,
-          job_title_id:  data.jobTitle,
-          manager_id:    data.managerId === 'none' ? null : data.managerId,
-        }).catch(() => {}),
-      );
+      const log = (label: string) => (e: unknown) =>
+        console.warn(`[EditEmployee] ${label} failed:`, (e as any)?.response?.data);
+
+      const calls: Promise<unknown>[] = [];
 
       if (data.employmentType !== apiTypeToForm(emp.employmentType)) {
         calls.push(
           employeeApi.updateEmploymentType(emp.id, {
             employment_type: mapJobType(data.employmentType),
-          }).catch(() => {}),
+          }).catch(log('employment-type')),
         );
       }
 
       const salary = parseFloat(data.salary);
       if (salary > 0 && salary !== (emp.salary ?? 0)) {
-        calls.push(employeeApi.updateSalary(emp.id, { salary }).catch(() => {}));
+        calls.push(employeeApi.updateSalary(emp.id, { salary }).catch(log('salary')));
       }
 
       if (
@@ -100,7 +97,7 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
           employeeApi.updateWorkSchedule(emp.id, {
             shift_start: data.shiftStart,
             shift_end:   data.shiftEnd,
-          }).catch(() => {}),
+          }).catch(log('work-schedule')),
         );
       }
 
@@ -125,6 +122,7 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
     control,
     handleSubmit,
     mutation,
+    onboardingLocked,
     deptItems,
     jTitleItems,
     empTypeItems,

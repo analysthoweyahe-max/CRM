@@ -14,6 +14,7 @@ const WORK_STATUS_MAP: Record<WorkStatus, { ar: string; en: string; dot: string 
   working:     { ar: 'يعمل الآن',    en: 'Working Now', dot: 'bg-emerald-500' },
   done:        { ar: 'انتهى الدوام', en: 'Done',        dot: 'bg-blue-400'   },
   not_started: { ar: 'لم يبدأ',      en: 'Not Started', dot: 'bg-gray-300 dark:bg-gray-600' },
+  offline:     { ar: 'غير متصل',     en: 'Offline',     dot: 'bg-gray-400 dark:bg-gray-500' },
 };
 
 export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>[] {
@@ -81,6 +82,7 @@ export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>
       header: isAr ? 'حالة اليوم' : 'Status',
       cell: ({ getValue }) => {
         const s = DAY_STATUS_MAP[getValue<DayStatus>()];
+        if (!s) return <span className="text-sm text-gray-400">—</span>;
         return <Badge label={isAr ? s.ar : s.en} variant={s.variant} />;
       },
     },
@@ -90,6 +92,7 @@ export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>
       enableSorting: false,
       cell: ({ getValue }) => {
         const s = WORK_STATUS_MAP[getValue<WorkStatus>()];
+        if (!s) return <span className="text-sm text-gray-400">—</span>;
         return (
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />

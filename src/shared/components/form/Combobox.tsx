@@ -14,6 +14,7 @@ interface ComboboxProps {
   value:              string;
   onChange:           (id: string) => void;
   error?:             boolean;
+  disabled?:          boolean;
   placeholder?:       string;
   searchPlaceholder?: string;
   noResultsText?:     string;
@@ -24,6 +25,7 @@ export function Combobox({
   value,
   onChange,
   error,
+  disabled          = false,
   placeholder       = 'Select…',
   searchPlaceholder = 'Search…',
   noResultsText     = 'No results',
@@ -59,8 +61,9 @@ export function Combobox({
       {/* Trigger */}
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={`${inputCls(!!error)} flex items-center justify-between gap-2 cursor-pointer text-start`}
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((o) => !o)}
+        className={`${inputCls(!!error)} flex items-center justify-between gap-2 text-start ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         {selected ? (
           <span className="truncate text-gray-800 dark:text-gray-200">

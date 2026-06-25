@@ -29,8 +29,8 @@ export function NewEmployeePage() {
       await mutateAsync(formData);
       toast.success(
         isAr
-          ? 'تم إنشاء حساب الموظف وإرسال دعوة التفعيل'
-          : 'Employee account created and activation invite sent',
+          ? 'تم إنشاء حساب الموظف بنجاح'
+          : 'Employee account created successfully',
       );
       navigate(ROUTES.EMPLOYEES.LIST);
     } catch (err: unknown) {

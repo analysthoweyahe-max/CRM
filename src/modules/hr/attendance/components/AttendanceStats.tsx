@@ -1,7 +1,7 @@
 ﻿import { UserCheck, Users, Clock, UserX } from 'lucide-react';
 import { type ReactElement } from 'react';
 import { Card } from '@/shared/components/ui/Card';
-import type { AttendanceRecord } from '@/modules/hr/attendance/types/attendance.types';
+import type { DailyAttendanceSummary } from '@/modules/hr/attendance/types/attendance.types';
 
 interface StatItemProps {
   icon:       ReactElement;
@@ -45,17 +45,17 @@ function StatItem({ icon, iconBg, value, label, isActive, onClick }: StatItemPro
 }
 
 interface AttendanceStatsProps {
-  records:    AttendanceRecord[];
+  summary:    DailyAttendanceSummary | null | undefined;
   isAr:       boolean;
   activeCard: string | null;
   onFilter:   (key: string | null) => void;
 }
 
-export function AttendanceStats({ records, isAr, activeCard, onFilter }: AttendanceStatsProps) {
-  const checkedIn   = records.filter((r) => r.checkIn !== null).length;
-  const workingNow  = records.filter((r) => r.workStatus === 'working').length;
-  const lateCount   = records.filter((r) => r.dayStatus === 'late').length;
-  const absentCount = records.filter((r) => r.dayStatus === 'absent').length;
+export function AttendanceStats({ summary, isAr, activeCard, onFilter }: AttendanceStatsProps) {
+  const checkedIn   = summary?.checkedIn        ?? 0;
+  const workingNow  = summary?.currentlyWorking ?? 0;
+  const lateCount   = summary?.lateArrivals     ?? 0;
+  const absentCount = summary?.absentToday      ?? 0;
 
   const toggle = (key: string) => onFilter(activeCard === key ? null : key);
 

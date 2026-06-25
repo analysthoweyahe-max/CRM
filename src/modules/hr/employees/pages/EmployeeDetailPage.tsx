@@ -248,7 +248,7 @@ export function EmployeeDetailPage() {
 
       {activeTab === 'employment' && <EmployeeDetailEmployment emp={emp} isAr={isAr} />}
       {activeTab === 'payroll'    && <EmployeeDetailPayroll    isAr={isAr} />}
-      {activeTab === 'attendance' && <EmployeeDetailAttendance isAr={isAr} />}
+      {activeTab === 'attendance' && <EmployeeDetailAttendance employeeId={emp.id} isAr={isAr} />}
       {activeTab === 'leaves'     && <EmployeeDetailLeaves     isAr={isAr} />}
 
       <EditEmployeeModal

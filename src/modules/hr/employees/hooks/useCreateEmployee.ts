@@ -9,11 +9,6 @@ function mapJobType(jt: string): EmploymentType {
   return 'full_time';
 }
 
-function isAlreadySentError(err: unknown): boolean {
-  const status: number = (err as any)?.response?.status ?? 0;
-  const msg: string    = (err as any)?.response?.data?.message ?? '';
-  return status === 422 && msg.toLowerCase().includes('already');
-}
 
 export function useCreateEmployee() {
   const queryClient = useQueryClient();
@@ -56,17 +51,19 @@ export function useCreateEmployee() {
         });
       }
 
-      // 5. Submit / send invite — skip if already submitted
-      if (step < 5) {
-        try {
-          await employeeApi.submit(id);
-        } catch (err) {
-          // "invitation already sent" means employee is already finalised — treat as success
-          if (!isAlreadySentError(err)) throw err;
-        }
-      }
+      // Cache the completed employee so the detail page works immediately
+      // (the backend has no GET /employees/:id endpoint)
+      const finalEmp = {
+        ...emp,
+        employmentType: mapJobType(d.jobType),
+        salary:         d.salary,
+        shiftStart:     d.startTime,
+        shiftEnd:       d.endTime,
+        onboardingStep: 4,
+      };
+      queryClient.setQueryData(['employee', id], finalEmp);
 
-      return emp;
+      return finalEmp;
     },
 
     onSuccess: () => {

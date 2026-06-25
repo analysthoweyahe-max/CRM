@@ -1,6 +1,7 @@
 export type DayStatus  = 'present' | 'late' | 'absent' | 'leave';
-export type WorkStatus = 'working' | 'done' | 'not_started';
+export type WorkStatus = 'working' | 'done' | 'not_started' | 'offline';
 
+/* ── Frontend display record (used by table + stats) ── */
 export interface AttendanceRecord {
   id:          string;
   employeeId:  string;
@@ -13,4 +14,85 @@ export interface AttendanceRecord {
   workedHours: number | null;
   dayStatus:   DayStatus;
   workStatus:  WorkStatus;
+}
+
+/* ── API: daily attendance (/v1/hr/attendance/daily) ── */
+export interface ApiDailyRecord {
+  employeeId:      string;
+  employeeNumber:  string;
+  employeeName:    string;
+  department:      string;
+  departmentId:    number;
+  checkInTime:     string | null;
+  checkOutTime:    string | null;
+  workingHours:    number | null;
+  dayStatus:       DayStatus;
+  dayStatusLabel:  string;
+  workStatus:      WorkStatus;
+  workStatusLabel: string;
+}
+
+export interface DailyAttendanceSummary {
+  checkedIn:        number;
+  currentlyWorking: number;
+  lateArrivals:     number;
+  absentToday:      number;
+}
+
+export interface DailyAttendanceResponse {
+  status:  string;
+  message: string;
+  data: {
+    date:         string;
+    summary:      DailyAttendanceSummary;
+    data:         ApiDailyRecord[];
+    current_page: number;
+    last_page:    number;
+    total:        number;
+  };
+}
+
+export interface DailyAttendanceParams {
+  search?:        string;
+  department_id?: string | number;
+  day_status?:    DayStatus | '';
+  work_status?:   WorkStatus | '';
+  per_page?:      number;
+  page?:          number;
+}
+
+/* ── API: employee attendance record ── */
+export interface ApiEmployeeAttendanceRecord {
+  id:           string | number;
+  date:         string;
+  check_in:     string | null;
+  check_out:    string | null;
+  worked_hours: number | null;
+  day_status:   DayStatus;
+}
+
+export interface AttendanceRecentResponse {
+  status:  string;
+  message: string;
+  data:    ApiEmployeeAttendanceRecord[];
+}
+
+export interface AttendanceHistoryResponse {
+  status:  string;
+  message: string;
+  data: {
+    data:         ApiEmployeeAttendanceRecord[];
+    current_page: number;
+    last_page:    number;
+    total:        number;
+    per_page:     number;
+  };
+}
+
+export interface AttendanceHistoryParams {
+  month?:     string;
+  date_from?: string;
+  date_to?:   string;
+  per_page?:  number;
+  page?:      number;
 }

@@ -35,7 +35,7 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
   const { open, onClose, emp, isAr } = props;
 
   const {
-    register, control, handleSubmit, mutation,
+    register, control, handleSubmit, mutation, onboardingLocked,
     deptItems, jTitleItems, empTypeItems, managerItems, cbProps,
   } = useEditEmployeeModal(props);
 
@@ -51,12 +51,14 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
           <Button variant="secondary" onClick={onClose}>
             {isAr ? 'إلغاء' : 'Cancel'}
           </Button>
-          <Button
-            isLoading={mutation.isPending}
-            onClick={handleSubmit((d) => mutation.mutate(d))}
-          >
-            {isAr ? 'حفظ التعديلات' : 'Save Changes'}
-          </Button>
+          {!onboardingLocked && (
+            <Button
+              isLoading={mutation.isPending}
+              onClick={handleSubmit((d) => mutation.mutate(d))}
+            >
+              {isAr ? 'حفظ التعديلات' : 'Save Changes'}
+            </Button>
+          )}
         </>
       }
     >
@@ -64,68 +66,81 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
 
         {/* ── Basic info ──────────────────────────────── */}
         <FormField label={isAr ? 'الاسم الكامل' : 'Full Name'} required icon={<User size={15} className="text-gray-400" />}>
-          <Input {...register('fullName')} endIcon={<User size={15} />} placeholder={isAr ? 'مثال: أحمد محمد' : 'e.g. Ahmed Mohamed'} />
+          <Input {...register('fullName')} disabled={onboardingLocked} endIcon={<User size={15} />} placeholder={isAr ? 'مثال: أحمد محمد' : 'e.g. Ahmed Mohamed'} />
         </FormField>
 
         <FormField label={isAr ? 'البريد الإلكتروني' : 'Email'} required icon={<Mail size={15} className="text-gray-400" />}>
-          <Input {...register('email')} type="email" endIcon={<Mail size={15} />} placeholder="name@company.com" />
+          <Input {...register('email')} disabled={onboardingLocked} type="email" endIcon={<Mail size={15} />} placeholder="name@company.com" />
         </FormField>
 
         <FormField label={isAr ? 'رقم الهاتف' : 'Phone'} icon={<Phone size={15} className="text-gray-400" />}>
-          <Input {...register('phone')} type="tel" dir={isAr ? 'rtl' : 'ltr'} endIcon={<Phone size={15} />} placeholder="01xxxxxxxx" />
+          <Input {...register('phone')} disabled={onboardingLocked} type="tel" dir={isAr ? 'rtl' : 'ltr'} endIcon={<Phone size={15} />} placeholder="01xxxxxxxx" />
         </FormField>
 
         <FormField label={isAr ? 'القسم' : 'Department'} icon={<Building2 size={15} className="text-gray-400" />}>
           <Controller name="department" control={control} render={({ field }) => (
-            <Combobox items={deptItems} value={field.value ?? ''} onChange={field.onChange}
+            <Combobox items={deptItems} value={field.value ?? ''} onChange={field.onChange} disabled={onboardingLocked}
               placeholder={isAr ? 'اختر القسم' : 'Select department'} {...cbProps} />
           )} />
         </FormField>
 
         <FormField label={isAr ? 'المسمى الوظيفي' : 'Job Title'} icon={<Briefcase size={15} className="text-gray-400" />}>
           <Controller name="jobTitle" control={control} render={({ field }) => (
-            <Combobox items={jTitleItems} value={field.value ?? ''} onChange={field.onChange}
+            <Combobox items={jTitleItems} value={field.value ?? ''} onChange={field.onChange} disabled={onboardingLocked}
               placeholder={isAr ? 'اختر المسمى' : 'Select job title'} {...cbProps} />
           )} />
         </FormField>
 
         <FormField label={isAr ? 'المدير المباشر' : 'Direct Manager'} icon={<User size={15} className="text-gray-400" />}>
           <Controller name="managerId" control={control} render={({ field }) => (
-            <Combobox items={managerItems} value={field.value ?? 'none'} onChange={field.onChange}
+            <Combobox items={managerItems} value={field.value ?? 'none'} onChange={field.onChange} disabled={onboardingLocked}
               placeholder={isAr ? 'بدون مدير مباشر' : 'No direct manager'} {...cbProps} />
           )} />
         </FormField>
 
-        {/* ── Step 2: Employment Type ──────────────────── */}
-        <StepDivider step={2}
-          labelAr="تحديث نوع التوظيف" labelEn="Update Employment Type" isAr={isAr} />
+        {onboardingLocked ? (
+          <div className="sm:col-span-2 flex items-center gap-2 px-3 py-2.5 rounded-lg
+                          bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-700/40 mt-1">
+            <span className="text-amber-600 dark:text-amber-400 text-xs font-medium">
+              {isAr
+                ? 'تم إتمام الـ Onboarding — لا يمكن تعديل نوع التوظيف أو الراتب أو الدوام بعد التقديم.'
+                : 'Onboarding submitted — employment type, salary and schedule cannot be changed after submission.'}
+            </span>
+          </div>
+        ) : (
+          <>
+            {/* ── Step 2: Employment Type ──────────────────── */}
+            <StepDivider step={2}
+              labelAr="تحديث نوع التوظيف" labelEn="Update Employment Type" isAr={isAr} />
 
-        <FormField label={isAr ? 'نوع التوظيف' : 'Employment Type'} icon={<Briefcase size={15} className="text-gray-400" />}>
-          <Controller name="employmentType" control={control} render={({ field }) => (
-            <Combobox items={empTypeItems} value={field.value ?? ''} onChange={field.onChange}
-              placeholder={isAr ? 'اختر نوع التوظيف' : 'Select type'} {...cbProps} />
-          )} />
-        </FormField>
+            <FormField label={isAr ? 'نوع التوظيف' : 'Employment Type'} icon={<Briefcase size={15} className="text-gray-400" />}>
+              <Controller name="employmentType" control={control} render={({ field }) => (
+                <Combobox items={empTypeItems} value={field.value ?? ''} onChange={field.onChange}
+                  placeholder={isAr ? 'اختر نوع التوظيف' : 'Select type'} {...cbProps} />
+              )} />
+            </FormField>
 
-        {/* ── Step 3: Salary ───────────────────────────── */}
-        <StepDivider step={3}
-          labelAr="تحديث الراتب" labelEn="Update Salary" optional isAr={isAr} />
+            {/* ── Step 3: Salary ───────────────────────────── */}
+            <StepDivider step={3}
+              labelAr="تحديث الراتب" labelEn="Update Salary" optional isAr={isAr} />
 
-        <FormField label={isAr ? 'الراتب الأساسي (ج.م)' : 'Basic Salary (EGP)'} icon={<DollarSign size={15} className="text-gray-400" />}>
-          <Input {...register('salary')} type="number" min={0} endIcon={<Wallet size={15} />} placeholder="0" />
-        </FormField>
+            <FormField label={isAr ? 'الراتب الأساسي (ج.م)' : 'Basic Salary (EGP)'} icon={<DollarSign size={15} className="text-gray-400" />}>
+              <Input {...register('salary')} type="number" min={0} endIcon={<Wallet size={15} />} placeholder="0" />
+            </FormField>
 
-        {/* ── Step 4: Work Schedule ────────────────────── */}
-        <StepDivider step={4}
-          labelAr="تحديث جدول الدوام" labelEn="Update Work Schedule" isAr={isAr} />
+            {/* ── Step 4: Work Schedule ────────────────────── */}
+            <StepDivider step={4}
+              labelAr="تحديث جدول الدوام" labelEn="Update Work Schedule" isAr={isAr} />
 
-        <FormField label={isAr ? 'وقت بداية الدوام' : 'Shift Start'} icon={<Clock size={15} className="text-gray-400" />}>
-          <Input {...register('shiftStart')} type="time" endIcon={<Clock size={15} />} />
-        </FormField>
+            <FormField label={isAr ? 'وقت بداية الدوام' : 'Shift Start'} icon={<Clock size={15} className="text-gray-400" />}>
+              <Input {...register('shiftStart')} type="time" endIcon={<Clock size={15} />} />
+            </FormField>
 
-        <FormField label={isAr ? 'وقت نهاية الدوام' : 'Shift End'} icon={<Clock size={15} className="text-gray-400" />}>
-          <Input {...register('shiftEnd')} type="time" endIcon={<Clock size={15} />} />
-        </FormField>
+            <FormField label={isAr ? 'وقت نهاية الدوام' : 'Shift End'} icon={<Clock size={15} className="text-gray-400" />}>
+              <Input {...register('shiftEnd')} type="time" endIcon={<Clock size={15} />} />
+            </FormField>
+          </>
+        )}
 
       </div>
     </Modal>
