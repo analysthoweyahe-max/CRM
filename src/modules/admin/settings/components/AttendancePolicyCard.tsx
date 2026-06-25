@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm }   from 'react-hook-form';
 import { Clock, Check } from 'lucide-react';
 import { toast }     from 'sonner';
@@ -5,24 +6,39 @@ import { Card }      from '@/shared/components/ui/Card';
 import { Input }     from '@/shared/components/ui/Input';
 import { Button }    from '@/shared/components/ui/Button';
 import { FormField } from '@/shared/components/form/FormField';
+import { useSettings, useUpdateSetting } from '../hooks/useSettings';
 
 interface AttendanceValues {
-  dailyHours:    number;
-  lateAllowance: number;
-  startTime:     string;
-  endTime:       string;
+  daily_hours:    number;
+  late_allowance: number;
+  start_time:     string;
+  end_time:       string;
 }
 
 export function AttendancePolicyCard({ isAr }: { isAr: boolean }) {
-  const { register, handleSubmit, formState: { isSubmitting } } =
-    useForm<AttendanceValues>({
-      defaultValues: { dailyHours: 8, lateAllowance: 15, startTime: '09:00', endTime: '17:00' },
+  const { data: settings }             = useSettings();
+  const { mutateAsync: updateSetting } = useUpdateSetting();
+
+  const { register, handleSubmit, reset, formState: { isSubmitting } } =
+    useForm<AttendanceValues>({ defaultValues: { daily_hours: 8, late_allowance: 15, start_time: '09:00', end_time: '17:00' } });
+
+  useEffect(() => {
+    if (!settings) return;
+    reset({
+      daily_hours:    Number(settings.daily_hours    ?? 8),
+      late_allowance: Number(settings.late_allowance ?? 15),
+      start_time:     String(settings.start_time     ?? '09:00'),
+      end_time:       String(settings.end_time       ?? '17:00'),
     });
+  }, [settings, reset]);
 
   async function onSubmit(data: AttendanceValues) {
-    await new Promise((r) => setTimeout(r, 500));
-    // TODO: await api.put('/settings/attendance', data)
-    console.log('attendance:', data);
+    await Promise.all([
+      updateSetting({ key: 'daily_hours',    value: data.daily_hours    }),
+      updateSetting({ key: 'late_allowance', value: data.late_allowance }),
+      updateSetting({ key: 'start_time',     value: data.start_time     }),
+      updateSetting({ key: 'end_time',       value: data.end_time       }),
+    ]);
     toast.success(isAr ? 'تم حفظ سياسة الحضور' : 'Attendance policy saved');
   }
 
@@ -40,39 +56,19 @@ export function AttendancePolicyCard({ isAr }: { isAr: boolean }) {
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormField label={isAr ? 'ساعات العمل اليومية' : 'Daily Work Hours'}>
-            <Input
-              {...register('dailyHours', { valueAsNumber: true })}
-              type="number" min={1} max={24}
-            />
+            <Input {...register('daily_hours', { valueAsNumber: true })} type="number" min={1} max={24} />
           </FormField>
 
           <FormField label={isAr ? 'سماح التأخير (دقيقة)' : 'Late Allowance (min)'}>
-            <Input
-              {...register('lateAllowance', { valueAsNumber: true })}
-              type="number" min={0}
-            />
+            <Input {...register('late_allowance', { valueAsNumber: true })} type="number" min={0} />
           </FormField>
 
-          <FormField
-            label={isAr ? 'وقت بدء الدوام' : 'Work Start Time'}
-            icon={<Clock size={15} className="text-gray-400" />}
-          >
-            <Input
-              {...register('startTime')}
-              type="time"
-              endIcon={<Clock size={15} />}
-            />
+          <FormField label={isAr ? 'وقت بدء الدوام' : 'Work Start Time'} icon={<Clock size={15} className="text-gray-400" />}>
+            <Input {...register('start_time')} type="time"  />
           </FormField>
 
-          <FormField
-            label={isAr ? 'وقت انتهاء الدوام' : 'Work End Time'}
-            icon={<Clock size={15} className="text-gray-400" />}
-          >
-            <Input
-              {...register('endTime')}
-              type="time"
-              endIcon={<Clock size={15} />}
-            />
+          <FormField label={isAr ? 'وقت انتهاء الدوام' : 'Work End Time'} icon={<Clock size={15} className="text-gray-400" />}>
+            <Input {...register('end_time')} type="time" />
           </FormField>
         </div>
 

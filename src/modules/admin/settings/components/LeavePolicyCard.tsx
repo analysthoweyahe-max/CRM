@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm }   from 'react-hook-form';
 import { Check }     from 'lucide-react';
 import { toast }     from 'sonner';
@@ -5,24 +6,39 @@ import { Card }      from '@/shared/components/ui/Card';
 import { Input }     from '@/shared/components/ui/Input';
 import { Button }    from '@/shared/components/ui/Button';
 import { FormField } from '@/shared/components/form/FormField';
+import { useSettings, useUpdateSetting } from '../hooks/useSettings';
 
 interface LeavePolicyValues {
-  annualLeave:  number;
-  sickLeave:    number;
-  maxCarryover: number;
-  notifyBefore: number;
+  annual_leave:  number;
+  sick_leave:    number;
+  max_carryover: number;
+  notify_before: number;
 }
 
 export function LeavePolicyCard({ isAr }: { isAr: boolean }) {
-  const { register, handleSubmit, formState: { isSubmitting } } =
-    useForm<LeavePolicyValues>({
-      defaultValues: { annualLeave: 15, sickLeave: 15, maxCarryover: 15, notifyBefore: 15 },
+  const { data: settings }             = useSettings();
+  const { mutateAsync: updateSetting } = useUpdateSetting();
+
+  const { register, handleSubmit, reset, formState: { isSubmitting } } =
+    useForm<LeavePolicyValues>({ defaultValues: { annual_leave: 15, sick_leave: 15, max_carryover: 15, notify_before: 1 } });
+
+  useEffect(() => {
+    if (!settings) return;
+    reset({
+      annual_leave:  Number(settings.annual_leave  ?? 15),
+      sick_leave:    Number(settings.sick_leave    ?? 15),
+      max_carryover: Number(settings.max_carryover ?? 15),
+      notify_before: Number(settings.notify_before ?? 1),
     });
+  }, [settings, reset]);
 
   async function onSubmit(data: LeavePolicyValues) {
-    await new Promise((r) => setTimeout(r, 500));
-    // TODO: await api.put('/settings/leave-policy', data)
-    console.log('leave policy:', data);
+    await Promise.all([
+      updateSetting({ key: 'annual_leave',  value: data.annual_leave  }),
+      updateSetting({ key: 'sick_leave',    value: data.sick_leave    }),
+      updateSetting({ key: 'max_carryover', value: data.max_carryover }),
+      updateSetting({ key: 'notify_before', value: data.notify_before }),
+    ]);
     toast.success(isAr ? 'تم حفظ سياسة الإجازات' : 'Leave policy saved');
   }
 
@@ -40,31 +56,19 @@ export function LeavePolicyCard({ isAr }: { isAr: boolean }) {
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormField label={isAr ? 'رصيد الإجازة السنوية' : 'Annual Leave'}>
-            <Input
-              {...register('annualLeave', { valueAsNumber: true })}
-              type="number" min={0}
-            />
+            <Input {...register('annual_leave', { valueAsNumber: true })} type="number" min={0} />
           </FormField>
 
           <FormField label={isAr ? 'رصيد الإجازة المرضية' : 'Sick Leave'}>
-            <Input
-              {...register('sickLeave', { valueAsNumber: true })}
-              type="number" min={0}
-            />
+            <Input {...register('sick_leave', { valueAsNumber: true })} type="number" min={0} />
           </FormField>
 
           <FormField label={isAr ? 'الحد الأقصى للترحيل' : 'Max Carryover'}>
-            <Input
-              {...register('maxCarryover', { valueAsNumber: true })}
-              type="number" min={0}
-            />
+            <Input {...register('max_carryover', { valueAsNumber: true })} type="number" min={0} />
           </FormField>
 
           <FormField label={isAr ? 'إشعار قبل (أيام)' : 'Notify Before (days)'}>
-            <Input
-              {...register('notifyBefore', { valueAsNumber: true })}
-              type="number" min={0}
-            />
+            <Input {...register('notify_before', { valueAsNumber: true })} type="number" min={0} />
           </FormField>
         </div>
 
