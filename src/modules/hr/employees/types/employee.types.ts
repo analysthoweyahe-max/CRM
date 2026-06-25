@@ -26,6 +26,8 @@ export interface ApiEmployee {
   salary?:             number | null;
   shiftStart?:         string | null;
   shiftEnd?:           string | null;
+  shift_start?:        string | null;
+  shift_end?:          string | null;
   onboardingStep?:     number;
   manager?:            ApiLookup | null;
 }
@@ -56,7 +58,7 @@ export interface LookupListResponse {
   data:    ApiLookup[];
 }
 
-// ── Request payload ───────────────────────────────────────────────────────────
+// ── Request payloads ──────────────────────────────────────────────────────────
 export interface CreateEmployeePayload {
   name:           string;
   email:          string;
@@ -64,6 +66,15 @@ export interface CreateEmployeePayload {
   department_id:  string;   // UUID — backend lookup returns UUIDs
   job_title_id:   string;   // UUID — backend lookup returns UUIDs
   joining_date:   string;
+  manager_id?:    string | null;
+}
+
+export interface UpdateEmployeePayload {
+  name?:          string;
+  email?:         string;
+  phone?:         string;
+  department_id?: string;
+  job_title_id?:  string;
   manager_id?:    string | null;
 }
 

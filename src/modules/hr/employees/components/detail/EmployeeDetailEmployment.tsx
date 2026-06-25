@@ -1,71 +1,133 @@
-import { Briefcase, Clock, Wallet, CalendarDays } from 'lucide-react';
+import { useState } from 'react';
+import { Briefcase, Clock, Wallet, CalendarDays, SquarePen } from 'lucide-react';
 import type { ApiEmployee } from '../../types/employee.types';
 import { mapEmploymentType } from '../../types/employee.types';
+import { EditEmploymentTypeModal } from '../edit-modals/EditEmploymentTypeModal';
+import { EditSalaryModal }         from '../edit-modals/EditSalaryModal';
+import { EditWorkScheduleModal }   from '../edit-modals/EditWorkScheduleModal';
+
+type ModalKey = 'employmentType' | 'salary' | 'workSchedule' | null;
 
 interface Props { emp: ApiEmployee; isAr: boolean }
 
 export function EmployeeDetailEmployment({ emp, isAr }: Props) {
-  const requiredHours = emp.shiftStart && emp.shiftEnd
-    ? calcHours(emp.shiftStart, emp.shiftEnd)
-    : null;
+  const [openModal, setOpenModal] = useState<ModalKey>(null);
 
-  const fields = [
-    {
-      icon:  <Briefcase size={16} />,
-      label: isAr ? 'نوع التوظيف'          : 'Employment Type',
-      value: mapEmploymentType(emp.employmentType, isAr),
-    },
-    {
-      icon:  <Clock size={16} />,
-      label: isAr ? 'وقت بدء الدوام'        : 'Start Time',
-      value: emp.shiftStart ?? '–',
-    },
-    {
-      icon:  <Clock size={16} />,
-      label: isAr ? 'وقت انتهاء الدوام'     : 'End Time',
-      value: emp.shiftEnd ?? '–',
-    },
-    {
-      icon:  <Clock size={16} />,
-      label: isAr ? 'ساعات العمل المطلوبة' : 'Required Hours',
-      value: requiredHours != null
-        ? `${requiredHours} ${isAr ? 'ساعات' : 'hours'}`
-        : '–',
-    },
-    {
-      icon:  <Wallet size={16} />,
-      label: isAr ? 'الراتب الأساسي'        : 'Base Salary',
-      value: emp.salary != null
-        ? `${emp.salary.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`
-        : '–',
-    },
-    {
-      icon:  <CalendarDays size={16} />,
-      label: isAr ? 'تاريخ الانضمام'        : 'Hire Date',
-      value: emp.joiningDate ?? '–',
-    },
-  ];
+  const startTime = emp.shiftStart ?? emp.shift_start ?? null;
+  const endTime   = emp.shiftEnd   ?? emp.shift_end   ?? null;
+  const requiredHours = startTime && endTime ? calcHours(startTime, endTime) : null;
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100
-                    dark:border-gray-700 shadow-sm p-6">
-      <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
-        {isAr ? 'تفاصيل التوظيف' : 'Employment Details'}
-      </h3>
+    <>
+      {/* ── Employment Type ───────────────────────────── */}
+      <Section
+        title={isAr ? 'نوع التوظيف' : 'Employment Type'}
+        onEdit={() => setOpenModal('employmentType')}
+      >
+        <Field icon={<Briefcase size={15} />} label={isAr ? 'نوع التوظيف' : 'Type'}>
+          {mapEmploymentType(emp.employmentType, isAr)}
+        </Field>
+      </Section>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {fields.map((f, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <div className="mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-                            bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
-              {f.icon}
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{f.label}</p>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{f.value}</p>
-            </div>
-          </div>
-        ))}
+      {/* ── Salary ───────────────────────────────────── */}
+      <Section
+        title={isAr ? 'الراتب' : 'Salary'}
+        onEdit={() => setOpenModal('salary')}
+      >
+        <Field icon={<Wallet size={15} />} label={isAr ? 'الراتب الأساسي' : 'Basic Salary'}>
+          {emp.salary != null
+            ? `${emp.salary.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`
+            : '–'}
+        </Field>
+      </Section>
+
+      {/* ── Work Schedule ─────────────────────────────── */}
+      <Section
+        title={isAr ? 'جدول الدوام' : 'Work Schedule'}
+        onEdit={() => setOpenModal('workSchedule')}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <Field icon={<Clock size={15} />} label={isAr ? 'بداية الدوام' : 'Start Time'}>
+            {startTime ?? '–'}
+          </Field>
+          <Field icon={<Clock size={15} />} label={isAr ? 'نهاية الدوام' : 'End Time'}>
+            {endTime ?? '–'}
+          </Field>
+          <Field icon={<Clock size={15} />} label={isAr ? 'ساعات العمل' : 'Hours / Day'}>
+            {requiredHours != null ? `${requiredHours} ${isAr ? 'ساعات' : 'hrs'}` : '–'}
+          </Field>
+        </div>
+      </Section>
+
+      {/* ── Hire date (read-only) ─────────────────────── */}
+      <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+        <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
+          {isAr ? 'تاريخ الانضمام' : 'Hire Date'}
+        </h3>
+        <Field icon={<CalendarDays size={15} />} label={isAr ? 'تاريخ الانضمام' : 'Joining Date'}>
+          {emp.joiningDate ?? '–'}
+        </Field>
+      </div>
+
+      {/* ── Modals ───────────────────────────────────── */}
+      <EditEmploymentTypeModal
+        open={openModal === 'employmentType'}
+        onClose={() => setOpenModal(null)}
+        employeeId={emp.id}
+        current={emp.employmentType}
+        isAr={isAr}
+      />
+      <EditSalaryModal
+        open={openModal === 'salary'}
+        onClose={() => setOpenModal(null)}
+        employeeId={emp.id}
+        current={emp.salary}
+        isAr={isAr}
+      />
+      <EditWorkScheduleModal
+        open={openModal === 'workSchedule'}
+        onClose={() => setOpenModal(null)}
+        employeeId={emp.id}
+        currentStart={emp.shiftStart}
+        currentEnd={emp.shiftEnd}
+        isAr={isAr}
+      />
+    </>
+  );
+}
+
+/* ── Helpers ───────────────────────────────────────── */
+
+function Section({
+  title, onEdit, children,
+}: { title: string; onEdit: () => void; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">{title}</h3>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE] dark:hover:bg-[#D8EBAE]/10 transition-colors"
+        >
+          <SquarePen size={15} />
+        </button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0
+                      bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{label}</p>
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{children}</p>
       </div>
     </div>
   );

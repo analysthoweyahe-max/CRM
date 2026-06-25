@@ -16,6 +16,7 @@ import { EmployeeDetailEmployment } from '../components/detail/EmployeeDetailEmp
 import { EmployeeDetailPayroll }    from '../components/detail/EmployeeDetailPayroll';
 import { EmployeeDetailAttendance } from '../components/detail/EmployeeDetailAttendance';
 import { EmployeeDetailLeaves }     from '../components/detail/EmployeeDetailLeaves';
+import { EditEmployeeModal }        from '../components/edit-modals/EditEmployeeModal';
 
 type Tab = 'summary' | 'employment' | 'payroll' | 'attendance' | 'leaves';
 
@@ -29,7 +30,8 @@ export function EmployeeDetailPage() {
   const navigate  = useNavigate();
   const isAr      = lang === 'ar';
 
-  const [activeTab, setActiveTab] = useState<Tab>('summary');
+  const [activeTab, setActiveTab]   = useState<Tab>('summary');
+  const [editOpen,  setEditOpen]    = useState(false);
 
   const { data: emp, isLoading, isError } = useEmployee(id);
 
@@ -93,7 +95,7 @@ export function EmployeeDetailPage() {
           </Button>
           <Button
             startIcon={<SquarePen size={15} />}
-            onClick={() => navigate(ROUTES.EMPLOYEES.EDIT(id!))}
+            onClick={() => setEditOpen(true)}
           >
             {isAr ? 'تعديل البيانات' : 'Edit'}
           </Button>
@@ -187,9 +189,18 @@ export function EmployeeDetailPage() {
           {/* General info */}
           <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-gray-800
                           border border-gray-100 dark:border-gray-700 shadow-sm p-6">
-            <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
-              {isAr ? 'المعلومات العامة' : 'General Information'}
-            </h3>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                {isAr ? 'المعلومات العامة' : 'General Information'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.EMPLOYEES.EDIT(id!))}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE] dark:hover:bg-[#D8EBAE]/10 transition-colors"
+              >
+                <SquarePen size={14} />
+              </button>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {infoFields.map((field, i) => (
                 <div key={i} className="flex items-start gap-3">
@@ -239,6 +250,13 @@ export function EmployeeDetailPage() {
       {activeTab === 'payroll'    && <EmployeeDetailPayroll    isAr={isAr} />}
       {activeTab === 'attendance' && <EmployeeDetailAttendance isAr={isAr} />}
       {activeTab === 'leaves'     && <EmployeeDetailLeaves     isAr={isAr} />}
+
+      <EditEmployeeModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        emp={emp}
+        isAr={isAr}
+      />
 
     </div>
   );

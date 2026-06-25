@@ -8,10 +8,16 @@ export interface ModalProps {
   description?: string;
   children?:    ReactNode;
   footer?:      ReactNode;
-  size?:        'sm' | 'md' | 'lg';
+  size?:        'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
-const SIZE_CLS = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' };
+const SIZE_CLS = {
+  sm:  'max-w-sm',
+  md:  'max-w-md',
+  lg:  'max-w-lg',
+  xl:  'max-w-xl',
+  '2xl': 'max-w-2xl',
+};
 
 export function Modal({
   open,
@@ -32,15 +38,15 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/40 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className={`relative w-full ${SIZE_CLS[size]} bg-white dark:bg-gray-800 rounded-2xl shadow-xl`}
+        className={`relative w-full ${SIZE_CLS[size]} my-auto flex flex-col max-h-[90vh] bg-white dark:bg-gray-800 rounded-2xl shadow-xl`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 p-6 pb-4">
+        {/* Header — sticky */}
+        <div className="flex items-start justify-between gap-4 p-6 pb-4 shrink-0">
           <div>
             <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">{title}</h2>
             {description && (
@@ -57,11 +63,11 @@ export function Modal({
         </div>
 
         {children && (
-          <div className="px-6 pb-4">{children}</div>
+          <div className="px-6 pb-4 overflow-y-auto">{children}</div>
         )}
 
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700 shrink-0">
             {footer}
           </div>
         )}

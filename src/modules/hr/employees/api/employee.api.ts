@@ -4,6 +4,7 @@ import type {
   EmployeeSingleResponse,
   LookupListResponse,
   CreateEmployeePayload,
+  UpdateEmployeePayload,
   EmploymentType,
 } from '../types/employee.types';
 
@@ -18,6 +19,10 @@ export const employeeApi = {
 
   create(payload: CreateEmployeePayload) {
     return http.post<EmployeeSingleResponse>('/v1/employees', payload);
+  },
+
+  update(id: string, payload: UpdateEmployeePayload) {
+    return http.put<EmployeeSingleResponse>(`/v1/employees/${id}`, payload);
   },
 
   updateEmploymentType(id: string, payload: { employment_type: EmploymentType }) {
