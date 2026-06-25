@@ -8,6 +8,15 @@ import type {
   CreateDeductionPayload,
   UpdateDeductionStatusPayload,
   EmployeeDeductionListResponse,
+  BonusListParams,
+  BonusListResponse,
+  BonusSingleResponse,
+  BonusLookupResponse,
+  OvertimeSettingsData,
+  OvertimeSettingsResponse,
+  OvertimeProcessResponse,
+  CreateBonusPayload,
+  EmployeeBonusListResponse,
 } from '../types/payroll.types';
 
 export const deductionsApi = {
@@ -47,5 +56,51 @@ export const deductionsApi = {
       `/v1/payroll/employees/${employeeId}/deductions`,
       { params },
     );
+  },
+};
+
+/* ── Bonuses API ────────────────────────────────────────────── */
+
+export const bonusesApi = {
+  list(params?: BonusListParams) {
+    return http.get<BonusListResponse>('/v1/payroll/bonuses', { params });
+  },
+
+  create(payload: CreateBonusPayload) {
+    return http.post<BonusSingleResponse>('/v1/payroll/bonuses', payload);
+  },
+
+  show(id: string) {
+    return http.get<BonusSingleResponse>(`/v1/payroll/bonuses/${id}`);
+  },
+
+  lookupTypes() {
+    return http.get<BonusLookupResponse>('/v1/payroll/bonuses/lookups/types');
+  },
+
+  lookupEmployee(employeeNumber: string) {
+    return http.get('/v1/payroll/bonuses/lookups/employee', {
+      params: { employee_number: employeeNumber },
+    });
+  },
+
+  overtimeSettings() {
+    return http.get<OvertimeSettingsResponse>('/v1/payroll/bonuses/overtime/settings');
+  },
+
+  updateOvertimeSettings(payload: OvertimeSettingsData) {
+    return http.put<OvertimeSettingsResponse>('/v1/payroll/bonuses/overtime/settings', payload);
+  },
+
+  processOvertime(financial_month: string) {
+    return http.post<OvertimeProcessResponse>(
+      '/v1/payroll/bonuses/overtime/process',
+      null,
+      { params: { financial_month } },
+    );
+  },
+
+  employeeBonuses(employeeId: string) {
+    return http.get<EmployeeBonusListResponse>(`/v1/payroll/employees/${employeeId}/bonuses`);
   },
 };
