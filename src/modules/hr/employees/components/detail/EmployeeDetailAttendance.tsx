@@ -38,7 +38,8 @@ export function EmployeeDetailAttendance({ employeeId, isAr }: Props) {
   const navigate  = useNavigate();
   const ArrowIcon = isAr ? ChevronLeft : ChevronRight;
 
-  const { data: rows = [], isLoading } = useEmployeeAttendanceRecent(employeeId);
+  const { data: rawRows, isLoading } = useEmployeeAttendanceRecent(employeeId);
+  const rows = Array.isArray(rawRows) ? rawRows : [];
 
   return (
     <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100

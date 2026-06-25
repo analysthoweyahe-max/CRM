@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Download, FileText } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES } from '@/app/router/routes';
-import { LEAVE_REQUESTS } from '../data/leavesData';
+import { useLeaveDetail, useLeaveApprove, useLeaveReject } from '../hooks/useLeaves';
 import type { LeaveStatus } from '../types/leaves.types';
 import { Modal } from '@/shared/components/ui/Modal';
 import { Button } from '@/shared/components/ui/Button';
+import { getInitial, getAvatarColor } from '@/modules/hr/employees/types/employee.types';
 
-const STATUS_CFG = {
+const STATUS_CFG: Record<LeaveStatus, { bgCls: string; textCls: string; dotCls: string; labelAr: string; labelEn: string }> = {
   pending:  { bgCls: 'bg-yellow-100 dark:bg-yellow-900/30', textCls: 'text-yellow-700 dark:text-yellow-400', dotCls: 'bg-yellow-500', labelAr: 'معلقة',      labelEn: 'Pending'  },
   approved: { bgCls: 'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10',  textCls: 'text-[#709028] dark:text-[#A0CD39]',   dotCls: 'bg-[#709028]', labelAr: 'موافق عليها', labelEn: 'Approved' },
   rejected: { bgCls: 'bg-red-100 dark:bg-red-900/20',       textCls: 'text-red-600 dark:text-red-400',        dotCls: 'bg-red-500',   labelAr: 'مرفوضة',     labelEn: 'Rejected' },
@@ -29,16 +30,27 @@ export function LeaveDetailPage() {
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
 
-  const initialReq = LEAVE_REQUESTS.find(r => r.id === id);
+  const [approveOpen,  setApproveOpen]  = useState(false);
+  const [rejectOpen,   setRejectOpen]   = useState(false);
+  const [approveNote,  setApproveNote]  = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectError,  setRejectError]  = useState(false);
 
-  const [status,          setStatus]          = useState<LeaveStatus>(initialReq?.status ?? 'pending');
-  const [approveOpen,     setApproveOpen]     = useState(false);
-  const [rejectOpen,      setRejectOpen]      = useState(false);
-  const [approveNote,     setApproveNote]     = useState('');
-  const [rejectReason,    setRejectReason]    = useState('');
-  const [rejectError,     setRejectError]     = useState(false);
+  const { data: req, isLoading, isError } = useLeaveDetail(id);
+  const approveMutation = useLeaveApprove();
+  const rejectMutation  = useLeaveReject();
 
-  if (!initialReq) {
+  const BackIcon = isAr ? ArrowRight : ArrowLeft;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
+        {isAr ? 'جاري التحميل...' : 'Loading...'}
+      </div>
+    );
+  }
+
+  if (isError || !req) {
     return (
       <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
         {isAr ? 'الطلب غير موجود' : 'Request not found'}
@@ -46,22 +58,26 @@ export function LeaveDetailPage() {
     );
   }
 
-  const req = { ...initialReq, status };
-  const cfg = STATUS_CFG[status];
-  const BackIcon = isAr ? ArrowRight : ArrowLeft;
+  const status = req.status;
+  const cfg    = STATUS_CFG[status] ?? STATUS_CFG.pending;
+  const name   = req.employee?.name ?? '';
+  const initial  = name ? getInitial(name) : '?';
+  const avatarBg = name ? getAvatarColor(name) : 'bg-gray-400';
+  const daysLabel = `${req.days_count} ${isAr ? (req.days_count === 1 ? 'يوم' : 'أيام') : (req.days_count === 1 ? 'day' : 'days')}`;
 
   function handleApprove() {
-    setStatus('approved');
-    setApproveOpen(false);
-    setApproveNote('');
+    approveMutation.mutate(
+      { id: id!, notes: approveNote || undefined },
+      { onSuccess: () => { setApproveOpen(false); setApproveNote(''); } },
+    );
   }
 
   function handleReject() {
     if (!rejectReason.trim()) { setRejectError(true); return; }
-    setStatus('rejected');
-    setRejectOpen(false);
-    setRejectReason('');
-    setRejectError(false);
+    rejectMutation.mutate(
+      { id: id!, reason: rejectReason },
+      { onSuccess: () => { setRejectOpen(false); setRejectReason(''); setRejectError(false); } },
+    );
   }
 
   return (
@@ -86,14 +102,15 @@ export function LeaveDetailPage() {
           </div>
         </div>
 
-        {/* Action buttons — only for pending */}
         {status === 'pending' && (
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setApproveOpen(true)}
+              disabled={approveMutation.isPending || rejectMutation.isPending}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
-                         bg-[#A0CD39] hover:bg-[#709028] text-gray-900 transition-colors"
+                         bg-[#A0CD39] hover:bg-[#709028] text-gray-900 transition-colors
+                         disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <CheckCircle size={15} />
               {isAr ? 'موافقة' : 'Approve'}
@@ -101,8 +118,10 @@ export function LeaveDetailPage() {
             <button
               type="button"
               onClick={() => setRejectOpen(true)}
+              disabled={approveMutation.isPending || rejectMutation.isPending}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
-                         bg-red-500 hover:bg-red-600 text-white transition-colors"
+                         bg-red-500 hover:bg-red-600 text-white transition-colors
+                         disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <XCircle size={15} />
               {isAr ? 'رفض' : 'Reject'}
@@ -117,23 +136,19 @@ export function LeaveDetailPage() {
         {/* Left card — applicant */}
         <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100
                         dark:border-gray-700 shadow-sm p-6 flex flex-col gap-5">
-
-          {/* Avatar + name */}
           <div className="flex flex-col items-center text-center gap-2">
-            <div className={`w-14 h-14 rounded-full ${req.empAvatarBg} flex items-center justify-center`}>
-              <span className="text-xl font-bold text-white">{req.empInitial}</span>
+            <div className={`w-14 h-14 rounded-full ${avatarBg} flex items-center justify-center`}>
+              <span className="text-xl font-bold text-white">{initial}</span>
             </div>
             <div>
-              <p className="font-bold text-gray-800 dark:text-gray-100">
-                {isAr ? req.empNameAr : req.empNameEn}
-              </p>
+              <p className="font-bold text-gray-800 dark:text-gray-100">{name}</p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                {isAr ? req.empJobTitleAr : req.empJobTitleEn} · {isAr ? req.empDeptAr : req.empDeptEn}
+                {req.employee?.job_title ?? '–'} · {req.employee?.department ?? '–'}
               </p>
             </div>
             <button
               type="button"
-              onClick={() => navigate(ROUTES.EMPLOYEES.DETAIL(req.empId))}
+              onClick={() => navigate(ROUTES.EMPLOYEES.DETAIL(req.employee?.id ?? ''))}
               className="mt-1 px-4 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600
                          text-xs font-medium text-gray-600 dark:text-gray-400
                          hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -144,23 +159,15 @@ export function LeaveDetailPage() {
 
           <hr className="border-gray-100 dark:border-gray-700" />
 
-          {/* Leave balance */}
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-              {isAr ? 'رصيد الإجازات' : 'Leave Balance'}
-            </h3>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">{isAr ? 'رصيد الإجازات' : 'Total'}</span>
-              <span className="font-semibold text-gray-800 dark:text-gray-100">21 {isAr ? 'يوم' : 'days'}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">{isAr ? 'المستخدم' : 'Used'}</span>
-              <span className="font-semibold text-red-500">4 {isAr ? 'يوم' : 'days'}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">{isAr ? 'المتبقي' : 'Remaining'}</span>
-              <span className="font-semibold text-[#709028] dark:text-[#A0CD39]">17 {isAr ? 'يوم' : 'days'}</span>
-            </div>
+          {/* Leave type chip */}
+          <div className="text-center">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">
+              {isAr ? 'نوع الإجازة' : 'Leave Type'}
+            </p>
+            <span className="inline-block px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700
+                             text-sm font-medium text-gray-700 dark:text-gray-300">
+              {req.leave_type_label ?? req.leave_type}
+            </span>
           </div>
         </div>
 
@@ -168,37 +175,19 @@ export function LeaveDetailPage() {
         <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100
                         dark:border-gray-700 shadow-sm p-6 space-y-5">
 
-          {/* Status badge */}
           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bgCls} ${cfg.textCls}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${cfg.dotCls}`} />
             {isAr ? cfg.labelAr : cfg.labelEn}
           </span>
 
-          {/* Fields grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
-            <Field
-              label={isAr ? 'تاريخ تقديم الطلب' : 'Request Date'}
-              value={req.requestDate}
-            />
-            <Field
-              label={isAr ? 'تاريخ البداية' : 'Start Date'}
-              value={req.from}
-            />
-            <Field
-              label={isAr ? 'نوع الإجازة' : 'Leave Type'}
-              value={isAr ? req.leaveTypeAr : req.leaveTypeEn}
-            />
-            <Field
-              label={isAr ? 'تاريخ النهاية' : 'End Date'}
-              value={req.to}
-            />
+            <Field label={isAr ? 'تاريخ تقديم الطلب' : 'Request Date'} value={req.request_date} />
+            <Field label={isAr ? 'تاريخ البداية'      : 'Start Date'}   value={req.start_date}   />
+            <Field label={isAr ? 'تاريخ النهاية'      : 'End Date'}     value={req.end_date}     />
+            <Field label={isAr ? 'المدة'              : 'Duration'}     value={daysLabel}         />
             <Field
               label={isAr ? 'تاريخ الموافقة' : 'Approval Date'}
-              value={req.approvalDate ?? (isAr ? 'بانتظار المراجعة' : 'Pending Review')}
-            />
-            <Field
-              label={isAr ? 'المدة' : 'Duration'}
-              value={isAr ? req.durationAr : req.durationEn}
+              value={req.approved_at ?? (isAr ? 'بانتظار المراجعة' : 'Pending Review')}
             />
           </div>
 
@@ -208,28 +197,24 @@ export function LeaveDetailPage() {
               {isAr ? 'سبب الإجازة' : 'Leave Reason'}
             </p>
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-700/30 rounded-xl px-4 py-3">
-              {req.reason}
+              {req.reason ?? '–'}
             </p>
           </div>
 
-          {/* Rejection reason (if rejected) */}
-          {status === 'rejected' && req.rejectionReason && (
+          {/* Rejection reason */}
+          {status === 'rejected' && req.rejection_reason && (
             <div>
-              <p className="text-xs text-red-400 mb-1.5">
-                {isAr ? 'سبب الرفض' : 'Rejection Reason'}
-              </p>
+              <p className="text-xs text-red-400 mb-1.5">{isAr ? 'سبب الرفض' : 'Rejection Reason'}</p>
               <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3">
-                {req.rejectionReason}
+                {req.rejection_reason}
               </p>
             </div>
           )}
 
-          {/* Approval note (if approved) */}
+          {/* Approval note */}
           {status === 'approved' && req.notes && (
             <div>
-              <p className="text-xs text-[#709028] mb-1.5">
-                {isAr ? 'ملاحظة' : 'Note'}
-              </p>
+              <p className="text-xs text-[#709028] mb-1.5">{isAr ? 'ملاحظة' : 'Note'}</p>
               <p className="text-sm text-[#709028] bg-[#D8EBAE]/40 dark:bg-[#D8EBAE]/10 rounded-xl px-4 py-3">
                 {req.notes}
               </p>
@@ -250,31 +235,31 @@ export function LeaveDetailPage() {
                     <FileText size={15} className="text-gray-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {isAr ? req.attachment.nameAr : req.attachment.nameEn}
-                    </p>
-                    <p className="text-xs text-gray-400">{req.attachment.sizeKB} KB</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{req.attachment.name}</p>
+                    <p className="text-xs text-gray-400">{Math.round(req.attachment.size / 1024)} KB</p>
                   </div>
                 </div>
-                <button
-                  type="button"
+                <a
+                  href={req.attachment.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400
                              hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Download size={14} />
-                </button>
+                </a>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Approve modal ─────────────────────────────────── */}
+      {/* Approve modal */}
       <Modal
         open={approveOpen}
         onClose={() => setApproveOpen(false)}
         title={isAr ? 'الموافقة على الإجازة' : 'Approve Leave'}
-        description={isAr ? req.empNameAr : req.empNameEn}
+        description={name}
         size="md"
         footer={
           <>
@@ -284,10 +269,14 @@ export function LeaveDetailPage() {
             <button
               type="button"
               onClick={handleApprove}
+              disabled={approveMutation.isPending}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
-                         bg-[#A0CD39] hover:bg-[#709028] text-gray-900 transition-colors"
+                         bg-[#A0CD39] hover:bg-[#709028] text-gray-900 transition-colors
+                         disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isAr ? 'تأكيد الموافقة' : 'Confirm Approval'}
+              {approveMutation.isPending
+                ? (isAr ? 'جاري...' : 'Saving...')
+                : (isAr ? 'تأكيد الموافقة' : 'Confirm Approval')}
             </button>
           </>
         }
@@ -309,12 +298,12 @@ export function LeaveDetailPage() {
         </div>
       </Modal>
 
-      {/* ── Reject modal ──────────────────────────────────── */}
+      {/* Reject modal */}
       <Modal
         open={rejectOpen}
         onClose={() => { setRejectOpen(false); setRejectError(false); }}
         title={isAr ? 'رفض الإجازة' : 'Reject Leave'}
-        description={isAr ? req.empNameAr : req.empNameEn}
+        description={name}
         size="md"
         footer={
           <>
@@ -324,10 +313,14 @@ export function LeaveDetailPage() {
             <button
               type="button"
               onClick={handleReject}
+              disabled={rejectMutation.isPending}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
-                         bg-red-500 hover:bg-red-600 text-white transition-colors"
+                         bg-red-500 hover:bg-red-600 text-white transition-colors
+                         disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isAr ? 'تأكيد الرفض' : 'Confirm Rejection'}
+              {rejectMutation.isPending
+                ? (isAr ? 'جاري...' : 'Saving...')
+                : (isAr ? 'تأكيد الرفض' : 'Confirm Rejection')}
             </button>
           </>
         }
