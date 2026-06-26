@@ -1,42 +1,26 @@
 import { type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, MessageSquare } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
 import { Card }   from '@/shared/components/ui/Card';
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge }  from '@/shared/components/ui/Badge';
+import type { ApiEmployee } from '@/modules/hr/employees/types/employee.types';
+import type { ApiLeaveRequest } from '@/modules/hr/leaves/types/leaves.types';
+import { LEAVE_STATUS_CFG } from '@/modules/hr/leaves/types/leaves.types';
 
-/* ── Data ─────────────────────────────────────────────────────────── */
-const RECENT_EMPLOYEES = [
-  { name: 'سارة حلمي',    role: 'مطور خلفي',          dept: 'التصميم',      initial: 'س', color: 'bg-pink-500' },
-  { name: 'باسم الشريف',  role: 'مطور واجهات أمامية',  dept: 'العمليات',     initial: 'ب', color: 'bg-violet-500' },
-  { name: 'ملك رشدي',    role: 'مصمم منتجات',        dept: 'التسويق',      initial: 'م', color: 'bg-orange-500' },
-  { name: 'محمد فؤاد',   role: 'ممثل خدمة عملاء',     dept: 'خدمة العملاء', initial: 'م', color: 'bg-green-500' },
-  { name: 'فاطمة الشريف', role: 'أخصائي تسويق',      dept: 'العمليات',     initial: 'ف', color: 'bg-teal-500' },
+const AVATAR_COLORS = [
+  'bg-pink-500', 'bg-violet-500', 'bg-orange-500',
+  'bg-green-500', 'bg-teal-500',  'bg-blue-500',
 ];
+function empColor(name: string) { return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]; }
 
-const NOTIFICATIONS = [
-  { icon: CalendarDays,  color: 'text-amber-600',  bg: 'bg-amber-50',  titleAr: 'طلب إجازة جديد', titleEn: 'New Leave Request', descAr: 'قام أحمد الشريف بطلب إجازة سنوية بانتظار المراجعة', descEn: 'Ahmed requested annual leave — pending review', time: '09:20 ص' },
-  { icon: CalendarDays,  color: 'text-amber-600',  bg: 'bg-amber-50',  titleAr: 'طلب إجازة جديد', titleEn: 'New Leave Request', descAr: 'قام أحمد الشريف بطلب إجازة سنوية بانتظار المراجعة', descEn: 'Ahmed requested annual leave — pending review', time: '09:20 ص' },
-  { icon: MessageSquare, color: 'text-brand-600',  bg: 'bg-brand-50',  titleAr: 'رسالة جديدة',    titleEn: 'New Message',       descAr: 'لديك رسالة جديدة من سارة منصور',                     descEn: 'You have a new message from Sara Mansour',    time: '09:20 ص' },
-  { icon: CalendarDays,  color: 'text-amber-600',  bg: 'bg-amber-50',  titleAr: 'طلب إجازة جديد', titleEn: 'New Leave Request', descAr: 'قام أحمد الشريف بطلب إجازة سنوية بانتظار المراجعة', descEn: 'Ahmed requested annual leave — pending review', time: '09:20 ص' },
-];
+interface Props {
+  isAr:            boolean;
+  recentEmployees: ApiEmployee[];
+  recentLeaves:    ApiLeaveRequest[];
+}
 
-const RECENT_LEAVES = [
-  { name: 'سارة حلمي',    role: 'مطور خلفي',          dept: 'التصميم',  initial: 'س', color: 'bg-pink-500',   status: 'pending'  as const },
-  { name: 'ملك رشدي',    role: 'مصمم منتجات',        dept: 'التسويق',  initial: 'م', color: 'bg-orange-500', status: 'approved' as const },
-  { name: 'فاطمة الشريف', role: 'أخصائي تسويق',      dept: 'العمليات', initial: 'ف', color: 'bg-teal-500',   status: 'rejected' as const },
-  { name: 'فاطمة الشريف', role: 'أخصائي تسويق',      dept: 'العمليات', initial: 'ف', color: 'bg-teal-500',   status: 'pending'  as const },
-  { name: 'باسم الشريف',  role: 'مطور واجهات أمامية', dept: 'العمليات', initial: 'ب', color: 'bg-violet-500', status: 'approved' as const },
-];
-
-const STATUS_BADGE = {
-  pending:  { ar: 'معلقة',      en: 'Pending',  variant: 'warning' as const },
-  approved: { ar: 'موافق عليها', en: 'Approved', variant: 'success' as const },
-  rejected: { ar: 'مرفوضة',     en: 'Rejected', variant: 'error'   as const },
-};
-
-/* ── Shared card section ───────────────────────────────────────────── */
 function SectionCard({
   title, action, badge, delay, children,
 }: {
@@ -57,8 +41,7 @@ function SectionCard({
   );
 }
 
-/* ── Component ─────────────────────────────────────────────────────── */
-export function RecentData({ isAr }: { isAr: boolean }) {
+export function RecentData({ isAr, recentEmployees, recentLeaves }: Props) {
   const navigate = useNavigate();
 
   return (
@@ -76,81 +59,77 @@ export function RecentData({ isAr }: { isAr: boolean }) {
             </button>
           }
         >
-          {RECENT_EMPLOYEES.map((emp, i) => (
-            <li key={i} className="flex items-center gap-3 px-5 py-3
-                                   hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-              <Avatar initial={emp.initial} color={emp.color} size="sm" />
+          {recentEmployees.length === 0 ? (
+            <li className="px-5 py-6 text-center text-xs text-gray-400">
+              {isAr ? 'لا توجد بيانات' : 'No data'}
+            </li>
+          ) : recentEmployees.map((emp) => (
+            <li key={emp.id}
+              className="flex items-center gap-3 px-5 py-3
+                         hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+              <Avatar initial={emp.name.charAt(0).toUpperCase()} color={empColor(emp.name)} size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{emp.name}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">{emp.role} · {emp.dept}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {emp.jobTitle?.name ?? (isAr ? 'لا يوجد مسمى' : 'No title')}
+                  {emp.department ? ` · ${isAr ? (emp.department.nameAr ?? emp.department.name) : emp.department.name}` : ''}
+                </p>
               </div>
-              <Badge label={isAr ? 'نشط' : 'Active'} variant="success" />
+              <Badge
+                label={emp.status === 'active' ? (isAr ? 'نشط' : 'Active') : (isAr ? 'غير نشط' : 'Inactive')}
+                variant={emp.status === 'active' ? 'success' : 'error'}
+              />
             </li>
           ))}
         </SectionCard>
 
-        {/* Notifications */}
+        {/* Pending Leaves Notifications */}
         <SectionCard
-          title={isAr ? 'الإشعارات' : 'Notifications'}
+          title={isAr ? 'طلبات الإجازات الأخيرة' : 'Latest Leave Requests'}
           delay="0.12s"
           badge={
-            <span className="text-xs bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400
-                             font-bold px-2 py-0.5 rounded-full">
-              {NOTIFICATIONS.length}
-            </span>
+            recentLeaves.length > 0 ? (
+              <span className="text-xs bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400
+                               font-bold px-2 py-0.5 rounded-full">
+                {recentLeaves.length}
+              </span>
+            ) : undefined
           }
         >
-          {NOTIFICATIONS.map((n, i) => {
-            const Icon = n.icon;
-            return (
-              <li key={i} className="flex items-start gap-3 px-5 py-3
-                                     hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                <div className={`${n.bg} mt-0.5 rounded-lg p-1.5 shrink-0`}>
-                  <Icon size={13} className={n.color} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                    {isAr ? n.titleAr : n.titleEn}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
-                    {isAr ? n.descAr : n.descEn}
-                  </p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{n.time}</p>
-                </div>
-              </li>
-            );
-          })}
+          {recentLeaves.length === 0 ? (
+            <li className="px-5 py-6 text-center text-xs text-gray-400">
+              {isAr ? 'لا توجد طلبات' : 'No requests'}
+            </li>
+          ) : recentLeaves.map((leave) => (
+            <li key={leave.id}
+              className="flex items-start gap-3 px-5 py-3
+                         hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+              <div className="bg-amber-50 dark:bg-amber-900/20 mt-0.5 rounded-lg p-1.5 shrink-0">
+                <CalendarDays size={13} className="text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                  {leave.employee.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
+                  {leave.leave_type_label} · {leave.days_count} {isAr ? 'يوم' : 'days'}
+                </p>
+              </div>
+              <Badge
+                label={isAr
+                  ? LEAVE_STATUS_CFG[leave.status].labelAr
+                  : LEAVE_STATUS_CFG[leave.status].labelEn}
+                variant={
+                  leave.status === 'approved' ? 'success'
+                  : leave.status === 'rejected' ? 'error'
+                  : 'warning'
+                }
+              />
+            </li>
+          ))}
         </SectionCard>
 
       </div>
-
-      {/* Recent Leave Requests */}
-      <SectionCard
-        title={isAr ? 'أحدث طلبات الإجازات' : 'Recent Leave Requests'}
-        delay="0.2s"
-        action={
-          <button type="button" onClick={() => navigate(ROUTES.LEAVES.LIST)}
-            className="text-xs text-brand-600 hover:text-brand-700 font-medium transition-colors">
-            {isAr ? 'عرض الكل' : 'View All'}
-          </button>
-        }
-      >
-        {RECENT_LEAVES.map((leave, i) => {
-          const s = STATUS_BADGE[leave.status];
-          return (
-            <li key={i} className="flex items-center gap-3 px-5 py-3
-                                   hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-              <Avatar initial={leave.initial} color={leave.color} size="sm" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{leave.name}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">{leave.role} · {leave.dept}</p>
-              </div>
-              <Badge label={isAr ? s.ar : s.en} variant={s.variant} />
-            </li>
-          );
-        })}
-      </SectionCard>
-
     </div>
   );
 }
