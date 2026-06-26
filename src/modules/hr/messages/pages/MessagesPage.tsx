@@ -1,13 +1,16 @@
-﻿import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { MessageSquare } from 'lucide-react';
 import type { Event } from 'stream-chat';
+import { useQueryClient } from '@tanstack/react-query';
 import { streamClient, getStreamToken } from '@/shared/lib/stream';
 import { useAuth }               from '@/modules/auth/context/AuthContext';
 import { useLang }               from '@/app/providers/LanguageProvider';
 import { ConversationList }      from '../components/ConversationList';
 import { ChatWindow }            from '../components/ChatWindow';
 import { NewConversationModal }  from '../components/NewConversationModal';
-import type { StreamChannel }    from '../types/messages.types';
+import { messagesApi }           from '../api/messages.api';
+import { useConversations, useCreateConversation } from '../hooks/useMessages';
+import type { StreamChannel, ApiConversation } from '../types/messages.types';
 
 function sanitizeId(id: string) {
   return id.replace(/[^a-zA-Z0-9@_-]/g, '_');
@@ -16,77 +19,99 @@ function sanitizeId(id: string) {
 export function MessagesPage() {
   const { user } = useAuth();
   const { lang } = useLang();
-  const isAr = lang === 'ar';
+  const qc       = useQueryClient();
+  const isAr     = lang === 'ar';
 
-  const [loading,       setLoading]       = useState(true);
+  const [streamReady,   setStreamReady]   = useState(false);
   const [streamError,   setStreamError]   = useState('');
-  const [channels,      setChannels]      = useState<StreamChannel[]>([]);
   const [activeChannel, setActiveChannel] = useState<StreamChannel | null>(null);
+  const [activeConvId,  setActiveConvId]  = useState<string | null>(null);
   const [showModal,     setShowModal]     = useState(false);
-  const [creating,      setCreating]      = useState(false);
   const [sidebarOpen,   setSidebarOpen]   = useState(false);
   const uidRef = useRef('');
 
+  const { data: convData, isLoading } = useConversations({ per_page: 15 });
+  const conversations = convData?.data ?? [];
+
+  const { mutateAsync: createConversation, isPending: creating } = useCreateConversation();
+
+  // Connect Stream for real-time events; sidebar data now comes from REST
   useEffect(() => {
     if (!user) return;
-    const uid = sanitizeId(user.id);
-    uidRef.current = uid;
     let mounted = true;
 
     (async () => {
       try {
         if (!streamClient.userID) {
-          const token = await getStreamToken(uid);
+          let uid: string;
+          let token: string;
+          try {
+            const res = await messagesApi.getChatToken();
+            uid   = res.data.user_id;
+            token = res.data.token;
+          } catch {
+            uid   = sanitizeId(user.id);
+            token = await getStreamToken(uid);
+          }
+          uidRef.current = uid;
           await streamClient.connectUser({ id: uid, name: user.fullName }, token);
+        } else {
+          uidRef.current = streamClient.userID;
         }
-        if (!mounted) return;
-
-        const chs = await streamClient.queryChannels(
-          { type: 'messaging', members: { $in: [uid] } },
-          { last_message_at: -1 },
-          { watch: true, state: true, limit: 30 },
-        );
-        if (!mounted) return;
-        setChannels(chs as StreamChannel[]);
-        if (chs.length) setActiveChannel(chs[0] as StreamChannel);
+        if (mounted) setStreamReady(true);
       } catch (e) {
         console.error('[Stream]', e);
         if (mounted) setStreamError(String(e));
-      } finally {
-        if (mounted) setLoading(false);
       }
     })();
 
+    // Real-time: new message → refresh conversation list
     const onMsg = (e: Event) => {
-      setChannels(prev => {
-        const ch = prev.find(c => c.id === e.channel_id);
-        if (!ch) return prev;
-        return [ch, ...prev.filter(c => c.id !== e.channel_id)];
-      });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+      // Also bump unread if the active channel received a message from someone else
+      if (e.channel_id && e.user?.id !== uidRef.current) {
+        qc.invalidateQueries({ queryKey: ['conversations'] });
+      }
     };
     streamClient.on('message.new', onMsg);
 
     return () => {
       mounted = false;
       streamClient.off('message.new', onMsg);
-      if (streamClient.userID === uid) {
-        streamClient.disconnectUser().catch(() => {});
-      }
+      const uid = uidRef.current;
+      if (streamClient.userID === uid) streamClient.disconnectUser().catch(() => {});
     };
-  }, [user]);
+  }, [user, qc]);
 
-  const handleSelectChannel = useCallback((ch: StreamChannel) => {
-    setActiveChannel(ch);
+  // Open a conversation: watch its Stream channel for real-time messaging
+  const handleSelectConversation = useCallback(async (conv: ApiConversation) => {
+    setActiveConvId(conv.id);
     setSidebarOpen(false);
+    try {
+      const channelId = conv.stream_channel_id ?? conv.id;
+      const ch = streamClient.channel('messaging', channelId);
+      await ch.watch();
+      setActiveChannel(ch as StreamChannel);
+    } catch (e) {
+      console.error('[Stream] watch channel:', e);
+    }
   }, []);
 
   const handleStartConversation = useCallback(
     async (empId: string, empName: string) => {
       const uid = uidRef.current;
       if (!uid || creating) return;
-      setCreating(true);
       try {
-        const channelId = [uid, empId].sort().join('--').replace(/[^a-zA-Z0-9_-]/g, '_');
+        let channelId: string;
+        try {
+          const conv = await createConversation(empId);
+          channelId = conv.data.data.stream_channel_id
+            ?? [uid, empId.replace(/[^a-zA-Z0-9@_-]/g, '_')].sort().join('--').replace(/[^a-zA-Z0-9_-]/g, '_');
+          setActiveConvId(conv.data.data.id);
+        } catch {
+          channelId = [uid, empId.replace(/[^a-zA-Z0-9@_-]/g, '_')].sort().join('--').replace(/[^a-zA-Z0-9_-]/g, '_');
+        }
+
         const ch = streamClient.channel('messaging', channelId, {
           created_by_id:  uid,
           members:        [uid],
@@ -94,30 +119,23 @@ export function MessagesPage() {
           recipient_id:   empId,
         });
         await ch.watch();
-        const typed = ch as StreamChannel;
-        setChannels(prev =>
-          prev.some(c => c.cid === typed.cid) ? prev : [typed, ...prev],
-        );
-        setActiveChannel(typed);
+        setActiveChannel(ch as StreamChannel);
         setShowModal(false);
         setSidebarOpen(false);
       } catch (e) {
         console.error('[Stream] create channel:', e);
-      } finally {
-        setCreating(false);
       }
     },
-    [creating],
+    [creating, createConversation],
   );
 
-  // Sidebar slides from the inline-end side: RTL → left (negative X), LTR → right (positive X)
   const hiddenTranslate = isAr ? '-translate-x-full' : 'translate-x-full';
 
   return (
     <>
       <div className="relative flex h-[calc(100vh-4rem)] overflow-hidden bg-white dark:bg-gray-900">
 
-        {/* ── Chat area — full-width on mobile, flex-1 on desktop */}
+        {/* Chat area */}
         <div className="flex-1 min-w-0 flex flex-col">
           {streamError ? (
             <div className="flex flex-col items-center justify-center h-full gap-2 px-6 text-center">
@@ -149,7 +167,7 @@ export function MessagesPage() {
           )}
         </div>
 
-        {/* ── Mobile backdrop */}
+        {/* Mobile backdrop */}
         {sidebarOpen && (
           <div
             className="absolute inset-0 z-40 bg-black/40 md:hidden"
@@ -157,9 +175,7 @@ export function MessagesPage() {
           />
         )}
 
-        {/* ── Sidebar
-              Mobile  : absolute drawer from the end side, z-50
-              Desktop : in-flow flex panel, w-80, always visible */}
+        {/* Sidebar */}
         <div className={`
           absolute inset-y-0 inset-e-0 z-50 flex w-72 flex-col
           bg-white dark:bg-gray-900
@@ -170,12 +186,12 @@ export function MessagesPage() {
           ${sidebarOpen ? 'translate-x-0' : hiddenTranslate}
         `}>
           <ConversationList
-            channels={channels}
-            activeChannel={activeChannel}
-            currentUserId={uidRef.current}
-            loading={loading}
+            conversations={conversations}
+            activeConvId={activeConvId}
+            currentUserId={user?.id ?? uidRef.current}
+            loading={isLoading && !streamReady}
             isAr={isAr}
-            onSelect={handleSelectChannel}
+            onSelect={handleSelectConversation}
             onNew={() => setShowModal(true)}
             onClose={() => setSidebarOpen(false)}
           />
@@ -185,7 +201,6 @@ export function MessagesPage() {
       {showModal && (
         <NewConversationModal
           isAr={isAr}
-          currentUserId={uidRef.current}
           loading={creating}
           onSelect={handleStartConversation}
           onClose={() => setShowModal(false)}

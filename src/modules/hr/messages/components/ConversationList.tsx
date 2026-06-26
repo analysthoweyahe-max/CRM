@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Plus, Search, MessageSquare, X } from 'lucide-react';
-import type { StreamChannel } from '../types/messages.types';
+import type { ApiConversation } from '../types/messages.types';
 
 interface Props {
-  channels:      StreamChannel[];
-  activeChannel: StreamChannel | null;
+  conversations: ApiConversation[];
+  activeConvId:  string | null;
   currentUserId: string;
   loading:       boolean;
   isAr:          boolean;
-  onSelect:      (ch: StreamChannel) => void;
+  onSelect:      (conv: ApiConversation) => void;
   onNew:         () => void;
   onClose?:      () => void;
 }
@@ -22,39 +22,26 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 }
 
-function getOther(ch: StreamChannel, uid: string) {
-  return Object.values(ch.state.members).find(m => m.user?.id !== uid);
-}
-
-function getChannelName(ch: StreamChannel, uid: string): string {
-  const other = getOther(ch, uid);
-  if (other?.user?.name) return other.user.name;
-  return (ch.data?.recipient_name as string | undefined) ?? '';
-}
-
-function fmtTime(raw: Date | string | null | undefined, isAr: boolean): string {
+function fmtTime(raw: string | undefined, isAr: boolean): string {
   if (!raw) return '';
-  const d   = raw instanceof Date ? raw : new Date(raw as string);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86_400_000);
-  if (diffDays === 0)
+  const d       = new Date(raw);
+  const now     = new Date();
+  const diffMs  = now.getTime() - d.getTime();
+  const diffDay = Math.floor(diffMs / 86_400_000);
+  if (diffDay === 0)
     return d.toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
   return d.toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 
 export function ConversationList({
-  channels, activeChannel, currentUserId, loading, isAr, onSelect, onNew, onClose,
+  conversations, activeConvId, currentUserId, loading, isAr, onSelect, onNew, onClose,
 }: Props) {
   const [search, setSearch] = useState('');
 
-  const filtered = channels.filter(ch => {
+  const filtered = conversations.filter(conv => {
     if (!search) return true;
-    const other = getOther(ch, currentUserId);
-    // Fall back to recipient_name stored in channel data when employee isn't a Stream member yet
-    const name = other?.user?.name
-      ?? (ch.data?.recipient_name as string | undefined)
-      ?? '';
-    return name.toLowerCase().includes(search.toLowerCase());
+    const other = conv.participants.find(p => p.id !== currentUserId) ?? conv.participants[0];
+    return other?.name?.toLowerCase().includes(search.toLowerCase()) ?? false;
   });
 
   return (
@@ -127,21 +114,21 @@ export function ConversationList({
             </p>
           </div>
         ) : (
-          filtered.map(ch => {
-            const name     = getChannelName(ch, currentUserId) || (isAr ? 'محادثة' : 'Chat');
+          filtered.map(conv => {
+            const other    = conv.participants.find(p => p.id !== currentUserId) ?? conv.participants[0];
+            const name     = other?.name ?? (isAr ? 'محادثة' : 'Chat');
             const initial  = name.charAt(0).toUpperCase();
             const color    = avatarColor(name);
-            const lastMsg  = ch.state.messages.at(-1);
-            const preview  = lastMsg?.text ?? '';
-            const time     = fmtTime(lastMsg?.created_at ?? (ch.data as { created_at?: unknown })?.created_at as Date | string | undefined, isAr);
-            const unread   = ch.countUnread();
-            const isActive = activeChannel?.cid === ch.cid;
+            const preview  = conv.last_message?.body ?? '';
+            const time     = fmtTime(conv.last_message?.created_at ?? conv.created_at, isAr);
+            const unread   = conv.unread_count ?? 0;
+            const isActive = activeConvId === conv.id;
 
             return (
               <button
-                key={ch.cid}
+                key={conv.id}
                 type="button"
-                onClick={() => onSelect(ch)}
+                onClick={() => onSelect(conv)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-start
                             border-b border-gray-50 dark:border-gray-700/30 transition-colors
                             ${isActive

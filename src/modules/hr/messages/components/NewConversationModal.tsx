@@ -1,24 +1,20 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { X, Search } from 'lucide-react';
-import { EMPLOYEES } from '@/modules/hr/employees/data/employeeData';
+import { useSearchEmployees } from '../hooks/useMessages';
 
 interface Props {
-  isAr:          boolean;
-  currentUserId: string;
-  loading?:      boolean;
-  onSelect:      (empId: string, empName: string) => void;
-  onClose:       () => void;
+  isAr:     boolean;
+  loading?: boolean;
+  onSelect: (empId: string, empName: string) => void;
+  onClose:  () => void;
 }
 
-export function NewConversationModal({ isAr, currentUserId, loading, onSelect, onClose }: Props) {
-  const [search, setSearch] = useState('');
+const AVATAR_COLORS = ['bg-red-400','bg-blue-400','bg-green-500','bg-purple-400','bg-yellow-400','bg-pink-400'];
+function avatarColor(name: string) { return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]; }
 
-  const filtered = EMPLOYEES.filter(e => {
-    if (e.id === currentUserId) return false;
-    const name = isAr ? e.name : e.nameEn;
-    return name.toLowerCase().includes(search.toLowerCase())
-      || e.id.toLowerCase().includes(search.toLowerCase());
-  });
+export function NewConversationModal({ isAr, loading, onSelect, onClose }: Props) {
+  const [search, setSearch] = useState('');
+  const { data: employees = [], isLoading } = useSearchEmployees(search);
 
   return (
     <div
@@ -55,7 +51,7 @@ export function NewConversationModal({ isAr, currentUserId, loading, onSelect, o
               value={search}
               onChange={e => setSearch(e.target.value)}
               autoFocus
-              placeholder={isAr ? 'ابحث باسم الموظف أو المعرّف...' : 'Search by name or ID...'}
+              placeholder={isAr ? 'ابحث باسم الموظف...' : 'Search by name...'}
               className="w-full ps-8 pe-3 py-2 text-sm rounded-lg
                          bg-gray-50 dark:bg-gray-700/60
                          border border-gray-200 dark:border-gray-600
@@ -68,36 +64,36 @@ export function NewConversationModal({ isAr, currentUserId, loading, onSelect, o
 
         {/* Employee list */}
         <div className="max-h-72 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="py-10 text-center text-sm text-gray-400">
+              {isAr ? 'جاري التحميل...' : 'Loading...'}
+            </div>
+          ) : employees.length === 0 ? (
             <div className="py-10 text-center text-sm text-gray-400">
               {isAr ? 'لا توجد نتائج' : 'No results'}
             </div>
-          ) : (
-            filtered.map(emp => {
-              const name = isAr ? emp.name : emp.nameEn;
-              const dept = isAr ? emp.department : emp.deptEn;
-              return (
-                <button
-                  key={emp.id}
-                  type="button"
-                  disabled={loading}
-                  onClick={() => onSelect(emp.id, name)}
-                  className="w-full flex items-center gap-3 px-5 py-3 text-start
-                             hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors
-                             disabled:opacity-50 disabled:cursor-wait"
-                >
-                  <div className={`w-9 h-9 rounded-full ${emp.avatarBg}
-                                   flex items-center justify-center shrink-0`}>
-                    <span className="text-sm font-bold text-white">{emp.initial}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{name}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{dept}</p>
-                  </div>
-                </button>
-              );
-            })
-          )}
+          ) : employees.map(emp => (
+            <button
+              key={emp.id}
+              type="button"
+              disabled={loading}
+              onClick={() => onSelect(emp.id, emp.name)}
+              className="w-full flex items-center gap-3 px-5 py-3 text-start
+                         hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors
+                         disabled:opacity-50 disabled:cursor-wait"
+            >
+              <div className={`w-9 h-9 rounded-full ${avatarColor(emp.name)}
+                               flex items-center justify-center shrink-0`}>
+                <span className="text-sm font-bold text-white">{emp.name.charAt(0).toUpperCase()}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{emp.name}</p>
+                {emp.department && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{emp.department}</p>
+                )}
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </div>
