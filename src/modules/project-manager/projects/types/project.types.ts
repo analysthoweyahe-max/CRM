@@ -9,6 +9,12 @@ export interface TeamMember {
   isActive?: boolean;
 }
 
+export interface MemberProfile extends TeamMember {
+  taskCount:    number;
+  projectNames: string[];
+  totalHours:   number;
+}
+
 export interface Project {
   id:             string;
   nameAr:         string;

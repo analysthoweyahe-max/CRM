@@ -3,7 +3,7 @@ import { toast }          from 'sonner';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { useProjects, updateProject, getProjects } from '../store/projectStore';
 import { useProjectTasks, getAllTasks }             from '../../tasks/store/taskStore';
-import type { TeamMember }                         from '../types/project.types';
+import type { TeamMember, MemberProfile }           from '../types/project.types';
 
 const AVAILABLE_EMPLOYEES = [
   { id: 'eman',   name: 'إيمان سالم',  initial: 'إ', color: 'bg-rose-500',   email: 'eman@howeyah.com'   },
@@ -15,11 +15,6 @@ const AVAILABLE_EMPLOYEES = [
 
 export interface TeamMemberWithCount extends TeamMember {
   taskCount: number;
-}
-
-export interface MemberProfile extends TeamMemberWithCount {
-  projectNames: string[];
-  totalHours:   number;
 }
 
 export function useProjectTeamTab(projectId: string, isAr: boolean) {

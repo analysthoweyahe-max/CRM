@@ -2,7 +2,7 @@ import { Briefcase, CheckSquare, Clock, Mail } from 'lucide-react';
 import { Modal }   from '@/shared/components/ui/Modal';
 import { Avatar }  from '@/shared/components/ui/Avatar';
 import { getAllTasks } from '../../tasks/store/taskStore';
-import type { MemberProfile } from '../hooks/useProjectTeamTab';
+import type { MemberProfile } from '../types/project.types';
 
 const STATUS_LABEL: Record<string, { ar: string; en: string; cls: string }> = {
   pending:    { ar: 'قيد الانتظار', en: 'Pending',     cls: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
@@ -46,7 +46,7 @@ export function MemberProfileModal({ member, onClose, isAr }: Props) {
         {/* Avatar + name + role + email */}
         <div className="flex flex-col items-center gap-2 pt-1">
           <Avatar initial={member.initial} color={member.color} size="lg"
-            className="!w-16 !h-16 !text-2xl" />
+            className="w-16! h-16! text-2xl!" />
           <div className="text-center space-y-1">
             <p className="text-base font-bold text-gray-900 dark:text-gray-100">{member.name}</p>
             {member.role && (
@@ -85,7 +85,7 @@ export function MemberProfileModal({ member, onClose, isAr }: Props) {
               {isAr ? 'المشاريع' : 'Projects'}
             </p>
             <div className="flex flex-wrap gap-2 justify-end">
-              {member.projectNames.map(name => (
+              {member.projectNames.map((name: string) => (
                 <span key={name}
                   className="text-xs px-3 py-1 rounded-full border border-[#A0CD39]/40 bg-[#D8EBAE]/40 dark:bg-[#A0CD39]/10 text-[#709028] dark:text-[#A0CD39]">
                   {name}
