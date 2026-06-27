@@ -28,6 +28,16 @@ export function deleteProject(id: string): void {
   notify();
 }
 
+export function archiveProject(id: string): void {
+  projects = projects.map(p => p.id === id ? { ...p, isArchived: true } : p);
+  notify();
+}
+
+export function unarchiveProject(id: string): void {
+  projects = projects.map(p => p.id === id ? { ...p, isArchived: false } : p);
+  notify();
+}
+
 export function getProject(id: string): Project | undefined {
   return projects.find(p => p.id === id);
 }

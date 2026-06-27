@@ -1,10 +1,10 @@
-import { useState }      from 'react';
-import { Trash2, AlertTriangle } from 'lucide-react';
-import { useNavigate }   from 'react-router-dom';
-import { Button }        from '@/shared/components/ui/Button';
-import { Modal }         from '@/shared/components/ui/Modal';
-import { ROUTES }        from '@/app/router/routes';
-import { deleteProject } from '../store/projectStore';
+import { useState }               from 'react';
+import { Trash2, AlertTriangle }  from 'lucide-react';
+import { useNavigate }            from 'react-router-dom';
+import { Button }                 from '@/shared/components/ui/Button';
+import { Modal }                  from '@/shared/components/ui/Modal';
+import { ROUTES }                 from '@/app/router/routes';
+import { deleteProject }          from '../store/projectStore';
 
 interface Props {
   projectId:   string;
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function DangerZoneCard({ projectId, projectName, isAr }: Props) {
-  const navigate  = useNavigate();
+  const navigate      = useNavigate();
   const [open, setOpen] = useState(false);
 
   function handleConfirm() {
@@ -62,9 +62,7 @@ export function DangerZoneCard({ projectId, projectName, isAr }: Props) {
           </div>
         }
       >
-        {/* Icon + body text */}
         <div className="flex flex-col items-end gap-4 text-end">
-          {/* Amber warning icon */}
           <div className="self-center w-14 h-14 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
             <AlertTriangle size={28} className="text-red-400" />
           </div>
@@ -76,7 +74,6 @@ export function DangerZoneCard({ projectId, projectName, isAr }: Props) {
             }
           </p>
 
-          {/* Warning notice */}
           <div className="w-full rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-2.5 text-center">
             <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
               {isAr ? 'لا يمكن التراجع عن هذا الإجراء' : 'This action cannot be undone'}

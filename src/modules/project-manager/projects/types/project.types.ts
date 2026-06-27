@@ -28,4 +28,5 @@ export interface Project {
   tasksCompleted: number;
   tasksTotal:     number;
   team:           TeamMember[];
+  isArchived?:    boolean;
 }
