@@ -134,6 +134,35 @@ async function validateInvite(token: string): Promise<InviteTokenPayload> {
   }
 }
 
+async function loadProfile(): Promise<AuthUser | null> {
+  const token = getStoredToken();
+  if (!token) return null;
+
+  const storedUser = getStoredUser();
+  if (!storedUser) return null;
+
+  try {
+    if (storedUser.role === 'employee') {
+      const { data } = await authApi.employeeProfile();
+      const { employee } = data.data;
+      const user: AuthUser = {
+        id:         employee.id,
+        employeeId: employee.id,
+        fullName:   employee.name,
+        role:       'employee',
+        avatarUrl:  employee.avatar_url,
+      };
+      const storage = localStorage.getItem(TOKEN_KEY) ? localStorage : sessionStorage;
+      storage.setItem(USER_KEY, JSON.stringify(user));
+      return user;
+    }
+    return storedUser;
+  } catch {
+    clearAuth();
+    return null;
+  }
+}
+
 async function logout(): Promise<void> {
   const user = getStoredUser();
   try {
@@ -151,6 +180,7 @@ export const authService = {
   login,
   setPassword,
   validateInvite,
+  loadProfile,
   logout,
   getStoredToken,
   getStoredUser,

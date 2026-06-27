@@ -1,13 +1,19 @@
 ﻿import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/context/AuthContext';
-import { DEFAULT_AFTER_LOGIN } from '@/app/config/constants';
+import { ROUTES }  from '@/app/router/routes';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
 
+function defaultRoute(role: string | undefined): string {
+  if (role === 'employee') return ROUTES.EMPLOYEE.DASHBOARD;
+  if (role === 'manager')  return ROUTES.PROJECT_MANAGER.DASHBOARD;
+  return ROUTES.DASHBOARD;
+}
+
 export function GuestGuard() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) return <LoadingSpinner />;
-  if (isAuthenticated) return <Navigate to={DEFAULT_AFTER_LOGIN} replace />;
+  if (isAuthenticated) return <Navigate to={defaultRoute(user?.role)} replace />;
 
   return <Outlet />;
 }

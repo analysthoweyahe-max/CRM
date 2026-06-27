@@ -5,7 +5,8 @@ import type { LoginFormValues } from '@/modules/auth/schemas/login.schema';
 import { ROUTES } from '@/app/router/routes';
 
 function redirectForRole(role: string): string {
-  if (role === 'manager') return ROUTES.PROJECT_MANAGER.DASHBOARD;
+  if (role === 'employee') return ROUTES.EMPLOYEE.DASHBOARD;
+  if (role === 'manager')  return ROUTES.PROJECT_MANAGER.DASHBOARD;
   return ROUTES.DASHBOARD;
 }
 

@@ -2,6 +2,7 @@ import { http } from '@/shared/services/http.service';
 import type {
   AdminLoginApiResponse,
   EmployeeLoginApiResponse,
+  EmployeeProfileApiResponse,
   AdminInviteApiResponse,
   EmployeeInviteApiResponse,
 } from '@/modules/auth/types/auth.types';
@@ -39,7 +40,7 @@ export const authApi = {
   },
 
   employeeProfile() {
-    return http.get<EmployeeLoginApiResponse>('/v1/employee/auth/profile');
+    return http.get<EmployeeProfileApiResponse>('/v1/employee/auth/profile');
   },
 
   verifyEmployeeInvite(token: string) {

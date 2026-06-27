@@ -37,4 +37,11 @@ export const ROUTES = {
     REPORTS:   '/project-manager/reports',
     PROFILE:   '/project-manager/profile',
   },
+  EMPLOYEE: {
+    DASHBOARD: '/employee',
+    MESSAGES:  '/employee/messages',
+    REQUESTS:  '/employee/requests',
+    REPORTS:   '/employee/reports',
+    PROFILE:   '/employee/profile',
+  },
 } as const;

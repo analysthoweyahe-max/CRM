@@ -58,8 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, { user: null, isLoading: true });
 
   useEffect(() => {
-    const user = authService.getStoredUser();
-    dispatch({ type: 'INIT', payload: user });
+    authService.loadProfile().then(user => {
+      dispatch({ type: 'INIT', payload: user });
+    });
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<AuthUser> => {

@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavItem } from './NavItem';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { NAV_BY_VARIANT, SUBTITLE } from './appSidebar.config';
-import type { AppSidebarProps } from './appSidebar.types';
+import type { AppSidebarProps as _Base } from './appSidebar.types';
 
-export type { AppSidebarProps };
+export interface AppSidebarProps extends _Base {
+  footerWidget?: ReactNode;
+}
 
-export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollapse }: AppSidebarProps) {
+export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollapse, footerWidget }: AppSidebarProps) {
   const { lang, isRTL } = useLang();
   const isAr             = lang === 'ar';
   const location         = useLocation();
@@ -148,6 +150,11 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
             </div>
           ))}
         </nav>
+
+        {/* ── Footer widget (optional, e.g. attendance check-in) ── */}
+        {footerWidget && (
+          <div className={collapsed ? 'lg:hidden' : ''}>{footerWidget}</div>
+        )}
 
         {/* ── Collapse toggle (desktop only) ── */}
         <div className="hidden lg:flex items-center justify-center px-3 py-2

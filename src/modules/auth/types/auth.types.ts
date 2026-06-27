@@ -91,3 +91,9 @@ export interface EmployeeInviteApiResponse {
     exp?:  number;
   };
 }
+
+export interface EmployeeProfileApiResponse {
+  data: {
+    employee: ApiEmployee;
+  };
+}

@@ -4,6 +4,7 @@ import { ROUTES } from './routes';
 import { AuthLayout }      from '@/app/layouts/AuthLayout';
 import { DashboardLayout }        from '@/app/layouts/DashboardLayout';
 import { ProjectManagerLayout }   from '@/app/layouts/ProjectManagerLayout';
+import { EmployeeLayout }         from '@/app/layouts/EmployeeLayout';
 import { GuestGuard }             from '@/app/guards/GuestGuard';
 import { AuthGuard }              from '@/app/guards/AuthGuard';
 
@@ -36,6 +37,11 @@ import { ProjectTeamPage }      from '@/modules/project-manager/team/pages/Proje
 import { ProjectReportsPage }   from '@/modules/project-manager/reports/pages/ProjectReportsPage';
 import { PMProfilePage }        from '@/modules/project-manager/profile/pages/PMProfilePage';
 
+import { EmployeeDashboardPage } from '@/modules/employee/dashboard/pages/EmployeeDashboardPage';
+import { EmployeeMessagesPage }  from '@/modules/employee/messages/pages/EmployeeMessagesPage';
+import { EmployeeRequestsPage }  from '@/modules/employee/requests/pages/EmployeeRequestsPage';
+import { EmployeeReportsPage }   from '@/modules/employee/reports/pages/EmployeeReportsPage';
+import { EmployeeProfilePage }   from '@/modules/employee/profile/pages/EmployeeProfilePage';
 
 export function AppRouter() {
   return (
@@ -85,6 +91,16 @@ export function AppRouter() {
             <Route path={ROUTES.PROJECT_MANAGER.TEAM}       element={<ProjectTeamPage />} />
             <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
             <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
+          </Route>
+        </Route>
+
+        <Route element={<AuthGuard />}>
+          <Route element={<EmployeeLayout />}>
+            <Route path={ROUTES.EMPLOYEE.DASHBOARD} element={<EmployeeDashboardPage />} />
+            <Route path={ROUTES.EMPLOYEE.MESSAGES}  element={<EmployeeMessagesPage />}  />
+            <Route path={ROUTES.EMPLOYEE.REQUESTS}  element={<EmployeeRequestsPage />}  />
+            <Route path={ROUTES.EMPLOYEE.REPORTS}   element={<EmployeeReportsPage />}   />
+            <Route path={ROUTES.EMPLOYEE.PROFILE}   element={<EmployeeProfilePage />}   />
           </Route>
         </Route>
 

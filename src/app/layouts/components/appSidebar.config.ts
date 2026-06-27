@@ -68,14 +68,29 @@ export const PM_NAV: NavSectionDef[] = [
   },
 ];
 
+// ── Employee ──────────────────────────────────────────────────────────────────
+
+export const EMPLOYEE_NAV: NavSectionDef[] = [
+  {
+    items: [
+      { key: 'emp-home',     labelAr: 'الرئيسية',         labelEn: 'Dashboard',     icon: LayoutDashboard, path: ROUTES.EMPLOYEE.DASHBOARD },
+      { key: 'emp-messages', labelAr: 'الرسائل',           labelEn: 'Messages',      icon: MessageSquare,   path: ROUTES.EMPLOYEE.MESSAGES  },
+      { key: 'emp-requests', labelAr: 'طلباتى',            labelEn: 'My Requests',   icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS  },
+      { key: 'emp-reports',  labelAr: 'التقارير اليومية', labelEn: 'Daily Reports', icon: ClipboardList,   path: ROUTES.EMPLOYEE.REPORTS   },
+    ],
+  },
+];
+
 // ── Lookup maps ───────────────────────────────────────────────────────────────
 
-export const NAV_BY_VARIANT: Record<'hr' | 'pm', NavSectionDef[]> = {
-  hr: HR_NAV,
-  pm: PM_NAV,
+export const NAV_BY_VARIANT: Record<'hr' | 'pm' | 'employee', NavSectionDef[]> = {
+  hr:       HR_NAV,
+  pm:       PM_NAV,
+  employee: EMPLOYEE_NAV,
 };
 
-export const SUBTITLE: Record<'hr' | 'pm', { ar: string; en: string }> = {
-  hr: { ar: 'نظام الموارد البشرية', en: 'HR System'       },
-  pm: { ar: 'مدير المشاريع',        en: 'Project Manager' },
+export const SUBTITLE: Record<'hr' | 'pm' | 'employee', { ar: string; en: string }> = {
+  hr:       { ar: 'نظام الموارد البشرية', en: 'HR System'       },
+  pm:       { ar: 'مدير المشاريع',        en: 'Project Manager' },
+  employee: { ar: 'بوابة الموظف',         en: 'Employee Portal' },
 };
