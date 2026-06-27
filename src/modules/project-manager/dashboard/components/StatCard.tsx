@@ -2,17 +2,24 @@ import type { ReactElement } from 'react';
 import { Card } from '@/shared/components/ui/Card';
 
 export interface StatCardProps {
-  icon:    ReactElement;
-  iconBg:  string;
-  value:   number;
-  labelAr: string;
-  labelEn: string;
-  isAr:    boolean;
+  icon:     ReactElement;
+  iconBg:   string;
+  value:    number;
+  labelAr:  string;
+  labelEn:  string;
+  isAr:     boolean;
+  onClick?: () => void;
 }
 
-export function StatCard({ icon, iconBg, value, labelAr, labelEn, isAr }: StatCardProps) {
+export function StatCard({ icon, iconBg, value, labelAr, labelEn, isAr, onClick }: StatCardProps) {
   return (
-    <Card className="px-5 py-4 flex items-center gap-4">
+    <Card
+      onClick={onClick}
+      className={[
+        'px-5 py-4 flex items-center gap-4 transition-all duration-200',
+        onClick ? 'cursor-pointer hover:border-[#A0CD39] hover:shadow-md' : '',
+      ].join(' ')}
+    >
       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
         {icon}
       </div>

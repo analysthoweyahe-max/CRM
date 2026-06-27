@@ -36,6 +36,7 @@ export function ProjectDashboardPage() {
           labelAr="التقارير اليومية"
           labelEn="Daily Reports"
           isAr={isAr}
+          onClick={() => navigate(ROUTES.PROJECT_MANAGER.REPORTS)}
         />
         <StatCard
           icon={<Users size={22} className="text-purple-600" />}
@@ -44,6 +45,7 @@ export function ProjectDashboardPage() {
           labelAr="أعضاء الفريق"
           labelEn="Team Members"
           isAr={isAr}
+          onClick={() => navigate(ROUTES.PROJECT_MANAGER.TEAM)}
         />
         <StatCard
           icon={<ListChecks size={22} className="text-amber-600" />}
