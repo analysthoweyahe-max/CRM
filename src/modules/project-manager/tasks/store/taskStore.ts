@@ -27,6 +27,11 @@ export function addTask(task: Task): void {
   notify();
 }
 
+export function deleteTask(id: string): void {
+  tasks = tasks.filter(t => t.id !== id);
+  notify();
+}
+
 export function useProjectTasks(projectId: string): Task[] {
   const [state, setState] = useState<Task[]>(() => getProjectTasks(projectId));
 

@@ -17,9 +17,10 @@ interface Props {
   tasks:  Task[];
   isAr:   boolean;
   onDrop: (taskId: string, toStatus: TaskStatus) => void;
+  onOpen: (task: Task) => void;
 }
 
-export function KanbanColumn({ status, tasks, isAr, onDrop }: Props) {
+export function KanbanColumn({ status, tasks, isAr, onDrop, onOpen }: Props) {
   const [isDragOver, setIsDragOver] = useState(false);
   const cfg = COLUMN_CONFIG[status];
 
@@ -59,7 +60,7 @@ export function KanbanColumn({ status, tasks, isAr, onDrop }: Props) {
         ].join(' ')}
       >
         {tasks.map(task => (
-          <KanbanTaskCard key={task.id} task={task} isAr={isAr} />
+          <KanbanTaskCard key={task.id} task={task} isAr={isAr} onOpen={onOpen} />
         ))}
 
         {tasks.length === 0 && (

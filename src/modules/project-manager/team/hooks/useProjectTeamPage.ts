@@ -110,6 +110,18 @@ export function useProjectTeamPage(isAr: boolean) {
     setProfileMember({ ...member });
   }
 
+  function removeMember(memberName: string) {
+    projects.forEach(project => {
+      if (!project.team.some(m => m.name === memberName)) return;
+      updateProject(project.id, {
+        team: project.team.filter(m => m.name !== memberName),
+      });
+    });
+    toast.success(
+      isAr ? `تمت إزالة ${memberName} من الفريق` : `${memberName} removed from team`
+    );
+  }
+
   function toggleActive(memberName: string) {
     const member   = allMembers.find(m => m.name === memberName);
     if (!member) return;
@@ -124,11 +136,20 @@ export function useProjectTeamPage(isAr: boolean) {
       });
     });
 
-    toast.success(
-      newActive
-        ? (isAr ? `تم تفعيل ${memberName}` : `${memberName} activated`)
-        : (isAr ? `تم تعطيل ${memberName}` : `${memberName} deactivated`)
-    );
+    if (newActive) {
+      toast.success(isAr ? `تم تفعيل ${memberName}` : `${memberName} activated`);
+    } else {
+      toast.warning(
+        isAr ? `تم تعطيل ${memberName}` : `${memberName} deactivated`,
+        {
+          description: isAr ? 'هل تريد إزالته من الفريق نهائياً؟' : 'Do you want to remove them from the team?',
+          action: {
+            label: isAr ? 'إزالة من الفريق' : 'Remove',
+            onClick: () => removeMember(memberName),
+          },
+        }
+      );
+    }
   }
 
   function exportSelected() {

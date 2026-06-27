@@ -1,4 +1,4 @@
-import { Download, MessageCircle } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useLang }            from '@/app/providers/LanguageProvider';
 import { Button }             from '@/shared/components/ui/Button';
 import { GlobalMemberCard }   from '../components/GlobalMemberCard';
@@ -45,9 +45,6 @@ export function ProjectTeamPage() {
             <span className="text-sm font-semibold text-[#709028] dark:text-[#A0CD39]">
               {isAr ? `تم تحديد ${selectedCount}` : `${selectedCount} selected`}
             </span>
-            <Button variant="ghost" size="sm" startIcon={<MessageCircle size={14} />}>
-              {isAr ? 'رسالة جماعية' : 'Bulk Message'}
-            </Button>
             <Button variant="ghost" size="sm" startIcon={<Download size={14} />} onClick={exportSelected}>
               {isAr ? 'تصدير' : 'Export'}
             </Button>

@@ -8,16 +8,18 @@ const PRIORITY_CONFIG: Record<TaskPriority, { ar: string; dot: string; badge: st
 };
 
 interface Props {
-  task: Task;
-  isAr: boolean;
+  task:   Task;
+  isAr:   boolean;
+  onOpen: (task: Task) => void;
 }
 
-export function KanbanTaskCard({ task, isAr }: Props) {
+export function KanbanTaskCard({ task, isAr, onOpen }: Props) {
   const prio = PRIORITY_CONFIG[task.priority];
 
   return (
     <div
       draggable
+      onClick={() => onOpen(task)}
       onDragStart={e => {
         e.dataTransfer.setData('taskId', task.id);
         e.dataTransfer.effectAllowed = 'move';
