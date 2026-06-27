@@ -12,6 +12,7 @@ import { AddTaskModal }    from '../components/AddTaskModal';
 import { ProgressLogTab }     from '../components/ProgressLogTab';
 import { ProjectSettingsTab }  from '../components/ProjectSettingsTab';
 import { ProjectTeamTab }      from '../components/ProjectTeamTab';
+import { ProjectMessagesTab }  from '../components/ProjectMessagesTab';
 
 const STATUS_BADGE: Record<string, string> = {
   inProgress: 'bg-[#D8EBAE] text-[#709028] dark:bg-[#A0CD39]/20 dark:text-[#A0CD39]',
@@ -151,13 +152,7 @@ export function ProjectDetailsPage() {
       {activeTab === 'team'     && <ProjectTeamTab projectId={project.id} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab project={project} tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
-      {activeTab === 'messages' && (
-        <div className="py-24 text-center">
-          <p className="text-sm text-gray-400 dark:text-gray-500">
-            {isAr ? 'هذه الميزة قيد التطوير' : 'This feature is under development'}
-          </p>
-        </div>
-      )}
+      {activeTab === 'messages' && <ProjectMessagesTab team={project.team} isAr={isAr} />}
 
       {/* Add Task Modal */}
       <AddTaskModal
