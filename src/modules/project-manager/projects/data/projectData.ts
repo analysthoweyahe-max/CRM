@@ -14,10 +14,10 @@ export const PROJECTS: Project[] = [
     tasksCompleted: 1,
     tasksTotal: 4,
     team: [
-      { initial: 'أ', color: 'bg-orange-500', name: 'أحمد' },
-      { initial: 'م', color: 'bg-blue-500',   name: 'محمد' },
-      { initial: 'ب', color: 'bg-purple-500', name: 'بسمة' },
-      { initial: 'ع', color: 'bg-green-500',  name: 'علاء'  },
+      { initial: 'أ', color: 'bg-orange-500', name: 'أحمد المنصور', role: 'مطور خلفي',   email: 'ahmed@howeyah.com',   isActive: true  },
+      { initial: 'م', color: 'bg-blue-500',   name: 'محمد علي',     role: 'مطور أمامي',  email: 'mohamed@howeyah.com', isActive: true  },
+      { initial: 'ب', color: 'bg-purple-500', name: 'بسمة حسن',     role: 'UI/UX مصممة', email: 'basma@howeyah.com',   isActive: true  },
+      { initial: 'ع', color: 'bg-green-500',  name: 'علاء الدين',   role: 'مختبر جودة',  email: 'alaa@howeyah.com',    isActive: false },
     ],
   },
   {
@@ -33,11 +33,11 @@ export const PROJECTS: Project[] = [
     tasksCompleted: 3,
     tasksTotal: 9,
     team: [
-      { initial: 'أ', color: 'bg-orange-500', name: 'أحمد'  },
-      { initial: 'م', color: 'bg-blue-500',   name: 'محمد'  },
-      { initial: 'س', color: 'bg-pink-500',   name: 'سارة'  },
-      { initial: 'خ', color: 'bg-teal-500',   name: 'خالد'  },
-      { initial: 'ن', color: 'bg-indigo-500', name: 'نور'   },
+      { initial: 'أ', color: 'bg-orange-500', name: 'أحمد المنصور', role: 'مطور خلفي',   email: 'ahmed@howeyah.com',   isActive: true  },
+      { initial: 'م', color: 'bg-blue-500',   name: 'محمد علي',     role: 'مطور أمامي',  email: 'mohamed@howeyah.com', isActive: true  },
+      { initial: 'س', color: 'bg-pink-500',   name: 'سارة محمد',    role: 'UI/UX مصممة', email: 'sara@howeyah.com',    isActive: true  },
+      { initial: 'خ', color: 'bg-teal-500',   name: 'خالد إبراهيم', role: 'مدير مشروع',  email: 'khaled@howeyah.com',  isActive: false },
+      { initial: 'ن', color: 'bg-indigo-500', name: 'نور أحمد',     role: 'مختبرة جودة', email: 'nour@howeyah.com',    isActive: true  },
     ],
   },
   {
@@ -51,9 +51,9 @@ export const PROJECTS: Project[] = [
     tasksCompleted: 12,
     tasksTotal: 12,
     team: [
-      { initial: 'ر', color: 'bg-rose-500',   name: 'رنا'   },
-      { initial: 'ك', color: 'bg-cyan-500',   name: 'كريم'  },
-      { initial: 'ف', color: 'bg-violet-500', name: 'فاطمة' },
+      { initial: 'ر', color: 'bg-rose-500',   name: 'رنا',   role: 'مديرة مشروع',  email: 'rana@howeyah.com',   isActive: true },
+      { initial: 'ك', color: 'bg-cyan-500',   name: 'كريم',  role: 'مطور',         email: 'karim@howeyah.com',  isActive: true },
+      { initial: 'ف', color: 'bg-violet-500', name: 'فاطمة', role: 'UI/UX مصممة',  email: 'fatima@howeyah.com', isActive: true },
     ],
   },
   {
@@ -67,8 +67,8 @@ export const PROJECTS: Project[] = [
     tasksCompleted: 6,
     tasksTotal: 10,
     team: [
-      { initial: 'ه', color: 'bg-lime-600',   name: 'هدى'   },
-      { initial: 'ط', color: 'bg-sky-500',    name: 'طارق'  },
+      { initial: 'ه', color: 'bg-lime-600', name: 'هدى',   role: 'محللة بيانات', email: 'huda@howeyah.com',   isActive: true },
+      { initial: 'ط', color: 'bg-sky-500',  name: 'طارق',  role: 'مطور',         email: 'tarek@howeyah.com',  isActive: true },
     ],
   },
   {
@@ -82,9 +82,9 @@ export const PROJECTS: Project[] = [
     tasksCompleted: 0,
     tasksTotal: 8,
     team: [
-      { initial: 'م', color: 'bg-blue-500',   name: 'محمد'  },
-      { initial: 'س', color: 'bg-pink-500',   name: 'سارة'  },
-      { initial: 'ع', color: 'bg-green-500',  name: 'علاء'  },
+      { initial: 'م', color: 'bg-blue-500',  name: 'محمد', role: 'مطور أمامي',  email: 'mohamed@howeyah.com', isActive: true },
+      { initial: 'س', color: 'bg-pink-500',  name: 'سارة', role: 'UI/UX مصممة', email: 'sara@howeyah.com',    isActive: true },
+      { initial: 'ع', color: 'bg-green-500', name: 'علاء', role: 'مختبر جودة',  email: 'alaa@howeyah.com',    isActive: true },
     ],
   },
 ];

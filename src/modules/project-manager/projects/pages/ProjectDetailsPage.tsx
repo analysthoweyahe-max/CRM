@@ -11,6 +11,7 @@ import { KanbanBoard }     from '../components/KanbanBoard';
 import { AddTaskModal }    from '../components/AddTaskModal';
 import { ProgressLogTab }     from '../components/ProgressLogTab';
 import { ProjectSettingsTab }  from '../components/ProjectSettingsTab';
+import { ProjectTeamTab }      from '../components/ProjectTeamTab';
 
 const STATUS_BADGE: Record<string, string> = {
   inProgress: 'bg-[#D8EBAE] text-[#709028] dark:bg-[#A0CD39]/20 dark:text-[#A0CD39]',
@@ -131,23 +132,26 @@ export function ProjectDetailsPage() {
           ))}
         </div>
 
-        {/* Add Task button (end = left in RTL) */}
-        <div className="pb-2 shrink-0">
-          <Button
-            variant="primary"
-            startIcon={<Plus size={15} />}
-            onClick={() => setShowAddTask(true)}
-          >
-            {isAr ? 'إضافة مهمة' : 'Add Task'}
-          </Button>
-        </div>
+        {/* Add Task button — only on tasks tab */}
+        {activeTab === 'tasks' && (
+          <div className="pb-2 shrink-0">
+            <Button
+              variant="primary"
+              startIcon={<Plus size={15} />}
+              onClick={() => setShowAddTask(true)}
+            >
+              {isAr ? 'إضافة مهمة' : 'Add Task'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Tab content */}
       {activeTab === 'tasks'    && <KanbanBoard tasks={tasks} isAr={isAr} />}
+      {activeTab === 'team'     && <ProjectTeamTab projectId={project.id} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab project={project} tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
-      {activeTab !== 'tasks' && activeTab !== 'progress' && activeTab !== 'settings' && (
+      {activeTab === 'messages' && (
         <div className="py-24 text-center">
           <p className="text-sm text-gray-400 dark:text-gray-500">
             {isAr ? 'هذه الميزة قيد التطوير' : 'This feature is under development'}

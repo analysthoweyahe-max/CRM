@@ -1,9 +1,12 @@
 export type ProjectStatus = 'inProgress' | 'completed' | 'paused' | 'notStarted';
 
 export interface TeamMember {
-  initial: string;
-  color:   string;
-  name:    string;
+  initial:   string;
+  color:     string;
+  name:      string;
+  role?:     string;
+  email?:    string;
+  isActive?: boolean;
 }
 
 export interface Project {

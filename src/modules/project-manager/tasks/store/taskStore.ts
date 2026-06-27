@@ -9,6 +9,10 @@ const listeners = new Set<Listener>();
 
 function notify() { listeners.forEach(fn => fn()); }
 
+export function getAllTasks(): Task[] {
+  return tasks;
+}
+
 export function getProjectTasks(projectId: string): Task[] {
   return tasks.filter(t => t.projectId === projectId);
 }
