@@ -19,54 +19,57 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
 
   return (
     <>
-      {/* ── Employment Type ───────────────────────────── */}
-      <Section
-        title={isAr ? 'نوع التوظيف' : 'Employment Type'}
-        onEdit={() => setOpenModal('employmentType')}
-      >
-        <Field icon={<Briefcase size={15} />} label={isAr ? 'نوع التوظيف' : 'Type'}>
-          {mapEmploymentType(emp.employmentType, isAr)}
-        </Field>
-      </Section>
-
-      {/* ── Salary ───────────────────────────────────── */}
-      <Section
-        title={isAr ? 'الراتب' : 'Salary'}
-        onEdit={() => setOpenModal('salary')}
-      >
-        <Field icon={<Wallet size={15} />} label={isAr ? 'الراتب الأساسي' : 'Basic Salary'}>
-          {emp.salary != null
-            ? `${emp.salary.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`
-            : '–'}
-        </Field>
-      </Section>
-
-      {/* ── Work Schedule ─────────────────────────────── */}
-      <Section
-        title={isAr ? 'جدول الدوام' : 'Work Schedule'}
-        onEdit={() => setOpenModal('workSchedule')}
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <Field icon={<Clock size={15} />} label={isAr ? 'بداية الدوام' : 'Start Time'}>
-            {startTime ?? '–'}
+      {/* ── Row 1: Employment Type + Salary ──────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Section
+          title={isAr ? 'نوع التوظيف' : 'Employment Type'}
+          onEdit={() => setOpenModal('employmentType')}
+        >
+          <Field icon={<Briefcase size={15} />} label={isAr ? 'نوع التوظيف' : 'Type'}>
+            {mapEmploymentType(emp.employmentType, isAr)}
           </Field>
-          <Field icon={<Clock size={15} />} label={isAr ? 'نهاية الدوام' : 'End Time'}>
-            {endTime ?? '–'}
+        </Section>
+
+        <Section
+          title={isAr ? 'الراتب' : 'Salary'}
+          onEdit={() => setOpenModal('salary')}
+        >
+          <Field icon={<Wallet size={15} />} label={isAr ? 'الراتب الأساسي' : 'Basic Salary'}>
+            {emp.salary != null
+              ? `${emp.salary.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`
+              : '–'}
           </Field>
-          <Field icon={<Clock size={15} />} label={isAr ? 'ساعات العمل' : 'Hours / Day'}>
-            {requiredHours != null ? `${requiredHours} ${isAr ? 'ساعات' : 'hrs'}` : '–'}
+        </Section>
+      </div>
+
+      {/* ── Row 2: Work Schedule + Hire Date ─────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Section
+          title={isAr ? 'جدول الدوام' : 'Work Schedule'}
+          onEdit={() => setOpenModal('workSchedule')}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <Field icon={<Clock size={15} />} label={isAr ? 'بداية الدوام' : 'Start Time'}>
+              {startTime ?? '–'}
+            </Field>
+            <Field icon={<Clock size={15} />} label={isAr ? 'نهاية الدوام' : 'End Time'}>
+              {endTime ?? '–'}
+            </Field>
+            <Field icon={<Clock size={15} />} label={isAr ? 'ساعات العمل' : 'Hours / Day'}>
+              {requiredHours != null ? `${requiredHours} ${isAr ? 'ساعات' : 'hrs'}` : '–'}
+            </Field>
+          </div>
+        </Section>
+
+        {/* ── Hire date (read-only) ──────────────────── */}
+        <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+          <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
+            {isAr ? 'تاريخ الانضمام' : 'Hire Date'}
+          </h3>
+          <Field icon={<CalendarDays size={15} />} label={isAr ? 'تاريخ الانضمام' : 'Joining Date'}>
+            {emp.joiningDate ?? '–'}
           </Field>
         </div>
-      </Section>
-
-      {/* ── Hire date (read-only) ─────────────────────── */}
-      <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm p-6">
-        <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
-          {isAr ? 'تاريخ الانضمام' : 'Hire Date'}
-        </h3>
-        <Field icon={<CalendarDays size={15} />} label={isAr ? 'تاريخ الانضمام' : 'Joining Date'}>
-          {emp.joiningDate ?? '–'}
-        </Field>
       </div>
 
       {/* ── Modals ───────────────────────────────────── */}

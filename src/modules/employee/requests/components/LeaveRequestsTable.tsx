@@ -13,7 +13,43 @@ import type { EmpLeaveRequest }             from '../types/employeeLeave.types';
 
 const col = createColumnHelper<EmpLeaveRequest>();
 
+/* ── 4 cols: النوع / الوصف / التاريخ / الحالة ── */
+const COL_W = [25, 45, 20, 20];
+
+function TableSkeleton() {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50 dark:bg-gray-700/40 border-b border-gray-100 dark:border-gray-700">
+          <tr>
+            {COL_W.map((w, i) => (
+              <th key={i} className="px-5 py-3">
+                <div className="h-3 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" style={{ width: `${w}%` }} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
+          {Array.from({ length: 5 }).map((_, r) => (
+            <tr key={r}>
+              {COL_W.map((w, c) => (
+                <td key={c} className="px-5 py-4">
+                  <div
+                    className="h-4 rounded bg-gray-100 dark:bg-gray-700/60 animate-pulse"
+                    style={{ width: `${w + ((c * 11 + r * 7) % 18)}%`, animationDelay: `${r * 50}ms` }}
+                  />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function LeaveRequestsTable({ requests, isLoading, isAr }: LeaveRequestsTableProps) {
+  if (isLoading) return <TableSkeleton />;
   const columns = useMemo(() => [
     col.accessor(row => getTypeName(row.type, isAr), {
       id:     'type',
@@ -70,7 +106,6 @@ export function LeaveRequestsTable({ requests, isLoading, isAr }: LeaveRequestsT
     <DataTable
       table={table}
       isAr={isAr}
-      isLoading={isLoading}
       emptyText={isAr ? 'لا توجد طلبات بعد' : 'No requests yet'}
       withCard={false}
     />

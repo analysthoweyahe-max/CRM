@@ -4,7 +4,9 @@ import { Button }         from '@/shared/components/ui/Button';
 import { Card }           from '@/shared/components/ui/Card';
 import { FilterBar }      from '@/shared/components/tables/FilterBar';
 import { DataTable }      from '@/shared/components/tables/DataTable';
+import { EmptyState }     from '@/shared/components/feedback/EmptyState';
 import { EmployeeBanner } from '../components/EmployeeBanner';
+import { AttendanceRowsSkeleton } from '../components/AttendanceRowsSkeleton';
 import { printAttendance } from '../utils/printAttendance';
 import { useAttendanceLogPage } from '../hooks/useAttendanceLogPage';
 
@@ -50,34 +52,30 @@ export function AttendanceLogPage() {
         />
 
         {!selectedId ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700
-                            flex items-center justify-center mb-4">
-              <Users size={24} className="text-gray-400 dark:text-gray-500" />
-            </div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {isAr ? 'اختر موظفاً لعرض سجل حضوره' : 'Select an employee to view their attendance log'}
-            </p>
-            <p className="text-xs mt-1 text-gray-400 dark:text-gray-500">
-              {isAr ? 'استخدم القائمة أعلاه للبحث عن موظف' : 'Use the dropdown above to search for an employee'}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Users size={24} className="text-[#709028] dark:text-[#A0CD39]" />}
+            title={isAr ? 'اختر موظفاً لعرض سجل حضوره' : 'Select an employee to view their attendance log'}
+            description={isAr ? 'استخدم القائمة أعلاه للبحث عن موظف' : 'Use the dropdown above to search for an employee'}
+          />
         ) : (
           <>
             {selectedEmp && <EmployeeBanner emp={selectedEmp} total={total} isAr={isAr} />}
-            <DataTable
-              table={table}
-              isAr={isAr}
-              withCard={false}
-              isLoading={isFetching && records.length === 0}
-              emptyText={isAr ? 'لا توجد سجلات حضور' : 'No attendance records found'}
-              serverPagination={{
-                page, lastPage, total, firstRow, lastRow,
-                onPrev: () => setPage((p) => p - 1),
-                onNext: () => setPage((p) => p + 1),
-                onPage: (i) => setPage(i + 1),
-              }}
-            />
+            {isFetching && records.length === 0 ? (
+              <AttendanceRowsSkeleton />
+            ) : (
+              <DataTable
+                table={table}
+                isAr={isAr}
+                withCard={false}
+                emptyText={isAr ? 'لا توجد سجلات حضور' : 'No attendance records found'}
+                serverPagination={{
+                  page, lastPage, total, firstRow, lastRow,
+                  onPrev: () => setPage((p) => p - 1),
+                  onNext: () => setPage((p) => p + 1),
+                  onPage: (i) => setPage(i + 1),
+                }}
+              />
+            )}
           </>
         )}
       </Card>

@@ -109,7 +109,7 @@ export function RecentData({ isAr, recentEmployees, recentLeaves }: Props) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                  {leave.employee.name}
+                  {leave.employee?.name ?? '–'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
                   {leave.leave_type_label} · {leave.days_count} {isAr ? 'يوم' : 'days'}

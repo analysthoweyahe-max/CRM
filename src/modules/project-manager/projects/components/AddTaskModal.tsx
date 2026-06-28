@@ -23,6 +23,19 @@ const PRIORITY_ITEMS: ComboboxItem[] = [
   { id: 'low',    label: 'منخفضة' },
 ];
 
+interface StageEntry { ar: string; en: string }
+const STAGES: StageEntry[] = [
+  { ar: 'متطلبات العمل', en: 'Requirements'  },
+  { ar: 'التحليل',       en: 'Analysis'      },
+  { ar: 'التصميم',       en: 'Design'        },
+  { ar: 'التطوير',       en: 'Development'   },
+  { ar: 'الاختبار',      en: 'Testing'       },
+  { ar: 'التكاملات',     en: 'Integrations'  },
+  { ar: 'المراجعة',      en: 'Review'        },
+  { ar: 'النشر',         en: 'Deployment'    },
+];
+const STAGE_ITEMS: ComboboxItem[] = STAGES.map(s => ({ id: s.ar, label: s.ar }));
+
 interface Props {
   open:      boolean;
   onClose:   () => void;
@@ -39,6 +52,7 @@ export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }
   const [assignee,       setAssignee]       = useState('');
   const [dueDate,        setDueDate]        = useState('');
   const [estimatedHours, setEstimatedHours] = useState<string>('');
+  const [stage,          setStage]          = useState('');
 
   const teamItems: ComboboxItem[] = team.map(m => ({ id: m.name, label: m.name }));
 
@@ -46,13 +60,14 @@ export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }
     if (!title.trim()) return;
     const member = team.find(m => m.name === assignee);
     const num    = String(taskCount + 1).padStart(3, '0');
+    const stageEntry = STAGES.find(s => s.ar === stage);
     addTask({
       id:              `t-${projectId}-${num}`,
       projectId,
       title:           title.trim(),
       description:     description.trim() || undefined,
-      categoryAr:      'عام',
-      categoryEn:      'General',
+      categoryAr:      stageEntry?.ar ?? 'عام',
+      categoryEn:      stageEntry?.en ?? 'General',
       priority:        (priority as TaskPriority),
       assigneeName:    member?.name    ?? assignee,
       assigneeInitial: member?.initial ?? (assignee ? assignee[0] : '؟'),
@@ -63,7 +78,7 @@ export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }
       taskNumber:      `#${num}`,
     });
     setTitle(''); setDescription(''); setPriority('medium');
-    setAssignee(''); setDueDate(''); setEstimatedHours('');
+    setAssignee(''); setDueDate(''); setEstimatedHours(''); setStage('');
     onClose();
   }
 
@@ -161,6 +176,19 @@ export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }
               className={INPUT}
             />
           </div>
+        </div>
+
+        {/* Stage */}
+        <div>
+          <label className={LABEL}>{isAr ? 'المرحلة' : 'Stage'}</label>
+          <Combobox
+            items={STAGE_ITEMS}
+            value={stage}
+            onChange={setStage}
+            placeholder={isAr ? 'اختر المرحلة' : 'Select stage'}
+            searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
+            noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+          />
         </div>
 
       </div>

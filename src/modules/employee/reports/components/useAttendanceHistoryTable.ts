@@ -1,3 +1,4 @@
+import { formatDateWithWeekday } from '@/shared/utils/date.utils';
 import type { DayStatus } from '@/modules/hr/attendance/types/attendance.types';
 
 export const DAY_STATUS_MAP: Record<string, { ar: string; en: string; variant: 'success' | 'warning' | 'error' | 'brand' | 'gray' }> = {
@@ -8,12 +9,7 @@ export const DAY_STATUS_MAP: Record<string, { ar: string; en: string; variant: '
   holiday: { ar: 'عطلة',  en: 'Holiday', variant: 'gray'    },
 };
 
-export function fmtDate(raw: string | undefined, isAr: boolean) {
-  if (!raw) return '–';
-  return new Date(raw).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
-    weekday: 'short', day: 'numeric', month: 'short',
-  });
-}
+export { formatDateWithWeekday as fmtDate };
 
 export function fmtTime(raw: string | null | undefined) {
   if (!raw) return '—';

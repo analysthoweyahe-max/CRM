@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLang }           from '@/app/providers/LanguageProvider';
 import { DailyReportsTab }   from '../components/DailyReportsTab';
 import { RequestsTab }       from '../components/RequestsTab';
+import { ProjectReportsSkeleton } from '../components/ProjectReportsSkeleton';
 
 type TabKey = 'reports' | 'requests';
 
@@ -14,7 +15,14 @@ export function ProjectReportsPage() {
   const { lang } = useLang();
   const isAr      = lang === 'ar';
 
-  const [active, setActive] = useState<TabKey>('reports');
+  const [active,    setActive]    = useState<TabKey>('reports');
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 350);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (isLoading) return <ProjectReportsSkeleton />;
 
   return (
     <div className="space-y-5">

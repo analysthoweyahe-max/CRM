@@ -2,6 +2,7 @@ import type { Table } from '@tanstack/react-table';
 import { flexRender } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { Card }            from '@/shared/components/ui/Card';
+import { EmptyState }      from '@/shared/components/feedback/EmptyState';
 import { FilterBar }       from './FilterBar';
 import { TablePagination } from './TablePagination';
 import type { FilterConfig } from './FilterBar';
@@ -110,8 +111,11 @@ export function DataTable<TData>({
               </tr>
             ) : table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td colSpan={colCount} className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
-                  {emptyText ?? (isAr ? 'لا توجد نتائج' : 'No results found')}
+                <td colSpan={colCount}>
+                  <EmptyState
+                    title={emptyText ?? (isAr ? 'لا توجد نتائج' : 'No results found')}
+                    description={isAr ? 'حاول تغيير معايير البحث أو الفلترة' : 'Try adjusting your search or filter criteria'}
+                  />
                 </td>
               </tr>
             ) : (

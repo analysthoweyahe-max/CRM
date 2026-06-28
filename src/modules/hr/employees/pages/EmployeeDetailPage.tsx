@@ -17,6 +17,7 @@ import { EmployeeDetailPayroll }    from '../components/detail/EmployeeDetailPay
 import { EmployeeDetailAttendance } from '../components/detail/EmployeeDetailAttendance';
 import { EmployeeDetailLeaves }     from '../components/detail/EmployeeDetailLeaves';
 import { EditEmployeeModal }        from '../components/edit-modals/EditEmployeeModal';
+import { EmployeeDetailSkeleton }  from '../components/EmployeeDetailSkeleton';
 
 type Tab = 'summary' | 'employment' | 'payroll' | 'attendance' | 'leaves';
 
@@ -37,13 +38,7 @@ export function EmployeeDetailPage() {
 
   const BackIcon = isAr ? ArrowRight : ArrowLeft;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
-        {isAr ? 'جاري التحميل...' : 'Loading...'}
-      </div>
-    );
-  }
+  if (isLoading) return <EmployeeDetailSkeleton />;
 
   if (isError || !emp) {
     return (

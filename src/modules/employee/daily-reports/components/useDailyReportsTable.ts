@@ -1,3 +1,4 @@
+import { formatDateWithWeekday } from '@/shared/utils/date.utils';
 import type { DailyReportStatus } from '../types/dailyReport.types';
 
 export const REPORT_STATUS_MAP: Record<DailyReportStatus, { ar: string; en: string; variant: 'warning' | 'success' | 'error' }> = {
@@ -6,9 +7,4 @@ export const REPORT_STATUS_MAP: Record<DailyReportStatus, { ar: string; en: stri
   rejected:  { ar: 'مرفوض',   en: 'Rejected',  variant: 'error'   },
 };
 
-export function fmtDate(raw: string, isAr: boolean) {
-  if (!raw) return '—';
-  return new Date(raw).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
-    weekday: 'short', day: 'numeric', month: 'short',
-  });
-}
+export { formatDateWithWeekday as fmtDate };

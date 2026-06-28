@@ -42,7 +42,7 @@ export function useDashboard() {
 
   const recentLeavesQ = useQuery({
     queryKey: ['dashboard', 'recent-leaves'],
-    queryFn:  () => leavesApi.list({ per_page: 5 }).then(r => r.data.data.data),
+    queryFn:  () => leavesApi.list({ per_page: 5, with: 'employee' }).then(r => r.data.data.data),
     staleTime: 2 * 60 * 1000,
   });
 
@@ -85,6 +85,6 @@ export function useDashboard() {
     deptDistribution,
     attendanceSummary: summary as DailyAttendanceSummary | undefined,
     recentEmployees: employees.slice(0, 5),
-    recentLeaves:    (recentLeavesQ.data ?? []) as ApiLeaveRequest[],
+    recentLeaves:    (recentLeavesQ.data ?? []).filter((l) => l.employee != null) as ApiLeaveRequest[],
   };
 }

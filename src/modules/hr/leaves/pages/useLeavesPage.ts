@@ -17,6 +17,7 @@ export function useLeavesPage(): UseLeavesPageReturn {
     search:   search || undefined,
     per_page: PAGE_SIZE,
     page,
+    with:     'employee',
   });
 
   const rows     = tablePage?.data      ?? [];

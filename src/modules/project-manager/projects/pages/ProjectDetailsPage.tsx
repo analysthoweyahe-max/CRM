@@ -1,4 +1,4 @@
-import { useState }      from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useLang }         from '@/app/providers/LanguageProvider';
@@ -13,6 +13,7 @@ import { ProgressLogTab }     from '../components/ProgressLogTab';
 import { ProjectSettingsTab }  from '../components/ProjectSettingsTab';
 import { ProjectTeamTab }      from '../components/ProjectTeamTab';
 import { ProjectMessagesTab }  from '../components/ProjectMessagesTab';
+import { ProjectDetailsSkeleton } from '../components/ProjectDetailsSkeleton';
 
 const STATUS_BADGE: Record<string, string> = {
   inProgress: 'bg-[#D8EBAE] text-[#709028] dark:bg-[#A0CD39]/20 dark:text-[#A0CD39]',
@@ -50,6 +51,13 @@ export function ProjectDetailsPage() {
 
   const [activeTab,   setActiveTab]   = useState<TabKey>('tasks');
   const [showAddTask, setShowAddTask] = useState(false);
+  const [isLoading,   setIsLoading]   = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 350);
+    return () => clearTimeout(t);
+  }, [id]);
+
+  if (isLoading) return <ProjectDetailsSkeleton />;
 
   if (!project) {
     navigate(ROUTES.PROJECT_MANAGER.DASHBOARD);

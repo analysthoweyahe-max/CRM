@@ -6,12 +6,7 @@ export const STATUS_MAP = {
   pending:  { ar: 'قيد الانتظار', en: 'Pending',  variant: 'warning' as const },
 };
 
-export function fmtDate(raw: string | undefined, isAr: boolean) {
-  if (!raw) return '–';
-  return new Date(raw).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  });
-}
+export { formatDateFull as fmtDate } from '@/shared/utils/date.utils';
 
 export function getTypeName(t: EmpLeaveType | string | undefined, isAr: boolean): string {
   if (!t) return '–';

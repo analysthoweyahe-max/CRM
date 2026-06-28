@@ -12,7 +12,8 @@ interface Props {
 
 export function LeaveTableRow({ row, isAr }: Props) {
   const navigate = useNavigate();
-  const name    = row.employee?.name ?? '';
+  const name    = row.employee?.name ?? row.employee_name ?? '';
+  const dept    = row.employee?.department ?? row.employee_department ?? '';
   const initial = name ? getInitial(name) : '?';
   const color   = name ? getAvatarColor(name) : 'bg-gray-400';
 
@@ -25,8 +26,8 @@ export function LeaveTableRow({ row, isAr }: Props) {
             <span className="text-xs font-bold text-white">{initial}</span>
           </div>
           <div className="min-w-0">
-            <p className="font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">{name}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{row.employee?.department ?? '–'}</p>
+            <p className="font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">{name || '–'}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{dept || '–'}</p>
           </div>
         </div>
       </td>

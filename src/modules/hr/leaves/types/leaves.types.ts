@@ -59,7 +59,11 @@ export interface ApiLeaveAttachment {
 
 export interface ApiLeaveRequest {
   id:               string;
-  employee:         ApiLeaveEmployee;
+  employee?:        ApiLeaveEmployee | null;
+  /* flat fallbacks some API versions return instead of the nested object */
+  employee_name?:   string;
+  employee_department?: string;
+  employee_job_title?:  string;
   leave_type:       string;
   leave_type_label: string;
   start_date:       string;
@@ -119,6 +123,7 @@ export interface LeaveListParams {
   request_date?: string;
   per_page?:     number;
   page?:         number;
+  with?:         string;
 }
 
 export interface EmployeeLeaveSummary {

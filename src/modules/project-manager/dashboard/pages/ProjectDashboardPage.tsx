@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { ClipboardList, Users, ListChecks, FolderKanban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLang }     from '@/app/providers/LanguageProvider';
@@ -5,12 +6,21 @@ import { ROUTES }      from '@/app/router/routes';
 import { useProjects } from '../../projects/store/projectStore';
 import { StatCard }        from '../components/StatCard';
 import { ProjectsSection } from '../components/ProjectsSection';
+import { ProjectDashboardSkeleton } from '../components/ProjectDashboardSkeleton';
 
 export function ProjectDashboardPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
   const projects = useProjects();
+
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 350);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (isLoading) return <ProjectDashboardSkeleton />;
 
   const totalMembers = new Set(
     projects.flatMap(p => p.team.map(m => m.name))

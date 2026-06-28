@@ -5,12 +5,15 @@ import { PageHeader }     from '@/shared/components/ui/PageHeader';
 import { Button }         from '@/shared/components/ui/Button';
 import { DataTable }      from '@/shared/components/tables/DataTable';
 import { BonusStats }     from '../components/BonusStats';
+import { BonusesSkeleton } from '../components/BonusesSkeleton';
 import { OvertimeSettings } from '../components/OvertimeSettings';
 import { useBonusesPage } from '../hooks/useBonusesPage';
 
 export function BonusesPage() {
   const navigate = useNavigate();
   const { isAr, isLoading, table, serverPagination, summary, search, filters } = useBonusesPage();
+
+  if (isLoading) return <BonusesSkeleton />;
 
   return (
     <div className="space-y-5">
@@ -42,7 +45,6 @@ export function BonusesPage() {
       <DataTable
         table={table}
         isAr={isAr}
-        isLoading={isLoading}
         search={search}
         filters={filters}
         serverPagination={serverPagination}

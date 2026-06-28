@@ -1,13 +1,21 @@
+import { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { useLang }            from '@/app/providers/LanguageProvider';
 import { Button }             from '@/shared/components/ui/Button';
 import { GlobalMemberCard }   from '../components/GlobalMemberCard';
 import { MemberProfileModal } from '../../projects/components/MemberProfileModal';
 import { useProjectTeamPage } from '../hooks/useProjectTeamPage';
+import { ProjectTeamSkeleton } from '../components/ProjectTeamSkeleton';
 
 export function ProjectTeamPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
+
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 350);
+    return () => clearTimeout(t);
+  }, []);
 
   const {
     members, total, page, setPage, pageCount,
@@ -15,6 +23,8 @@ export function ProjectTeamPage() {
     toggleAll, toggleOne, clearSelection, toggleActive, exportSelected,
     profileMember, openProfile, closeProfile,
   } = useProjectTeamPage(isAr);
+
+  if (isLoading) return <ProjectTeamSkeleton />;
 
   return (
     <div className="space-y-5">

@@ -1,3 +1,4 @@
+import { formatDateShort } from '@/shared/utils/date.utils';
 import type { EmpTaskPriority, EmpTaskStatus } from '../types/employeeTask.types';
 
 export const PRIORITY_MAP: Record<EmpTaskPriority, { ar: string; en: string; variant: 'error' | 'warning' | 'gray' }> = {
@@ -12,9 +13,4 @@ export const STATUS_MAP: Record<EmpTaskStatus, { ar: string; en: string; variant
   pending:    { ar: 'معلقة',       en: 'Pending',     variant: 'gray'    },
 };
 
-export function fmtDeadline(raw: string, isAr: boolean) {
-  if (!raw) return '—';
-  return new Date(raw).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  });
-}
+export { formatDateShort as fmtDeadline };

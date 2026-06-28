@@ -20,7 +20,7 @@ export function useLeaveDetailPage(): UseLeaveDetailPageReturn {
   const approveMutation = useLeaveApprove();
   const rejectMutation  = useLeaveReject();
 
-  const name     = req?.employee?.name ?? '';
+  const name     = req?.employee?.name ?? req?.employee_name ?? '';
   const initial  = name ? getInitial(name) : '?';
   const avatarBg = name ? getAvatarColor(name) : 'bg-gray-400';
   const daysLabel = req
