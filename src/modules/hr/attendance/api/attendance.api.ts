@@ -5,6 +5,10 @@ import type {
   AttendanceRecentResponse,
   AttendanceHistoryResponse,
   AttendanceHistoryParams,
+  EmployeeTodayAttendanceResponse,
+  EmployeeCheckInResponse,
+  EmployeeCheckOutResponse,
+  EmployeeSelfHistoryParams,
 } from '../types/attendance.types';
 
 export const attendanceApi = {
@@ -23,5 +27,25 @@ export const attendanceApi = {
       `/v1/hr/employees/${employeeId}/attendance/history`,
       { params },
     );
+  },
+
+  employeeToday() {
+    return http.get<EmployeeTodayAttendanceResponse>('/v1/employee/attendance/today');
+  },
+
+  employeeCheckIn() {
+    return http.post<EmployeeCheckInResponse>('/v1/employee/attendance/check-in');
+  },
+
+  employeeCheckOut() {
+    return http.post<EmployeeCheckOutResponse>('/v1/employee/attendance/check-out');
+  },
+
+  employeeSelfRecent() {
+    return http.get<AttendanceRecentResponse>('/v1/employee/attendance/recent');
+  },
+
+  employeeSelfHistory(params?: EmployeeSelfHistoryParams) {
+    return http.get<AttendanceHistoryResponse>('/v1/employee/attendance/history', { params });
   },
 };

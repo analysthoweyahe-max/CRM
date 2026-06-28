@@ -8,9 +8,10 @@ import type { AppSidebarProps as _Base } from './appSidebar.types';
 
 export interface AppSidebarProps extends _Base {
   footerWidget?: ReactNode;
+  isCheckedIn?:  boolean;
 }
 
-export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollapse, footerWidget }: AppSidebarProps) {
+export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollapse, footerWidget, isCheckedIn }: AppSidebarProps) {
   const { lang, isRTL } = useLang();
   const isAr             = lang === 'ar';
   const location         = useLocation();
@@ -154,6 +155,16 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
         {/* ── Footer widget (optional, e.g. attendance check-in) ── */}
         {footerWidget && (
           <div className={collapsed ? 'lg:hidden' : ''}>{footerWidget}</div>
+        )}
+
+        {/* ── Attendance dot (collapsed + checked-in indicator) ── */}
+        {isCheckedIn && collapsed && (
+          <div className="hidden lg:flex items-center justify-center py-2">
+            <div className="relative w-2.5 h-2.5">
+              <div className="absolute inset-0 rounded-full bg-[#A0CD39] animate-ping opacity-60" />
+              <div className="relative rounded-full bg-[#A0CD39] w-2.5 h-2.5" />
+            </div>
+          </div>
         )}
 
         {/* ── Collapse toggle (desktop only) ── */}

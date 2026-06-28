@@ -96,3 +96,48 @@ export interface AttendanceHistoryParams {
   per_page?:  number;
   page?:      number;
 }
+
+/* ── Employee self-service attendance ── */
+
+export interface AttendanceStatusFlag {
+  value: string;
+  label: string;
+}
+
+/** Shape returned by today / check-in / check-out endpoints */
+export interface EmployeeAttendanceRecord {
+  id?:           string;
+  date?:         string;          // "YYYY-MM-DD"
+  checkInTime?:  string | null;   // "HH:MM:SS"  — null if not checked in yet
+  checkOutTime?: string | null;   // "HH:MM:SS"  — null while still working
+  workingHours?: number | null;
+  statusFlags?:  AttendanceStatusFlag[];
+  createdAt?:    string;
+  updatedAt?:    string;
+}
+
+export interface EmployeeTodayAttendanceResponse {
+  status:  string;
+  message: string;
+  data:    EmployeeAttendanceRecord;
+}
+
+export interface EmployeeCheckInResponse {
+  status:  string;
+  message: string;
+  data:    EmployeeAttendanceRecord;
+}
+
+export interface EmployeeCheckOutResponse {
+  status:  string;
+  message: string;
+  data:    EmployeeAttendanceRecord;
+}
+
+export interface EmployeeSelfHistoryParams {
+  month?:     string;
+  date_from?: string;
+  date_to?:   string;
+  per_page?:  number;
+  page?:      number;
+}

@@ -2,7 +2,7 @@ import { CheckCircle, Eye, RefreshCw, Clock } from 'lucide-react';
 import { useLang }        from '@/app/providers/LanguageProvider';
 import { EmpStatCard }    from '../components/EmpStatCard';
 import { TodayTasksList } from '../components/TodayTasksList';
-import type { EmpTask }   from '../components/TodayTasksList';
+import type { EmpTask }   from '../types/empTask.types';
 
 const MOCK_TASKS: EmpTask[] = [
   {
