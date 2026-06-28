@@ -76,7 +76,7 @@ export const EMPLOYEE_NAV: NavSectionDef[] = [
       { key: 'emp-home',     labelAr: 'الرئيسية',         labelEn: 'Dashboard',     icon: LayoutDashboard, path: ROUTES.EMPLOYEE.DASHBOARD },
       { key: 'emp-messages', labelAr: 'الرسائل',           labelEn: 'Messages',      icon: MessageSquare,   path: ROUTES.EMPLOYEE.MESSAGES  },
       { key: 'emp-requests', labelAr: 'طلباتى',            labelEn: 'My Requests',   icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS  },
-      { key: 'emp-reports',  labelAr: 'التقارير اليومية', labelEn: 'Daily Reports', icon: ClipboardList,   path: ROUTES.EMPLOYEE.REPORTS   },
+      { key: 'emp-reports',  labelAr: 'سجل الحضور',      labelEn: 'Attendance',    icon: ClipboardList,   path: ROUTES.EMPLOYEE.REPORTS   },
     ],
   },
 ];
