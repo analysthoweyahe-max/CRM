@@ -38,10 +38,12 @@ export const ROUTES = {
     PROFILE:   '/project-manager/profile',
   },
   EMPLOYEE: {
-    DASHBOARD: '/employee',
-    MESSAGES:  '/employee/messages',
-    REQUESTS:  '/employee/requests',
-    REPORTS:   '/employee/reports',
-    PROFILE:   '/employee/profile',
+    DASHBOARD:     '/employee',
+    MESSAGES:      '/employee/messages',
+    REQUESTS:      '/employee/requests',
+    REPORTS:       '/employee/reports',
+    TASKS:         '/employee/tasks',
+    DAILY_REPORTS: '/employee/daily-reports',
+    PROFILE:       '/employee/profile',
   },
 } as const;

@@ -37,11 +37,13 @@ import { ProjectTeamPage }      from '@/modules/project-manager/team/pages/Proje
 import { ProjectReportsPage }   from '@/modules/project-manager/reports/pages/ProjectReportsPage';
 import { PMProfilePage }        from '@/modules/project-manager/profile/pages/PMProfilePage';
 
-import { EmployeeDashboardPage } from '@/modules/employee/dashboard/pages/EmployeeDashboardPage';
-import { EmployeeMessagesPage }  from '@/modules/employee/messages/pages/EmployeeMessagesPage';
-import { EmployeeRequestsPage }  from '@/modules/employee/requests/pages/EmployeeRequestsPage';
-import { EmployeeReportsPage }   from '@/modules/employee/reports/pages/EmployeeReportsPage';
-import { EmployeeProfilePage }   from '@/modules/employee/profile/pages/EmployeeProfilePage';
+import { EmployeeDashboardPage }    from '@/modules/employee/dashboard/pages/EmployeeDashboardPage';
+import { EmployeeMessagesPage }     from '@/modules/employee/messages/pages/EmployeeMessagesPage';
+import { EmployeeRequestsPage }     from '@/modules/employee/requests/pages/EmployeeRequestsPage';
+import { EmployeeReportsPage }      from '@/modules/employee/reports/pages/EmployeeReportsPage';
+import { EmployeeTasksPage }        from '@/modules/employee/tasks/pages/EmployeeTasksPage';
+import { EmployeeDailyReportsPage } from '@/modules/employee/daily-reports/pages/EmployeeDailyReportsPage';
+import { EmployeeProfilePage }      from '@/modules/employee/profile/pages/EmployeeProfilePage';
 
 export function AppRouter() {
   return (
@@ -96,11 +98,13 @@ export function AppRouter() {
 
         <Route element={<AuthGuard />}>
           <Route element={<EmployeeLayout />}>
-            <Route path={ROUTES.EMPLOYEE.DASHBOARD} element={<EmployeeDashboardPage />} />
-            <Route path={ROUTES.EMPLOYEE.MESSAGES}  element={<EmployeeMessagesPage />}  />
-            <Route path={ROUTES.EMPLOYEE.REQUESTS}  element={<EmployeeRequestsPage />}  />
-            <Route path={ROUTES.EMPLOYEE.REPORTS}   element={<EmployeeReportsPage />}   />
-            <Route path={ROUTES.EMPLOYEE.PROFILE}   element={<EmployeeProfilePage />}   />
+            <Route path={ROUTES.EMPLOYEE.DASHBOARD}     element={<EmployeeDashboardPage />}    />
+            <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />}     />
+            <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />}     />
+            <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />}      />
+            <Route path={ROUTES.EMPLOYEE.TASKS}         element={<EmployeeTasksPage />}        />
+            <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
+            <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />}      />
           </Route>
         </Route>
 

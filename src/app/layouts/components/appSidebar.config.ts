@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Clock, Banknote, MessageSquare, Settings,
   UserPlus, FileText, CalendarDays, TrendingDown, Gift,
-  FilePlus2, ClipboardList,
+  FilePlus2, ClipboardList, CheckSquare, BarChart2,
 } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
 import type { NavSectionDef } from './appSidebar.types';
@@ -73,10 +73,12 @@ export const PM_NAV: NavSectionDef[] = [
 export const EMPLOYEE_NAV: NavSectionDef[] = [
   {
     items: [
-      { key: 'emp-home',     labelAr: 'الرئيسية',         labelEn: 'Dashboard',     icon: LayoutDashboard, path: ROUTES.EMPLOYEE.DASHBOARD },
-      { key: 'emp-messages', labelAr: 'الرسائل',           labelEn: 'Messages',      icon: MessageSquare,   path: ROUTES.EMPLOYEE.MESSAGES  },
-      { key: 'emp-requests', labelAr: 'طلباتى',            labelEn: 'My Requests',   icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS  },
-      { key: 'emp-reports',  labelAr: 'سجل الحضور',      labelEn: 'Attendance',    icon: ClipboardList,   path: ROUTES.EMPLOYEE.REPORTS   },
+      { key: 'emp-home',    labelAr: 'الرئيسية',          labelEn: 'Dashboard',      icon: LayoutDashboard, path: ROUTES.EMPLOYEE.DASHBOARD     },
+      { key: 'emp-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.EMPLOYEE.TASKS         },
+      { key: 'emp-msg',     labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.EMPLOYEE.MESSAGES      },
+      { key: 'emp-req',     labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS      },
+      { key: 'emp-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.EMPLOYEE.REPORTS       },
+      { key: 'emp-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.EMPLOYEE.DAILY_REPORTS },
     ],
   },
 ];
