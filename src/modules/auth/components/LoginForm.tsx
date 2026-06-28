@@ -63,9 +63,12 @@ export function LoginForm() {
             type="text"
             placeholder={t.login.employeeIdPlaceholder}
             autoComplete="username"
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 ps-11 pe-4
+            aria-invalid={!!errors.employeeId}
+            className={`w-full rounded-lg border bg-white py-2.5 ps-11 pe-4
                        text-sm outline-none focus:border-brand-500 focus:ring-2
-                       focus:ring-brand-500/20 transition placeholder:text-gray-400"
+                       focus:ring-brand-500/20 transition placeholder:text-gray-400 ${
+                         errors.employeeId ? 'border-red-300' : 'border-gray-300'
+                       }`}
           />
           <span className="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center ps-3 text-gray-400">
             <User size={17} />
@@ -89,9 +92,12 @@ export function LoginForm() {
             placeholder={t.login.passwordPlaceholder}
             autoComplete="current-password"
             dir="ltr"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 ps-11 pe-11
+            aria-invalid={!!errors.password}
+            className={`w-full rounded-lg border bg-white px-4 py-2.5 ps-11 pe-11
                        text-sm outline-none focus:border-brand-500 focus:ring-2
-                       focus:ring-brand-500/20 transition placeholder:text-gray-400"
+                       focus:ring-brand-500/20 transition placeholder:text-gray-400 ${
+                         errors.password ? 'border-red-300' : 'border-gray-300'
+                       }`}
           />
           {/* Eye toggle — logical start */}
           <button

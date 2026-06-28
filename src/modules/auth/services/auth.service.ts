@@ -53,7 +53,8 @@ function getStoredUser(): AuthUser | null {
 // ── Auth operations ───────────────────────────────────────────────────────────
 
 async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> {
-  const { employeeId, password, rememberMe = false } = credentials;
+  const { password, rememberMe = false } = credentials;
+  const employeeId = credentials.employeeId.trim();
 
   if (isEmail(employeeId)) {
     const { data } = await authApi.employeeLogin({ email: employeeId, password });

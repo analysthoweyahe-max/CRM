@@ -51,7 +51,9 @@ export const authTranslations = {
 
     validation: {
       employeeIdRequired: 'معرّف الموظف مطلوب',
+      employeeIdInvalid:  'أدخل بريدًا إلكترونيًا صحيحًا أو معرّف مدير صحيح',
       passwordRequired:   'كلمة المرور مطلوبة',
+      loginPasswordMin:   'كلمة المرور يجب أن تكون 6 أحرف أو أرقام على الأقل',
       passwordMin:        'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
       passwordUppercase:  'يجب أن تحتوي على حرف كبير واحد على الأقل',
       passwordLowercase:  'يجب أن تحتوي على حرف صغير واحد على الأقل',
@@ -111,7 +113,9 @@ export const authTranslations = {
 
     validation: {
       employeeIdRequired: 'Employee ID is required',
+      employeeIdInvalid:  'Enter a valid email address or admin ID',
       passwordRequired:   'Password is required',
+      loginPasswordMin:   'Password must be at least 6 characters',
       passwordMin:        'Password must be at least 8 characters',
       passwordUppercase:  'Must contain at least one uppercase letter',
       passwordLowercase:  'Must contain at least one lowercase letter',

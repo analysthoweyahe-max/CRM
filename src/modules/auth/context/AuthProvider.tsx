@@ -62,17 +62,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'INIT', payload: user });
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<AuthUser> => {
     dispatch({ type: 'LOADING' });
-    const data = await authService.login(credentials);
-    dispatch({ type: 'LOGIN', payload: data.user });
-  }, []);
+    try {
+      const data = await authService.login(credentials);
+      dispatch({ type: 'LOGIN', payload: data.user });
+      return data.user;
+    } catch (error) {
+      dispatch({ type: 'INIT', payload: state.user });
+      throw error;
+    }
+  }, [state.user]);
 
   const setPassword = useCallback(async (payload: SetPasswordPayload) => {
     dispatch({ type: 'LOADING' });
-    const data = await authService.setPassword(payload);
-    dispatch({ type: 'LOGIN', payload: data.user });
-  }, []);
+    try {
+      const data = await authService.setPassword(payload);
+      dispatch({ type: 'LOGIN', payload: data.user });
+    } catch (error) {
+      dispatch({ type: 'INIT', payload: state.user });
+      throw error;
+    }
+  }, [state.user]);
 
   const logout = useCallback(async () => {
     try {
