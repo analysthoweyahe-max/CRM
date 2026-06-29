@@ -1,14 +1,17 @@
 import { Play, Square, Briefcase, CalendarClock } from 'lucide-react';
+import { useNavigate }   from 'react-router-dom';
 import { Badge }         from '@/shared/components/ui/Badge';
 import { Button }        from '@/shared/components/ui/Button';
 import { Card }          from '@/shared/components/ui/Card';
 import { useTaskTimer }  from '@/app/layouts/components/TaskTimerContext';
+import { ROUTES }        from '@/app/router/routes';
 import { useTaskCard }   from './useTaskCard';
 import type { TaskCardProps } from './TaskCard.types';
 
 export function TaskCard({ task, isAr }: TaskCardProps) {
   const { status, priority, title, project, deadline, taskNum, empTask } = useTaskCard(task, isAr);
   const { activeTask, startTimer, stopTimer } = useTaskTimer();
+  const navigate = useNavigate();
   const isActive = activeTask?.id === task.id;
 
   return (
@@ -74,7 +77,7 @@ export function TaskCard({ task, isAr }: TaskCardProps) {
                 {isAr ? 'بدء المؤقت' : 'Start Timer'}
               </Button>
             )}
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" onClick={() => navigate(ROUTES.EMPLOYEE.TASK_DETAIL(task.id))}>
               {isAr ? 'تفاصيل' : 'Details'}
             </Button>
           </div>

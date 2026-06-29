@@ -49,6 +49,7 @@ const EmployeeMessagesPage     = lazy(() => import('@/modules/employee/messages/
 const EmployeeRequestsPage     = lazy(() => import('@/modules/employee/requests/pages/EmployeeRequestsPage')         .then(m => ({ default: m.EmployeeRequestsPage })));
 const EmployeeReportsPage      = lazy(() => import('@/modules/employee/reports/pages/EmployeeReportsPage')           .then(m => ({ default: m.EmployeeReportsPage })));
 const EmployeeTasksPage        = lazy(() => import('@/modules/employee/tasks/pages/EmployeeTasksPage')               .then(m => ({ default: m.EmployeeTasksPage })));
+const EmployeeTaskDetailPage   = lazy(() => import('@/modules/employee/tasks/pages/TaskDetailPage')                  .then(m => ({ default: m.TaskDetailPage })));
 const EmployeeDailyReportsPage = lazy(() => import('@/modules/employee/daily-reports/pages/EmployeeDailyReportsPage').then(m => ({ default: m.EmployeeDailyReportsPage })));
 const EmployeeProfilePage      = lazy(() => import('@/modules/employee/profile/pages/EmployeeProfilePage')           .then(m => ({ default: m.EmployeeProfilePage })));
 
@@ -112,7 +113,8 @@ export function AppRouter() {
                 <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />} />
                 <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
                 <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
-                <Route path={ROUTES.EMPLOYEE.TASKS}         element={<EmployeeTasksPage />} />
+                <Route path={ROUTES.EMPLOYEE.TASKS}            element={<EmployeeTasksPage />} />
+                <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
                 <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
                 <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />} />
               </Route>

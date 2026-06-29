@@ -43,6 +43,7 @@ export const ROUTES = {
     REQUESTS:      '/employee/requests',
     REPORTS:       '/employee/reports',
     TASKS:         '/employee/tasks',
+    TASK_DETAIL:   (id = ':id') => `/employee/tasks/${id}`,
     DAILY_REPORTS: '/employee/daily-reports',
     PROFILE:       '/employee/profile',
   },
