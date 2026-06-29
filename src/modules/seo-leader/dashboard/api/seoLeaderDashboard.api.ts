@@ -1,0 +1,9 @@
+import { http }                from '@/shared/services/http.service';
+import type { ApiResponse }    from '@/shared/types/api.types';
+import type { SeoManagerDashboard } from '../types/dashboard.types';
+
+export const seoLeaderDashboardApi = {
+  get() {
+    return http.get<ApiResponse<SeoManagerDashboard>>('/v1/seo/manager/dashboard');
+  },
+};

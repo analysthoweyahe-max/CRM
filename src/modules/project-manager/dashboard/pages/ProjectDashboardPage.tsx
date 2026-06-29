@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
 import { useProjects } from '../../projects/store/projectStore';
-import { StatCard }        from '../components/StatCard';
+import { StatCard }        from '@/shared/components/ui/StatCard';
 import { ProjectsSection } from '../components/ProjectsSection';
 import { ProjectDashboardSkeleton } from '../components/ProjectDashboardSkeleton';
 

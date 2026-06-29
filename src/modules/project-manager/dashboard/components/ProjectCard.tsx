@@ -3,7 +3,7 @@ import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
 import { ROUTES }      from '@/app/router/routes';
 import type { Project, ProjectStatus } from '../../projects/types/project.types';
-import { TeamAvatars } from './TeamAvatars';
+import { TeamAvatars } from '@/shared/components/ui/TeamAvatars';
 
 const STATUS_LABEL: Record<ProjectStatus, { ar: string; en: string; dot: string }> = {
   inProgress: { ar: 'قيد التنفيذ', en: 'In Progress', dot: 'bg-[#A0CD39]'    },
