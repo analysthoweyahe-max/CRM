@@ -8,6 +8,7 @@ import { AuthLayout }            from '@/app/layouts/AuthLayout';
 import { DashboardLayout }       from '@/app/layouts/DashboardLayout';
 import { ProjectManagerLayout }  from '@/app/layouts/ProjectManagerLayout';
 import { EmployeeLayout }        from '@/app/layouts/EmployeeLayout';
+import { SeoLeaderLayout }       from '@/app/layouts/SeoLeaderLayout';
 import { GuestGuard }            from '@/app/guards/GuestGuard';
 import { AuthGuard }             from '@/app/guards/AuthGuard';
 
@@ -42,6 +43,13 @@ const ProjectDetailsPage   = lazy(() => import('@/modules/project-manager/projec
 const ProjectTeamPage      = lazy(() => import('@/modules/project-manager/team/pages/ProjectTeamPage')           .then(m => ({ default: m.ProjectTeamPage })));
 const ProjectReportsPage   = lazy(() => import('@/modules/project-manager/reports/pages/ProjectReportsPage')     .then(m => ({ default: m.ProjectReportsPage })));
 const PMProfilePage        = lazy(() => import('@/modules/project-manager/profile/pages/PMProfilePage')          .then(m => ({ default: m.PMProfilePage })));
+
+/* ── SEO Leader ───────────────────────────────────────────────────── */
+const SeoLeaderDashboardPage = lazy(() => import('@/modules/seo-leader/dashboard/pages/SeoLeaderDashboardPage') .then(m => ({ default: m.SeoLeaderDashboardPage })));
+const NewCampaignPage        = lazy(() => import('@/modules/seo-leader/campaigns/pages/NewCampaignPage')        .then(m => ({ default: m.NewCampaignPage })));
+const SeoTeamPage            = lazy(() => import('@/modules/seo-leader/team/pages/SeoTeamPage')                 .then(m => ({ default: m.SeoTeamPage })));
+const SeoReportsPage         = lazy(() => import('@/modules/seo-leader/reports/pages/SeoReportsPage')           .then(m => ({ default: m.SeoReportsPage })));
+const SeoProfilePage         = lazy(() => import('@/modules/seo-leader/profile/pages/SeoProfilePage')           .then(m => ({ default: m.SeoProfilePage })));
 
 /* ── Employee ─────────────────────────────────────────────────────── */
 const EmployeeDashboardPage    = lazy(() => import('@/modules/employee/dashboard/pages/EmployeeDashboardPage')       .then(m => ({ default: m.EmployeeDashboardPage })));
@@ -117,6 +125,16 @@ export function AppRouter() {
                 <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
                 <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
                 <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />} />
+              </Route>
+            </Route>
+
+            <Route element={<AuthGuard />}>
+              <Route element={<SeoLeaderLayout />}>
+                <Route path={ROUTES.SEO_LEADER.DASHBOARD} element={<SeoLeaderDashboardPage />} />
+                <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />
+                <Route path={ROUTES.SEO_LEADER.TEAM}      element={<SeoTeamPage />} />
+                <Route path={ROUTES.SEO_LEADER.REPORTS}   element={<SeoReportsPage />} />
+                <Route path={ROUTES.SEO_LEADER.PROFILE}   element={<SeoProfilePage />} />
               </Route>
             </Route>
 

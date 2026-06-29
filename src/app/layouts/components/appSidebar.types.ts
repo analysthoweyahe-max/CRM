@@ -24,7 +24,7 @@ export interface NavSectionDef {
 }
 
 export interface AppSidebarProps {
-  variant:          'hr' | 'pm' | 'employee';
+  variant:          'hr' | 'pm' | 'employee' | 'seo';
   isOpen:           boolean;
   onClose:          () => void;
   collapsed:        boolean;

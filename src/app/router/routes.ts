@@ -37,6 +37,14 @@ export const ROUTES = {
     REPORTS:   '/project-manager/reports',
     PROFILE:   '/project-manager/profile',
   },
+  SEO_LEADER: {
+    DASHBOARD: '/seo-leader',
+    NEW:       '/seo-leader/new',
+    DETAILS:   (id = ':id') => `/seo-leader/campaign/${id}`,
+    TEAM:      '/seo-leader/team',
+    REPORTS:   '/seo-leader/reports',
+    PROFILE:   '/seo-leader/profile',
+  },
   EMPLOYEE: {
     DASHBOARD:     '/employee',
     MESSAGES:      '/employee/messages',
