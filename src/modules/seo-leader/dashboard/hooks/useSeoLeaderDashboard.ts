@@ -25,10 +25,15 @@ export function useSeoLeaderDashboard() {
     staleTime: 2 * 60 * 1000,
   });
 
+  const rawProjects = data?.projects;
+  const campaignsList: SeoCampaign[] = Array.isArray(rawProjects)
+    ? rawProjects
+    : (rawProjects as { data?: SeoCampaign[] } | undefined)?.data ?? [];
+
   return {
     isLoading,
     isError,
     stats:     data?.stats,
-    campaigns: (data?.projects ?? []).map(toCampaignVM),
+    campaigns: campaignsList.map(toCampaignVM),
   };
 }

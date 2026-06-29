@@ -55,6 +55,14 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.ViewMessages,
     Permission.SendMessages,
   ],
+  'seo-leader': [
+    Permission.ViewEmployees,
+    Permission.ViewAttendance,
+    Permission.ViewLeaves,
+    Permission.ManageLeaves,
+    Permission.ViewMessages,
+    Permission.SendMessages,
+  ],
   employee: [
     Permission.ViewAttendance,
     Permission.ViewLeaves,

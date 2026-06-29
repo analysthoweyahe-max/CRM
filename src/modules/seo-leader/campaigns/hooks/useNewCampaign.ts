@@ -5,8 +5,14 @@ import { campaignApi }                  from '../api/campaign.api';
 import { ROUTES }                       from '@/app/router/routes';
 import type { ComboboxItem }            from '@/shared/components/form/Combobox';
 
-function toItems(values: string[]): ComboboxItem[] {
-  return values.map(v => ({ id: v, label: v }));
+function toItems(values: unknown[]): ComboboxItem[] {
+  return values.map(v => {
+    if (typeof v === 'string') return { id: v, label: v };
+    const obj   = v as Record<string, unknown>;
+    const label = String(obj.label ?? obj.name  ?? obj.value ?? '');
+    const id    = String(obj.id    ?? obj.value ?? obj.name  ?? '');
+    return { id, label };
+  });
 }
 
 export function useNewCampaign() {

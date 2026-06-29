@@ -25,7 +25,15 @@ export interface SeoManagerStats {
   completed_projects: number;
 }
 
+export interface PaginatedProjects {
+  data:         SeoCampaign[];
+  total:        number;
+  current_page: number;
+  last_page:    number;
+  per_page:     number;
+}
+
 export interface SeoManagerDashboard {
   stats:    SeoManagerStats;
-  projects: SeoCampaign[];
+  projects: SeoCampaign[] | PaginatedProjects;
 }

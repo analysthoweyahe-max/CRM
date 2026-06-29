@@ -11,5 +11,5 @@ export interface CreateCampaignPayload {
 }
 
 export interface CampaignLookupResponse {
-  data: string[];
+  data: unknown[];
 }

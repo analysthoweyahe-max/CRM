@@ -16,8 +16,9 @@ function isEmail(value: string): boolean {
 }
 
 function mapAdminRole(roles: string[]): Role {
-  if (roles.includes('hr-manager')) return 'hr';
-  if (roles.includes('manager'))    return 'manager';
+  if (roles.includes('hr-manager'))  return 'hr';
+  if (roles.includes('manager'))     return 'manager';
+  if (roles.includes('seo-manager')) return 'seo-leader';
   return 'admin';
 }
 

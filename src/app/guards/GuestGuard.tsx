@@ -4,8 +4,9 @@ import { ROUTES }  from '@/app/router/routes';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
 
 function defaultRoute(role: string | undefined): string {
-  if (role === 'employee') return ROUTES.EMPLOYEE.DASHBOARD;
-  if (role === 'manager')  return ROUTES.PROJECT_MANAGER.DASHBOARD;
+  if (role === 'employee')   return ROUTES.EMPLOYEE.DASHBOARD;
+  if (role === 'manager')    return ROUTES.PROJECT_MANAGER.DASHBOARD;
+  if (role === 'seo-leader') return ROUTES.SEO_LEADER.DASHBOARD;
   return ROUTES.DASHBOARD;
 }
 
