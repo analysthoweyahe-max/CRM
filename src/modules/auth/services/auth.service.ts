@@ -70,7 +70,11 @@ async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> 
     return { token: accessToken, user };
   } else {
     const { data } = await authApi.adminLogin({ admin_id: employeeId, password });
-    const { accessToken, admin } = data.data;
+    const payload = data.data;
+    if (!payload?.accessToken || !payload?.admin) {
+      throw new Error('Invalid admin login response');
+    }
+    const { accessToken, admin } = payload;
     const user: AuthUser = {
       id:         admin.id,
       employeeId: admin.id,

@@ -42,7 +42,11 @@ export function useDashboard() {
 
   const recentLeavesQ = useQuery({
     queryKey: ['dashboard', 'recent-leaves'],
-    queryFn:  () => leavesApi.list({ per_page: 5, with: 'employee' }).then(r => r.data.data.data),
+    queryFn:  async () => {
+      const res = await leavesApi.list({ per_page: 5, with: 'employee' });
+      const items = res.data.data?.data;
+      return Array.isArray(items) ? items : [];
+    },
     staleTime: 2 * 60 * 1000,
   });
 

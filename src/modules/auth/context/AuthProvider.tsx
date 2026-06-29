@@ -1,4 +1,5 @@
 ﻿import { useReducer, useEffect, useCallback, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { AuthContext } from './AuthContext';
 import { authService } from '@/modules/auth/services/auth.service';
 import type { AuthUser, LoginCredentials, SetPasswordPayload } from '@/modules/auth/types/auth.types';
@@ -13,15 +14,23 @@ type Action =
   | { type: 'INIT';    payload: AuthUser | null }
   | { type: 'LOGIN';   payload: AuthUser }
   | { type: 'LOGOUT' }
-  | { type: 'LOADING' };
+  | { type: 'AUTH_FAIL' };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case 'LOADING': return { ...state, isLoading: true };
-    case 'INIT':    return { user: action.payload, isLoading: false };
-    case 'LOGIN':   return { user: action.payload, isLoading: false };
-    case 'LOGOUT':  return { user: null,           isLoading: false };
+    case 'INIT':      return { user: action.payload, isLoading: false };
+    case 'LOGIN':     return { user: action.payload, isLoading: false };
+    case 'LOGOUT':    return { user: null,           isLoading: false };
+    case 'AUTH_FAIL': return { ...state, isLoading: false };
+    default:          return state;
   }
+}
+
+function getInitialState(): State {
+  return {
+    user:      authService.getStoredUser(),
+    isLoading: true,
+  };
 }
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -55,22 +64,35 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, { user: null, isLoading: true });
+  const [state, dispatch] = useReducer(reducer, undefined, getInitialState);
 
   useEffect(() => {
-    const user = authService.getStoredUser();
-    dispatch({ type: 'INIT', payload: user });
+    dispatch({ type: 'INIT', payload: authService.getStoredUser() });
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<AuthUser> => {
-    const data = await authService.login(credentials);
-    dispatch({ type: 'LOGIN', payload: data.user });
-    return data.user;
+    try {
+      const data = await authService.login(credentials);
+      flushSync(() => {
+        dispatch({ type: 'LOGIN', payload: data.user });
+      });
+      return data.user;
+    } catch (error) {
+      dispatch({ type: 'AUTH_FAIL' });
+      throw error;
+    }
   }, []);
 
   const setPassword = useCallback(async (payload: SetPasswordPayload) => {
-    const data = await authService.setPassword(payload);
-    dispatch({ type: 'LOGIN', payload: data.user });
+    try {
+      const data = await authService.setPassword(payload);
+      flushSync(() => {
+        dispatch({ type: 'LOGIN', payload: data.user });
+      });
+    } catch (error) {
+      dispatch({ type: 'AUTH_FAIL' });
+      throw error;
+    }
   }, []);
 
   const logout = useCallback(async () => {

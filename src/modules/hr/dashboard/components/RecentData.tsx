@@ -100,7 +100,10 @@ export function RecentData({ isAr, recentEmployees, recentLeaves }: Props) {
             <li className="px-5 py-6 text-center text-xs text-gray-400">
               {isAr ? 'لا توجد طلبات' : 'No requests'}
             </li>
-          ) : recentLeaves.map((leave) => (
+          ) : recentLeaves.map((leave) => {
+            const employeeName = leave.employee?.name ?? (isAr ? 'موظف' : 'Employee');
+            const statusCfg = LEAVE_STATUS_CFG[leave.status];
+            return (
             <li key={leave.id}
               className="flex items-start gap-3 px-5 py-3
                          hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
@@ -109,24 +112,24 @@ export function RecentData({ isAr, recentEmployees, recentLeaves }: Props) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                  {leave.employee?.name ?? '–'}
+                  {employeeName}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
                   {leave.leave_type_label} · {leave.days_count} {isAr ? 'يوم' : 'days'}
                 </p>
               </div>
+              {statusCfg && (
               <Badge
-                label={isAr
-                  ? LEAVE_STATUS_CFG[leave.status].labelAr
-                  : LEAVE_STATUS_CFG[leave.status].labelEn}
+                label={isAr ? statusCfg.labelAr : statusCfg.labelEn}
                 variant={
                   leave.status === 'approved' ? 'success'
                   : leave.status === 'rejected' ? 'error'
                   : 'warning'
                 }
               />
+              )}
             </li>
-          ))}
+          );})}
         </SectionCard>
 
       </div>

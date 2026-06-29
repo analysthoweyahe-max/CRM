@@ -35,6 +35,22 @@ export interface ApiEmployeeLookup {
   department?:      string;
 }
 
+export interface ApiMessageAttachment {
+  type:  string;
+  url:   string;
+  name?: string;
+  size?: number;
+}
+
+export interface ApiMessage {
+  id:           string;
+  body?:        string;
+  created_at:   string;
+  read_at?:     string | null;
+  sender:       ApiParticipant;
+  attachments?: ApiMessageAttachment[];
+}
+
 /* ── Response envelopes ─────────────────────────────────────── */
 export interface ConversationListResponse {
   status: string;

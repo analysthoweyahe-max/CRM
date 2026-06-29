@@ -1,4 +1,16 @@
-﻿import type { Bonus } from '@/modules/hr/payroll/components/bonusColumns';
+﻿interface Bonus {
+  id:              string;
+  employeeName:    string;
+  department:      string;
+  initial:         string;
+  avatarColor:     string;
+  type:            string;
+  amount:          number;
+  reason:          string;
+  date:            string;
+  financialMonth:  string;
+  source:          'auto' | 'manual';
+}
 
 export const BONUS_DATA: Bonus[] = [
   { id: '1',  employeeName: 'حسن الخطيب',  department: 'الموارد البشرية',  initial: 'ح', avatarColor: 'bg-red-400',    type: 'مكافأة أداء',  amount: 1700, reason: 'تميز في الأداء الوظيفي',                  date: '2026/06/14', financialMonth: 'يونيو 2026', source: 'auto'   },

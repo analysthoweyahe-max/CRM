@@ -12,7 +12,13 @@ function defaultRoute(role: string | undefined): string {
 export function GuestGuard() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
   if (isAuthenticated) return <Navigate to={defaultRoute(user?.role)} replace />;
 
   return <Outlet />;

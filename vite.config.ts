@@ -12,5 +12,16 @@ export default defineConfig({
 	},
 	server: {
 		port: 3000,
+		proxy: {
+			"/api": {
+				target: "https://crm-hr.subcodeco.com",
+				changeOrigin: true,
+				secure: true,
+				rewrite: (path) => `/index.php${path}`,
+			},
+		},
+		watch: {
+			ignored: ["**/dist/**", "**/dist.zip"],
+		},
 	},
 });

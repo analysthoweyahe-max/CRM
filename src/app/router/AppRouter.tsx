@@ -102,9 +102,7 @@ export function AppRouter() {
                 <Route path={ROUTES.MESSAGES}               element={<MessagesPage />} />
                 <Route path={ROUTES.SETTINGS}               element={<SettingsPage />} />
               </Route>
-            </Route>
 
-            <Route element={<AuthGuard />}>
               <Route element={<ProjectManagerLayout />}>
                 <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
                 <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
@@ -113,22 +111,18 @@ export function AppRouter() {
                 <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
                 <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
               </Route>
-            </Route>
 
-            <Route element={<AuthGuard />}>
               <Route element={<EmployeeLayout />}>
                 <Route path={ROUTES.EMPLOYEE.DASHBOARD}     element={<EmployeeDashboardPage />} />
                 <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />} />
                 <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
                 <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
-                <Route path={ROUTES.EMPLOYEE.TASKS}            element={<EmployeeTasksPage />} />
+                <Route path={ROUTES.EMPLOYEE.TASKS}         element={<EmployeeTasksPage />} />
                 <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
                 <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
                 <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />} />
               </Route>
-            </Route>
 
-            <Route element={<AuthGuard />}>
               <Route element={<SeoLeaderLayout />}>
                 <Route path={ROUTES.SEO_LEADER.DASHBOARD} element={<SeoLeaderDashboardPage />} />
                 <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />

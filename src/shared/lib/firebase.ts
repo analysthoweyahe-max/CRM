@@ -1,5 +1,5 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getMessaging }           from 'firebase/messaging';
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getMessaging, isSupported, type Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -11,9 +11,26 @@ const firebaseConfig = {
   measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Guard against double-init in HMR / StrictMode
-export const firebaseApp = getApps().length
-  ? getApps()[0]
-  : initializeApp(firebaseConfig);
+let firebaseApp: FirebaseApp | null = null;
+let messagingInstance: Messaging | null = null;
+let messagingInit: Promise<Messaging | null> | null = null;
 
-export const messaging = getMessaging(firebaseApp);
+export function getFirebaseApp(): FirebaseApp {
+  if (firebaseApp) return firebaseApp;
+  firebaseApp = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
+  return firebaseApp;
+}
+
+export function getMessagingInstance(): Promise<Messaging | null> {
+  if (messagingInstance) return Promise.resolve(messagingInstance);
+  if (!messagingInit) {
+    messagingInit = isSupported()
+      .then((supported) => {
+        if (!supported) return null;
+        messagingInstance = getMessaging(getFirebaseApp());
+        return messagingInstance;
+      })
+      .catch(() => null);
+  }
+  return messagingInit;
+}
