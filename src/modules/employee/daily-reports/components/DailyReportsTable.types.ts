@@ -1,7 +1,7 @@
-import type { DailyReport } from '../types/dailyReport.types';
+import type { DayHistoryItem } from '../types/dailyReport.types';
 
 export interface DailyReportsTableProps {
-  reports:   DailyReport[];
+  reports:   DayHistoryItem[];
   isLoading: boolean;
   isAr:      boolean;
 }
