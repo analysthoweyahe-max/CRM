@@ -14,7 +14,7 @@ const LABELS = {
   en: { null: 'Total Tasks',   inProgress: 'In Progress',  completed: 'Completed', pending: 'Pending' },
 } as const;
 
-export function TaskStatsCards({ tasks, isLoading, isAr, activeStatus, onFilter }: TaskStatsCardsProps) {
+export function TaskStatsCards({ tasks, isLoading, isAr, activeStatus = null, onFilter }: TaskStatsCardsProps) {
   const stats = useTaskStatsCards(tasks);
 
   if (isLoading) {
@@ -48,7 +48,7 @@ export function TaskStatsCards({ tasks, isLoading, isAr, activeStatus, onFilter 
           <button
             key={String(card.key)}
             type="button"
-            onClick={() => onFilter(isActive ? null : card.key)}
+            onClick={onFilter ? () => onFilter(isActive ? null : card.key) : undefined}
             className={[
               'text-start bg-white dark:bg-gray-800 rounded-2xl border p-5 transition-all',
               'hover:shadow-md hover:-translate-y-0.5',

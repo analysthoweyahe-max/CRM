@@ -2,24 +2,28 @@ import { CheckCircle, Eye, RefreshCw, Clock } from 'lucide-react';
 import { useLang }        from '@/app/providers/LanguageProvider';
 import { EmpStatCard }    from '../components/EmpStatCard';
 import { TodayTasksList } from '../components/TodayTasksList';
-import type { EmpTask }   from '../types/empTask.types';
+import type { EmployeeTask } from '@/modules/employee/tasks/types/employeeTask.types';
 
-const MOCK_TASKS: EmpTask[] = [
+const MOCK_TASKS: EmployeeTask[] = [
   {
     id: '1',
-    titleAr: 'تطوير واجهة المستخدم #005',
-    titleEn: 'Develop User Interface #005',
-    project: 'موقع الشركة الإلكتروني',
-    deadline: '25 يونيو 2026',
+    titleAr: 'تطوير واجهة المستخدم',
+    titleEn: 'Develop User Interface',
+    projectAr: 'موقع الشركة الإلكتروني',
+    projectEn: 'Company Website',
+    status: 'inProgress',
     priority: 'high',
+    deadline: '2026-06-25',
   },
   {
     id: '2',
-    titleAr: 'تطوير شاشة الطلبات #011',
-    titleEn: 'Develop Requests Screen #011',
-    project: 'تطبيق نماء للتوصيل',
-    deadline: '25 يونيو 2026',
+    titleAr: 'تطوير شاشة الطلبات',
+    titleEn: 'Develop Requests Screen',
+    projectAr: 'تطبيق نماء للتوصيل',
+    projectEn: 'Namaa Delivery App',
+    status: 'inProgress',
     priority: 'high',
+    deadline: '2026-06-25',
   },
 ];
 
@@ -28,7 +32,7 @@ export function EmployeeDashboardPage() {
   const isAr = lang === 'ar';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
 
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
         {isAr ? 'مرحباً، محمد علي 👋' : 'Welcome, Mohammed Ali 👋'}
