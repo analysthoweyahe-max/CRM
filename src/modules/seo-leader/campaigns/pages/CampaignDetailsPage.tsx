@@ -9,7 +9,7 @@ import { ROUTES }                 from '@/app/router/routes';
 import { campaignApi }                       from '../api/campaign.api';
 import type { SeoTask }                      from '../api/campaign.api';
 import { AddSeoTaskModal }        from '../components/AddSeoTaskModal';
-import { SeoTaskModal }           from '../components/SeoTaskModal';
+import { SeoTaskDrawer }          from '../components/SeoTaskDrawer';
 import { ProjectMessages }        from '../components/ProjectMessages';
 import { KanbanColumn }           from '@/modules/project-manager/projects/components/KanbanColumn';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
@@ -267,7 +267,7 @@ export function CampaignDetailsPage() {
       )}
 
       {/* SEO Task Detail Drawer */}
-      <SeoTaskModal
+      <SeoTaskDrawer
         taskId={selectedTaskId}
         projectId={id}
         onClose={() => setSelectedTaskId(null)}

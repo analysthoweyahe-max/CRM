@@ -58,6 +58,16 @@ export interface Mentionable {
   name: string;
 }
 
+export interface SeoComment {
+  id:          number;
+  body:        string;
+  type?:       string;
+  sender:      { id: string; name: string; type?: string; avatarUrl?: string | null };
+  mentions?:   unknown[];
+  attachments?: unknown[];
+  sentAt:      string;
+}
+
 export const campaignApi = {
   /* ── Campaign ──────────────────────────────────────────────────────── */
   create(payload: CreateCampaignPayload) {
@@ -96,7 +106,8 @@ export const campaignApi = {
   },
 
   updateTask(projectId: string | number, taskId: string | number, payload: Partial<CreateSeoTaskPayload>) {
-    return http.patch<ApiResponse<SeoTaskDetail>>(
+    console.log('[updateTask] payload:', JSON.stringify(payload, null, 2));
+    return http.put<ApiResponse<SeoTaskDetail>>(
       `/v1/seo/projects/${projectId}/tasks/${taskId}`, payload
     );
   },
@@ -117,7 +128,8 @@ export const campaignApi = {
     const fd = new FormData();
     fd.append('file', file);
     return http.post<ApiResponse<{ id: number; name: string; url: string }>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/attachments`, fd
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/attachments`, fd,
+      { headers: { 'Content-Type': undefined } }
     );
   },
 
@@ -146,6 +158,19 @@ export const campaignApi = {
   getMentionables(projectId: string | number) {
     return http.get<ApiResponse<{ data: Mentionable[] }>>(
       `/v1/seo/projects/${projectId}/messages/mentionables`
+    );
+  },
+
+  /* ── Task Comments ─────────────────────────────────────────────────── */
+  getComments(projectId: string | number, taskId: string | number) {
+    return http.get<ApiResponse<SeoComment[] | { data: SeoComment[] }>>(
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`
+    );
+  },
+
+  addComment(projectId: string | number, taskId: string | number, body: string) {
+    return http.post<ApiResponse<{ comment: SeoComment }>>(
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`, { body }
     );
   },
 };
