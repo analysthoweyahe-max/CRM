@@ -6,6 +6,7 @@ import type {
   SeoAttendanceOverview,
   SeoPendingInvitation,
   SeoTeamInvitePayload,
+  SeoJobTitle,
   SeoProjectMember,
   SeoAvailableMember,
   SeoProjectInvitePayload,
@@ -49,6 +50,12 @@ export const seoTeamApi = {
   resendInvitation(employeeId: string) {
     return http.post<SeoTeamApiResponse<unknown>>(
       `/v1/seo/team/${employeeId}/resend-invitation`
+    );
+  },
+
+  getJobTitles() {
+    return http.get<SeoTeamApiResponse<SeoJobTitle[]>>(
+      '/v1/seo/team/lookups/job-titles'
     );
   },
 

@@ -124,9 +124,16 @@ export function useSeoTeamPage(isAr = true) {
   }
 
   async function handleInvite(payload: SeoTeamInvitePayload) {
-    await seoTeamApi.invite(payload);
-    toast.success(isAr ? 'تم إرسال الدعوة بنجاح' : 'Invitation sent successfully');
-    setRefreshTick(t => t + 1);
+    try {
+      await seoTeamApi.invite(payload);
+      toast.success(isAr ? 'تم إرسال الدعوة بنجاح' : 'Invitation sent successfully');
+      setRefreshTick(t => t + 1);
+    } catch (err: unknown) {
+      const res = (err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response?.data;
+      const firstFieldError = res?.errors ? Object.values(res.errors)[0]?.[0] : null;
+      const msg = firstFieldError ?? res?.message ?? (isAr ? 'فشل إرسال الدعوة' : 'Failed to send invitation');
+      throw new Error(msg);
+    }
   }
 
   return {

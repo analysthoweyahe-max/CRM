@@ -40,11 +40,15 @@ export interface SeoPendingInvitation {
   invitedAt?:  string;
 }
 
+export interface SeoJobTitle {
+  id:   number;
+  name: string;
+}
+
 export interface SeoTeamInvitePayload {
-  email:          string;
-  name?:          string;
-  role?:          string;
-  employee_uuid?: string;
+  email:        string;
+  name?:        string;
+  job_title_id: number;
 }
 
 export interface SeoTeamApiResponse<T> {
