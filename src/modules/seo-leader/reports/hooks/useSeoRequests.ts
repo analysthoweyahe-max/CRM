@@ -5,7 +5,7 @@ import type { RequestItem, FilterKey } from '@/shared/modules/team-reports/types
 const MOCK: RequestItem[] = [
   {
     id: '1',
-    memberName: 'سارة خليل', memberInitial: 'س', memberColor: 'bg-rose-500',
+    memberName: 'سارة خليل', memberInitial: 'س', memberColor: 'bg-emerald-500',
     typeAr: 'إجازة', typeEn: 'Leave',
     bodyAr: 'إجازة سنوية لمدة يومين', bodyEn: 'Annual leave for 2 days',
     targetDate: '25 يونيو 2026', submittedDate: '20 يونيو 2026',
@@ -21,15 +21,23 @@ const MOCK: RequestItem[] = [
   },
   {
     id: '3',
-    memberName: 'ياسر حسن', memberInitial: 'ي', memberColor: 'bg-sky-500',
+    memberName: 'يوسف حسن', memberInitial: 'ي', memberColor: 'bg-sky-500',
     typeAr: 'طلب دعم', typeEn: 'Support',
     bodyAr: 'طلب ترخيص أداة تطوير', bodyEn: 'Development tool license request',
     targetDate: '17 يونيو 2026', submittedDate: '17 يونيو 2026',
     status: 'rejected', comment: 'غير متاح حالياً',
   },
+  {
+    id: '4',
+    memberName: 'سارة خليل', memberInitial: 'س', memberColor: 'bg-emerald-500',
+    typeAr: 'إجازة', typeEn: 'Leave',
+    bodyAr: 'إجازة مرضية ليوم واحد', bodyEn: 'Sick leave for 1 day',
+    targetDate: '28 يونيو 2026', submittedDate: '27 يونيو 2026',
+    status: 'pending',
+  },
 ];
 
-export function useProjectRequests(isAr: boolean) {
+export function useSeoRequests(isAr: boolean) {
   const [items,  setItems]  = useState<RequestItem[]>(MOCK);
   const [filter, setFilter] = useState<FilterKey>('all');
 
