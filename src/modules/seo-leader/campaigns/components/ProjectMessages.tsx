@@ -1,5 +1,50 @@
 import { Search, Send, AtSign, Paperclip } from 'lucide-react';
+import { useState, useEffect }             from 'react';
 import { useProjectMessages }              from './useProjectMessages';
+import { env }                             from '@/app/config/env';
+import { TOKEN_KEY }                       from '@/app/config/constants';
+
+/* ── Build full URL (backend may return localhost URLs) ───────────────── */
+const API_ORIGIN = (() => {
+  try { return new URL(env.apiBaseUrl).origin; } catch { return ''; }
+})();
+
+function buildUrl(url?: string | null) {
+  if (!url) return '';
+  try {
+    const { pathname, search } = new URL(url);
+    return `${API_ORIGIN}${pathname}${search}`;
+  } catch {
+    return `${API_ORIGIN}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
+}
+
+/* ── Authenticated image (fetches with Bearer token → blob URL) ──────── */
+function AuthImage({ src, alt, onClick }: { src: string; alt: string; onClick?: () => void }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let objectUrl = '';
+    const token = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY) ?? '';
+    fetch(src, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(r => r.ok ? r.blob() : Promise.reject(r.status))
+      .then(blob => { objectUrl = URL.createObjectURL(blob); setBlobUrl(objectUrl); })
+      .catch(() => setBlobUrl(src)); // fallback: try direct URL
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [src]);
+
+  if (!blobUrl) return (
+    <div className="w-40 h-28 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
+  );
+  return (
+    <img
+      src={blobUrl}
+      alt={alt}
+      onClick={onClick}
+      className="max-w-xs max-h-56 rounded-xl object-cover cursor-pointer"
+    />
+  );
+}
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 const AVATAR_COLORS = [
@@ -14,16 +59,6 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
-function formatTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleTimeString('ar-EG', {
-      hour: '2-digit', minute: '2-digit', hour12: false,
-    });
-  } catch {
-    return '';
-  }
-}
-
 /* ── Props ───────────────────────────────────────────────────────────── */
 interface Props {
   projectId: string;
@@ -33,7 +68,7 @@ interface Props {
 /* ── Component ───────────────────────────────────────────────────────── */
 export function ProjectMessages({ projectId, isAr }: Props) {
   const {
-    messages, isLoading, currentUserId,
+    messages, isLoading,
     search, setSearch,
     text, handleTextChange, handleKeyDown, handleSend, isSending,
     apiError,
@@ -57,7 +92,7 @@ export function ProjectMessages({ projectId, isAr }: Props) {
         onChange={handleFileChange}
       />
 
-      {/* ── Search bar ─────────────────────────────────────────────── */}
+      {/* ── Search bar ──────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700/60">
         <Search size={16} className="text-gray-400 shrink-0" />
         <input
@@ -89,38 +124,50 @@ export function ProjectMessages({ projectId, isAr }: Props) {
           </div>
         ) : (
           messages.map(msg => {
-            const isMine  = msg.sender.id === currentUserId;
-            const initial = msg.sender.name?.[0]?.toUpperCase() ?? '?';
+            const isMine   = msg.isMine;
+            const initial  = msg.sender.avatarInitial ?? msg.sender.name?.[0]?.toUpperCase() ?? '?';
+            const imgAttachment = msg.type === 'image' ? msg.attachments?.[0] : null;
+            const imgUrl   = imgAttachment ? buildUrl(imgAttachment.url) : null;
+
+            const bubble = (
+              <div className={isMine
+                ? 'bg-[#A0CD39] text-white px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed'
+              }>
+                {imgUrl ? (
+                  <img
+                    src={imgUrl}
+                    alt={imgAttachment?.fileName ?? 'attachment'}
+                    className="max-w-xs max-h-56 rounded-xl object-cover cursor-pointer"
+                    onClick={() => window.open(imgUrl, '_blank', 'noopener,noreferrer')}
+                  />
+                ) : (
+                  <span className="wrap-break-word">{msg.body ?? ''}</span>
+                )}
+              </div>
+            );
 
             return isMine ? (
-              /* ── Current user: right side (justify-start = visual right in RTL) ── */
+              /* Current user — right in RTL (justify-start) */
               <div key={msg.id} className="flex justify-start">
                 <div className="max-w-[70%]">
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 ms-1">
                     {msg.sender.name}
-                    <span className="ms-2">{formatTime(msg.createdAt)}</span>
+                    <span className="ms-2">{msg.sentTime}</span>
                   </p>
-                  <div className="bg-[#A0CD39] text-white px-4 py-2.5 rounded-2xl
-                                  rounded-tl-sm text-sm leading-relaxed wrap-break-word">
-                    {msg.content}
-                  </div>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 ms-1">
-                    {isAr ? 'قرأت' : 'Read'} ✓✓
-                  </p>
+                  {bubble}
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 ms-1">✓✓</p>
                 </div>
               </div>
             ) : (
-              /* ── Other user: left side (justify-end = visual left in RTL) ── */
+              /* Other user — left in RTL (justify-end) */
               <div key={msg.id} className="flex items-end gap-2 justify-end">
                 <div className="max-w-[70%]">
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 text-end me-1">
                     {msg.sender.name}
-                    <span className="ms-2">{formatTime(msg.createdAt)}</span>
+                    <span className="ms-2">{msg.sentTime}</span>
                   </p>
-                  <div className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100
-                                  px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed wrap-break-word">
-                    {msg.content}
-                  </div>
+                  {bubble}
                 </div>
                 <div className={`w-9 h-9 rounded-full ${avatarColor(msg.sender.name)}
                                   flex items-center justify-center text-white text-xs
@@ -134,7 +181,7 @@ export function ProjectMessages({ projectId, isAr }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── @ Mention dropdown (above input) ────────────────────────── */}
+      {/* ── @ Mention dropdown ──────────────────────────────────────── */}
       {showMentions && filteredMentions.length > 0 && (
         <div className="mx-4 mb-1 bg-white dark:bg-gray-800 border border-gray-200
                         dark:border-gray-700 rounded-xl shadow-lg overflow-hidden
@@ -143,10 +190,7 @@ export function ProjectMessages({ projectId, isAr }: Props) {
             <button
               key={m.id}
               type="button"
-              onMouseDown={e => {
-                e.preventDefault();
-                insertMention(m.name);
-              }}
+              onMouseDown={e => { e.preventDefault(); insertMention(m.name); }}
               className="w-full flex items-center gap-2 px-4 py-2.5 text-sm
                          text-gray-700 dark:text-gray-200
                          hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -172,7 +216,7 @@ export function ProjectMessages({ projectId, isAr }: Props) {
       <div className="border-t border-gray-100 dark:border-gray-700/60 px-4 py-3">
         <div className="flex items-end gap-2">
 
-          {/* Send button */}
+          {/* Send */}
           <button
             type="button"
             onClick={handleSend}
@@ -184,7 +228,7 @@ export function ProjectMessages({ projectId, isAr }: Props) {
             <Send size={15} className="text-white" />
           </button>
 
-          {/* Text area */}
+          {/* Textarea */}
           <textarea
             rows={1}
             value={text}
@@ -211,12 +255,11 @@ export function ProjectMessages({ projectId, isAr }: Props) {
             className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full
                        text-gray-400 hover:text-[#709028] hover:bg-gray-100
                        dark:hover:bg-gray-800 transition-colors"
-            title={isAr ? 'ذكر شخص' : 'Mention someone'}
           >
             <AtSign size={18} />
           </button>
 
-          {/* Attachment / image */}
+          {/* Attachment */}
           <button
             type="button"
             onClick={openFilePicker}
@@ -225,7 +268,6 @@ export function ProjectMessages({ projectId, isAr }: Props) {
                        text-gray-400 hover:text-[#709028] hover:bg-gray-100
                        dark:hover:bg-gray-800 transition-colors
                        disabled:opacity-40 disabled:cursor-not-allowed"
-            title={isAr ? 'إرفاق ملف' : 'Attach file'}
           >
             <Paperclip size={18} />
           </button>

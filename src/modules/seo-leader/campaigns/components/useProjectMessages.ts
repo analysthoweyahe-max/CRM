@@ -94,8 +94,11 @@ export function useProjectMessages(projectId: string) {
       setApiError(null);
     },
     onError: (err: unknown) => {
-      const errMsg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      const res = (err as { response?: { data?: unknown; status?: number } })?.response;
+      console.error('[fileMutation error]', res?.status, JSON.stringify(res?.data));
+      const data = res?.data as { message?: string; errors?: Record<string, string[]> } | undefined;
+      const errMsg = data?.message
+        ?? Object.values(data?.errors ?? {}).flat()[0]
         ?? 'حدث خطأ أثناء رفع الملف';
       setApiError(errMsg);
     },
@@ -153,6 +156,7 @@ export function useProjectMessages(projectId: string) {
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    console.log('[handleFileChange] file:', file?.name ?? 'none');
     if (!file) return;
     fileMutation.mutate(file);
     e.target.value = '';

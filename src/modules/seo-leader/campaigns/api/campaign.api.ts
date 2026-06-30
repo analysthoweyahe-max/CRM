@@ -1,5 +1,7 @@
 import { http }                    from '@/shared/services/http.service';
 import type { ApiResponse }         from '@/shared/types/api.types';
+import { env }                      from '@/app/config/env';
+import { TOKEN_KEY }                from '@/app/config/constants';
 import type {
   CreateCampaignPayload,
   CampaignLookupResponse,
@@ -40,17 +42,32 @@ interface PhasedTasksResponse {
 }
 
 export interface SeoMessageSender {
-  id:      string;
-  name:    string;
-  avatar?: string | null;
+  id:             string;
+  name:           string;
+  type?:          string;
+  avatarUrl?:     string | null;
+  avatarInitial?: string;
+}
+
+export interface SeoMessageAttachment {
+  id:         number;
+  fileName:   string;
+  mimeType:   string;
+  size:       number;
+  url:        string;
+  uploadedAt: string;
 }
 
 export interface SeoMessage {
-  id:        number;
-  content:   string;
-  sender:    SeoMessageSender;
-  isRead:    boolean;
-  createdAt: string;
+  id:          number;
+  body:        string | null;
+  type:        string;
+  sender:      SeoMessageSender;
+  isMine:      boolean;
+  mentions:    unknown[];
+  attachments: SeoMessageAttachment[];
+  sentAt:      string;
+  sentTime:    string;
 }
 
 export interface Mentionable {
@@ -142,17 +159,30 @@ export const campaignApi = {
 
   sendMessage(projectId: string | number, content: string) {
     return http.post<ApiResponse<SeoMessage>>(
-      `/v1/seo/projects/${projectId}/messages`, { message: content }
+      `/v1/seo/projects/${projectId}/messages`, { body: content }
     );
   },
 
-  sendMedia(projectId: string | number, file: File) {
-    const fd = new FormData();
-    fd.append('attachment', file);
-    return http.post<ApiResponse<SeoMessage>>(
-      `/v1/seo/projects/${projectId}/messages`, fd,
-      { headers: { 'Content-Type': undefined } }
+  async sendMedia(projectId: string | number, file: File) {
+    const fd    = new FormData();
+    fd.append('file', file);
+    console.log('[sendMedia] file:', file.name, file.type, file.size);
+    const token = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY) ?? '';
+    const res   = await fetch(
+      `${env.apiBaseUrl}/v1/seo/projects/${projectId}/messages`,
+      {
+        method:  'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept:        'application/json',
+          /* No Content-Type — browser sets multipart/form-data + boundary automatically */
+        },
+        body: fd,
+      },
     );
+    const json: ApiResponse<SeoMessage> = await res.json();
+    if (!res.ok) throw { response: { data: json, status: res.status } };
+    return { data: json };
   },
 
   getMentionables(projectId: string | number) {
