@@ -67,7 +67,7 @@ export function useNewCampaign() {
       references:    links.filter(Boolean),
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
       setSaved(true);
       setTimeout(() => navigate(ROUTES.SEO_LEADER.DASHBOARD), 1500);
     },

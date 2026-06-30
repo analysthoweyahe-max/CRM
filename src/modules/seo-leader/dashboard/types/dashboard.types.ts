@@ -1,21 +1,20 @@
-export interface SeoTeamMember {
-  uuid:   string;
-  name:   string;
-  avatar: string | null;
-}
-
 export interface SeoCampaign {
-  uuid:            string;
-  name:            string;
-  client_name:     string;
-  campaign_type:   string;
-  start_date:      string;
-  end_date:        string;
-  progress:        number;
-  status:          string;
-  tasks_completed: number;
-  tasks_total:     number;
-  team:            SeoTeamMember[];
+  id:               number;
+  name:             string;
+  description:      string;
+  targetDomain:     string | null;
+  campaignType:     string;
+  campaignTypeLabel: string;
+  status:           string;
+  statusLabel:      string;
+  isDraft:          boolean;
+  startDate:        string;
+  expectedEndDate:  string | null;
+  targetKeywords:   string[];
+  referenceLinks:   string[];
+  createdBy:        { id: string; name: string };
+  createdAt:        string;
+  updatedAt:        string;
 }
 
 export interface SeoManagerStats {
@@ -30,7 +29,13 @@ export interface PaginatedProjects {
   total:        number;
   current_page: number;
   last_page:    number;
-  per_page:     number;
+  per_page?:    number;
+}
+
+export interface SeoTeamMember {
+  uuid:   string;
+  name:   string;
+  avatar: string | null;
 }
 
 export interface SeoManagerDashboard {

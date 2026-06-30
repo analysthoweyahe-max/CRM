@@ -45,8 +45,9 @@ const ProjectReportsPage   = lazy(() => import('@/modules/project-manager/report
 const PMProfilePage        = lazy(() => import('@/modules/project-manager/profile/pages/PMProfilePage')          .then(m => ({ default: m.PMProfilePage })));
 
 /* ── SEO Leader ───────────────────────────────────────────────────── */
-const SeoLeaderDashboardPage = lazy(() => import('@/modules/seo-leader/dashboard/pages/SeoLeaderDashboardPage') .then(m => ({ default: m.SeoLeaderDashboardPage })));
-const NewCampaignPage        = lazy(() => import('@/modules/seo-leader/campaigns/pages/NewCampaignPage')        .then(m => ({ default: m.NewCampaignPage })));
+const SeoLeaderDashboardPage = lazy(() => import('@/modules/seo-leader/dashboard/pages/SeoLeaderDashboardPage')   .then(m => ({ default: m.SeoLeaderDashboardPage })));
+const NewCampaignPage        = lazy(() => import('@/modules/seo-leader/campaigns/pages/NewCampaignPage')           .then(m => ({ default: m.NewCampaignPage })));
+const CampaignDetailsPage    = lazy(() => import('@/modules/seo-leader/campaigns/pages/CampaignDetailsPage')       .then(m => ({ default: m.CampaignDetailsPage })));
 const SeoTeamPage            = lazy(() => import('@/modules/seo-leader/team/pages/SeoTeamPage')                 .then(m => ({ default: m.SeoTeamPage })));
 const SeoReportsPage         = lazy(() => import('@/modules/seo-leader/reports/pages/SeoReportsPage')           .then(m => ({ default: m.SeoReportsPage })));
 const SeoProfilePage         = lazy(() => import('@/modules/seo-leader/profile/pages/SeoProfilePage')           .then(m => ({ default: m.SeoProfilePage })));
@@ -126,6 +127,7 @@ export function AppRouter() {
               <Route element={<SeoLeaderLayout />}>
                 <Route path={ROUTES.SEO_LEADER.DASHBOARD} element={<SeoLeaderDashboardPage />} />
                 <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />
+                <Route path={ROUTES.SEO_LEADER.DETAILS()} element={<CampaignDetailsPage />} />
                 <Route path={ROUTES.SEO_LEADER.TEAM}      element={<SeoTeamPage />} />
                 <Route path={ROUTES.SEO_LEADER.REPORTS}   element={<SeoReportsPage />} />
                 <Route path={ROUTES.SEO_LEADER.PROFILE}   element={<SeoProfilePage />} />

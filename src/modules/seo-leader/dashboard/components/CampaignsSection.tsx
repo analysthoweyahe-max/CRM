@@ -1,17 +1,17 @@
-import { useState }      from 'react';
+import { useState }       from 'react';
 import { Plus, Megaphone } from 'lucide-react';
-import { Card }           from '@/shared/components/ui/Card';
-import { Button }         from '@/shared/components/ui/Button';
-import { CampaignCard }   from './CampaignCard';
+import { Card }            from '@/shared/components/ui/Card';
+import { Button }          from '@/shared/components/ui/Button';
+import { CampaignCard }    from './CampaignCard';
 import type { CampaignViewModel } from '../hooks/useSeoLeaderDashboard';
 
-type TabKey = 'active' | 'pending' | 'completed' | 'paused';
+type TabKey = 'in_progress' | 'not_started' | 'completed' | 'paused';
 
 const TABS: { key: TabKey; labelAr: string; labelEn: string }[] = [
-  { key: 'active',    labelAr: 'نشطة',   labelEn: 'Active'    },
-  { key: 'pending',   labelAr: 'معلقة',  labelEn: 'Pending'   },
-  { key: 'completed', labelAr: 'مكتملة', labelEn: 'Completed' },
-  { key: 'paused',    labelAr: 'متوقفة', labelEn: 'Paused'    },
+  { key: 'in_progress', labelAr: 'جارية',   labelEn: 'Active'    },
+  { key: 'not_started', labelAr: 'لم تبدأ', labelEn: 'Pending'   },
+  { key: 'completed',   labelAr: 'مكتملة',  labelEn: 'Completed' },
+  { key: 'paused',      labelAr: 'متوقفة',  labelEn: 'Paused'    },
 ];
 
 interface Props {
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export function CampaignsSection({ campaigns, isAr, onNewCampaign }: Props) {
-  const [activeTab, setActiveTab] = useState<TabKey>('active');
+  const [activeTab, setActiveTab] = useState<TabKey>('in_progress');
 
   const visible = campaigns.filter(c => c.status === activeTab);
 
@@ -79,7 +79,7 @@ export function CampaignsSection({ campaigns, isAr, onNewCampaign }: Props) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {visible.map(c => (
-              <CampaignCard key={c.uuid} campaign={c} isAr={isAr} />
+              <CampaignCard key={c.id} campaign={c} isAr={isAr} />
             ))}
           </div>
         )}
