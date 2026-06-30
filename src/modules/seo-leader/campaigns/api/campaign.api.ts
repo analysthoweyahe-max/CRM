@@ -39,6 +39,25 @@ interface PhasedTasksResponse {
   total:  number;
 }
 
+export interface SeoMessageSender {
+  id:      string;
+  name:    string;
+  avatar?: string | null;
+}
+
+export interface SeoMessage {
+  id:        number;
+  content:   string;
+  sender:    SeoMessageSender;
+  isRead:    boolean;
+  createdAt: string;
+}
+
+export interface Mentionable {
+  id:   string;
+  name: string;
+}
+
 export const campaignApi = {
   /* ── Campaign ──────────────────────────────────────────────────────── */
   create(payload: CreateCampaignPayload) {
@@ -99,6 +118,34 @@ export const campaignApi = {
     fd.append('file', file);
     return http.post<ApiResponse<{ id: number; name: string; url: string }>>(
       `/v1/seo/projects/${projectId}/tasks/${taskId}/attachments`, fd
+    );
+  },
+
+  /* ── Messages ──────────────────────────────────────────────────────── */
+  getMessages(projectId: string | number, params?: { search?: string }) {
+    return http.get<ApiResponse<{ data: SeoMessage[]; total?: number }>>(
+      `/v1/seo/projects/${projectId}/messages`, { params }
+    );
+  },
+
+  sendMessage(projectId: string | number, content: string) {
+    return http.post<ApiResponse<SeoMessage>>(
+      `/v1/seo/projects/${projectId}/messages`, { message: content }
+    );
+  },
+
+  sendMedia(projectId: string | number, file: File) {
+    const fd = new FormData();
+    fd.append('attachment', file);
+    return http.post<ApiResponse<SeoMessage>>(
+      `/v1/seo/projects/${projectId}/messages`, fd,
+      { headers: { 'Content-Type': undefined } }
+    );
+  },
+
+  getMentionables(projectId: string | number) {
+    return http.get<ApiResponse<{ data: Mentionable[] }>>(
+      `/v1/seo/projects/${projectId}/messages/mentionables`
     );
   },
 };
