@@ -96,18 +96,34 @@ export const SEO_NAV: NavSectionDef[] = [
   },
 ];
 
+// ── SEO Member ────────────────────────────────────────────────────────────────
+
+export const SEO_MEMBER_NAV: NavSectionDef[] = [
+  {
+    items: [
+      { key: 'seo-m-dash',     labelAr: 'الرئيسية',         labelEn: 'Dashboard',       icon: LayoutDashboard, path: ROUTES.SEO_MEMBER.DASHBOARD },
+      { key: 'seo-m-tasks',    labelAr: 'مهامي',            labelEn: 'My Tasks',        icon: CheckSquare,     path: ROUTES.SEO_MEMBER.TASKS     },
+      { key: 'seo-m-messages', labelAr: 'الرسائل',          labelEn: 'Messages',        icon: MessageSquare,   path: ROUTES.SEO_MEMBER.MESSAGES  },
+      { key: 'seo-m-requests', labelAr: 'طلباتى',           labelEn: 'My Requests',     icon: FileText,        path: ROUTES.SEO_MEMBER.REQUESTS  },
+      { key: 'seo-m-reports',  labelAr: 'سجل الحضور',       labelEn: 'Attendance',      icon: ClipboardList,   path: ROUTES.SEO_MEMBER.REPORTS   },
+    ],
+  },
+];
+
 // ── Lookup maps ───────────────────────────────────────────────────────────────
 
-export const NAV_BY_VARIANT: Record<'hr' | 'pm' | 'employee' | 'seo', NavSectionDef[]> = {
-  hr:       HR_NAV,
-  pm:       PM_NAV,
-  employee: EMPLOYEE_NAV,
-  seo:      SEO_NAV,
+export const NAV_BY_VARIANT: Record<'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', NavSectionDef[]> = {
+  hr:          HR_NAV,
+  pm:          PM_NAV,
+  employee:    EMPLOYEE_NAV,
+  seo:         SEO_NAV,
+  'seo-member': SEO_MEMBER_NAV,
 };
 
-export const SUBTITLE: Record<'hr' | 'pm' | 'employee' | 'seo', { ar: string; en: string }> = {
-  hr:       { ar: 'نظام الموارد البشرية', en: 'HR System'       },
-  pm:       { ar: 'مدير المشاريع',        en: 'Project Manager' },
-  employee: { ar: 'بوابة الموظف',         en: 'Employee Portal' },
-  seo:      { ar: 'قائد SEO',             en: 'SEO Leader'      },
+export const SUBTITLE: Record<'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', { ar: string; en: string }> = {
+  hr:           { ar: 'نظام الموارد البشرية', en: 'HR System'       },
+  pm:           { ar: 'مدير المشاريع',        en: 'Project Manager' },
+  employee:     { ar: 'بوابة الموظف',         en: 'Employee Portal' },
+  seo:          { ar: 'قائد SEO',             en: 'SEO Leader'      },
+  'seo-member': { ar: 'موظف SEO',             en: 'SEO Member'      },
 };

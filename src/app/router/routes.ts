@@ -55,4 +55,12 @@ export const ROUTES = {
     DAILY_REPORTS: '/employee/daily-reports',
     PROFILE:       '/employee/profile',
   },
+  SEO_MEMBER: {
+    DASHBOARD: '/seo-member',
+    TASKS:     '/seo-member/tasks',
+    MESSAGES:  '/seo-member/messages',
+    REQUESTS:  '/seo-member/requests',
+    REPORTS:   '/seo-member/reports',
+    PROFILE:   '/seo-member/profile',
+  },
 } as const;

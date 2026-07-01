@@ -9,6 +9,7 @@ import { DashboardLayout }       from '@/app/layouts/DashboardLayout';
 import { ProjectManagerLayout }  from '@/app/layouts/ProjectManagerLayout';
 import { EmployeeLayout }        from '@/app/layouts/EmployeeLayout';
 import { SeoLeaderLayout }       from '@/app/layouts/SeoLeaderLayout';
+import { SeoMemberLayout }       from '@/app/layouts/SeoMemberLayout';
 import { GuestGuard }            from '@/app/guards/GuestGuard';
 import { AuthGuard }             from '@/app/guards/AuthGuard';
 
@@ -51,6 +52,14 @@ const CampaignDetailsPage    = lazy(() => import('@/modules/seo-leader/campaigns
 const SeoTeamPage            = lazy(() => import('@/modules/seo-leader/team/pages/SeoTeamPage')                 .then(m => ({ default: m.SeoTeamPage })));
 const SeoReportsPage         = lazy(() => import('@/modules/seo-leader/reports/pages/SeoReportsPage')           .then(m => ({ default: m.SeoReportsPage })));
 const SeoProfilePage         = lazy(() => import('@/modules/seo-leader/profile/pages/SeoProfilePage')           .then(m => ({ default: m.SeoProfilePage })));
+
+/* ── SEO Member ──────────────────────────────────────────────────── */
+const SeoMemberDashboardPage = lazy(() => import('@/modules/seo-member/dashboard/pages/SeoMemberDashboardPage') .then(m => ({ default: m.SeoMemberDashboardPage })));
+const SeoMemberTasksPage     = lazy(() => import('@/modules/seo-member/tasks/pages/SeoMemberTasksPage')         .then(m => ({ default: m.SeoMemberTasksPage })));
+const SeoMemberMessagesPage  = lazy(() => import('@/modules/seo-member/messages/pages/SeoMemberMessagesPage')   .then(m => ({ default: m.SeoMemberMessagesPage })));
+const SeoMemberRequestsPage  = lazy(() => import('@/modules/seo-member/requests/pages/SeoMemberRequestsPage')   .then(m => ({ default: m.SeoMemberRequestsPage })));
+const SeoMemberReportsPage   = lazy(() => import('@/modules/seo-member/reports/pages/SeoMemberReportsPage')     .then(m => ({ default: m.SeoMemberReportsPage })));
+const SeoMemberProfilePage   = lazy(() => import('@/modules/seo-member/profile/pages/SeoMemberProfilePage')     .then(m => ({ default: m.SeoMemberProfilePage })));
 
 /* ── Employee ─────────────────────────────────────────────────────── */
 const EmployeeDashboardPage    = lazy(() => import('@/modules/employee/dashboard/pages/EmployeeDashboardPage')       .then(m => ({ default: m.EmployeeDashboardPage })));
@@ -131,6 +140,15 @@ export function AppRouter() {
                 <Route path={ROUTES.SEO_LEADER.TEAM}      element={<SeoTeamPage />} />
                 <Route path={ROUTES.SEO_LEADER.REPORTS}   element={<SeoReportsPage />} />
                 <Route path={ROUTES.SEO_LEADER.PROFILE}   element={<SeoProfilePage />} />
+              </Route>
+
+              <Route element={<SeoMemberLayout />}>
+                <Route path={ROUTES.SEO_MEMBER.DASHBOARD} element={<SeoMemberDashboardPage />} />
+                <Route path={ROUTES.SEO_MEMBER.TASKS}     element={<SeoMemberTasksPage />} />
+                <Route path={ROUTES.SEO_MEMBER.MESSAGES}  element={<SeoMemberMessagesPage />} />
+                <Route path={ROUTES.SEO_MEMBER.REQUESTS}  element={<SeoMemberRequestsPage />} />
+                <Route path={ROUTES.SEO_MEMBER.REPORTS}   element={<SeoMemberReportsPage />} />
+                <Route path={ROUTES.SEO_MEMBER.PROFILE}   element={<SeoMemberProfilePage />} />
               </Route>
             </Route>
 
