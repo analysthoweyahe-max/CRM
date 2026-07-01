@@ -52,6 +52,20 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.ViewMessages,
     Permission.SendMessages,
   ],
+  'seo-leader': [
+    Permission.ViewEmployees,
+    Permission.ViewAttendance,
+    Permission.ViewLeaves,
+    Permission.ManageLeaves,
+    Permission.ViewMessages,
+    Permission.SendMessages,
+  ],
+  'seo-member': [
+    Permission.ViewAttendance,
+    Permission.ViewLeaves,
+    Permission.ViewMessages,
+    Permission.SendMessages,
+  ],
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {

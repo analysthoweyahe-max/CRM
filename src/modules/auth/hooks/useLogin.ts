@@ -5,9 +5,10 @@ import type { LoginFormValues } from '@/modules/auth/schemas/login.schema';
 import { ROUTES } from '@/app/router/routes';
 
 function redirectForRole(role: string): string {
-  if (role === 'employee')   return ROUTES.EMPLOYEE.DASHBOARD;
-  if (role === 'manager')    return ROUTES.PROJECT_MANAGER.DASHBOARD;
-  if (role === 'seo-leader') return ROUTES.SEO_LEADER.DASHBOARD;
+  if (role === 'employee')    return ROUTES.EMPLOYEE.DASHBOARD;
+  if (role === 'seo-member')  return ROUTES.SEO_MEMBER.DASHBOARD;
+  if (role === 'manager')     return ROUTES.PROJECT_MANAGER.DASHBOARD;
+  if (role === 'seo-leader')  return ROUTES.SEO_LEADER.DASHBOARD;
   return ROUTES.DASHBOARD;
 }
 

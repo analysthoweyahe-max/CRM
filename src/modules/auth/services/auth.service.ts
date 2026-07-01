@@ -4,6 +4,7 @@ import type {
   SetPasswordPayload,
   AuthLoginResponse,
   AuthUser,
+  ApiEmployee,
   InviteTokenPayload,
 } from '@/modules/auth/types/auth.types';
 import type { Role } from '@/shared/types/role.types';
@@ -20,6 +21,22 @@ function mapAdminRole(roles: string[]): Role {
   if (roles.includes('manager'))     return 'manager';
   if (roles.includes('seo-manager')) return 'seo-leader';
   return 'admin';
+}
+
+function mapEmployeeRole(roles: string[], department?: { id: number; name: string }): Role {
+  if (roles?.includes('seo-employee'))  return 'seo-member';
+  if (department?.name?.toLowerCase() === 'seo') return 'seo-member';
+  return 'employee';
+}
+
+function buildEmployeeUser(employee: ApiEmployee): AuthUser {
+  return {
+    id:         employee.id,
+    employeeId: employee.id,
+    fullName:   employee.name,
+    role:       mapEmployeeRole(employee.roles ?? [], employee.department),
+    avatarUrl:  employee.avatar_url,
+  };
 }
 
 // ── Storage ──────────────────────────────────────────────────────────────────
@@ -60,16 +77,20 @@ async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> 
   if (isEmail(employeeId)) {
     const { data } = await authApi.employeeLogin({ email: employeeId, password });
     const { accessToken, employee } = data.data;
-    const user: AuthUser = {
-      id:         employee.id,
-      employeeId: employee.id,
-      fullName:   employee.name,
-      role:       'employee',
-      avatarUrl:  employee.avatar_url,
-    };
+    const user = buildEmployeeUser(employee);
     storeAuth(accessToken, user, rememberMe);
     return { token: accessToken, user };
-  } else {
+  }
+
+  // Non-email input: try employee login first (handles numeric IDs like "783729")
+  // then fall back to admin login (for HR/manager/seo-leader UUIDs)
+  try {
+    const { data } = await authApi.employeeLogin({ employee_id: employeeId, password });
+    const { accessToken, employee } = data.data;
+    const user = buildEmployeeUser(employee);
+    storeAuth(accessToken, user, rememberMe);
+    return { token: accessToken, user };
+  } catch {
     const { data } = await authApi.adminLogin({ admin_id: employeeId, password });
     const payload = data.data;
     if (!payload?.accessToken || !payload?.admin) {
@@ -107,13 +128,7 @@ async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginRespon
   } else {
     const { data } = await authApi.setEmployeePassword(token, apiPayload);
     const { accessToken, employee } = data.data;
-    const user: AuthUser = {
-      id:         employee.id,
-      employeeId: employee.id,
-      fullName:   employee.name,
-      role:       'employee',
-      avatarUrl:  employee.avatar_url,
-    };
+    const user = buildEmployeeUser(employee);
     storeAuth(accessToken, user, rememberMe);
     return { token: accessToken, user };
   }
@@ -148,16 +163,10 @@ async function loadProfile(): Promise<AuthUser | null> {
   if (!storedUser) return null;
 
   try {
-    if (storedUser.role === 'employee') {
+    if (storedUser.role === 'employee' || storedUser.role === 'seo-member') {
       const { data } = await authApi.employeeProfile();
       const { employee } = data.data;
-      const user: AuthUser = {
-        id:         employee.id,
-        employeeId: employee.id,
-        fullName:   employee.name,
-        role:       'employee',
-        avatarUrl:  employee.avatar_url,
-      };
+      const user = buildEmployeeUser(employee);
       const storage = localStorage.getItem(TOKEN_KEY) ? localStorage : sessionStorage;
       storage.setItem(USER_KEY, JSON.stringify(user));
       return user;
@@ -172,7 +181,7 @@ async function loadProfile(): Promise<AuthUser | null> {
 async function logout(): Promise<void> {
   const user = getStoredUser();
   try {
-    if (user?.role === 'employee') {
+    if (user?.role === 'employee' || user?.role === 'seo-member') {
       await authApi.employeeLogout();
     } else {
       await authApi.adminLogout();

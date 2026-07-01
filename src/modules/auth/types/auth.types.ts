@@ -55,11 +55,20 @@ export interface ApiAdmin {
   status?:     string;
 }
 
+export interface ApiDepartment {
+  id:   number;
+  name: string;
+}
+
 export interface ApiEmployee {
-  id:          string;
-  name:        string;
-  email:       string;
-  avatar_url?: string;
+  id:              string;
+  employeeNumber?: string;
+  name:            string;
+  email:           string;
+  avatar_url?:     string;
+  roles?:          string[];
+  department?:     ApiDepartment;
+  status?:         string;
 }
 
 export interface AdminLoginApiResponse {
@@ -70,9 +79,13 @@ export interface AdminLoginApiResponse {
 }
 
 export interface EmployeeLoginApiResponse {
+  status:  string;
+  message: string;
   data: {
-    accessToken: string;
-    employee:    ApiEmployee;
+    accessToken:   string;
+    tokenType:     string;
+    employee:      ApiEmployee;
+    redirect_path: string;
   };
 }
 
@@ -93,6 +106,8 @@ export interface EmployeeInviteApiResponse {
 }
 
 export interface EmployeeProfileApiResponse {
+  status:  string;
+  message: string;
   data: {
     employee: ApiEmployee;
   };

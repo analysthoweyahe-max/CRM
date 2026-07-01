@@ -31,7 +31,7 @@ export const authApi = {
 
   // ── Employee ─────────────────────────────────────────────────────────────
 
-  employeeLogin(credentials: { email: string; password: string }) {
+  employeeLogin(credentials: { email?: string; employee_id?: string; password: string }) {
     return http.post<EmployeeLoginApiResponse>('/v1/employee/auth/login', credentials);
   },
 

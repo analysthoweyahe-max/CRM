@@ -4,6 +4,7 @@ export const Role = {
   Manager:   'manager',
   Employee:  'employee',
   SeoLeader: 'seo-leader',
+  SeoMember: 'seo-member',
 } as const;
 export type Role = (typeof Role)[keyof typeof Role];
 

@@ -8,11 +8,12 @@ import { ROUTES }        from '@/app/router/routes';
 import { useTaskCard }   from './useTaskCard';
 import type { TaskCardProps } from './TaskCard.types';
 
-export function TaskCard({ task, isAr }: TaskCardProps) {
+export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
   const { status, priority, title, project, deadline, taskNum, empTask } = useTaskCard(task, isAr);
   const { activeTask, startTimer, stopTimer } = useTaskTimer();
   const navigate = useNavigate();
   const isActive = activeTask?.id === task.id;
+  const handleDetails = onDetails ? () => onDetails(task.id) : () => navigate(ROUTES.EMPLOYEE.TASK_DETAIL(task.id));
 
   return (
     <Card
@@ -77,7 +78,7 @@ export function TaskCard({ task, isAr }: TaskCardProps) {
                 {isAr ? 'بدء المؤقت' : 'Start Timer'}
               </Button>
             )}
-            <Button variant="secondary" size="sm" onClick={() => navigate(ROUTES.EMPLOYEE.TASK_DETAIL(task.id))}>
+            <Button variant="secondary" size="sm" onClick={handleDetails}>
               {isAr ? 'تفاصيل' : 'Details'}
             </Button>
           </div>
