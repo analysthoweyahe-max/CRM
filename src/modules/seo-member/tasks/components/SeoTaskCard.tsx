@@ -1,19 +1,15 @@
-import { Play, Square, Briefcase, CalendarClock } from 'lucide-react';
-import { useNavigate }   from 'react-router-dom';
-import { Badge }         from '@/shared/components/ui/Badge';
-import { Button }        from '@/shared/components/ui/Button';
-import { Card }          from '@/shared/components/ui/Card';
-import { useTaskTimer }  from '@/app/layouts/components/TaskTimerContext';
-import { ROUTES }        from '@/app/router/routes';
-import { useTaskCard }   from './useTaskCard';
-import type { TaskCardProps } from './TaskCard.types';
+import { Play, Square, Tag, FolderOpen, CalendarClock } from 'lucide-react';
+import { Badge }        from '@/shared/components/ui/Badge';
+import { Button }       from '@/shared/components/ui/Button';
+import { Card }         from '@/shared/components/ui/Card';
+import { useTaskTimer } from '@/app/layouts/components/TaskTimerContext';
+import { useSeoTaskCard } from './useSeoTaskCard';
+import type { SeoTaskCardProps } from './SeoTaskCard.types';
 
-export function TaskCard({ task, isAr, onDetails, projectLabel }: TaskCardProps) {
-  const { status, priority, title, project, deadline, taskNum, empTask } = useTaskCard(task, isAr);
+export function SeoTaskCard({ task, isAr, onDetails }: SeoTaskCardProps) {
+  const { status, priority, taskNum, deadline, empTask } = useSeoTaskCard(task, isAr);
   const { activeTask, startTimer, stopTimer } = useTaskTimer();
-  const navigate = useNavigate();
-  const isActive = activeTask?.id === task.id;
-  const handleDetails = onDetails ? () => onDetails(task.id) : () => navigate(ROUTES.EMPLOYEE.TASK_DETAIL(task.id));
+  const isActive = activeTask?.id === String(task.id);
 
   return (
     <Card
@@ -26,11 +22,12 @@ export function TaskCard({ task, isAr, onDetails, projectLabel }: TaskCardProps)
       ].join(' ')}
     >
       <div className="space-y-2.5">
-        {/* Row 1: title+id (start→right in RTL) | status badge (end→left in RTL) */}
+
+        {/* Row 1: title + taskNum | status badge */}
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-800 dark:text-gray-100">{title}</span>
-            <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums">{taskNum}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">{task.title}</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums shrink-0">{taskNum}</span>
           </div>
           <Badge
             label={isAr ? status.ar : status.en}
@@ -39,15 +36,23 @@ export function TaskCard({ task, isAr, onDetails, projectLabel }: TaskCardProps)
           />
         </div>
 
-        {/* Row 2: project */}
-        <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-          <Briefcase size={14} className="text-gray-400 shrink-0" />
-          <span>{isAr ? `المشروع: ${project}` : `Project: ${project}`}</span>
+        {/* Row 2: task type | phase */}
+        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+          <span className="flex items-center gap-1.5">
+            <Tag size={14} className="text-gray-400 shrink-0" />
+            {task.taskTypeLabel}
+          </span>
+          {task.phase && (
+            <span className="flex items-center gap-1.5">
+              <FolderOpen size={14} className="text-gray-400 shrink-0" />
+              {task.phase}
+            </span>
+          )}
         </div>
 
-        {/* Row 3: priority+deadline (start→right in RTL) | timer+details (end→left in RTL) */}
+        {/* Row 3: priority + deadline | timer + details */}
         <div className="flex items-center justify-between gap-4 pt-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Badge
               label={isAr ? priority.ar : priority.en}
               variant={priority.variant}
@@ -58,7 +63,7 @@ export function TaskCard({ task, isAr, onDetails, projectLabel }: TaskCardProps)
               {isAr ? `التسليم: ${deadline}` : `Due: ${deadline}`}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {isActive ? (
               <Button
                 variant="danger"
@@ -78,11 +83,16 @@ export function TaskCard({ task, isAr, onDetails, projectLabel }: TaskCardProps)
                 {isAr ? 'بدء المؤقت' : 'Start Timer'}
               </Button>
             )}
-            <Button variant="secondary" size="sm" onClick={handleDetails}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => onDetails?.(task.id)}
+            >
               {isAr ? 'تفاصيل' : 'Details'}
             </Button>
           </div>
         </div>
+
       </div>
     </Card>
   );
