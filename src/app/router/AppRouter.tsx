@@ -57,6 +57,7 @@ const SeoProfilePage         = lazy(() => import('@/modules/seo-leader/profile/p
 /* ── SEO Member ──────────────────────────────────────────────────── */
 const SeoMemberDashboardPage     = lazy(() => import('@/modules/seo-member/dashboard/pages/SeoMemberDashboardPage')         .then(m => ({ default: m.SeoMemberDashboardPage })));
 const SeoMemberTasksPage         = lazy(() => import('@/modules/seo-member/tasks/pages/SeoMemberTasksPage')                 .then(m => ({ default: m.SeoMemberTasksPage })));
+const SeoTaskDetailPage          = lazy(() => import('@/modules/seo-member/tasks/pages/SeoTaskDetailPage')                  .then(m => ({ default: m.SeoTaskDetailPage })));
 const SeoMemberMessagesPage      = lazy(() => import('@/modules/seo-member/messages/pages/SeoMemberMessagesPage')           .then(m => ({ default: m.SeoMemberMessagesPage })));
 const SeoMemberRequestsPage      = lazy(() => import('@/modules/seo-member/requests/pages/SeoMemberRequestsPage')           .then(m => ({ default: m.SeoMemberRequestsPage })));
 const SeoMemberReportsPage       = lazy(() => import('@/modules/seo-member/reports/pages/SeoMemberReportsPage')             .then(m => ({ default: m.SeoMemberReportsPage })));
@@ -155,8 +156,9 @@ export function AppRouter() {
 
               <Route element={<RoleGuard allowedRoles={['seo-member']} />}>
                 <Route element={<SeoMemberLayout />}>
-                  <Route path={ROUTES.SEO_MEMBER.DASHBOARD}     element={<SeoMemberDashboardPage />} />
-                  <Route path={ROUTES.SEO_MEMBER.TASKS}         element={<SeoMemberTasksPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.DASHBOARD}        element={<SeoMemberDashboardPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.TASKS}            element={<SeoMemberTasksPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.TASK_DETAIL()}    element={<SeoTaskDetailPage />} />
                   <Route path={ROUTES.SEO_MEMBER.MESSAGES}      element={<SeoMemberMessagesPage />} />
                   <Route path={ROUTES.SEO_MEMBER.REQUESTS}      element={<SeoMemberRequestsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.REPORTS}       element={<SeoMemberReportsPage />} />

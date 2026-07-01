@@ -1,3 +1,5 @@
+import type { SeoTaskListResponse } from '../types/seoTask.types';
+
 function delay<T>(data: T, ms = 400): Promise<{ data: T }> {
   return new Promise(res => setTimeout(() => res({ data }), ms));
 }
@@ -5,7 +7,7 @@ function delay<T>(data: T, ms = 400): Promise<{ data: T }> {
 // TODO: replace DUMMY_PROJECT_UUID with real value from user profile/endpoint
 const DUMMY_PROJECT_UUID = 'dummy-project-uuid';
 
-const mockData = {
+const mockData: SeoTaskListResponse = {
   status: 'true',
   message: 'تم جلب مهام المشروع بنجاح.',
   data: {

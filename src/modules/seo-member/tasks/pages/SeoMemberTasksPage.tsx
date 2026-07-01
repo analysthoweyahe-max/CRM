@@ -1,4 +1,6 @@
+import { useNavigate }   from 'react-router-dom';
 import { useLang }       from '@/app/providers/LanguageProvider';
+import { ROUTES }        from '@/app/router/routes';
 import { PageHeader }    from '@/shared/components/ui/PageHeader';
 import { Card }          from '@/shared/components/ui/Card';
 import { TaskFilters }   from '@/modules/employee/tasks/components/TaskFilters';
@@ -31,6 +33,7 @@ function SeoTaskSkeleton() {
 }
 
 export function SeoMemberTasksPage() {
+  const navigate = useNavigate();
   const { lang } = useLang();
   const isAr = lang === 'ar';
 
@@ -83,7 +86,12 @@ export function SeoMemberTasksPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map(task => (
-            <SeoTaskCard key={task.id} task={task} isAr={isAr} />
+            <SeoTaskCard
+              key={task.id}
+              task={task}
+              isAr={isAr}
+              onDetails={id => navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(id))}
+            />
           ))}
         </div>
       )}
