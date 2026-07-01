@@ -1,24 +1,26 @@
-import type { EmpTaskStatus, EmpTaskPriority } from '@/modules/employee/tasks/types/employeeTask.types';
-
-export interface SeoMemberStats {
-  completed:   number;
-  needsReview: number;
-  inProgress:  number;
-  pending:     number;
+export interface TasksOverview {
+  totalAssigned: number;
+  inProgress:    number;
+  completed:     number;
 }
 
-export interface SeoMemberTaskRaw {
-  id:         string;
-  titleAr:    string;
-  titleEn:    string;
-  campaignAr: string;
-  campaignEn: string;
-  deadline:   string;
-  priority:   EmpTaskPriority;
-  status:     EmpTaskStatus;
+export interface SeoProject {
+  id:     number | string;
+  name:   string;
+  status: string;
+}
+
+export interface ProjectSection {
+  key:             string;
+  label:           string;
+  defaultExpanded: boolean;
+  total:           number;
+  projects:        SeoProject[];
 }
 
 export interface SeoMemberDashboardData {
-  stats:      SeoMemberStats;
-  todayTasks: SeoMemberTaskRaw[];
+  tasksOverview: TasksOverview;
+  myProjects: {
+    sections: ProjectSection[];
+  };
 }
