@@ -55,7 +55,7 @@ export const seoTeamApi = {
 
   getJobTitles() {
     return http.get<SeoTeamApiResponse<SeoJobTitle[]>>(
-      '/v1/seo/team/lookups/job-titles'
+      '/v1/employees/lookups/job-titles'
     );
   },
 

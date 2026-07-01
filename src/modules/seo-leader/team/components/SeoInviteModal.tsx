@@ -15,19 +15,37 @@ interface Props {
 }
 
 export function SeoInviteModal({ open, onClose, onConfirm, isAr }: Props) {
-  const [email,      setEmail]      = useState('');
-  const [name,       setName]       = useState('');
-  const [jobTitleId, setJobTitleId] = useState('');
-  const [jobTitles,  setJobTitles]  = useState<SeoJobTitle[]>([]);
-  const [isLoading,  setIsLoading]  = useState(false);
-  const [error,      setError]      = useState('');
+  const [email,           setEmail]           = useState('');
+  const [name,            setName]            = useState('');
+  const [jobTitleId,      setJobTitleId]      = useState('');
+  const [jobTitles,       setJobTitles]       = useState<SeoJobTitle[]>([]);
+  const [jobTitlesError,  setJobTitlesError]  = useState('');
+  const [isLoading,       setIsLoading]       = useState(false);
+  const [error,           setError]           = useState('');
 
   useEffect(() => {
     if (!open) return;
     seoTeamApi.getJobTitles()
-      .then(res => setJobTitles(res.data.data ?? []))
-      .catch(() => setJobTitles([]));
-  }, [open]);
+      .then(res => {
+        const raw   = res.data as unknown;
+        const items =
+          Array.isArray(raw)                                   ? raw as SeoJobTitle[]
+          : Array.isArray((raw as { data?: unknown }).data)   ? (raw as { data: SeoJobTitle[] }).data
+          : [];
+        setJobTitles(items);
+      })
+      .catch(err => {
+        const status = err?.response?.status;
+        setJobTitlesError(
+          status === 403
+            ? (isAr
+                ? 'لا تملك صلاحية جلب المسميات الوظيفية — يرجى التواصل مع المسؤول لإضافة الصلاحية'
+                : 'You do not have permission to load job titles — contact your administrator')
+            : (isAr ? 'تعذّر تحميل المسميات الوظيفية' : 'Failed to load job titles')
+        );
+        setJobTitles([]);
+      });
+  }, [open, isAr]);
 
   const jobTitleItems: ComboboxItem[] = jobTitles.map(jt => ({
     id:    String(jt.id),
@@ -124,6 +142,11 @@ export function SeoInviteModal({ open, onClose, onConfirm, isAr }: Props) {
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
+          {jobTitlesError && (
+            <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400 text-end">
+              {jobTitlesError}
+            </p>
+          )}
         </FormField>
 
       </div>
