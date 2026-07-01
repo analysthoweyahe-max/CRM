@@ -13,6 +13,7 @@ import { SeoTaskDrawer }          from '../components/SeoTaskDrawer';
 import { ProjectMessages }        from '../components/ProjectMessages';
 import { SeoProjectTeamTab }      from '../../projects/components/SeoProjectTeamTab';
 import { SeoProjectSettingsTab }  from '../components/SeoProjectSettingsTab';
+import { SeoProgressTab }         from '../components/SeoProgressTab';
 import { KanbanColumn }           from '@/modules/project-manager/projects/components/KanbanColumn';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
 
@@ -262,6 +263,8 @@ export function CampaignDetailsPage() {
         <ProjectMessages projectId={id} isAr={isAr} />
       ) : activeTab === 'team' ? (
         <SeoProjectTeamTab projectId={id} isAr={isAr} />
+      ) : activeTab === 'progress' ? (
+        <SeoProgressTab tasks={tasks} isAr={isAr} />
       ) : activeTab === 'settings' ? (
         <SeoProjectSettingsTab
           campaignId={id}
