@@ -9,6 +9,7 @@ import type {
   SeoJobTitle,
   SeoProjectMember,
   SeoAvailableMember,
+  SeoAddMemberPayload,
   SeoProjectInvitePayload,
   SeoActivityItem,
 } from '../types/seoTeam.types';
@@ -77,6 +78,12 @@ export const seoTeamApi = {
     return http.get<ApiResponse<{ data: SeoAvailableMember[] } | SeoAvailableMember[]>>(
       `/v1/seo/projects/${projectId}/team/available`,
       { params: search ? { search } : undefined }
+    );
+  },
+
+  addMemberToProject(projectId: string | number, payload: SeoAddMemberPayload) {
+    return http.post<ApiResponse<unknown>>(
+      `/v1/seo/projects/${projectId}/team/members`, payload
     );
   },
 

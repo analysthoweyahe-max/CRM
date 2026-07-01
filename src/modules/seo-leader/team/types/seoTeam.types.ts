@@ -60,25 +60,47 @@ export interface SeoTeamApiResponse<T> {
 /* ── Project-scoped (used inside campaign detail) ─────────────────────── */
 
 export interface SeoProjectMember {
-  uuid:         string;
-  name:         string;
-  email?:       string;
-  role?:        string;
-  avatar:       string | null;
-  is_active?:   boolean;
-  tasks_count?: number;
+  id:                     string;
+  name:                   string;
+  email?:                 string;
+  avatarUrl:              string | null;
+  avatarInitial:          string;
+  role?:                  string;
+  projectRole?:           string;
+  status:                 string;
+  isActive:               boolean;
+  statusLabel:            string;
+  department?:            { id: number; name: string; nameAr: string };
+  jobTitle?:              { id: number; name: string } | null;
+  activeProjectsCount:    number;
+  projectTasksCount:      number;
+  projectTasksCompleted:  number;
+  tasksCompletionPercent: number;
+  isSelected?:            boolean;
+  assignedAt?:            string | null;
 }
 
 export interface SeoAvailableMember {
-  uuid:   string;
-  name:   string;
-  email?: string;
-  avatar: string | null;
+  id:             string;
+  name:           string;
+  email?:         string;
+  avatarUrl?:     string | null;
+  avatarInitial?: string;
 }
 
+/** POST /v1/seo/projects/{id}/team/members — add existing employee */
+export interface SeoAddMemberPayload {
+  employee_id:  string;
+  project_role: string;
+}
+
+/** POST /v1/seo/projects/{id}/team/invite — invite brand-new member */
 export interface SeoProjectInvitePayload {
-  employee_uuid: string;
-  role?:         string;
+  name:          string;
+  email:         string;
+  department_id: number;
+  job_title_id:  number;
+  project_role:  string;
 }
 
 export interface SeoActivityItem {

@@ -1,0 +1,103 @@
+import { UserPlus }                 from 'lucide-react';
+import { Button }                   from '@/shared/components/ui/Button';
+import { Modal }                    from '@/shared/components/ui/Modal';
+import { ProjectMemberCard }        from '@/shared/modules/team/components/ProjectMemberCard';
+import { SeoAddProjectMemberModal } from './SeoAddProjectMemberModal';
+import { useSeoProjectTeam }        from '../hooks/useSeoProjectTeam';
+
+interface Props {
+  projectId: string;
+  isAr:      boolean;
+}
+
+export function SeoProjectTeamTab({ projectId, isAr }: Props) {
+  const {
+    members, isLoading,
+    showModal, openModal, closeModal,
+    available,
+    selectedId, setSelectedId,
+    projectRole, setProjectRole,
+    canAdd, handleAddExisting,
+    deleteTarget, requestRemove, confirmRemove, cancelDelete,
+  } = useSeoProjectTeam(projectId, isAr);
+
+  return (
+    <div className="space-y-4">
+
+      {/* Add button */}
+      <div className="flex justify-end">
+        <Button variant="primary" startIcon={<UserPlus size={15} />} onClick={openModal}>
+          {isAr ? 'إضافة عضو جديد' : 'Add New Member'}
+        </Button>
+      </div>
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="flex justify-center py-12">
+          <div className="w-6 h-6 border-2 border-[#A0CD39] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Empty */}
+      {!isLoading && members.length === 0 && (
+        <div className="text-center py-16 text-sm text-gray-400 dark:text-gray-500">
+          {isAr ? 'لا يوجد أعضاء في هذا المشروع بعد' : 'No team members in this project yet'}
+        </div>
+      )}
+
+      {/* Grid */}
+      {!isLoading && members.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {members.map(member => (
+            <ProjectMemberCard
+              key={member.id}
+              member={member}
+              onRemove={requestRemove}
+              onView={() => {}}
+              isAr={isAr}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Add Member Modal */}
+      <SeoAddProjectMemberModal
+        open={showModal}
+        onClose={closeModal}
+        isAr={isAr}
+        available={available}
+        selectedId={selectedId}
+        projectRole={projectRole}
+        onSelect={setSelectedId}
+        onSetRole={setProjectRole}
+        canAdd={canAdd}
+        onConfirm={handleAddExisting}
+      />
+
+      {/* Delete Confirm */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={cancelDelete}
+        title={isAr ? 'حذف العضو' : 'Remove Member'}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={cancelDelete}>
+              {isAr ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button variant="danger" onClick={confirmRemove}>
+              {isAr ? 'حذف' : 'Remove'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-400 text-end leading-relaxed">
+          {isAr
+            ? `هل أنت متأكد من حذف "${deleteTarget?.name}" من فريق المشروع؟`
+            : `Are you sure you want to remove "${deleteTarget?.name}" from the project team?`}
+        </p>
+      </Modal>
+
+    </div>
+  );
+}

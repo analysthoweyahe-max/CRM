@@ -11,6 +11,7 @@ import type { SeoTask }                      from '../api/campaign.api';
 import { AddSeoTaskModal }        from '../components/AddSeoTaskModal';
 import { SeoTaskDrawer }          from '../components/SeoTaskDrawer';
 import { ProjectMessages }        from '../components/ProjectMessages';
+import { SeoProjectTeamTab }      from '../../projects/components/SeoProjectTeamTab';
 import { KanbanColumn }           from '@/modules/project-manager/projects/components/KanbanColumn';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
 
@@ -258,6 +259,8 @@ export function CampaignDetailsPage() {
         )
       ) : activeTab === 'messages' ? (
         <ProjectMessages projectId={id} isAr={isAr} />
+      ) : activeTab === 'team' ? (
+        <SeoProjectTeamTab projectId={id} isAr={isAr} />
       ) : (
         <div className="py-20 text-center">
           <p className="text-sm text-gray-400 dark:text-gray-500">
