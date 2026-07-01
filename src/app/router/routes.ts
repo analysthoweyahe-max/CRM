@@ -56,11 +56,12 @@ export const ROUTES = {
     PROFILE:       '/employee/profile',
   },
   SEO_MEMBER: {
-    DASHBOARD: '/seo-member',
-    TASKS:     '/seo-member/tasks',
-    MESSAGES:  '/seo-member/messages',
-    REQUESTS:  '/seo-member/requests',
-    REPORTS:   '/seo-member/reports',
-    PROFILE:   '/seo-member/profile',
+    DASHBOARD:     '/seo-member',
+    TASKS:         '/seo-member/tasks',
+    MESSAGES:      '/seo-member/messages',
+    REQUESTS:      '/seo-member/requests',
+    REPORTS:       '/seo-member/reports',
+    DAILY_REPORTS: '/seo-member/daily-reports',
+    PROFILE:       '/seo-member/profile',
   },
 } as const;

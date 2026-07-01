@@ -101,11 +101,12 @@ export const SEO_NAV: NavSectionDef[] = [
 export const SEO_MEMBER_NAV: NavSectionDef[] = [
   {
     items: [
-      { key: 'seo-m-dash',     labelAr: 'الرئيسية',         labelEn: 'Dashboard',       icon: LayoutDashboard, path: ROUTES.SEO_MEMBER.DASHBOARD },
-      { key: 'seo-m-tasks',    labelAr: 'مهامي',            labelEn: 'My Tasks',        icon: CheckSquare,     path: ROUTES.SEO_MEMBER.TASKS     },
-      { key: 'seo-m-messages', labelAr: 'الرسائل',          labelEn: 'Messages',        icon: MessageSquare,   path: ROUTES.SEO_MEMBER.MESSAGES  },
-      { key: 'seo-m-requests', labelAr: 'طلباتى',           labelEn: 'My Requests',     icon: FileText,        path: ROUTES.SEO_MEMBER.REQUESTS  },
-      { key: 'seo-m-reports',  labelAr: 'سجل الحضور',       labelEn: 'Attendance',      icon: ClipboardList,   path: ROUTES.SEO_MEMBER.REPORTS   },
+      { key: 'seo-m-dash',     labelAr: 'الرئيسية',          labelEn: 'Dashboard',      icon: LayoutDashboard, path: ROUTES.SEO_MEMBER.DASHBOARD     },
+      { key: 'seo-m-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.SEO_MEMBER.TASKS         },
+      { key: 'seo-m-messages',labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.SEO_MEMBER.MESSAGES      },
+      { key: 'seo-m-requests',labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.SEO_MEMBER.REQUESTS      },
+      { key: 'seo-m-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.SEO_MEMBER.REPORTS       },
+      { key: 'seo-m-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.SEO_MEMBER.DAILY_REPORTS },
     ],
   },
 ];

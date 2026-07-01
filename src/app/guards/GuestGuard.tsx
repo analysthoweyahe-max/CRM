@@ -7,6 +7,7 @@ function defaultRoute(role: string | undefined): string {
   if (role === 'employee')   return ROUTES.EMPLOYEE.DASHBOARD;
   if (role === 'manager')    return ROUTES.PROJECT_MANAGER.DASHBOARD;
   if (role === 'seo-leader') return ROUTES.SEO_LEADER.DASHBOARD;
+  if (role === 'seo-member') return ROUTES.SEO_MEMBER.DASHBOARD;
   return ROUTES.DASHBOARD;
 }
 

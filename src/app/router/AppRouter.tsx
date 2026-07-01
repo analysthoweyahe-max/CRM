@@ -12,6 +12,7 @@ import { SeoLeaderLayout }       from '@/app/layouts/SeoLeaderLayout';
 import { SeoMemberLayout }       from '@/app/layouts/SeoMemberLayout';
 import { GuestGuard }            from '@/app/guards/GuestGuard';
 import { AuthGuard }             from '@/app/guards/AuthGuard';
+import { RoleGuard }             from '@/app/guards/RoleGuard';
 
 /* ── Auth ─────────────────────────────────────────────────────────── */
 const LoginPage            = lazy(() => import('@/modules/auth/pages/LoginPage')            .then(m => ({ default: m.LoginPage })));
@@ -54,12 +55,13 @@ const SeoReportsPage         = lazy(() => import('@/modules/seo-leader/reports/p
 const SeoProfilePage         = lazy(() => import('@/modules/seo-leader/profile/pages/SeoProfilePage')           .then(m => ({ default: m.SeoProfilePage })));
 
 /* ── SEO Member ──────────────────────────────────────────────────── */
-const SeoMemberDashboardPage = lazy(() => import('@/modules/seo-member/dashboard/pages/SeoMemberDashboardPage') .then(m => ({ default: m.SeoMemberDashboardPage })));
-const SeoMemberTasksPage     = lazy(() => import('@/modules/seo-member/tasks/pages/SeoMemberTasksPage')         .then(m => ({ default: m.SeoMemberTasksPage })));
-const SeoMemberMessagesPage  = lazy(() => import('@/modules/seo-member/messages/pages/SeoMemberMessagesPage')   .then(m => ({ default: m.SeoMemberMessagesPage })));
-const SeoMemberRequestsPage  = lazy(() => import('@/modules/seo-member/requests/pages/SeoMemberRequestsPage')   .then(m => ({ default: m.SeoMemberRequestsPage })));
-const SeoMemberReportsPage   = lazy(() => import('@/modules/seo-member/reports/pages/SeoMemberReportsPage')     .then(m => ({ default: m.SeoMemberReportsPage })));
-const SeoMemberProfilePage   = lazy(() => import('@/modules/seo-member/profile/pages/SeoMemberProfilePage')     .then(m => ({ default: m.SeoMemberProfilePage })));
+const SeoMemberDashboardPage     = lazy(() => import('@/modules/seo-member/dashboard/pages/SeoMemberDashboardPage')         .then(m => ({ default: m.SeoMemberDashboardPage })));
+const SeoMemberTasksPage         = lazy(() => import('@/modules/seo-member/tasks/pages/SeoMemberTasksPage')                 .then(m => ({ default: m.SeoMemberTasksPage })));
+const SeoMemberMessagesPage      = lazy(() => import('@/modules/seo-member/messages/pages/SeoMemberMessagesPage')           .then(m => ({ default: m.SeoMemberMessagesPage })));
+const SeoMemberRequestsPage      = lazy(() => import('@/modules/seo-member/requests/pages/SeoMemberRequestsPage')           .then(m => ({ default: m.SeoMemberRequestsPage })));
+const SeoMemberReportsPage       = lazy(() => import('@/modules/seo-member/reports/pages/SeoMemberReportsPage')             .then(m => ({ default: m.SeoMemberReportsPage })));
+const SeoMemberDailyReportsPage  = lazy(() => import('@/modules/seo-member/daily-reports/pages/SeoMemberDailyReportsPage') .then(m => ({ default: m.SeoMemberDailyReportsPage })));
+const SeoMemberProfilePage       = lazy(() => import('@/modules/seo-member/profile/pages/SeoMemberProfilePage')             .then(m => ({ default: m.SeoMemberProfilePage })));
 
 /* ── Employee ─────────────────────────────────────────────────────── */
 const EmployeeDashboardPage    = lazy(() => import('@/modules/employee/dashboard/pages/EmployeeDashboardPage')       .then(m => ({ default: m.EmployeeDashboardPage })));
@@ -90,66 +92,79 @@ export function AppRouter() {
             </Route>
 
             <Route element={<AuthGuard />}>
-              <Route element={<DashboardLayout />}>
-                <Route path={ROUTES.DASHBOARD}              element={<DashboardPage />} />
 
-                <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
-                <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />
-                <Route path={ROUTES.EMPLOYEES.DETAIL()}     element={<EmployeeDetailPage />} />
-                <Route path={ROUTES.EMPLOYEES.EDIT()}       element={<EmployeeEditPage />} />
+              <Route element={<RoleGuard allowedRoles={['admin', 'hr']} />}>
+                <Route element={<DashboardLayout />}>
+                  <Route path={ROUTES.DASHBOARD}              element={<DashboardPage />} />
 
-                <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
-                <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
-                <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />
-                <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
+                  <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
+                  <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />
+                  <Route path={ROUTES.EMPLOYEES.DETAIL()}     element={<EmployeeDetailPage />} />
+                  <Route path={ROUTES.EMPLOYEES.EDIT()}       element={<EmployeeEditPage />} />
 
-                <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
-                <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
-                <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
-                <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
+                  <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
+                  <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
+                  <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />
+                  <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
 
-                <Route path={ROUTES.PROFILE}                element={<ProfilePage />} />
-                <Route path={ROUTES.MESSAGES}               element={<MessagesPage />} />
-                <Route path={ROUTES.SETTINGS}               element={<SettingsPage />} />
+                  <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
+                  <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
+                  <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
+                  <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
+
+                  <Route path={ROUTES.PROFILE}                element={<ProfilePage />} />
+                  <Route path={ROUTES.MESSAGES}               element={<MessagesPage />} />
+                  <Route path={ROUTES.SETTINGS}               element={<SettingsPage />} />
+                </Route>
               </Route>
 
-              <Route element={<ProjectManagerLayout />}>
-                <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
-                <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
-                <Route path={ROUTES.PROJECT_MANAGER.DETAILS()} element={<ProjectDetailsPage />} />
-                <Route path={ROUTES.PROJECT_MANAGER.TEAM}      element={<ProjectTeamPage />} />
-                <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
-                <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
+              <Route element={<RoleGuard allowedRoles={['manager']} />}>
+                <Route element={<ProjectManagerLayout />}>
+                  <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.DETAILS()} element={<ProjectDetailsPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.TEAM}      element={<ProjectTeamPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
+                </Route>
               </Route>
 
-              <Route element={<EmployeeLayout />}>
-                <Route path={ROUTES.EMPLOYEE.DASHBOARD}     element={<EmployeeDashboardPage />} />
-                <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />} />
-                <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
-                <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
-                <Route path={ROUTES.EMPLOYEE.TASKS}         element={<EmployeeTasksPage />} />
-                <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
-                <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
-                <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />} />
+              <Route element={<RoleGuard allowedRoles={['employee']} />}>
+                <Route element={<EmployeeLayout />}>
+                  <Route path={ROUTES.EMPLOYEE.DASHBOARD}     element={<EmployeeDashboardPage />} />
+                  <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />} />
+                  <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
+                  <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
+                  <Route path={ROUTES.EMPLOYEE.TASKS}         element={<EmployeeTasksPage />} />
+                  <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
+                  <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
+                  <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />} />
+                </Route>
               </Route>
 
-              <Route element={<SeoLeaderLayout />}>
-                <Route path={ROUTES.SEO_LEADER.DASHBOARD} element={<SeoLeaderDashboardPage />} />
-                <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />
-                <Route path={ROUTES.SEO_LEADER.DETAILS()} element={<CampaignDetailsPage />} />
-                <Route path={ROUTES.SEO_LEADER.TEAM}      element={<SeoTeamPage />} />
-                <Route path={ROUTES.SEO_LEADER.REPORTS}   element={<SeoReportsPage />} />
-                <Route path={ROUTES.SEO_LEADER.PROFILE}   element={<SeoProfilePage />} />
+              <Route element={<RoleGuard allowedRoles={['seo-leader']} />}>
+                <Route element={<SeoLeaderLayout />}>
+                  <Route path={ROUTES.SEO_LEADER.DASHBOARD} element={<SeoLeaderDashboardPage />} />
+                  <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />
+                  <Route path={ROUTES.SEO_LEADER.DETAILS()} element={<CampaignDetailsPage />} />
+                  <Route path={ROUTES.SEO_LEADER.TEAM}      element={<SeoTeamPage />} />
+                  <Route path={ROUTES.SEO_LEADER.REPORTS}   element={<SeoReportsPage />} />
+                  <Route path={ROUTES.SEO_LEADER.PROFILE}   element={<SeoProfilePage />} />
+                </Route>
               </Route>
 
-              <Route element={<SeoMemberLayout />}>
-                <Route path={ROUTES.SEO_MEMBER.DASHBOARD} element={<SeoMemberDashboardPage />} />
-                <Route path={ROUTES.SEO_MEMBER.TASKS}     element={<SeoMemberTasksPage />} />
-                <Route path={ROUTES.SEO_MEMBER.MESSAGES}  element={<SeoMemberMessagesPage />} />
-                <Route path={ROUTES.SEO_MEMBER.REQUESTS}  element={<SeoMemberRequestsPage />} />
-                <Route path={ROUTES.SEO_MEMBER.REPORTS}   element={<SeoMemberReportsPage />} />
-                <Route path={ROUTES.SEO_MEMBER.PROFILE}   element={<SeoMemberProfilePage />} />
+              <Route element={<RoleGuard allowedRoles={['seo-member']} />}>
+                <Route element={<SeoMemberLayout />}>
+                  <Route path={ROUTES.SEO_MEMBER.DASHBOARD}     element={<SeoMemberDashboardPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.TASKS}         element={<SeoMemberTasksPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.MESSAGES}      element={<SeoMemberMessagesPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.REQUESTS}      element={<SeoMemberRequestsPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.REPORTS}       element={<SeoMemberReportsPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.DAILY_REPORTS} element={<SeoMemberDailyReportsPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.PROFILE}       element={<SeoMemberProfilePage />} />
+                </Route>
               </Route>
+
             </Route>
 
             <Route path="*" element={<Navigate to={ROUTES.AUTH.LOGIN} replace />} />
