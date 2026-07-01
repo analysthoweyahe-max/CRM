@@ -1,5 +1,6 @@
 import { useQuery }                from '@tanstack/react-query';
 import { seoLeaderDashboardApi }   from '../api/seoLeaderDashboard.api';
+import { useArchivedSeoProjects }  from '../../campaigns/store/seoArchivedStore';
 import type { SeoCampaign }        from '../types/dashboard.types';
 
 export interface CampaignViewModel {
@@ -43,7 +44,13 @@ export function useSeoLeaderDashboard() {
     staleTime: 2 * 60 * 1000,
   });
 
-  const campaigns = (data?.data ?? []).map(toCampaignVM);
+  const archivedIds = useArchivedSeoProjects();
+
+  const campaigns = (data?.data ?? []).map(c => {
+    const vm = toCampaignVM(c);
+    if (archivedIds.has(c.id)) return { ...vm, status: 'archived', statusLabel: 'مؤرشفة' };
+    return vm;
+  });
 
   const stats = {
     total_projects:     campaigns.length,

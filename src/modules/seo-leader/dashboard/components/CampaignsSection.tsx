@@ -5,13 +5,14 @@ import { Button }          from '@/shared/components/ui/Button';
 import { CampaignCard }    from './CampaignCard';
 import type { CampaignViewModel } from '../hooks/useSeoLeaderDashboard';
 
-type TabKey = 'in_progress' | 'not_started' | 'completed' | 'paused';
+type TabKey = 'in_progress' | 'not_started' | 'completed' | 'paused' | 'archived';
 
 const TABS: { key: TabKey; labelAr: string; labelEn: string }[] = [
-  { key: 'in_progress', labelAr: 'جارية',   labelEn: 'Active'    },
-  { key: 'not_started', labelAr: 'لم تبدأ', labelEn: 'Pending'   },
-  { key: 'completed',   labelAr: 'مكتملة',  labelEn: 'Completed' },
-  { key: 'paused',      labelAr: 'متوقفة',  labelEn: 'Paused'    },
+  { key: 'in_progress', labelAr: 'جارية',    labelEn: 'Active'    },
+  { key: 'not_started', labelAr: 'لم تبدأ',  labelEn: 'Pending'   },
+  { key: 'completed',   labelAr: 'مكتملة',   labelEn: 'Completed' },
+  { key: 'paused',      labelAr: 'متوقفة',   labelEn: 'Paused'    },
+  { key: 'archived',    labelAr: 'الأرشيف',  labelEn: 'Archive'   },
 ];
 
 interface Props {

@@ -85,6 +85,35 @@ export interface SeoComment {
   sentAt:      string;
 }
 
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface SeoProjectSettings {
+  id:                  number;
+  sectionTitle:        string;
+  name:                string;
+  startDate:           string;
+  targetDomain:        string | null;
+  description:         string;
+  status:              string;
+  statusLabel:         string;
+  campaignType:        string;
+  campaignTypeLabel:   string;
+  labels:              Record<string, string>;
+  statusOptions:       SelectOption[];
+  campaignTypeOptions: SelectOption[];
+}
+
+export interface SeoProjectUpdatePayload {
+  name?:         string;
+  description?:  string;
+  targetDomain?: string | null;
+  campaignType?: string;
+  startDate?:    string;
+}
+
 export const campaignApi = {
   /* ── Campaign ──────────────────────────────────────────────────────── */
   create(payload: CreateCampaignPayload) {
@@ -93,6 +122,25 @@ export const campaignApi = {
 
   getById(id: string | number) {
     return http.get<ApiResponse<SeoCampaign>>(`/v1/seo/projects/${id}`);
+  },
+
+  getSettings(id: string | number) {
+    return http.get<ApiResponse<SeoProjectSettings>>(`/v1/seo/projects/${id}/settings`);
+  },
+
+  updateProject(id: string | number, payload: SeoProjectUpdatePayload) {
+    /* Server returns 405 for PATCH from browser — use POST with _method spoofing */
+    return http.post<ApiResponse<SeoCampaign>>(
+      `/v1/seo/projects/${id}`,
+      { ...payload, _method: 'PATCH' }
+    );
+  },
+
+  updateProjectStatus(id: string | number, status: string) {
+    return http.post<ApiResponse<SeoCampaign>>(
+      `/v1/seo/projects/${id}/status`,
+      { status, _method: 'PATCH' }
+    );
   },
 
   getCampaignTypes() {
