@@ -3,6 +3,7 @@ import { Button }                   from '@/shared/components/ui/Button';
 import { Modal }                    from '@/shared/components/ui/Modal';
 import { ProjectMemberCard }        from '@/shared/modules/team/components/ProjectMemberCard';
 import { SeoAddProjectMemberModal } from './SeoAddProjectMemberModal';
+import { SeoMemberProfileModal }    from './SeoMemberProfileModal';
 import { useSeoProjectTeam }        from '../hooks/useSeoProjectTeam';
 
 interface Props {
@@ -19,6 +20,7 @@ export function SeoProjectTeamTab({ projectId, isAr }: Props) {
     projectRole, setProjectRole,
     canAdd, handleAddExisting,
     deleteTarget, requestRemove, confirmRemove, cancelDelete,
+    viewTarget, requestView, cancelView,
   } = useSeoProjectTeam(projectId, isAr);
 
   return (
@@ -53,7 +55,7 @@ export function SeoProjectTeamTab({ projectId, isAr }: Props) {
               key={member.id}
               member={member}
               onRemove={requestRemove}
-              onView={() => {}}
+              onView={requestView}
               isAr={isAr}
             />
           ))}
@@ -72,6 +74,13 @@ export function SeoProjectTeamTab({ projectId, isAr }: Props) {
         onSetRole={setProjectRole}
         canAdd={canAdd}
         onConfirm={handleAddExisting}
+      />
+
+      {/* Member Profile Modal */}
+      <SeoMemberProfileModal
+        member={viewTarget}
+        onClose={cancelView}
+        isAr={isAr}
       />
 
       {/* Delete Confirm */}

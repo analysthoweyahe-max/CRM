@@ -21,6 +21,7 @@ export function useSeoProjectTeam(projectId: string, isAr: boolean) {
   const [members,      setMembers]      = useState<SeoProjectMember[]>([]);
   const [isLoading,    setIsLoading]    = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<SeoProjectMember | null>(null);
+  const [viewTarget,   setViewTarget]   = useState<SeoProjectMember | null>(null);
   const [showModal,    setShowModal]    = useState(false);
   const [available,    setAvailable]    = useState<ComboboxItem[]>([]);
   const [selectedId,   setSelectedId]   = useState('');
@@ -121,5 +122,11 @@ export function useSeoProjectTeam(projectId: string, isAr: boolean) {
     },
     confirmRemove,
     cancelDelete: () => setDeleteTarget(null),
+    viewTarget,
+    requestView: (id: string) => {
+      const m = members.find(m => m.id === id);
+      if (m) setViewTarget(m);
+    },
+    cancelView: () => setViewTarget(null),
   };
 }

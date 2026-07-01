@@ -1,4 +1,4 @@
-import { useState, useEffect }   from 'react';
+import { useState, useMemo }     from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus }        from 'lucide-react';
 import { useQuery }               from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import { ProjectMessages }        from '../components/ProjectMessages';
 import { SeoProjectTeamTab }      from '../../projects/components/SeoProjectTeamTab';
 import { SeoProjectSettingsTab }  from '../components/SeoProjectSettingsTab';
 import { SeoProgressTab }         from '../components/SeoProgressTab';
+import { SeoClientUpdatesTab }    from '../components/SeoClientUpdatesTab';
 import { KanbanColumn }           from '@/modules/project-manager/projects/components/KanbanColumn';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
 
@@ -81,7 +82,7 @@ type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings'
 
 const TABS: { key: TabKey; ar: string; en: string }[] = [
   { key: 'tasks',    ar: 'المهام',    en: 'Tasks'    },
-  { key: 'client',   ar: 'العميل',    en: 'Client'   },
+  { key: 'client',   ar: 'تحديثات العميل', en: 'Client Updates' },
   { key: 'messages', ar: 'الرسائل',   en: 'Messages' },
   { key: 'team',     ar: 'الفريق',    en: 'Team'     },
   { key: 'progress', ar: 'الإنجاز',   en: 'Progress' },
@@ -102,10 +103,11 @@ export function CampaignDetailsPage() {
   const navigate    = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
 
-  const [activeTab,     setActiveTab]     = useState<TabKey>('tasks');
-  const [tasks,         setTasks]         = useState<Task[]>([]);
+  const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [showAddTask,   setShowAddTask]   = useState(false);
+  const [showAddTask,    setShowAddTask]    = useState(false);
+  const [addedTasks,     setAddedTasks]     = useState<Task[]>([]);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, TaskStatus>>({});
 
   /* ── Campaign header ──────────────────────────────────────────────── */
   const { data: campaign, isLoading: campaignLoading } = useQuery({
@@ -126,19 +128,27 @@ export function CampaignDetailsPage() {
     staleTime: 30_000,
   });
 
-  /* ── Sync fetched tasks → local state ─────────────────────────────── */
-  useEffect(() => {
-    if (rawTasks) setTasks(rawTasks.map(t => toLocalTask(t, id)));
-  }, [rawTasks, id]);
+  /* ── Derive tasks — no setState inside effect ─────────────────────── */
+  const baseTasks = useMemo(
+    () => (rawTasks ?? []).map(t => toLocalTask(t, id)),
+    [rawTasks, id],
+  );
 
-  /* ── Immediately add newly created task to local state ───────────── */
+  const tasks = useMemo(() => {
+    const withOverrides = baseTasks.map(t =>
+      statusOverrides[t.id] ? { ...t, status: statusOverrides[t.id] } : t,
+    );
+    return [...withOverrides, ...addedTasks];
+  }, [baseTasks, statusOverrides, addedTasks]);
+
+  /* ── Immediately add newly created task ───────────────────────────── */
   function handleTaskCreated(task: SeoTask) {
-    setTasks(prev => [...prev, toLocalTask(task, id)]);
+    setAddedTasks(prev => [...prev, toLocalTask(task, id)]);
   }
 
-  /* ── Drag-drop: update locally + call status API ──────────────────── */
+  /* ── Drag-drop: optimistic status override + API call ─────────────── */
   function handleDrop(taskId: string, toStatus: TaskStatus) {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: toStatus } : t));
+    setStatusOverrides(prev => ({ ...prev, [taskId]: toStatus }));
     campaignApi
       .updateTaskStatus(id, taskId, STATUS_TO_BACKEND[toStatus])
       .catch(console.error);
@@ -259,12 +269,14 @@ export function CampaignDetailsPage() {
             ))}
           </div>
         )
+      ) : activeTab === 'client' ? (
+        <SeoClientUpdatesTab isAr={isAr} />
       ) : activeTab === 'messages' ? (
         <ProjectMessages projectId={id} isAr={isAr} />
       ) : activeTab === 'team' ? (
         <SeoProjectTeamTab projectId={id} isAr={isAr} />
       ) : activeTab === 'progress' ? (
-        <SeoProgressTab tasks={tasks} isAr={isAr} />
+        <SeoProgressTab projectId={id} tasks={tasks} isAr={isAr} />
       ) : activeTab === 'settings' ? (
         <SeoProjectSettingsTab
           campaignId={id}
