@@ -6,6 +6,9 @@ export const ROUTES = {
     FORGOT_PASSWORD: '/auth/forgot-password',
   },
   DASHBOARD: '/dashboard',
+  ADMIN: {
+    DASHBOARD: '/admin-dashboard',
+  },
   EMPLOYEES: {
     LIST:   '/employees',
     NEW:    '/employees/new',

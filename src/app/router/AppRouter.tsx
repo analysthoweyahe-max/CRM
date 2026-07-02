@@ -20,6 +20,9 @@ const SetPasswordPage      = lazy(() => import('@/modules/auth/pages/SetPassword
 const InviteValidationPage = lazy(() => import('@/modules/auth/pages/InviteValidationPage') .then(m => ({ default: m.InviteValidationPage })));
 const ForgotPasswordPage   = lazy(() => import('@/modules/auth/pages/ForgotPasswordPage')   .then(m => ({ default: m.ForgotPasswordPage })));
 
+/* ── Admin ────────────────────────────────────────────────────────── */
+const AdminDashboardPage = lazy(() => import('@/modules/admin/dashboard/pages/AdminDashboardPage')   .then(m => ({ default: m.AdminDashboardPage })));
+
 /* ── HR ───────────────────────────────────────────────────────────── */
 const DashboardPage      = lazy(() => import('@/modules/hr/dashboard/pages/DashboardPage')           .then(m => ({ default: m.DashboardPage })));
 const EmployeeListPage   = lazy(() => import('@/modules/hr/employees/pages/EmployeeListPage')         .then(m => ({ default: m.EmployeeListPage })));
@@ -97,6 +100,7 @@ export function AppRouter() {
               <Route element={<RoleGuard allowedRoles={['admin', 'hr']} />}>
                 <Route element={<DashboardLayout />}>
                   <Route path={ROUTES.DASHBOARD}              element={<DashboardPage />} />
+                  <Route path={ROUTES.ADMIN.DASHBOARD}        element={<AdminDashboardPage />} />
 
                   <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
                   <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />

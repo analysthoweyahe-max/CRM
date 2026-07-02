@@ -5,6 +5,7 @@ import type { Role } from '@/shared/types/role.types';
 
 function homeDashboard(role: Role | undefined): string {
   switch (role) {
+    case 'admin':      return ROUTES.ADMIN.DASHBOARD;
     case 'employee':   return ROUTES.EMPLOYEE.DASHBOARD;
     case 'manager':    return ROUTES.PROJECT_MANAGER.DASHBOARD;
     case 'seo-leader': return ROUTES.SEO_LEADER.DASHBOARD;

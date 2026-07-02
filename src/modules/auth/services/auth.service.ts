@@ -24,9 +24,8 @@ function mapAdminRole(roles: string[]): Role {
   return 'admin';
 }
 
-function mapEmployeeRole(roles: string[], department?: { id: number; name: string }): Role {
-  if (roles?.includes('seo-employee'))  return 'seo-member';
-  if (department?.name?.toLowerCase() === 'seo') return 'seo-member';
+function mapEmployeeRole(roles: string[]): Role {
+  if (roles?.includes('seo-member')) return 'seo-member';
   return 'employee';
 }
 
@@ -35,7 +34,7 @@ function buildEmployeeUser(employee: ApiEmployee): AuthUser {
     id:         employee.id,
     employeeId: employee.id,
     fullName:   employee.name,
-    role:       mapEmployeeRole(employee.roles ?? [], employee.department),
+    role:       mapEmployeeRole(employee.roles ?? []),
     avatarUrl:  employee.avatar_url,
   };
 }
@@ -83,8 +82,7 @@ async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> 
     return { token: accessToken, user };
   }
 
-  // Non-email input: try employee login first (handles numeric IDs like "783729")
-  // then fall back to admin login (for HR/manager/seo-leader UUIDs)
+
   try {
     const { data } = await authApi.employeeLogin({ employee_id: employeeId, password });
     const { accessToken, employee } = data.data;
