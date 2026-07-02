@@ -1,38 +1,19 @@
-import { useState, useEffect } from 'react';
-import { ClipboardList, Users, ListChecks, FolderKanban } from 'lucide-react';
+import { PlayCircle, CheckCircle2, PauseCircle, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
-import { useProjects } from '../../projects/store/projectStore';
 import { StatCard }        from '@/shared/components/ui/StatCard';
 import { ProjectsSection } from '../components/ProjectsSection';
 import { ProjectDashboardSkeleton } from '../components/ProjectDashboardSkeleton';
+import { usePmDashboard } from '../hooks/usePmDashboard';
 
 export function ProjectDashboardPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
-  const projects = useProjects();
-
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 350);
-    return () => clearTimeout(t);
-  }, []);
+  const { isLoading, summary, sections } = usePmDashboard();
 
   if (isLoading) return <ProjectDashboardSkeleton />;
-
-  const totalMembers = new Set(
-    projects.flatMap(p => p.team.map(m => m.name))
-  ).size;
-
-  const activeTasks = projects
-    .filter(p => p.status === 'inProgress')
-    .reduce((sum, p) => sum + (p.tasksTotal - p.tasksCompleted), 0);
-
-  const activeProjects = projects.filter(
-    p => p.status === 'inProgress' || p.status === 'paused'
-  ).length;
 
   return (
     <div className="space-y-6">
@@ -40,44 +21,42 @@ export function ProjectDashboardPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon={<ClipboardList size={22} className="text-blue-600" />}
-          iconBg="bg-blue-100 dark:bg-blue-900/30"
-          value={2}
-          labelAr="التقارير اليومية"
-          labelEn="Daily Reports"
-          isAr={isAr}
-          onClick={() => navigate(ROUTES.PROJECT_MANAGER.REPORTS)}
-        />
-        <StatCard
-          icon={<Users size={22} className="text-purple-600" />}
-          iconBg="bg-purple-100 dark:bg-purple-900/30"
-          value={totalMembers}
-          labelAr="أعضاء الفريق"
-          labelEn="Team Members"
-          isAr={isAr}
-          onClick={() => navigate(ROUTES.PROJECT_MANAGER.TEAM)}
-        />
-        <StatCard
-          icon={<ListChecks size={22} className="text-amber-600" />}
-          iconBg="bg-amber-100 dark:bg-amber-900/30"
-          value={activeTasks}
-          labelAr="المهام قيد التنفيذ"
-          labelEn="Active Tasks"
-          isAr={isAr}
-        />
-        <StatCard
-          icon={<FolderKanban size={22} className="text-[#709028]" />}
+          icon={<PlayCircle size={22} className="text-[#709028]" />}
           iconBg="bg-[#D8EBAE] dark:bg-[#A0CD39]/20"
-          value={activeProjects}
-          labelAr="المشاريع النشطة"
-          labelEn="Active Projects"
+          value={summary.inProgress}
+          labelAr="قيد التنفيذ"
+          labelEn="In Progress"
+          isAr={isAr}
+        />
+        <StatCard
+          icon={<CheckCircle2 size={22} className="text-emerald-600" />}
+          iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+          value={summary.completed}
+          labelAr="مكتمل"
+          labelEn="Completed"
+          isAr={isAr}
+        />
+        <StatCard
+          icon={<PauseCircle size={22} className="text-amber-600" />}
+          iconBg="bg-amber-100 dark:bg-amber-900/30"
+          value={summary.onHold}
+          labelAr="معلق"
+          labelEn="On Hold"
+          isAr={isAr}
+        />
+        <StatCard
+          icon={<Circle size={22} className="text-gray-500" />}
+          iconBg="bg-gray-100 dark:bg-gray-700"
+          value={summary.notStarted}
+          labelAr="لم يبدأ"
+          labelEn="Not Started"
           isAr={isAr}
         />
       </div>
 
       {/* Projects list */}
       <ProjectsSection
-        projects={projects}
+        sections={sections}
         isAr={isAr}
         onNewProject={() => navigate(ROUTES.PROJECT_MANAGER.NEW)}
       />
