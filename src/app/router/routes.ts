@@ -8,6 +8,7 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   ADMIN: {
     DASHBOARD: '/admin-dashboard',
+    EMPLOYEES: '/admin-employees',
   },
   EMPLOYEES: {
     LIST:   '/employees',

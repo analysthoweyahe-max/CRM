@@ -22,6 +22,7 @@ const ForgotPasswordPage   = lazy(() => import('@/modules/auth/pages/ForgotPassw
 
 /* ── Admin ────────────────────────────────────────────────────────── */
 const AdminDashboardPage = lazy(() => import('@/modules/admin/dashboard/pages/AdminDashboardPage')   .then(m => ({ default: m.AdminDashboardPage })));
+const AdminEmployeesPage = lazy(() => import('@/modules/admin/employees/pages/AdminEmployeesPage')   .then(m => ({ default: m.AdminEmployeesPage })));
 
 /* ── HR ───────────────────────────────────────────────────────────── */
 const DashboardPage      = lazy(() => import('@/modules/hr/dashboard/pages/DashboardPage')           .then(m => ({ default: m.DashboardPage })));
@@ -101,6 +102,7 @@ export function AppRouter() {
                 <Route element={<DashboardLayout />}>
                   <Route path={ROUTES.DASHBOARD}              element={<DashboardPage />} />
                   <Route path={ROUTES.ADMIN.DASHBOARD}        element={<AdminDashboardPage />} />
+                  <Route path={ROUTES.ADMIN.EMPLOYEES}        element={<AdminEmployeesPage />} />
 
                   <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
                   <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />
