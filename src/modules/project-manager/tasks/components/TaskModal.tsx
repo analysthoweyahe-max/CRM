@@ -6,7 +6,9 @@ import { TaskAttachmentsTab }    from './TaskAttachmentsTab';
 import { TaskCommentsTab }       from './TaskCommentsTab';
 import { Modal }                 from '@/shared/components/ui/Modal';
 import { Button }                from '@/shared/components/ui/Button';
+import { Combobox }              from '@/shared/components/form/Combobox';
 import { inputCls }              from '@/shared/components/form/FormField';
+import { usePmTaskLookups }      from '../../projects/hooks/usePmTaskLookups';
 import type { Task }             from '../types/task.types';
 import type { TaskModalTab }     from '../types/taskModal.types';
 
@@ -20,15 +22,19 @@ const TABS: TabDef[] = [
 ];
 
 interface Props {
-  task:    Task | null;
-  onClose: () => void;
-  isAr:    boolean;
+  task:      Task | null;
+  onClose:   () => void;
+  projectId: string;
+  isAr:      boolean;
 }
 
-export function TaskModal({ task, onClose, isAr }: Props) {
-  const modal = useTaskModal(task, isAr, onClose);
+export function TaskModal({ task, onClose, projectId, isAr }: Props) {
+  const modal = useTaskModal(task, isAr, onClose, projectId);
+  const { priorities } = usePmTaskLookups();
 
   if (!task) return null;
+
+  const priorityItems = priorities.map(p => ({ id: p.value, label: p.label }));
 
   const counts = { attachments: modal.attachments.length, comments: modal.comments.length };
 
@@ -86,6 +92,8 @@ export function TaskModal({ task, onClose, isAr }: Props) {
               task={task}
               onDeleteClick={modal.openDelete}
               onEditClick={modal.openEdit}
+              onStatusChange={modal.changeStatus}
+              changingStatus={modal.changingStatus}
               isAr={isAr}
             />
           )}
@@ -128,7 +136,7 @@ export function TaskModal({ task, onClose, isAr }: Props) {
         size="md"
         footer={
           <div className="flex items-center gap-3 justify-start flex-row-reverse">
-            <Button variant="primary" onClick={modal.saveEdit}>
+            <Button variant="primary" onClick={modal.saveEdit} disabled={!modal.editTitle.trim() || modal.savingEdit}>
               {isAr ? 'حفظ' : 'Save'}
             </Button>
             <Button variant="ghost" onClick={modal.closeEdit}>
@@ -152,22 +160,20 @@ export function TaskModal({ task, onClose, isAr }: Props) {
             />
           </div>
 
-          {/* Description */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
-              {isAr ? 'الوصف' : 'Description'}
-            </label>
-            <textarea
-              rows={3}
-              value={modal.editDesc}
-              onChange={e => modal.setEditDesc(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-4 py-3 text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700/50 outline-none resize-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 text-right placeholder:text-gray-400"
-              placeholder={isAr ? 'وصف تفصيلي للمهمة...' : 'Task description...'}
-            />
-          </div>
-
-          {/* Dates */}
+          {/* Priority + Due date */}
           <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
+                {isAr ? 'الأولوية' : 'Priority'}
+              </label>
+              <Combobox
+                items={priorityItems}
+                value={modal.editPriority}
+                onChange={modal.setEditPriority}
+                searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
+                noResultsText={isAr ? 'لا نتائج' : 'No results'}
+              />
+            </div>
             <div className="space-y-1.5">
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
                 {isAr ? 'تاريخ التسليم' : 'Due Date'}
@@ -176,16 +182,6 @@ export function TaskModal({ task, onClose, isAr }: Props) {
                 type="date"
                 value={modal.editDueDate}
                 onChange={e => modal.setEditDueDate(e.target.value)}
-                className={`${inputCls(false)} text-right`}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
-                {isAr ? 'تاريخ البداية' : 'Start Date'}
-              </label>
-              <input
-                type="date"
-                defaultValue="2026-06-10"
                 className={`${inputCls(false)} text-right`}
               />
             </div>

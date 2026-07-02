@@ -1,13 +1,13 @@
-export type TaskStatus   = 'pending' | 'inProgress' | 'review' | 'completed';
-export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskStatus   = 'pending' | 'in_progress' | 'needs_review' | 'completed';
+export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 
 export interface Task {
   id:               string;
   projectId:        string;
   title:            string;
   description?:     string;
-  categoryAr:       string;
-  categoryEn:       string;
+  phaseId?:         number;
+  phaseName?:       string;
   priority:         TaskPriority;
   assigneeName:     string;
   assigneeInitial:  string;

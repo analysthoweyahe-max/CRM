@@ -6,10 +6,10 @@ const COLUMN_CONFIG: Record<TaskStatus, {
   labelAr: string; labelEn: string;
   dot:     string; headerCls: string;
 }> = {
-  pending:    { labelAr: 'قيد الانتظار',  labelEn: 'Pending',     dot: 'bg-gray-400',    headerCls: 'text-gray-600 dark:text-gray-300'          },
-  inProgress: { labelAr: 'قيد التنفيذ',   labelEn: 'In Progress', dot: 'bg-[#A0CD39]',   headerCls: 'text-[#709028] dark:text-[#A0CD39]'        },
-  review:     { labelAr: 'بحاجة لمراجعة', labelEn: 'In Review',   dot: 'bg-amber-500',   headerCls: 'text-amber-600 dark:text-amber-400'        },
-  completed:  { labelAr: 'مكتمل',         labelEn: 'Completed',   dot: 'bg-emerald-500', headerCls: 'text-emerald-600 dark:text-emerald-400'    },
+  pending:      { labelAr: 'قيد الانتظار',  labelEn: 'Pending',      dot: 'bg-gray-400',    headerCls: 'text-gray-600 dark:text-gray-300'          },
+  in_progress:  { labelAr: 'قيد التنفيذ',   labelEn: 'In Progress',  dot: 'bg-[#A0CD39]',   headerCls: 'text-[#709028] dark:text-[#A0CD39]'        },
+  needs_review: { labelAr: 'بحاجة لمراجعة', labelEn: 'Needs Review', dot: 'bg-amber-500',   headerCls: 'text-amber-600 dark:text-amber-400'        },
+  completed:    { labelAr: 'مكتمل',         labelEn: 'Completed',    dot: 'bg-emerald-500', headerCls: 'text-emerald-600 dark:text-emerald-400'    },
 };
 
 interface Props {

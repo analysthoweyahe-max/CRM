@@ -1,11 +1,11 @@
 import type { Task } from '../types/task.types';
 
 export const INITIAL_TASKS: Task[] = [
-  // p2 — موقع الشركة الإلكتروني (9 tasks: 2 pending, 2 inProgress, 2 review, 3 completed)
+  // p2 — موقع الشركة الإلكتروني (9 tasks: 2 pending, 2 in_progress, 2 needs_review, 3 completed)
   {
     id: 't-p2-001', projectId: 'p2', taskNumber: '#001',
     title: 'تصميم الواجهة الرئيسية للموقع',
-    categoryAr: 'تصميم', categoryEn: 'Design',
+    phaseName: 'التصميم',
     priority: 'high', status: 'pending',
     assigneeName: 'أحمد المنصور', assigneeInitial: 'أ', assigneeColor: 'bg-orange-500',
     dueDate: '2025-07-10', estimatedHours: 8,
@@ -13,7 +13,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 't-p2-002', projectId: 'p2', taskNumber: '#002',
     title: 'إعداد بنية قاعدة البيانات',
-    categoryAr: 'تطوير', categoryEn: 'Development',
+    phaseName: 'التطوير',
     priority: 'high', status: 'pending',
     assigneeName: 'محمد علي', assigneeInitial: 'م', assigneeColor: 'bg-blue-500',
     dueDate: '2025-07-15', estimatedHours: 12,
@@ -21,39 +21,39 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 't-p2-003', projectId: 'p2', taskNumber: '#003',
     title: 'تطوير نظام المصادقة',
-    categoryAr: 'تطوير', categoryEn: 'Development',
-    priority: 'high', status: 'inProgress',
+    phaseName: 'التطوير',
+    priority: 'high', status: 'in_progress',
     assigneeName: 'خالد إبراهيم', assigneeInitial: 'خ', assigneeColor: 'bg-teal-500',
     dueDate: '2025-07-20', estimatedHours: 16,
   },
   {
     id: 't-p2-004', projectId: 'p2', taskNumber: '#004',
     title: 'تكامل نظام الدفع الإلكتروني',
-    categoryAr: 'تكاملات', categoryEn: 'Integrations',
-    priority: 'medium', status: 'inProgress',
+    phaseName: 'التكاملات',
+    priority: 'normal', status: 'in_progress',
     assigneeName: 'سارة محمد', assigneeInitial: 'س', assigneeColor: 'bg-pink-500',
     dueDate: '2025-07-25', estimatedHours: 10,
   },
   {
     id: 't-p2-005', projectId: 'p2', taskNumber: '#005',
     title: 'اختبار الأداء والسرعة',
-    categoryAr: 'اختبار', categoryEn: 'Testing',
-    priority: 'medium', status: 'review',
+    phaseName: 'الاختبار',
+    priority: 'normal', status: 'needs_review',
     assigneeName: 'نور أحمد', assigneeInitial: 'ن', assigneeColor: 'bg-indigo-500',
     dueDate: '2025-08-01', estimatedHours: 6,
   },
   {
     id: 't-p2-006', projectId: 'p2', taskNumber: '#006',
     title: 'مراجعة تصميم صفحة الهبوط',
-    categoryAr: 'تصميم', categoryEn: 'Design',
-    priority: 'low', status: 'review',
+    phaseName: 'التصميم',
+    priority: 'low', status: 'needs_review',
     assigneeName: 'أحمد المنصور', assigneeInitial: 'أ', assigneeColor: 'bg-orange-500',
     dueDate: '2025-08-05', estimatedHours: 4,
   },
   {
     id: 't-p2-007', projectId: 'p2', taskNumber: '#007',
     title: 'إعداد خادم الاستضافة',
-    categoryAr: 'بنية تحتية', categoryEn: 'Infrastructure',
+    phaseName: 'النشر',
     priority: 'high', status: 'completed',
     assigneeName: 'خالد إبراهيم', assigneeInitial: 'خ', assigneeColor: 'bg-teal-500',
     dueDate: '2025-06-15', estimatedHours: 8,
@@ -61,33 +61,33 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 't-p2-008', projectId: 'p2', taskNumber: '#008',
     title: 'تصميم هوية الموقع البصرية',
-    categoryAr: 'تصميم', categoryEn: 'Design',
-    priority: 'medium', status: 'completed',
+    phaseName: 'التصميم',
+    priority: 'normal', status: 'completed',
     assigneeName: 'سارة محمد', assigneeInitial: 'س', assigneeColor: 'bg-pink-500',
     dueDate: '2025-06-10', estimatedHours: 6,
   },
   {
     id: 't-p2-009', projectId: 'p2', taskNumber: '#009',
     title: 'تحليل متطلبات المشروع',
-    categoryAr: 'متطلبات', categoryEn: 'Requirements',
+    phaseName: 'متطلبات العمل',
     priority: 'high', status: 'completed',
     assigneeName: 'محمد علي', assigneeInitial: 'م', assigneeColor: 'bg-blue-500',
     dueDate: '2025-06-01', estimatedHours: 4,
   },
 
-  // p1 — تطبيق نماء للتوصيل (4 tasks: 2 pending, 1 inProgress, 1 completed)
+  // p1 — تطبيق نماء للتوصيل (4 tasks: 2 pending, 1 in_progress, 1 completed)
   {
     id: 't-p1-001', projectId: 'p1', taskNumber: '#001',
     title: 'تصميم شاشات التطبيق',
-    categoryAr: 'تصميم', categoryEn: 'Design',
-    priority: 'high', status: 'inProgress',
+    phaseName: 'التصميم',
+    priority: 'high', status: 'in_progress',
     assigneeName: 'بسمة حسن', assigneeInitial: 'ب', assigneeColor: 'bg-purple-500',
     dueDate: '2025-07-30',
   },
   {
     id: 't-p1-002', projectId: 'p1', taskNumber: '#002',
     title: 'تطوير واجهة برمجية للطلبات',
-    categoryAr: 'تطوير', categoryEn: 'Development',
+    phaseName: 'التطوير',
     priority: 'high', status: 'pending',
     assigneeName: 'محمد علي', assigneeInitial: 'م', assigneeColor: 'bg-blue-500',
     dueDate: '2025-08-10',
@@ -95,15 +95,15 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 't-p1-003', projectId: 'p1', taskNumber: '#003',
     title: 'تكامل خرائط جوجل',
-    categoryAr: 'تكاملات', categoryEn: 'Integrations',
-    priority: 'medium', status: 'pending',
+    phaseName: 'التكاملات',
+    priority: 'normal', status: 'pending',
     assigneeName: 'علاء الدين', assigneeInitial: 'ع', assigneeColor: 'bg-green-500',
     dueDate: '2025-08-20',
   },
   {
     id: 't-p1-004', projectId: 'p1', taskNumber: '#004',
     title: 'تحليل المتطلبات الأولية',
-    categoryAr: 'متطلبات', categoryEn: 'Requirements',
+    phaseName: 'متطلبات العمل',
     priority: 'high', status: 'completed',
     assigneeName: 'أحمد المنصور', assigneeInitial: 'أ', assigneeColor: 'bg-orange-500',
     dueDate: '2025-06-20',

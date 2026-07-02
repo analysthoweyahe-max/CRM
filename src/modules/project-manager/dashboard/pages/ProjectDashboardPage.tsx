@@ -1,4 +1,5 @@
-import { PlayCircle, CheckCircle2, PauseCircle, Circle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ClipboardList, Users, ListChecks, FolderKanban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
@@ -6,14 +7,24 @@ import { StatCard }        from '@/shared/components/ui/StatCard';
 import { ProjectsSection } from '../components/ProjectsSection';
 import { ProjectDashboardSkeleton } from '../components/ProjectDashboardSkeleton';
 import { usePmDashboard } from '../hooks/usePmDashboard';
+import { usePmTeamCount } from '../../team/hooks/usePmTeamCount';
 
 export function ProjectDashboardPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
-  const { isLoading, summary, sections } = usePmDashboard();
+  const { isLoading, sections, stats } = usePmDashboard();
+  const teamCount = usePmTeamCount();
+
+  const [activeSectionKey, setActiveSectionKey] = useState<string | undefined>(undefined);
+  const projectsRef = useRef<HTMLDivElement>(null);
 
   if (isLoading) return <ProjectDashboardSkeleton />;
+
+  function focusInProgress() {
+    setActiveSectionKey('in_progress');
+    projectsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   return (
     <div className="space-y-6">
@@ -21,45 +32,53 @@ export function ProjectDashboardPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon={<PlayCircle size={22} className="text-[#709028]" />}
-          iconBg="bg-[#D8EBAE] dark:bg-[#A0CD39]/20"
-          value={summary.inProgress}
-          labelAr="قيد التنفيذ"
-          labelEn="In Progress"
+          icon={<ClipboardList size={22} className="text-blue-600" />}
+          iconBg="bg-blue-100 dark:bg-blue-900/30"
+          value={stats.dailyReports}
+          labelAr="التقارير اليومية"
+          labelEn="Daily Reports"
           isAr={isAr}
+          onClick={() => navigate(ROUTES.PROJECT_MANAGER.REPORTS)}
         />
         <StatCard
-          icon={<CheckCircle2 size={22} className="text-emerald-600" />}
-          iconBg="bg-emerald-100 dark:bg-emerald-900/30"
-          value={summary.completed}
-          labelAr="مكتمل"
-          labelEn="Completed"
+          icon={<Users size={22} className="text-purple-600" />}
+          iconBg="bg-purple-100 dark:bg-purple-900/30"
+          value={teamCount}
+          labelAr="أعضاء الفريق"
+          labelEn="Team Members"
           isAr={isAr}
+          onClick={() => navigate(ROUTES.PROJECT_MANAGER.TEAM)}
         />
         <StatCard
-          icon={<PauseCircle size={22} className="text-amber-600" />}
+          icon={<ListChecks size={22} className="text-amber-600" />}
           iconBg="bg-amber-100 dark:bg-amber-900/30"
-          value={summary.onHold}
-          labelAr="معلق"
-          labelEn="On Hold"
+          value={stats.activeTasks}
+          labelAr="المهام قيد التنفيذ"
+          labelEn="Active Tasks"
           isAr={isAr}
+          onClick={focusInProgress}
         />
         <StatCard
-          icon={<Circle size={22} className="text-gray-500" />}
-          iconBg="bg-gray-100 dark:bg-gray-700"
-          value={summary.notStarted}
-          labelAr="لم يبدأ"
-          labelEn="Not Started"
+          icon={<FolderKanban size={22} className="text-[#709028]" />}
+          iconBg="bg-[#D8EBAE] dark:bg-[#A0CD39]/20"
+          value={stats.activeProjects}
+          labelAr="المشاريع النشطة"
+          labelEn="Active Projects"
           isAr={isAr}
+          onClick={focusInProgress}
         />
       </div>
 
       {/* Projects list */}
-      <ProjectsSection
-        sections={sections}
-        isAr={isAr}
-        onNewProject={() => navigate(ROUTES.PROJECT_MANAGER.NEW)}
-      />
+      <div ref={projectsRef}>
+        <ProjectsSection
+          sections={sections}
+          activeKey={activeSectionKey ?? sections[0]?.key}
+          onActiveKeyChange={setActiveSectionKey}
+          isAr={isAr}
+          onNewProject={() => navigate(ROUTES.PROJECT_MANAGER.NEW)}
+        />
+      </div>
 
     </div>
   );

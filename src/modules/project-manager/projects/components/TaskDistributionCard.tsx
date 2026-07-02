@@ -4,10 +4,10 @@ import { C_GREEN, C_DARK_GREEN, C_AMBER, C_GRAY_200 } from './progressCharts.con
 import type { Task } from '../../tasks/types/task.types';
 
 const LEGEND = [
-  { key: 'completed'  as const, label: 'مكتمل',          color: C_GREEN      },
-  { key: 'inProgress' as const, label: 'قيد التنفيذ',    color: C_DARK_GREEN },
-  { key: 'review'     as const, label: 'بحاجة لمراجعة',  color: C_AMBER      },
-  { key: 'pending'    as const, label: 'قيد الانتظار',   color: C_GRAY_200   },
+  { key: 'completed'    as const, label: 'مكتمل',          color: C_GREEN      },
+  { key: 'in_progress'  as const, label: 'قيد التنفيذ',    color: C_DARK_GREEN },
+  { key: 'needs_review' as const, label: 'بحاجة لمراجعة',  color: C_AMBER      },
+  { key: 'pending'      as const, label: 'قيد الانتظار',   color: C_GRAY_200   },
 ];
 
 interface Props {
@@ -17,10 +17,10 @@ interface Props {
 
 export function TaskDistributionCard({ tasks, isAr }: Props) {
   const counts = {
-    completed:  tasks.filter(t => t.status === 'completed').length,
-    inProgress: tasks.filter(t => t.status === 'inProgress').length,
-    review:     tasks.filter(t => t.status === 'review').length,
-    pending:    tasks.filter(t => t.status === 'pending').length,
+    completed:    tasks.filter(t => t.status === 'completed').length,
+    in_progress:  tasks.filter(t => t.status === 'in_progress').length,
+    needs_review: tasks.filter(t => t.status === 'needs_review').length,
+    pending:      tasks.filter(t => t.status === 'pending').length,
   };
 
   return (
@@ -34,7 +34,7 @@ export function TaskDistributionCard({ tasks, isAr }: Props) {
           <Doughnut
             data={{
               datasets: [{
-                data: [counts.completed, counts.inProgress, counts.review, counts.pending],
+                data: [counts.completed, counts.in_progress, counts.needs_review, counts.pending],
                 backgroundColor: [C_GREEN, C_DARK_GREEN, C_AMBER, C_GRAY_200],
                 borderWidth: 3,
                 borderColor: 'white',

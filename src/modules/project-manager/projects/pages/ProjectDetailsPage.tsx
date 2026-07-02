@@ -196,7 +196,7 @@ export function ProjectDetailsPage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'tasks'    && <KanbanBoard tasks={tasks} isAr={isAr} />}
+      {activeTab === 'tasks'    && <KanbanBoard projectId={String(project.id)} tasks={tasks} isAr={isAr} />}
       {activeTab === 'team'     && <ProjectTeamTab projectId={String(project.id)} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
@@ -207,7 +207,8 @@ export function ProjectDetailsPage() {
         open={showAddTask}
         onClose={() => setShowAddTask(false)}
         projectId={String(project.id)}
-        team={legacyTeam}
+        team={project.teamMembers}
+        phases={project.phases}
         taskCount={tasks.length}
         isAr={isAr}
       />

@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Plus, FolderKanban } from 'lucide-react';
 import { Card }   from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui/Button';
@@ -6,18 +5,14 @@ import type { PmProjectSectionVM } from '../hooks/usePmDashboard';
 import { ProjectCard } from './ProjectCard';
 
 interface Props {
-  sections:     PmProjectSectionVM[];
-  isAr:         boolean;
-  onNewProject: () => void;
+  sections:         PmProjectSectionVM[];
+  activeKey:        string | undefined;
+  onActiveKeyChange: (key: string) => void;
+  isAr:             boolean;
+  onNewProject:     () => void;
 }
 
-export function ProjectsSection({ sections, isAr, onNewProject }: Props) {
-  const [activeKey, setActiveKey] = useState<string | undefined>(sections[0]?.key);
-
-  useEffect(() => {
-    if (!activeKey && sections.length > 0) setActiveKey(sections[0].key);
-  }, [sections, activeKey]);
-
+export function ProjectsSection({ sections, activeKey, onActiveKeyChange, isAr, onNewProject }: Props) {
   const active  = sections.find(s => s.key === activeKey) ?? sections[0];
   const visible = active?.projects ?? [];
 
@@ -38,7 +33,7 @@ export function ProjectsSection({ sections, isAr, onNewProject }: Props) {
             <button
               key={section.key}
               type="button"
-              onClick={() => setActiveKey(section.key)}
+              onClick={() => onActiveKeyChange(section.key)}
               className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium
                           border-b-2 transition-colors duration-150 whitespace-nowrap
                           ${isActive

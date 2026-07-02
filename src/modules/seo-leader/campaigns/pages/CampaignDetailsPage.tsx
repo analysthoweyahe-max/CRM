@@ -20,19 +20,18 @@ import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/ta
 
 /* ── Status mapping: PM TaskStatus → backend status string ───────────── */
 const STATUS_TO_BACKEND: Record<TaskStatus, string> = {
-  pending:    'pending',
-  inProgress: 'in_progress',
-  review:     'in_review',
-  completed:  'completed',
+  pending:      'pending',
+  in_progress:  'in_progress',
+  needs_review: 'in_review',
+  completed:    'completed',
 };
 
 /* ── Status mapping: backend → PM TaskStatus ─────────────────────────── */
 const STATUS_FROM_BACKEND: Record<string, TaskStatus> = {
   pending:     'pending',
-  in_progress: 'inProgress',
-  inProgress:  'inProgress',
-  in_review:   'review',
-  review:      'review',
+  in_progress: 'in_progress',
+  in_review:   'needs_review',
+  review:      'needs_review',
   completed:   'completed',
   done:        'completed',
 };
@@ -49,9 +48,10 @@ function avatarColor(name: string) {
 }
 
 const PRIORITY_MAP: Record<string, Task['priority']> = {
+  urgent: 'urgent',
   high:   'high',
-  normal: 'medium',
-  medium: 'medium',
+  normal: 'normal',
+  medium: 'normal',
   low:    'low',
 };
 
@@ -62,9 +62,8 @@ function toLocalTask(t: SeoTask, projectId: string): Task {
     projectId,
     title:           t.title,
     description:     t.description ?? '',
-    categoryAr:      t.taskTypeLabel ?? 'مهمة SEO',
-    categoryEn:      t.taskType      ?? 'SEO Task',
-    priority:        PRIORITY_MAP[t.priority] ?? 'medium',
+    phaseName:       t.taskTypeLabel ?? 'مهمة SEO',
+    priority:        PRIORITY_MAP[t.priority] ?? 'normal',
     assigneeName:    assignee,
     assigneeInitial: assignee ? assignee[0].toUpperCase() : '?',
     assigneeColor:   avatarColor(assignee),
@@ -76,7 +75,7 @@ function toLocalTask(t: SeoTask, projectId: string): Task {
 }
 
 /* ── Constants ───────────────────────────────────────────────────────── */
-const KANBAN_COLS: TaskStatus[] = ['pending', 'inProgress', 'review', 'completed'];
+const KANBAN_COLS: TaskStatus[] = ['pending', 'in_progress', 'needs_review', 'completed'];
 
 type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings';
 

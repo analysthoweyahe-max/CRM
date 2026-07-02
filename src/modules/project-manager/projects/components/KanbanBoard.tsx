@@ -1,21 +1,32 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import type { Task, TaskStatus } from '../../tasks/types/task.types';
 import { moveTask } from '../../tasks/store/taskStore';
+import { pmTaskApi } from '../../tasks/api/task.api';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskModal } from '../../tasks/components/TaskModal';
 
-const COLUMNS: TaskStatus[] = ['pending', 'inProgress', 'review', 'completed'];
+const COLUMNS: TaskStatus[] = ['pending', 'in_progress', 'needs_review', 'completed'];
 
 interface Props {
-  tasks: Task[];
-  isAr:  boolean;
+  projectId: string;
+  tasks:     Task[];
+  isAr:      boolean;
 }
 
-export function KanbanBoard({ tasks, isAr }: Props) {
+export function KanbanBoard({ projectId, tasks, isAr }: Props) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  function handleDrop(taskId: string, toStatus: TaskStatus) {
-    moveTask(taskId, toStatus);
+  async function handleDrop(taskId: string, toStatus: TaskStatus) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || task.status === toStatus) return;
+    try {
+      await pmTaskApi.updateStatus(projectId, taskId, toStatus);
+      moveTask(taskId, toStatus);
+      toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
+    } catch {
+      toast.error(isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status');
+    }
   }
 
   return (
@@ -36,6 +47,7 @@ export function KanbanBoard({ tasks, isAr }: Props) {
         key={selectedTask?.id ?? ''}
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
+        projectId={projectId}
         isAr={isAr}
       />
     </>

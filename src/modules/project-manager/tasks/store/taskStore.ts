@@ -27,6 +27,11 @@ export function addTask(task: Task): void {
   notify();
 }
 
+export function updateTask(id: string, updates: Partial<Omit<Task, 'id'>>): void {
+  tasks = tasks.map(t => t.id === id ? { ...t, ...updates } : t);
+  notify();
+}
+
 export function deleteTask(id: string): void {
   tasks = tasks.filter(t => t.id !== id);
   notify();

@@ -1,10 +1,11 @@
 import { Calendar } from 'lucide-react';
 import type { Task, TaskPriority } from '../../tasks/types/task.types';
 
-const PRIORITY_CONFIG: Record<TaskPriority, { ar: string; dot: string; badge: string }> = {
-  high:   { ar: 'عالية',   dot: 'bg-red-500',   badge: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'       },
-  medium: { ar: 'متوسطة',  dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
-  low:    { ar: 'منخفضة',  dot: 'bg-gray-400',  badge: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'        },
+const PRIORITY_CONFIG: Record<TaskPriority, { ar: string; en: string; dot: string; badge: string }> = {
+  urgent: { ar: 'عاجلة',   en: 'Urgent', dot: 'bg-red-600',   badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'         },
+  high:   { ar: 'عالية',   en: 'High',   dot: 'bg-red-500',   badge: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'         },
+  normal: { ar: 'متوسطة',  en: 'Normal', dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'  },
+  low:    { ar: 'منخفضة',  en: 'Low',    dot: 'bg-gray-400',  badge: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'         },
 };
 
 interface Props {
@@ -35,7 +36,7 @@ export function KanbanTaskCard({ task, isAr, onOpen }: Props) {
         <span className="text-[11px] text-gray-400 font-mono">{task.taskNumber}</span>
         <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${prio.badge}`}>
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${prio.dot}`} />
-          {isAr ? prio.ar : task.priority}
+          {isAr ? prio.ar : prio.en}
         </span>
       </div>
 
@@ -44,10 +45,12 @@ export function KanbanTaskCard({ task, isAr, onOpen }: Props) {
         {task.title}
       </p>
 
-      {/* Category */}
-      <p className="text-xs text-gray-400 dark:text-gray-500 mb-3 text-end">
-        {isAr ? task.categoryAr : task.categoryEn}
-      </p>
+      {/* Phase */}
+      {task.phaseName && (
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-3 text-end">
+          {task.phaseName}
+        </p>
+      )}
 
       {/* Footer: due date + assignee */}
       <div className="flex items-center justify-between gap-2">

@@ -1,15 +1,17 @@
-import { useState }         from 'react';
 import { Pencil, Trash2 }   from 'lucide-react';
 import { Button }            from '@/shared/components/ui/Button';
 import { Combobox }          from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
-import type { Task }         from '../types/task.types';
+import type { Task, TaskStatus } from '../types/task.types';
+import { usePmTaskLookups } from '../../projects/hooks/usePmTaskLookups';
 
 interface Props {
-  task:          Task;
-  onDeleteClick: () => void;
-  onEditClick:   () => void;
-  isAr:          boolean;
+  task:            Task;
+  onDeleteClick:   () => void;
+  onEditClick:     () => void;
+  onStatusChange:  (status: string) => void;
+  changingStatus:  boolean;
+  isAr:            boolean;
 }
 
 const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -18,43 +20,17 @@ function fmtDate(d: string): string {
   return `${day} ${MONTHS_AR[m - 1]} ${y}`;
 }
 
-const STAGE_ITEMS: ComboboxItem[] = [
-  { id: 'التطوير',    label: 'التطوير'    },
-  { id: 'التصميم',    label: 'التصميم'    },
-  { id: 'الاختبار',   label: 'الاختبار'   },
-  { id: 'التكاملات',  label: 'التكاملات'  },
-  { id: 'المراجعة',   label: 'المراجعة'   },
-  { id: 'التخطيط',    label: 'التخطيط'    },
-];
+const PRIORITY_LABEL: Record<Task['priority'], { ar: string; en: string }> = {
+  urgent: { ar: 'عاجلة',  en: 'Urgent' },
+  high:   { ar: 'عالية',  en: 'High'   },
+  normal: { ar: 'متوسطة', en: 'Normal' },
+  low:    { ar: 'منخفضة', en: 'Low'    },
+};
 
-const PRIORITY_ITEMS_AR: ComboboxItem[] = [
-  { id: 'high',   label: 'عالية'   },
-  { id: 'medium', label: 'متوسطة'  },
-  { id: 'low',    label: 'منخفضة'  },
-];
-const PRIORITY_ITEMS_EN: ComboboxItem[] = [
-  { id: 'high',   label: 'High'   },
-  { id: 'medium', label: 'Medium' },
-  { id: 'low',    label: 'Low'    },
-];
-
-const STATUS_ITEMS_AR: ComboboxItem[] = [
-  { id: 'pending',    label: 'قيد الانتظار' },
-  { id: 'inProgress', label: 'قيد التنفيذ'  },
-  { id: 'review',     label: 'مراجعة'       },
-  { id: 'completed',  label: 'مكتمل'        },
-];
-const STATUS_ITEMS_EN: ComboboxItem[] = [
-  { id: 'pending',    label: 'Pending'     },
-  { id: 'inProgress', label: 'In Progress' },
-  { id: 'review',     label: 'Review'      },
-  { id: 'completed',  label: 'Completed'   },
-];
-
-export function TaskInfoTab({ task, onDeleteClick, onEditClick, isAr }: Props) {
-  const [stage,      setStage]      = useState(task.categoryAr);
-  const [priority,   setPriority]   = useState(task.priority);
-  const [taskStatus, setTaskStatus] = useState(task.status);
+export function TaskInfoTab({ task, onDeleteClick, onEditClick, onStatusChange, changingStatus, isAr }: Props) {
+  const { statuses } = usePmTaskLookups();
+  const statusItems: ComboboxItem[] = statuses.map(s => ({ id: s.value, label: s.label }));
+  const priorityLabel = PRIORITY_LABEL[task.priority];
 
   return (
     <div className="space-y-5">
@@ -74,19 +50,12 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, isAr }: Props) {
       </div>
 
       {/* Stage row */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="w-44">
-          <Combobox
-            items={STAGE_ITEMS}
-            value={stage}
-            onChange={setStage}
-            placeholder={isAr ? 'اختر المرحلة' : 'Select stage'}
-            searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
-            noResultsText={isAr ? 'لا نتائج' : 'No results'}
-          />
+      {task.phaseName && (
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{task.phaseName}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 shrink-0">{isAr ? 'المرحلة' : 'Stage'}</p>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 shrink-0">{isAr ? 'المرحلة' : 'Stage'}</p>
-      </div>
+      )}
 
       {/* Assignee row */}
       <div className="flex items-center justify-between gap-4">
@@ -99,17 +68,11 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, isAr }: Props) {
         <p className="text-sm text-gray-500 dark:text-gray-400 shrink-0">{isAr ? 'المسؤول عن التنفيذ' : 'Assignee'}</p>
       </div>
 
-      {/* Created by */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">أحمد المنصور</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{isAr ? 'تم الإنشاء بواسطة' : 'Created by'}</p>
-      </div>
-
       {/* Dates */}
       <div className="flex items-center justify-between text-sm">
         <div className="text-left">
-          <p className="text-xs text-gray-400">{isAr ? 'تاريخ البداية' : 'Start Date'}</p>
-          <p className="font-medium text-gray-700 dark:text-gray-200 mt-0.5">10 {isAr ? 'يونيو' : 'Jun'} 2026</p>
+          <p className="text-xs text-gray-400">{isAr ? 'الساعات المقدرة' : 'Est. Hours'}</p>
+          <p className="font-medium text-gray-700 dark:text-gray-200 mt-0.5">{task.estimatedHours ?? '—'}</p>
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-400">{isAr ? 'تاريخ التسليم' : 'Due Date'}</p>
@@ -121,21 +84,17 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, isAr }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <p className="text-xs text-gray-400 text-right">{isAr ? 'الأولوية' : 'Priority'}</p>
-          <Combobox
-            items={isAr ? PRIORITY_ITEMS_AR : PRIORITY_ITEMS_EN}
-            value={priority}
-            onChange={v => setPriority(v as typeof priority)}
-            placeholder={isAr ? 'الأولوية' : 'Priority'}
-            searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
-            noResultsText={isAr ? 'لا نتائج' : 'No results'}
-          />
+          <div className="h-11 flex items-center px-3.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-sm text-gray-700 dark:text-gray-200">
+            {isAr ? priorityLabel.ar : priorityLabel.en}
+          </div>
         </div>
         <div className="space-y-1.5">
           <p className="text-xs text-gray-400 text-right">{isAr ? 'الحالة' : 'Status'}</p>
           <Combobox
-            items={isAr ? STATUS_ITEMS_AR : STATUS_ITEMS_EN}
-            value={taskStatus}
-            onChange={v => setTaskStatus(v as typeof taskStatus)}
+            items={statusItems}
+            value={task.status as TaskStatus}
+            onChange={onStatusChange}
+            disabled={changingStatus}
             placeholder={isAr ? 'الحالة' : 'Status'}
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
             noResultsText={isAr ? 'لا نتائج' : 'No results'}

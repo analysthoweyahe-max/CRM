@@ -1,11 +1,15 @@
-import { useState }   from 'react';
+import { useState, useEffect } from 'react';
+import { toast }      from 'sonner';
 import { Modal }       from '@/shared/components/ui/Modal';
 import { Button }      from '@/shared/components/ui/Button';
 import { Combobox }    from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
-import type { TaskPriority } from '../../tasks/types/task.types';
-import type { TeamMember } from '../types/project.types';
-import { addTask } from '../../tasks/store/taskStore';
+import { getAvatarColor } from '@/shared/utils';
+import type { TaskPriority, TaskStatus } from '../../tasks/types/task.types';
+import type { PmProjectTeamMember, PmProjectPhase } from '../types/project.types';
+import { pmTaskApi } from '../../tasks/api/task.api';
+import { addTask }   from '../../tasks/store/taskStore';
+import { usePmTaskLookups } from '../hooks/usePmTaskLookups';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -17,69 +21,93 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
-const PRIORITY_ITEMS: ComboboxItem[] = [
-  { id: 'high',   label: 'عالية'  },
-  { id: 'medium', label: 'متوسطة' },
-  { id: 'low',    label: 'منخفضة' },
-];
-
-interface StageEntry { ar: string; en: string }
-const STAGES: StageEntry[] = [
-  { ar: 'متطلبات العمل', en: 'Requirements'  },
-  { ar: 'التحليل',       en: 'Analysis'      },
-  { ar: 'التصميم',       en: 'Design'        },
-  { ar: 'التطوير',       en: 'Development'   },
-  { ar: 'الاختبار',      en: 'Testing'       },
-  { ar: 'التكاملات',     en: 'Integrations'  },
-  { ar: 'المراجعة',      en: 'Review'        },
-  { ar: 'النشر',         en: 'Deployment'    },
-];
-const STAGE_ITEMS: ComboboxItem[] = STAGES.map(s => ({ id: s.ar, label: s.ar }));
-
 interface Props {
   open:      boolean;
   onClose:   () => void;
   projectId: string;
-  team:      TeamMember[];
+  team:      PmProjectTeamMember[];
+  phases:    PmProjectPhase[];
   taskCount: number;
   isAr:      boolean;
 }
 
-export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }: Props) {
+export function AddTaskModal({ open, onClose, projectId, team, phases, taskCount, isAr }: Props) {
+  const { statuses, priorities } = usePmTaskLookups();
+
   const [title,          setTitle]          = useState('');
   const [description,    setDescription]    = useState('');
-  const [priority,       setPriority]       = useState<string>('medium');
-  const [assignee,       setAssignee]       = useState('');
+  const [priority,       setPriority]       = useState('');
+  const [status,         setStatus]         = useState('');
+  const [assigneeId,     setAssigneeId]     = useState('');
   const [dueDate,        setDueDate]        = useState('');
-  const [estimatedHours, setEstimatedHours] = useState<string>('');
-  const [stage,          setStage]          = useState('');
+  const [estimatedHours, setEstimatedHours] = useState('');
+  const [phaseId,        setPhaseId]        = useState('');
+  const [submitting,     setSubmitting]     = useState(false);
 
-  const teamItems: ComboboxItem[] = team.map(m => ({ id: m.name, label: m.name }));
+  useEffect(() => {
+    if (!priority && priorities.length > 0) setPriority(priorities[0].value);
+  }, [priorities, priority]);
 
-  function handleAdd() {
-    if (!title.trim()) return;
-    const member = team.find(m => m.name === assignee);
-    const num    = String(taskCount + 1).padStart(3, '0');
-    const stageEntry = STAGES.find(s => s.ar === stage);
-    addTask({
-      id:              `t-${projectId}-${num}`,
-      projectId,
-      title:           title.trim(),
-      description:     description.trim() || undefined,
-      categoryAr:      stageEntry?.ar ?? 'عام',
-      categoryEn:      stageEntry?.en ?? 'General',
-      priority:        (priority as TaskPriority),
-      assigneeName:    member?.name    ?? assignee,
-      assigneeInitial: member?.initial ?? (assignee ? assignee[0] : '؟'),
-      assigneeColor:   member?.color   ?? 'bg-gray-400',
-      dueDate,
-      estimatedHours:  estimatedHours ? Number(estimatedHours) : undefined,
-      status:          'pending',
-      taskNumber:      `#${num}`,
-    });
-    setTitle(''); setDescription(''); setPriority('medium');
-    setAssignee(''); setDueDate(''); setEstimatedHours(''); setStage('');
-    onClose();
+  useEffect(() => {
+    if (!status && statuses.length > 0) setStatus(statuses[0].value);
+  }, [statuses, status]);
+
+  const teamItems:     ComboboxItem[] = team.map(m => ({ id: m.id, label: m.name, detail: m.jobTitle }));
+  const phaseItems:    ComboboxItem[] = phases.map(p => ({ id: String(p.id), label: p.name }));
+  const priorityItems: ComboboxItem[] = priorities.map(p => ({ id: p.value, label: p.label }));
+  const statusItems:   ComboboxItem[] = statuses.map(s => ({ id: s.value, label: s.label }));
+
+  const isValid = !!(title.trim() && assigneeId && priority && status && dueDate && phaseId);
+
+  function resetForm() {
+    setTitle(''); setDescription(''); setPriority(''); setStatus('');
+    setAssigneeId(''); setDueDate(''); setEstimatedHours(''); setPhaseId('');
+  }
+
+  async function handleAdd() {
+    if (!isValid || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await pmTaskApi.create(projectId, {
+        title:            title.trim(),
+        description:      description.trim() || undefined,
+        employee_id:      assigneeId,
+        priority,
+        due_date:         dueDate,
+        estimated_hours:  estimatedHours ? Number(estimatedHours) : undefined,
+        phase_id:         Number(phaseId),
+        status,
+      });
+
+      const member = team.find(m => m.id === assigneeId);
+      const phase  = phases.find(p => String(p.id) === phaseId);
+      const num    = String(taskCount + 1).padStart(3, '0');
+
+      addTask({
+        id:              String(res.data.data.id),
+        projectId,
+        title:           title.trim(),
+        description:     description.trim() || undefined,
+        phaseId:         phase?.id,
+        phaseName:       phase?.name,
+        priority:        priority as TaskPriority,
+        assigneeName:    member?.name ?? '',
+        assigneeInitial: member?.avatarInitial ?? '؟',
+        assigneeColor:   getAvatarColor(assigneeId),
+        dueDate,
+        estimatedHours:  estimatedHours ? Number(estimatedHours) : undefined,
+        status:          status as TaskStatus,
+        taskNumber:      `#${num}`,
+      });
+
+      toast.success(isAr ? 'تمت إضافة المهمة' : 'Task added');
+      resetForm();
+      onClose();
+    } catch {
+      toast.error(isAr ? 'فشل إضافة المهمة' : 'Failed to add task');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -93,7 +121,7 @@ export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }
           <Button variant="ghost" onClick={onClose}>
             {isAr ? 'إلغاء' : 'Cancel'}
           </Button>
-          <Button variant="primary" disabled={!title.trim()} onClick={handleAdd}>
+          <Button variant="primary" disabled={!isValid || submitting} onClick={handleAdd}>
             {isAr ? 'إضافة مهمة' : 'Add Task'}
           </Button>
         </>
@@ -132,20 +160,26 @@ export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }
         {/* Assignee + Priority */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={LABEL}>{isAr ? 'المسؤول' : 'Assignee'}</label>
+            <label className={LABEL}>
+              {isAr ? 'المسؤول' : 'Assignee'}
+              <span className="text-red-500 ms-1">*</span>
+            </label>
             <Combobox
               items={teamItems}
-              value={assignee}
-              onChange={setAssignee}
+              value={assigneeId}
+              onChange={setAssigneeId}
               placeholder={isAr ? 'اختر عضو' : 'Pick member'}
               searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
               noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
             />
           </div>
           <div>
-            <label className={LABEL}>{isAr ? 'الأولوية' : 'Priority'}</label>
+            <label className={LABEL}>
+              {isAr ? 'الأولوية' : 'Priority'}
+              <span className="text-red-500 ms-1">*</span>
+            </label>
             <Combobox
-              items={PRIORITY_ITEMS}
+              items={priorityItems}
               value={priority}
               onChange={setPriority}
               searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
@@ -157,7 +191,10 @@ export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }
         {/* Due Date + Estimated Hours */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={LABEL}>{isAr ? 'تاريخ التسليم' : 'Due Date'}</label>
+            <label className={LABEL}>
+              {isAr ? 'تاريخ التسليم' : 'Due Date'}
+              <span className="text-red-500 ms-1">*</span>
+            </label>
             <input
               type="date"
               value={dueDate}
@@ -178,17 +215,35 @@ export function AddTaskModal({ open, onClose, projectId, team, taskCount, isAr }
           </div>
         </div>
 
-        {/* Stage */}
-        <div>
-          <label className={LABEL}>{isAr ? 'المرحلة' : 'Stage'}</label>
-          <Combobox
-            items={STAGE_ITEMS}
-            value={stage}
-            onChange={setStage}
-            placeholder={isAr ? 'اختر المرحلة' : 'Select stage'}
-            searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
-            noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
-          />
+        {/* Stage + Status */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={LABEL}>
+              {isAr ? 'المرحلة' : 'Stage'}
+              <span className="text-red-500 ms-1">*</span>
+            </label>
+            <Combobox
+              items={phaseItems}
+              value={phaseId}
+              onChange={setPhaseId}
+              placeholder={isAr ? 'اختر المرحلة' : 'Select stage'}
+              searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
+              noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+            />
+          </div>
+          <div>
+            <label className={LABEL}>
+              {isAr ? 'الحالة الابتدائية' : 'Initial Status'}
+              <span className="text-red-500 ms-1">*</span>
+            </label>
+            <Combobox
+              items={statusItems}
+              value={status}
+              onChange={setStatus}
+              searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
+              noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+            />
+          </div>
         </div>
 
       </div>
