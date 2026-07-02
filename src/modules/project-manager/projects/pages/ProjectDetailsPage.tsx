@@ -197,7 +197,7 @@ export function ProjectDetailsPage() {
 
       {/* Tab content */}
       {activeTab === 'tasks'    && <KanbanBoard tasks={tasks} isAr={isAr} />}
-      {activeTab === 'team'     && <ProjectTeamTab team={project.teamMembers} isAr={isAr} />}
+      {activeTab === 'team'     && <ProjectTeamTab projectId={String(project.id)} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
       {activeTab === 'messages' && <ProjectMessagesTab team={legacyTeam} isAr={isAr} />}

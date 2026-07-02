@@ -5,6 +5,9 @@ import type {
   PmProjectApiResponse,
   PmLookupApiResponse,
   PmProjectPayload,
+  PmAvailableMembersApiResponse,
+  PmProjectTeamListApiResponse,
+  PmAddProjectMemberPayload,
 } from '../types/project.types';
 
 export const pmProjectsApi = {
@@ -34,6 +37,26 @@ export const pmProjectsApi = {
 
   remove(id: number | string) {
     return http.delete<{ status: string; message: string }>(`/v1/pm/projects/${id}`);
+  },
+};
+
+export const pmProjectTeamApi = {
+  list(projectId: number | string, params: { per_page?: number; page?: number } = {}) {
+    return http.get<PmProjectTeamListApiResponse>(`/v1/pm/projects/${projectId}/team`, { params });
+  },
+
+  available(projectId: number | string, search?: string) {
+    return http.get<PmAvailableMembersApiResponse>(`/v1/pm/projects/${projectId}/team/available`, {
+      params: { search: search || undefined },
+    });
+  },
+
+  addMember(projectId: number | string, payload: PmAddProjectMemberPayload) {
+    return http.post<{ status: string; message: string }>(`/v1/pm/projects/${projectId}/team/members`, payload);
+  },
+
+  remove(projectId: number | string, employeeId: string) {
+    return http.delete<{ status: string; message: string }>(`/v1/pm/projects/${projectId}/team/${employeeId}`);
   },
 };
 

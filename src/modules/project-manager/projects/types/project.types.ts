@@ -114,3 +114,46 @@ export interface PmProjectPayload {
   start_date:   string;
   deadline:     string;
 }
+
+/* ── Per-project team management (available / members / add / remove) ──── */
+
+export interface PmAvailableMember {
+  id:            string;
+  name:          string;
+  email:         string;
+  status:        string;
+  projectRole:   string | null;
+  department:    string;
+  jobTitle:      string;
+  avatarUrl:     string | null;
+  avatarInitial: string;
+}
+
+export interface PmProjectTeamListMember extends PmProjectTeamMember {
+  projectTasksCount: number;
+}
+
+export interface PmAvailableMembersApiResponse {
+  status:  string;
+  message: string;
+  data: {
+    data:  PmAvailableMember[];
+    total: number;
+  };
+}
+
+export interface PmProjectTeamListApiResponse {
+  status:  string;
+  message: string;
+  data: {
+    data:         PmProjectTeamListMember[];
+    current_page: number;
+    last_page:    number;
+    total:        number;
+  };
+}
+
+export interface PmAddProjectMemberPayload {
+  employee_id:  string;
+  project_role: string;
+}
