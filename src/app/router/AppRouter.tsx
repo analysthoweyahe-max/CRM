@@ -24,6 +24,7 @@ const ForgotPasswordPage   = lazy(() => import('@/modules/auth/pages/ForgotPassw
 const AdminDashboardPage = lazy(() => import('@/modules/admin/dashboard/pages/AdminDashboardPage')   .then(m => ({ default: m.AdminDashboardPage })));
 const AdminEmployeesPage = lazy(() => import('@/modules/admin/employees/pages/AdminEmployeesPage')   .then(m => ({ default: m.AdminEmployeesPage })));
 const OrgSettingsPage    = lazy(() => import('@/modules/admin/org-settings/pages/OrgSettingsPage')   .then(m => ({ default: m.OrgSettingsPage })));
+const AdminRolesPage     = lazy(() => import('@/modules/admin/roles/pages/AdminRolesPage')           .then(m => ({ default: m.AdminRolesPage })));
 
 /* ── HR ───────────────────────────────────────────────────────────── */
 const DashboardPage      = lazy(() => import('@/modules/hr/dashboard/pages/DashboardPage')           .then(m => ({ default: m.DashboardPage })));
@@ -104,6 +105,7 @@ export function AppRouter() {
                   <Route path={ROUTES.DASHBOARD}              element={<DashboardPage />} />
                   <Route path={ROUTES.ADMIN.DASHBOARD}        element={<AdminDashboardPage />} />
                   <Route path={ROUTES.ADMIN.EMPLOYEES}        element={<AdminEmployeesPage />} />
+                  <Route path={ROUTES.ADMIN.ROLES}            element={<AdminRolesPage />} />
                   <Route path={ROUTES.ADMIN.SETTINGS}         element={<OrgSettingsPage />} />
 
                   <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
