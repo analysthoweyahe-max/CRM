@@ -104,6 +104,8 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
               estimatedHours={modal.estimatedHours}
               remainingHours={modal.remainingHours}
               progress={modal.progress}
+              onAddTimeLog={modal.addTimeLog}
+              loggingTime={modal.loggingTime}
               isAr={isAr}
             />
           )}

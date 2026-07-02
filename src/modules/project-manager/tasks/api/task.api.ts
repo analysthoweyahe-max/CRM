@@ -24,6 +24,13 @@ export interface PmTaskApiResponse {
   data:    { id: number | string };
 }
 
+export interface PmTimeLogPayload {
+  work_date:  string;
+  started_at: string;
+  ended_at:   string;
+  notes?:     string;
+}
+
 export const pmTaskApi = {
   create(projectId: number | string, payload: PmCreateTaskPayload) {
     return http.post<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks`, payload);
@@ -35,5 +42,9 @@ export const pmTaskApi = {
 
   updateStatus(projectId: number | string, taskId: string, status: string) {
     return http.patch<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/status`, { status });
+  },
+
+  addTimeLog(projectId: number | string, taskId: string, payload: PmTimeLogPayload) {
+    return http.post<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/time-logs`, payload);
   },
 };

@@ -28,8 +28,16 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function hoursBetween(startedAt: string, endedAt: string): number {
+  const [sh, sm] = startedAt.split(':').map(Number);
+  const [eh, em] = endedAt.split(':').map(Number);
+  return Math.max(0, +(((eh * 60 + em) - (sh * 60 + sm)) / 60).toFixed(2));
+}
+
 export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => void, projectId: string) {
   const [activeTab,    setActiveTab]    = useState<TaskModalTab>('info');
+  const [sessions,     setSessions]     = useState<TimeSession[]>(MOCK_SESSIONS);
+  const [loggingTime,  setLoggingTime]  = useState(false);
   const [attachments,  setAttachments]  = useState<TaskAttachment[]>(MOCK_ATTACHMENTS);
   const [comments,     setComments]     = useState<TaskComment[]>(MOCK_COMMENTS);
   const [commentText,  setCommentText]  = useState('');
@@ -49,10 +57,36 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   // Time tracking
-  const totalHours     = useMemo(() => MOCK_SESSIONS.reduce((s, ss) => s + ss.hours, 0), []);
+  const totalHours     = useMemo(() => sessions.reduce((s, ss) => s + ss.hours, 0), [sessions]);
   const estimatedHours = task?.estimatedHours ?? 10;
   const remainingHours = Math.max(0, estimatedHours - totalHours);
   const progress       = Math.min(100, Math.round((totalHours / estimatedHours) * 100));
+
+  /* ── Time logs ── */
+  async function addTimeLog(payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) {
+    if (!task || loggingTime) return;
+    setLoggingTime(true);
+    try {
+      await pmTaskApi.addTimeLog(projectId, task.id, {
+        work_date:  payload.workDate,
+        started_at: payload.startedAt,
+        ended_at:   payload.endedAt,
+        notes:      payload.notes || undefined,
+      });
+      setSessions(prev => [...prev, {
+        id:    String(Date.now()),
+        date:  payload.workDate,
+        from:  payload.startedAt,
+        to:    payload.endedAt,
+        hours: hoursBetween(payload.startedAt, payload.endedAt),
+      }]);
+      toast.success(isAr ? 'تم تسجيل الوقت' : 'Time logged');
+    } catch {
+      toast.error(isAr ? 'تعذر تسجيل الوقت' : 'Failed to log time');
+    } finally {
+      setLoggingTime(false);
+    }
+  }
 
   /* ── Comments ── */
   function addComment() {
@@ -154,7 +188,8 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
 
   return {
     activeTab, setActiveTab,
-    sessions: MOCK_SESSIONS, totalHours, estimatedHours, remainingHours, progress,
+    sessions, totalHours, estimatedHours, remainingHours, progress,
+    addTimeLog, loggingTime,
     attachments, removeAttachment, addAttachment, downloadAttachment,
     comments, commentText, setCommentText, addComment,
     isEditOpen, editTitle, setEditTitle,

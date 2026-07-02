@@ -2,6 +2,7 @@ import { useMemo }         from 'react';
 import { Clock }             from 'lucide-react';
 import { useReactTable, getCoreRowModel, getFilteredRowModel, createColumnHelper } from '@tanstack/react-table';
 import { DataTable }         from '@/shared/components/tables/DataTable';
+import { AddTimeLogForm }    from './AddTimeLogForm';
 import type { TimeSession }  from '../types/taskModal.types';
 
 interface Props {
@@ -10,12 +11,14 @@ interface Props {
   estimatedHours:  number;
   remainingHours:  number;
   progress:        number;
+  onAddTimeLog?:   (payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) => void;
+  loggingTime?:    boolean;
   isAr:            boolean;
 }
 
 const col = createColumnHelper<TimeSession>();
 
-export function TaskTimeTab({ sessions, totalHours, estimatedHours, remainingHours, progress, isAr }: Props) {
+export function TaskTimeTab({ sessions, totalHours, estimatedHours, remainingHours, progress, onAddTimeLog, loggingTime, isAr }: Props) {
   const columns = useMemo(() => [
     col.accessor('date',  { header: isAr ? 'التاريخ' : 'Date',         enableSorting: false }),
     col.accessor('from',  { header: isAr ? 'من'       : 'From',         enableSorting: false }),
@@ -54,6 +57,10 @@ export function TaskTimeTab({ sessions, totalHours, estimatedHours, remainingHou
       <div className="rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700">
         <DataTable table={table} isAr={isAr} withCard={false} />
       </div>
+
+      {onAddTimeLog && (
+        <AddTimeLogForm onSubmit={onAddTimeLog} submitting={!!loggingTime} isAr={isAr} />
+      )}
 
       {/* Summary */}
       <div className="rounded-xl border border-gray-100 dark:border-gray-700 p-4 space-y-3">
