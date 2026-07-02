@@ -19,17 +19,19 @@ import { ProgressLogTab }     from '../components/ProgressLogTab';
 import { ProjectSettingsTab } from '../components/ProjectSettingsTab';
 import { ProjectTeamTab }     from '../components/ProjectTeamTab';
 import { ProjectMessagesTab } from '../components/ProjectMessagesTab';
+import { ProjectClientUpdatesTab } from '../components/ProjectClientUpdatesTab';
 import { ProjectDetailsSkeleton } from '../components/ProjectDetailsSkeleton';
 import type { TeamMember, PmProjectTeamMember } from '../types/project.types';
 
-type TabKey = 'tasks' | 'messages' | 'team' | 'progress' | 'settings';
+type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings';
 
 const TABS: { key: TabKey; ar: string; en: string }[] = [
-  { key: 'tasks',    ar: 'المهام',          en: 'Tasks'        },
-  { key: 'messages', ar: 'رسائل المشروع',   en: 'Messages'     },
-  { key: 'team',     ar: 'فريق العمل',      en: 'Team'         },
-  { key: 'progress', ar: 'سجل الإنجاز',     en: 'Progress Log' },
-  { key: 'settings', ar: 'إعدادات المشروع', en: 'Settings'     },
+  { key: 'tasks',    ar: 'المهام',          en: 'Tasks'          },
+  { key: 'client',   ar: 'تحديثات العميل',  en: 'Client Updates' },
+  { key: 'messages', ar: 'رسائل المشروع',   en: 'Messages'       },
+  { key: 'team',     ar: 'فريق العمل',      en: 'Team'           },
+  { key: 'progress', ar: 'سجل الإنجاز',     en: 'Progress Log'   },
+  { key: 'settings', ar: 'إعدادات المشروع', en: 'Settings'       },
 ];
 
 function toLegacyTeamMember(m: PmProjectTeamMember): TeamMember {
@@ -197,6 +199,7 @@ export function ProjectDetailsPage() {
 
       {/* Tab content */}
       {activeTab === 'tasks'    && <KanbanBoard projectId={String(project.id)} tasks={tasks} isAr={isAr} />}
+      {activeTab === 'client'   && <ProjectClientUpdatesTab projectId={String(project.id)} isAr={isAr} />}
       {activeTab === 'team'     && <ProjectTeamTab projectId={String(project.id)} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
