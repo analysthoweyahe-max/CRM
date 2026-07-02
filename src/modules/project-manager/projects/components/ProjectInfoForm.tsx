@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check }    from 'lucide-react';
+import { toast }    from 'sonner';
 import { Button }   from '@/shared/components/ui/Button';
 import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
-import type { Project, ProjectStatus } from '../types/project.types';
-import { updateProject } from '../store/projectStore';
+import { useProjectSettings }      from '../hooks/useProjectSettings';
+import { usePmProjectLookups }     from '../hooks/usePmProjectLookups';
+import type { PmLookupItem } from '../types/project.types';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -16,48 +18,64 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
-const STATUS_ITEMS: ComboboxItem[] = [
-  { id: 'notStarted', label: 'لم يبدأ'     },
-  { id: 'inProgress', label: 'قيد التنفيذ' },
-  { id: 'paused',     label: 'متوقف'       },
-  { id: 'completed',  label: 'مكتمل'       },
-];
-
-const TYPE_ITEMS: ComboboxItem[] = [
-  { id: 'موقع إلكتروني', label: 'موقع إلكتروني' },
-  { id: 'تطبيق موبايل',  label: 'تطبيق موبايل'  },
-  { id: 'نظام إدارة',    label: 'نظام إدارة'     },
-  { id: 'لوحة تحكم',    label: 'لوحة تحكم'      },
-  { id: 'تطبيق ويب',    label: 'تطبيق ويب'      },
-  { id: 'أخرى',          label: 'أخرى'           },
-];
-
-interface Props {
-  project: Project;
-  isAr:    boolean;
+function toComboboxItems(lookups: PmLookupItem[]): ComboboxItem[] {
+  return lookups.map(l => ({ id: l.value, label: l.label }));
 }
 
-export function ProjectInfoForm({ project, isAr }: Props) {
-  const [name,      setName]      = useState(project.nameAr);
-  const [startDate, setStartDate] = useState(project.startDate ?? '');
-  const [desc,      setDesc]      = useState(project.description ?? '');
-  const [status,    setStatus]    = useState<string>(project.status);
-  const [type,      setType]      = useState(project.categoryAr);
-  const [saved,     setSaved]     = useState(false);
+interface Props {
+  projectId: string;
+  isAr:      boolean;
+}
 
-  function handleSave() {
-    if (!name.trim()) return;
-    updateProject(project.id, {
-      nameAr:      name.trim(),
-      nameEn:      name.trim(),
-      description: desc.trim() || undefined,
-      startDate:   startDate || undefined,
-      status:      status as ProjectStatus,
-      categoryAr:  type,
-      categoryEn:  type,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+export function ProjectInfoForm({ projectId, isAr }: Props) {
+  const { settings, isLoading, save } = useProjectSettings(projectId);
+  const { statuses, types }           = usePmProjectLookups();
+
+  const [name,        setName]        = useState('');
+  const [description, setDesc]        = useState('');
+  const [startDate,   setStartDate]   = useState('');
+  const [deadline,    setDeadline]    = useState('');
+  const [status,      setStatus]      = useState('');
+  const [projectType, setType]        = useState('');
+  const [saving,      setSaving]      = useState(false);
+
+  useEffect(() => {
+    if (!settings) return;
+    setName(settings.name);
+    setDesc(settings.description ?? '');
+    setStartDate(settings.startDate ?? '');
+    setDeadline(settings.deadline ?? '');
+    setStatus(settings.status);
+    setType(settings.projectType);
+  }, [settings]);
+
+  async function handleSave() {
+    if (!name.trim() || saving) return;
+    setSaving(true);
+    try {
+      await save({
+        name:         name.trim(),
+        description:  description.trim(),
+        project_type: projectType,
+        status,
+        is_draft:     settings?.isDraft ?? false,
+        start_date:   startDate,
+        deadline,
+      });
+      toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
+    } catch {
+      toast.error(isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6">
+        <div className="animate-pulse h-32 rounded-xl bg-gray-100 dark:bg-gray-700/60" />
+      </div>
+    );
   }
 
   return (
@@ -93,7 +111,7 @@ export function ProjectInfoForm({ project, isAr }: Props) {
         <label className={LABEL}>{isAr ? 'الوصف' : 'Description'}</label>
         <textarea
           rows={3}
-          value={desc}
+          value={description}
           onChange={e => setDesc(e.target.value)}
           placeholder={isAr ? 'وصف المشروع وأهدافه...' : 'Project description and goals…'}
           className={`${INPUT} resize-none`}
@@ -105,7 +123,7 @@ export function ProjectInfoForm({ project, isAr }: Props) {
         <div>
           <label className={LABEL}>{isAr ? 'الحالة' : 'Status'}</label>
           <Combobox
-            items={STATUS_ITEMS}
+            items={toComboboxItems(statuses)}
             value={status}
             onChange={setStatus}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
@@ -115,8 +133,8 @@ export function ProjectInfoForm({ project, isAr }: Props) {
         <div>
           <label className={LABEL}>{isAr ? 'النوع' : 'Type'}</label>
           <Combobox
-            items={TYPE_ITEMS}
-            value={type}
+            items={toComboboxItems(types)}
+            value={projectType}
             onChange={setType}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
@@ -124,13 +142,24 @@ export function ProjectInfoForm({ project, isAr }: Props) {
         </div>
       </div>
 
+      {/* Deadline */}
+      <div>
+        <label className={LABEL}>{isAr ? 'الموعد النهائي' : 'Deadline'}</label>
+        <input
+          type="date"
+          value={deadline}
+          onChange={e => setDeadline(e.target.value)}
+          className={INPUT}
+        />
+      </div>
+
       <Button
         variant="primary"
         startIcon={<Check size={15} />}
-        disabled={!name.trim()}
+        disabled={!name.trim() || saving}
         onClick={handleSave}
       >
-        {saved ? (isAr ? 'تم الحفظ ✓' : 'Saved ✓') : (isAr ? 'حفظ' : 'Save')}
+        {isAr ? 'حفظ' : 'Save'}
       </Button>
     </div>
   );

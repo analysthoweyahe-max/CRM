@@ -1,4 +1,3 @@
-import type { Project } from '../types/project.types';
 import type { Task }    from '../../tasks/types/task.types';
 import { ProgressDonutCard }    from './ProgressDonutCard';
 import { TaskDistributionCard } from './TaskDistributionCard';
@@ -7,19 +6,27 @@ import { TeamProductivityCard } from './TeamProductivityCard';
 import { BurndownCard }         from './BurndownCard';
 
 interface Props {
-  project: Project;
-  tasks:   Task[];
-  isAr:    boolean;
+  tasks: Task[];
+  isAr:  boolean;
 }
 
-export function ProgressLogTab({ project, tasks, isAr }: Props) {
+export function ProgressLogTab({ tasks, isAr }: Props) {
+  const tasksTotal     = tasks.length;
+  const tasksCompleted = tasks.filter(t => t.status === 'completed').length;
+  const progress       = tasksTotal ? Math.round((tasksCompleted / tasksTotal) * 100) : 0;
+
   return (
     <div className="space-y-4">
 
       {/* Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ProgressDonutCard    project={project} isAr={isAr} />
-        <TaskDistributionCard tasks={tasks}     isAr={isAr} />
+        <ProgressDonutCard
+          progress={progress}
+          tasksCompleted={tasksCompleted}
+          tasksTotal={tasksTotal}
+          isAr={isAr}
+        />
+        <TaskDistributionCard tasks={tasks} isAr={isAr} />
       </div>
 
       {/* Row 2 */}
@@ -29,7 +36,7 @@ export function ProgressLogTab({ project, tasks, isAr }: Props) {
       </div>
 
       {/* Row 3 — full width */}
-      <BurndownCard tasks={tasks} totalTasks={project.tasksTotal} isAr={isAr} />
+      <BurndownCard tasks={tasks} totalTasks={tasksTotal} isAr={isAr} />
 
     </div>
   );

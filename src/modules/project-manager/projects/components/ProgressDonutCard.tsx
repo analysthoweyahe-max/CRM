@@ -1,14 +1,15 @@
 import { Doughnut } from 'react-chartjs-2';
 import { Card }     from '@/shared/components/ui/Card';
 import { C_GREEN, C_GRAY_200, TOOLTIP_STYLE } from './progressCharts.config';
-import type { Project } from '../types/project.types';
 
 interface Props {
-  project: Project;
-  isAr:    boolean;
+  progress:       number;
+  tasksCompleted: number;
+  tasksTotal:     number;
+  isAr:           boolean;
 }
 
-export function ProgressDonutCard({ project, isAr }: Props) {
+export function ProgressDonutCard({ progress, tasksCompleted, tasksTotal, isAr }: Props) {
   return (
     <Card className="p-5">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-5 text-end">
@@ -20,7 +21,7 @@ export function ProgressDonutCard({ project, isAr }: Props) {
           <Doughnut
             data={{
               datasets: [{
-                data: [project.progress, 100 - project.progress],
+                data: [progress, 100 - progress],
                 backgroundColor: [C_GREEN, C_GRAY_200],
                 borderWidth: 0,
                 borderRadius: 6,
@@ -39,14 +40,14 @@ export function ProgressDonutCard({ project, isAr }: Props) {
           />
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">
-              {project.progress}%
+              {progress}%
             </span>
             <span className="text-xs text-gray-400 mt-1">{isAr ? 'الإنجاز' : 'Progress'}</span>
           </div>
         </div>
 
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {project.tasksCompleted} {isAr ? 'من' : 'of'} {project.tasksTotal} {isAr ? 'مهمة مكتملة' : 'tasks done'}
+          {tasksCompleted} {isAr ? 'من' : 'of'} {tasksTotal} {isAr ? 'مهمة مكتملة' : 'tasks done'}
         </p>
       </div>
     </Card>

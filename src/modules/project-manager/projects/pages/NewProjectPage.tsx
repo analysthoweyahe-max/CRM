@@ -1,12 +1,13 @@
-import { useState }    from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast }       from 'sonner';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
 import { ROUTES }      from '@/app/router/routes';
-import { addProject }  from '../store/projectStore';
-import type { ProjectStatus } from '../types/project.types';
+import { pmProjectsApi } from '../api/project.api';
+import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
 import { SDLCPanel }        from '../components/SDLCPanel';
 import { ProjectFormFields } from '../components/ProjectFormFields';
 
@@ -15,36 +16,43 @@ export function NewProjectPage() {
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
 
+  const { statuses, types } = usePmProjectLookups();
+
   const [name,        setName]        = useState('');
   const [description, setDesc]        = useState('');
   const [projectType, setType]        = useState('');
-  const [status,      setStatus]      = useState('notStarted');
+  const [status,      setStatus]      = useState('');
   const [startDate,   setDate]        = useState('');
-  const [links,       setLinks]       = useState<string[]>(['']);
+  const [deadline,    setDeadline]    = useState('');
   const [saved,       setSaved]       = useState(false);
+  const [submitting,  setSubmitting]  = useState(false);
 
-  const addLink    = () => setLinks(p => [...p, '']);
-  const updateLink = (i: number, v: string) =>
-    setLinks(p => p.map((l, idx) => idx === i ? v : l));
-  const removeLink = (i: number) =>
-    setLinks(p => p.filter((_, idx) => idx !== i));
+  useEffect(() => {
+    if (!status && statuses.length > 0) setStatus(statuses[0].value);
+  }, [statuses, status]);
 
-  function handleSave(asDraft = false) {
-    if (!name.trim()) return;
-    addProject({
-      id:             `p-${Date.now()}`,
-      nameAr:         name.trim(),
-      nameEn:         name.trim(),
-      categoryAr:     projectType || 'مشروع',
-      categoryEn:     projectType || 'Project',
-      progress:       0,
-      status:         (asDraft ? 'notStarted' : status) as ProjectStatus,
-      tasksCompleted: 0,
-      tasksTotal:     0,
-      team:           [],
-    });
-    setSaved(true);
-    setTimeout(() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD), 1500);
+  const isValid = !!(name.trim() && description.trim() && projectType && status && startDate && deadline);
+
+  async function handleSave(asDraft = false) {
+    if (!isValid || submitting) return;
+    setSubmitting(true);
+    try {
+      await pmProjectsApi.create({
+        name:         name.trim(),
+        description:  description.trim(),
+        project_type: projectType,
+        status,
+        is_draft:     asDraft,
+        start_date:   startDate,
+        deadline,
+      });
+      setSaved(true);
+      setTimeout(() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD), 1500);
+    } catch {
+      toast.error(isAr ? 'حدث خطأ أثناء إنشاء المشروع' : 'Failed to create the project');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -67,12 +75,12 @@ export function NewProjectPage() {
           <ProjectFormFields
             name={name}        description={description}
             projectType={projectType} status={status}
-            startDate={startDate}     links={links}
+            startDate={startDate}     deadline={deadline}
+            typeItems={types}  statusItems={statuses}
             isAr={isAr}
             setName={setName}  setDesc={setDesc}
             setType={setType}  setStatus={setStatus}
-            setDate={setDate}
-            addLink={addLink}  updateLink={updateLink} removeLink={removeLink}
+            setDate={setDate}  setDeadline={setDeadline}
           />
         </Card>
       </div>
@@ -96,14 +104,14 @@ export function NewProjectPage() {
         <Button
           variant="primary"
           onClick={() => handleSave(false)}
-          disabled={!name.trim() || !description.trim() || !projectType || !startDate || saved}
+          disabled={!isValid || saved || submitting}
         >
           {isAr ? 'حفظ المشروع' : 'Save Project'}
         </Button>
         <Button
           variant="secondary"
           onClick={() => handleSave(true)}
-          disabled={!name.trim() || !description.trim() || !projectType || !startDate || saved}
+          disabled={!isValid || saved || submitting}
           className="border-[#A0CD39] text-[#709028] dark:text-[#A0CD39]
                      hover:bg-[#D8EBAE] dark:hover:bg-[#A0CD39]/10"
         >
@@ -112,7 +120,7 @@ export function NewProjectPage() {
         <Button
           variant="ghost"
           onClick={() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD)}
-          disabled={saved}
+          disabled={saved || submitting}
         >
           {isAr ? 'إلغاء' : 'Cancel'}
         </Button>

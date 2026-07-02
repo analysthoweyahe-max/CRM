@@ -1,7 +1,7 @@
 import { Briefcase, CheckSquare, Clock } from 'lucide-react';
 import { useAuth }     from '@/modules/auth/context/AuthContext';
 import { Card }        from '@/shared/components/ui/Card';
-import { useProjects } from '../../projects/store/projectStore';
+import { usePmDashboard } from '../../dashboard/hooks/usePmDashboard';
 
 interface Props { isAr: boolean }
 
@@ -12,9 +12,10 @@ const STATS = (projects: number, isAr: boolean) => [
 ];
 
 export function PMProfileSummaryCard({ isAr }: Props) {
-  const { user }   = useAuth();
-  const projects   = useProjects();
-  const initial    = (user?.fullName ?? 'P').slice(0, 1).toUpperCase();
+  const { user }    = useAuth();
+  const { summary } = usePmDashboard();
+  const totalProjects = summary.inProgress + summary.completed + summary.onHold + summary.notStarted;
+  const initial     = (user?.fullName ?? 'P').slice(0, 1).toUpperCase();
 
   return (
     <Card padding="lg" className="flex flex-col items-center text-center gap-5">
@@ -40,7 +41,7 @@ export function PMProfileSummaryCard({ isAr }: Props) {
 
       {/* Stats */}
       <div className="w-full space-y-3 px-1">
-        {STATS(projects.length, isAr).map((stat, i) => (
+        {STATS(totalProjects, isAr).map((stat, i) => (
           <div key={i} className="flex items-center justify-between">
             <span className="text-xl font-bold text-gray-800 dark:text-gray-100">
               {stat.value}
