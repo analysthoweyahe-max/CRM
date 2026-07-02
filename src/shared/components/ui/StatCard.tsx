@@ -4,7 +4,7 @@ import { Card } from '@/shared/components/ui/Card';
 export interface StatCardProps {
   icon:     ReactElement;
   iconBg:   string;
-  value:    number;
+  value:    number | string;
   labelAr:  string;
   labelEn:  string;
   isAr:     boolean;

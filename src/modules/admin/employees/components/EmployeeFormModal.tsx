@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal }     from '@/shared/components/ui/Modal';
 import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
+import { MANAGER_ITEMS } from '../data/employeeData';
 import type { NewAdminEmployeeInput } from '../types/adminEmployee.types';
 
 const ROLE_ITEMS = [
@@ -17,28 +18,27 @@ const STATUS_ITEMS = [
   { id: 'معطل', label: 'معطل' },
 ];
 
-const MANAGER_ITEMS = [
-  { id: '',  label: 'بدون مدير مباشر' },
-  { id: '1', label: 'أحمد المنصور'    },
-  { id: '2', label: 'منى الشريف'      },
-];
-
-interface Props {
-  open:              boolean;
-  onClose:           () => void;
-  departmentOptions: string[];
-  onSubmit:          (input: NewAdminEmployeeInput) => void;
-  isAr:              boolean;
-}
-
 const EMPTY: NewAdminEmployeeInput = {
   fullName: '', email: '', phone: '', address: '',
   jobTitle: '', department: '', managerId: '', joiningDate: '',
   role: 'موظف', accountStatus: 'نشط',
 };
 
-export function AddEmployeeModal({ open, onClose, departmentOptions, onSubmit, isAr }: Props) {
+interface Props {
+  open:              boolean;
+  onClose:           () => void;
+  departmentOptions: string[];
+  onSubmit:          (input: NewAdminEmployeeInput) => void;
+  initial?:          NewAdminEmployeeInput;
+  isAr:              boolean;
+}
+
+export function EmployeeFormModal({ open, onClose, departmentOptions, onSubmit, initial, isAr }: Props) {
   const [form, setForm] = useState<NewAdminEmployeeInput>(EMPTY);
+
+  useEffect(() => {
+    if (open) setForm(initial ?? EMPTY);
+  }, [open, initial]);
 
   function set<K extends keyof NewAdminEmployeeInput>(key: K, value: NewAdminEmployeeInput[K]) {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -49,12 +49,6 @@ export function AddEmployeeModal({ open, onClose, departmentOptions, onSubmit, i
   function handleSubmit() {
     if (!isValid) return;
     onSubmit(form);
-    setForm(EMPTY);
-  }
-
-  function handleClose() {
-    setForm(EMPTY);
-    onClose();
   }
 
   const departmentItems = departmentOptions.map(d => ({ id: d, label: d }));
@@ -62,15 +56,15 @@ export function AddEmployeeModal({ open, onClose, departmentOptions, onSubmit, i
   return (
     <Modal
       open={open}
-      onClose={handleClose}
-      title={isAr ? 'إضافة موظف' : 'Add Employee'}
+      onClose={onClose}
+      title={initial ? (isAr ? 'تعديل موظف' : 'Edit Employee') : (isAr ? 'إضافة موظف' : 'Add Employee')}
       size="lg"
       footer={
         <div className="flex items-center gap-3 justify-start flex-row-reverse">
           <Button variant="primary" disabled={!isValid} onClick={handleSubmit}>
             {isAr ? 'حفظ' : 'Save'}
           </Button>
-          <Button variant="ghost" onClick={handleClose}>
+          <Button variant="ghost" onClick={onClose}>
             {isAr ? 'إلغاء' : 'Cancel'}
           </Button>
         </div>

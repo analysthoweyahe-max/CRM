@@ -7,10 +7,11 @@ export const ROUTES = {
   },
   DASHBOARD: '/dashboard',
   ADMIN: {
-    DASHBOARD: '/admin-dashboard',
-    EMPLOYEES: '/admin-employees',
-    ROLES:     '/admin-roles',
-    SETTINGS:  '/admin-org-settings',
+    DASHBOARD:       '/admin-dashboard',
+    EMPLOYEES:       '/admin-employees',
+    EMPLOYEE_DETAIL: (id = ':id') => `/admin-employees/${id}`,
+    ROLES:           '/admin-roles',
+    SETTINGS:        '/admin-org-settings',
   },
   EMPLOYEES: {
     LIST:   '/employees',

@@ -1,3 +1,5 @@
+import type { PermissionAction } from '../../roles/types/adminRole.types';
+
 export type AdminEmployeeStatus = 'active' | 'disabled' | 'pending';
 
 export interface AdminEmployee {
@@ -14,6 +16,37 @@ export interface AdminEmployee {
   statusLabelEn: string;
   lastLoginAr:   string;
   lastLoginEn:   string;
+}
+
+export interface AdminEmployeeActivity {
+  id:      string;
+  titleAr: string;
+  titleEn: string;
+  timeAr:  string;
+  timeEn:  string;
+}
+
+export interface AdminEmployeeStats {
+  projects:        number;
+  tasksAssigned:   number;
+  totalHours:      number;
+  completionRate:  number;
+}
+
+export interface AdminEmployeeDetail extends AdminEmployee {
+  phone:              string;
+  address:            string;
+  employeeNumber:     string;
+  managerName:        string;
+  joiningDateAr:      string;
+  joiningDateEn:      string;
+  employmentTypeAr:   string;
+  employmentTypeEn:   string;
+  accountCreatedAr:   string;
+  accountCreatedEn:   string;
+  stats:              AdminEmployeeStats;
+  activity:           AdminEmployeeActivity[];
+  customPermissions:  Record<string, PermissionAction[]>;
 }
 
 export interface NewAdminEmployeeInput {

@@ -16,28 +16,33 @@ const STATUS_VARIANT: Record<AdminEmployee['status'], 'success' | 'error' | 'war
 const col = createColumnHelper<AdminEmployee>();
 
 interface Props {
-  employees: AdminEmployee[];
-  isAr:      boolean;
-  page:      number;
-  pageCount: number;
-  total:     number;
-  pageSize:  number;
-  onPage:    (page: number) => void;
+  employees:  AdminEmployee[];
+  isAr:       boolean;
+  page:       number;
+  pageCount:  number;
+  total:      number;
+  pageSize:   number;
+  onPage:     (page: number) => void;
+  onRowClick: (id: string) => void;
 }
 
-export function AdminEmployeeTable({ employees, isAr, page, pageCount, total, pageSize, onPage }: Props) {
+export function AdminEmployeeTable({ employees, isAr, page, pageCount, total, pageSize, onPage, onRowClick }: Props) {
   const columns = useMemo(() => [
     col.display({
       id:     'employee',
       header: isAr ? 'الموظف' : 'Employee',
       cell:   ({ row }) => (
-        <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={() => onRowClick(row.original.id)}
+          className="flex items-center gap-2.5 text-start hover:opacity-80 transition-opacity"
+        >
           <Avatar initial={row.original.avatarInitial} color={row.original.avatarColor} size="md" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{row.original.name}</p>
             <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{row.original.email}</p>
           </div>
-        </div>
+        </button>
       ),
     }),
     col.accessor('department', { header: isAr ? 'القسم' : 'Department' }),
@@ -67,13 +72,13 @@ export function AdminEmployeeTable({ employees, isAr, page, pageCount, total, pa
     col.display({
       id:     'actions',
       header: isAr ? 'إجراءات' : 'Actions',
-      cell:   () => (
-        <Button variant="icon" aria-label={isAr ? 'إجراءات' : 'Actions'}>
+      cell:   ({ row }) => (
+        <Button variant="icon" aria-label={isAr ? 'إجراءات' : 'Actions'} onClick={() => onRowClick(row.original.id)}>
           <MoreHorizontal size={16} />
         </Button>
       ),
     }),
-  ], [isAr]);
+  ], [isAr, onRowClick]);
 
   const table = useReactTable({
     data: employees,
