@@ -9,6 +9,7 @@ export const ROUTES = {
   ADMIN: {
     DASHBOARD: '/admin-dashboard',
     EMPLOYEES: '/admin-employees',
+    SETTINGS:  '/admin-org-settings',
   },
   EMPLOYEES: {
     LIST:   '/employees',
