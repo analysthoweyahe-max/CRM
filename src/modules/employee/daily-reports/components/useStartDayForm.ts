@@ -15,7 +15,7 @@ export function useStartDayForm(isAr: boolean) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     mutate(
-      { tasks: tasks.map(t => ({ id: t.id, hours: hours[t.id] ?? 0 })), notes },
+      { tasks: tasks.map(t => ({ id: t.id, name: t.name, hours: hours[t.id] ?? 0 })), notes },
       {
         onSuccess: () => toast.success(isAr ? 'تم حفظ التقرير' : 'Report saved'),
         onError:   () => toast.error(isAr ? 'حدث خطأ' : 'Something went wrong'),

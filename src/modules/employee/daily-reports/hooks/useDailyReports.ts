@@ -6,8 +6,19 @@ export function useDailyReportList() {
   return useQuery({ queryKey: ['employee', 'daily-reports'], queryFn: () => dailyReportApi.list(), select: res => res.data.data.data });
 }
 
+function currentMonthRange() {
+  const now      = new Date();
+  const dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const dateTo   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  return { date_from: dateFrom, date_to: dateTo };
+}
+
 export function useHistory() {
-  return useQuery({ queryKey: ['employee', 'daily-reports', 'history'], queryFn: () => dailyReportApi.history(), select: res => res.data.data.data });
+  return useQuery({
+    queryKey: ['employee', 'daily-reports', 'history'],
+    queryFn:  () => dailyReportApi.history(currentMonthRange()),
+    select:   res => res.data.data.data,
+  });
 }
 
 export function usePlannedTasks() {

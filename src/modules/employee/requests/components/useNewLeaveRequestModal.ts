@@ -30,8 +30,10 @@ export function useNewLeaveRequestModal(onClose: () => void, isAr: boolean) {
 
   function handleSubmit() {
     if (!typeId || creating) return;
+    const typeLabel = comboItems.find(i => i.id === typeId)?.label;
     const fd = new FormData();
     fd.append('type_id', typeId);
+    if (typeLabel)    fd.append('type_label', typeLabel);
     if (description) fd.append('description', description);
     if (date)        fd.append('date', date);
     if (file)        fd.append('attachment', file);

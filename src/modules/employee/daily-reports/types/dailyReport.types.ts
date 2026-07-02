@@ -11,8 +11,8 @@ export interface DayHistoryItem { id: string; date: string; status: DayReportSta
 export interface PlannedTask    { id: string; name: string; }
 export interface WorkedTask     { id: string; name: string; actualHours: number; }
 
-export interface StartDayPayload { tasks: { id: string; hours: number }[]; notes: string; }
-export interface EndDayPayload   { tasks: { id: string; hours: number }[]; reflection: string; }
+export interface StartDayPayload { tasks: { id: string; name: string; hours: number }[]; notes: string; }
+export interface EndDayPayload   { tasks: { id: string; name: string; hours: number }[]; reflection: string; }
 
 export interface WeeklyRow {
   taskId: string; taskName: string;

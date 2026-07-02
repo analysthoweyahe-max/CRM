@@ -10,7 +10,7 @@ export function useEndDayForm(isAr: boolean) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     mutate(
-      { tasks: tasks.map(t => ({ id: t.id, hours: t.actualHours })), reflection },
+      { tasks: tasks.map(t => ({ id: t.id, name: t.name, hours: t.actualHours })), reflection },
       {
         onSuccess: () => toast.success(isAr ? 'تم الإرسال للمدير' : 'Sent to manager'),
         onError:   () => toast.error(isAr ? 'حدث خطأ' : 'Something went wrong'),
