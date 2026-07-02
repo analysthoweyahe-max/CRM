@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { getAvatarColor } from '@/shared/utils';
 import { pmDashboardApi } from '../api/dashboard.api';
 import type {
   PmDashboardProject,
@@ -42,16 +43,6 @@ const SECTION_LABELS: Record<PmProjectStatusKey, { ar: string; en: string }> = {
   not_started: { ar: 'لم يبدأ',     en: 'Not Started'  },
 };
 
-const AVATAR_COLORS = [
-  'bg-orange-500', 'bg-blue-500', 'bg-purple-500', 'bg-green-500',
-  'bg-pink-500',   'bg-teal-500', 'bg-amber-500',  'bg-indigo-500',
-];
-
-function colorFor(seed: string): string {
-  const sum = [...seed].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-  return AVATAR_COLORS[sum % AVATAR_COLORS.length];
-}
-
 function toProjectVM(p: PmDashboardProject): PmProjectVM {
   return {
     id:               p.id,
@@ -68,7 +59,7 @@ function toProjectVM(p: PmDashboardProject): PmProjectVM {
       id:      m.id,
       name:    m.name,
       initial: m.avatarInitial,
-      color:   colorFor(m.id),
+      color:   getAvatarColor(m.id),
     })),
   };
 }

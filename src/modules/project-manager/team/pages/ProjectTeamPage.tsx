@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { useLang }            from '@/app/providers/LanguageProvider';
 import { Button }             from '@/shared/components/ui/Button';
+import { SearchInput }        from '@/shared/components/ui/SearchInput';
 import { GlobalMemberCard }   from '../components/GlobalMemberCard';
-import { MemberProfileModal } from '../../projects/components/MemberProfileModal';
+import { PmMemberProfileModal } from '../components/PmMemberProfileModal';
 import { useProjectTeamPage } from '../hooks/useProjectTeamPage';
 import { ProjectTeamSkeleton } from '../components/ProjectTeamSkeleton';
 
@@ -11,20 +11,16 @@ export function ProjectTeamPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
 
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 350);
-    return () => clearTimeout(t);
-  }, []);
-
   const {
     members, total, page, setPage, pageCount,
     selected, selectedCount, isAllSelected,
+    search, handleSearch,
     toggleAll, toggleOne, clearSelection, toggleActive, exportSelected,
     profileMember, openProfile, closeProfile,
+    isLoading,
   } = useProjectTeamPage(isAr);
 
-  if (isLoading) return <ProjectTeamSkeleton />;
+  if (isLoading && members.length === 0) return <ProjectTeamSkeleton />;
 
   return (
     <div className="space-y-5">
@@ -38,6 +34,13 @@ export function ProjectTeamPage() {
           {isAr ? 'جميع أعضاء الفريق عبر مشاريعك' : 'All team members across your projects'}
         </p>
       </div>
+
+      {/* Search */}
+      <SearchInput
+        value={search}
+        onChange={handleSearch}
+        placeholder={isAr ? 'ابحث عن عضو...' : 'Search members...'}
+      />
 
       {/* Selection action bar */}
       {selectedCount > 0 && (
@@ -75,39 +78,59 @@ export function ProjectTeamPage() {
         />
       </label>
 
+      {/* Loading overlay for subsequent fetches */}
+      {isLoading && members.length > 0 && (
+        <div className="flex justify-center py-4">
+          <div className="w-6 h-6 border-2 border-[#A0CD39] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!isLoading && members.length === 0 && (
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-sm">
+          {search
+            ? (isAr ? 'لا توجد نتائج للبحث' : 'No results found')
+            : (isAr ? 'لا يوجد أعضاء في الفريق بعد' : 'No team members yet')}
+        </div>
+      )}
+
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {members.map(member => (
-          <GlobalMemberCard
-            key={member.name}
-            member={member}
-            selected={selected.has(member.name)}
-            onToggle={toggleOne}
-            onView={openProfile}
-            onToggleActive={toggleActive}
-            isAr={isAr}
-          />
-        ))}
-      </div>
+      {members.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {members.map(member => (
+            <GlobalMemberCard
+              key={member.id}
+              member={member}
+              selected={selected.has(member.id)}
+              onToggle={toggleOne}
+              onView={openProfile}
+              onToggleActive={toggleActive}
+              isAr={isAr}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-        <p>
-          {isAr
-            ? `يتم عرض ${members.length} من أصل ${total}`
-            : `Showing ${members.length} of ${total}`}
-        </p>
+      {total > 0 && (
+        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+          <p>
+            {isAr
+              ? `يتم عرض ${members.length} من أصل ${total}`
+              : `Showing ${members.length} of ${total}`}
+          </p>
 
-        <div className="flex items-center gap-1">
-          <PageBtn onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>‹</PageBtn>
-          {Array.from({ length: pageCount }, (_, i) => i + 1).map(n => (
-            <PageBtn key={n} onClick={() => setPage(n)} active={n === page}>{n}</PageBtn>
-          ))}
-          <PageBtn onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page === pageCount}>›</PageBtn>
+          <div className="flex items-center gap-1">
+            <PageBtn onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>‹</PageBtn>
+            {Array.from({ length: pageCount }, (_, i) => i + 1).map(n => (
+              <PageBtn key={n} onClick={() => setPage(n)} active={n === page}>{n}</PageBtn>
+            ))}
+            <PageBtn onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page === pageCount}>›</PageBtn>
+          </div>
         </div>
-      </div>
+      )}
 
-      <MemberProfileModal member={profileMember} onClose={closeProfile} isAr={isAr} />
+      <PmMemberProfileModal member={profileMember} onClose={closeProfile} isAr={isAr} />
     </div>
   );
 }

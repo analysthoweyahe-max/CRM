@@ -1,31 +1,32 @@
-import { Briefcase, CheckSquare, Mail, Phone } from 'lucide-react';
-import { Modal }   from '@/shared/components/ui/Modal';
-import { Avatar }  from '@/shared/components/ui/Avatar';
+import { Briefcase, Building2, Mail } from 'lucide-react';
+import { Modal }  from '@/shared/components/ui/Modal';
+import { Avatar } from '@/shared/components/ui/Avatar';
 import { getAvatarColor } from '@/shared/utils';
-import type { SeoTeamApiMember } from '../hooks/useSeoTeamPage';
+import type { PmTeamMemberApi } from '../hooks/useProjectTeamPage';
 
 interface Props {
-  member:  SeoTeamApiMember | null;
+  member:  PmTeamMemberApi | null;
   onClose: () => void;
   isAr:    boolean;
 }
 
-export function SeoMemberProfileModal({ member, onClose, isAr }: Props) {
+export function PmMemberProfileModal({ member, onClose, isAr }: Props) {
   if (!member) return null;
 
-  const color  = getAvatarColor(member.id);
+  const color    = getAvatarColor(member.id);
   const isActive = member.isActive;
 
   const stats = [
     {
-      icon:  <Briefcase   size={18} className="text-[#A0CD39]" />,
-      value: member.activeProjectsCount,
+      icon:  <Briefcase size={18} className="text-[#A0CD39]" />,
+      value: member.activeProjectsLabel,
       label: isAr ? 'المشاريع النشطة' : 'Active Projects',
+      isText: true,
     },
     {
-      icon:  <CheckSquare size={18} className="text-[#A0CD39]" />,
-      value: member.jobTitle?.name ?? '—',
-      label: isAr ? 'المسمى الوظيفي' : 'Job Title',
+      icon:  <Building2 size={18} className="text-[#A0CD39]" />,
+      value: member.department,
+      label: isAr ? 'القسم' : 'Department',
       isText: true,
     },
   ];
@@ -39,16 +40,21 @@ export function SeoMemberProfileModal({ member, onClose, isAr }: Props) {
     >
       <div className="space-y-5 pb-2">
 
-        {/* Avatar + name + role + contact */}
+        {/* Avatar + name + role + email */}
         <div className="flex flex-col items-center gap-2 pt-1">
           <Avatar initial={member.avatarInitial} color={color} size="lg"
             className="w-16! h-16! text-2xl!" />
           <div className="text-center space-y-1.5">
             <p className="text-base font-bold text-gray-900 dark:text-gray-100">{member.name}</p>
 
-            {/* Status */}
+            {member.jobTitle && (
+              <span className="inline-block text-xs px-3 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                {member.jobTitle}
+              </span>
+            )}
+
             <span className={[
-              'inline-flex items-center gap-1 text-xs px-3 py-0.5 rounded-full',
+              'flex items-center justify-center gap-1 text-xs px-3 py-0.5 rounded-full w-fit mx-auto',
               isActive
                 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-400',
@@ -57,24 +63,10 @@ export function SeoMemberProfileModal({ member, onClose, isAr }: Props) {
               {member.statusLabel}
             </span>
 
-            {/* Team */}
-            {member.team?.nameAr && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">{member.team.nameAr}</p>
-            )}
-
-            {/* Email */}
             {member.email && (
               <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                 <span>{member.email}</span>
                 <Mail size={12} />
-              </div>
-            )}
-
-            {/* Phone */}
-            {member.phone && (
-              <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                <span dir="ltr">{member.phone}</span>
-                <Phone size={12} />
               </div>
             )}
           </div>

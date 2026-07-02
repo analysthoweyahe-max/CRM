@@ -1,6 +1,7 @@
-import { Download, Search, UserPlus } from 'lucide-react';
+import { Download, UserPlus } from 'lucide-react';
 import { useLang }               from '@/app/providers/LanguageProvider';
 import { Button }                from '@/shared/components/ui/Button';
+import { SearchInput }           from '@/shared/components/ui/SearchInput';
 import { MemberCard }            from '@/shared/modules/team/components/MemberCard';
 import { TeamPageSkeleton }      from '@/shared/modules/team/components/TeamPageSkeleton';
 import { useSeoTeamPage }        from '../hooks/useSeoTeamPage';
@@ -44,17 +45,11 @@ export function SeoTeamPage() {
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 focus-within:border-[#A0CD39] transition-colors">
-        <Search size={15} className="text-gray-400 shrink-0" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => handleSearch(e.target.value)}
-          placeholder={isAr ? 'ابحث عن عضو...' : 'Search members...'}
-          className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder:text-gray-400 outline-none text-end"
-          dir="auto"
-        />
-      </div>
+      <SearchInput
+        value={search}
+        onChange={handleSearch}
+        placeholder={isAr ? 'ابحث عن عضو...' : 'Search members...'}
+      />
 
       {/* Selection action bar */}
       {selectedCount > 0 && (

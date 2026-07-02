@@ -1,164 +1,127 @@
-import { useState, useMemo } from 'react';
-import { toast }             from 'sonner';
-import { useProjects, updateProject } from '../../projects/store/projectStore';
-import { getAllTasks }                 from '../../tasks/store/taskStore';
-import type { TeamMember, MemberProfile } from '../../projects/types/project.types';
+import { useState, useEffect, useMemo } from 'react';
+import { toast }               from 'sonner';
+import { getAvatarColor, matchesSearch } from '@/shared/utils';
+import { downloadTeamExcel }   from '@/shared/modules/team/utils/exportTeam';
+import { pmTeamApi }           from '../api/team.api';
+import type { PmTeamMemberApi } from '../types/team.types';
 
-const PAGE_SIZE = 4;
+const PAGE_SIZE       = 12;
+const FETCH_PAGE_SIZE = 100;
 
-export interface GlobalMember extends TeamMember {
-  projectCount: number;
-  projectNames: string[];
-  taskCount:    number;
-  totalHours:   number;
+export type { PmTeamMemberApi };
+
+// Backend `search` matching isn't reliable for Arabic name variants (e.g. "احمد" vs "أحمد"),
+// so the full roster is fetched once and searched client-side with normalization instead.
+async function fetchAllMembers(): Promise<PmTeamMemberApi[]> {
+  const first = await pmTeamApi.list({ per_page: FETCH_PAGE_SIZE, page: 1 });
+  const { data: firstBatch, last_page } = first.data.data;
+  if (last_page <= 1) return firstBatch;
+
+  const restPages = Array.from({ length: last_page - 1 }, (_, i) => i + 2);
+  const rest = await Promise.all(
+    restPages.map(page => pmTeamApi.list({ per_page: FETCH_PAGE_SIZE, page }).then(r => r.data.data.data))
+  );
+  return [firstBatch, ...rest].flat();
 }
 
-function downloadExcel(members: GlobalMember[], isAr: boolean) {
-  const headers = isAr
-    ? ['الاسم', 'الدور', 'البريد الإلكتروني', 'المشاريع', 'المهام', 'إجمالي الساعات', 'الحالة']
-    : ['Name', 'Role', 'Email', 'Projects', 'Tasks', 'Total Hours', 'Status'];
-
-  const rows = members.map(m => [
-    m.name,
-    m.role ?? '',
-    m.email ?? '',
-    m.projectCount,
-    m.taskCount,
-    m.totalHours,
-    m.isActive !== false ? (isAr ? 'نشط' : 'Active') : (isAr ? 'غير نشط' : 'Inactive'),
-  ]);
-
-  const cell = (v: string | number) =>
-    `<Cell><Data ss:Type="${typeof v === 'number' ? 'Number' : 'String'}">${v}</Data></Cell>`;
-
-  const xml = [
-    `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"`,
-    `  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">`,
-    `  <Worksheet ss:Name="${isAr ? 'فريق العمل' : 'Team'}">`,
-    `    <Table>`,
-    `      <Row>${headers.map(h => cell(h)).join('')}</Row>`,
-    ...rows.map(r => `      <Row>${r.map(v => cell(v)).join('')}</Row>`),
-    `    </Table>`,
-    `  </Worksheet>`,
-    `</Workbook>`,
-  ].join('\n');
-
-  const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = Object.assign(document.createElement('a'), { href: url, download: 'team-members.xls' });
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-export function useProjectTeamPage(isAr: boolean) {
-  const projects = useProjects();
+export function useProjectTeamPage(isAr = true) {
+  const [allMembers,    setAllMembers]    = useState<PmTeamMemberApi[]>([]);
+  const [isLoading,     setIsLoading]     = useState(true);
   const [page,          setPage]          = useState(1);
+  const [search,        setSearch]        = useState('');
   const [selected,      setSelected]      = useState<Set<string>>(new Set());
-  const [profileMember, setProfileMember] = useState<MemberProfile | null>(null);
+  const [profileMember, setProfileMember] = useState<PmTeamMemberApi | null>(null);
 
-  const allMembers: GlobalMember[] = useMemo(() => {
-    const allTasks = getAllTasks();
-    const map      = new Map<string, GlobalMember>();
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    fetchAllMembers()
+      .then(members => { if (!cancelled) setAllMembers(members); })
+      .catch(() => { /* leave previous state on error */ })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
-    for (const project of projects) {
-      const pName = isAr ? project.nameAr : project.nameEn;
-      for (const member of project.team) {
-        const existing = map.get(member.name);
-        if (existing) {
-          existing.projectCount++;
-          existing.projectNames.push(pName);
-        } else {
-          const memberTasks = allTasks.filter(t => t.assigneeName === member.name);
-          map.set(member.name, {
-            ...member,
-            projectCount: 1,
-            projectNames: [pName],
-            taskCount:    memberTasks.length,
-            totalHours:   memberTasks.reduce((s, t) => s + (t.estimatedHours ?? 0), 0),
-          });
-        }
-      }
-    }
-    return [...map.values()];
-  }, [projects, isAr]);
+  const filtered = useMemo(() => {
+    if (!search.trim()) return allMembers;
+    return allMembers.filter(m => matchesSearch([m.name, m.email, m.jobTitle, m.department], search));
+  }, [allMembers, search]);
 
-  const total     = allMembers.length;
-  const pageCount = Math.ceil(total / PAGE_SIZE) || 1;
-  const paged     = allMembers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const total     = filtered.length;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const members   = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const isAllSelected = paged.length > 0 && paged.every(m => selected.has(m.name));
+  function handleSearch(value: string) {
+    setSearch(value);
+    setPage(1);
+    setSelected(new Set());
+  }
+
+  const isAllSelected = members.length > 0 && members.every(m => selected.has(m.id));
 
   function toggleAll() {
     setSelected(prev => {
       const next = new Set(prev);
-      if (isAllSelected) paged.forEach(m => next.delete(m.name));
-      else               paged.forEach(m => next.add(m.name));
+      if (isAllSelected) members.forEach(m => next.delete(m.id));
+      else               members.forEach(m => next.add(m.id));
       return next;
     });
   }
 
-  function toggleOne(name: string) {
+  function toggleOne(id: string) {
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   }
 
-  function openProfile(member: GlobalMember) {
-    setProfileMember({ ...member });
+  function openProfile(id: string) {
+    const m = allMembers.find(m => m.id === id);
+    if (m) setProfileMember(m);
   }
 
-  function removeMember(memberName: string) {
-    projects.forEach(project => {
-      if (!project.team.some(m => m.name === memberName)) return;
-      updateProject(project.id, {
-        team: project.team.filter(m => m.name !== memberName),
-      });
-    });
-    toast.success(
-      isAr ? `تمت إزالة ${memberName} من الفريق` : `${memberName} removed from team`
+  function toggleActive(id: string) {
+    const member   = allMembers.find(m => m.id === id);
+    const newState = !(member?.isActive ?? true);
+    setAllMembers(prev =>
+      prev.map(m => m.id === id
+        ? { ...m, isActive: newState, statusLabel: newState ? (isAr ? 'نشط' : 'Active') : (isAr ? 'غير نشط' : 'Inactive') }
+        : m)
+    );
+    toast[newState ? 'success' : 'warning'](
+      newState
+        ? (isAr ? `تم تفعيل ${member?.name}` : `${member?.name} activated`)
+        : (isAr ? `تم تعطيل ${member?.name}` : `${member?.name} deactivated`)
     );
   }
 
-  function toggleActive(memberName: string) {
-    const member   = allMembers.find(m => m.name === memberName);
-    if (!member) return;
-    const newActive = !(member.isActive !== false);
-
-    projects.forEach(project => {
-      if (!project.team.some(m => m.name === memberName)) return;
-      updateProject(project.id, {
-        team: project.team.map(m =>
-          m.name === memberName ? { ...m, isActive: newActive } : m
-        ),
-      });
-    });
-
-    if (newActive) {
-      toast.success(isAr ? `تم تفعيل ${memberName}` : `${memberName} activated`);
-    } else {
-      toast.warning(
-        isAr ? `تم تعطيل ${memberName}` : `${memberName} deactivated`,
-        {
-          description: isAr ? 'هل تريد إزالته من الفريق نهائياً؟' : 'Do you want to remove them from the team?',
-          action: {
-            label: isAr ? 'إزالة من الفريق' : 'Remove',
-            onClick: () => removeMember(memberName),
-          },
-        }
-      );
-    }
+  function getColor(member: PmTeamMemberApi) {
+    return getAvatarColor(member.id);
   }
 
   function exportSelected() {
-    const toExport = allMembers.filter(m => selected.has(m.name));
-    if (toExport.length > 0) downloadExcel(toExport, isAr);
+    const toExport = allMembers.filter(m => selected.has(m.id));
+    if (toExport.length === 0) return;
+
+    const headers = isAr
+      ? ['الاسم', 'البريد الإلكتروني', 'المسمى الوظيفي', 'القسم', 'المشاريع النشطة', 'الحالة']
+      : ['Name', 'Email', 'Job Title', 'Department', 'Active Projects', 'Status'];
+
+    const rows = toExport.map(m => [
+      m.name,
+      m.email,
+      m.jobTitle,
+      m.department,
+      m.activeProjectsCount,
+      m.statusLabel,
+    ]);
+
+    downloadTeamExcel(headers, rows, 'pm-team.xls', isAr ? 'فريق العمل' : 'Team');
   }
 
   return {
-    members: paged,
+    members,
     total,
     page,
     setPage,
@@ -166,6 +129,8 @@ export function useProjectTeamPage(isAr: boolean) {
     selected,
     selectedCount: selected.size,
     isAllSelected,
+    search,
+    handleSearch,
     toggleAll,
     toggleOne,
     clearSelection: () => setSelected(new Set()),
@@ -174,5 +139,7 @@ export function useProjectTeamPage(isAr: boolean) {
     profileMember,
     openProfile,
     closeProfile: () => setProfileMember(null),
+    isLoading,
+    getColor,
   };
 }

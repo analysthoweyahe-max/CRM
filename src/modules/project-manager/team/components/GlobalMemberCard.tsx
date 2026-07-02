@@ -1,12 +1,13 @@
-import { MemberCard } from '@/shared/modules/team/components/MemberCard';
-import type { GlobalMember } from '../hooks/useProjectTeamPage';
+import { MemberCard }     from '@/shared/modules/team/components/MemberCard';
+import { getAvatarColor } from '@/shared/utils';
+import type { PmTeamMemberApi } from '../hooks/useProjectTeamPage';
 
 interface Props {
-  member:         GlobalMember;
+  member:         PmTeamMemberApi;
   selected:       boolean;
-  onToggle:       (name: string) => void;
-  onView:         (member: GlobalMember) => void;
-  onToggleActive: (name: string) => void;
+  onToggle:       (id: string) => void;
+  onView:         (id: string) => void;
+  onToggleActive: (id: string) => void;
   isAr:           boolean;
 }
 
@@ -14,18 +15,18 @@ export function GlobalMemberCard({ member, selected, onToggle, onView, onToggleA
   return (
     <MemberCard
       member={{
-        id:           member.name,
-        initial:      member.initial,
-        color:        member.color,
+        id:           member.id,
+        initial:      member.avatarInitial,
+        color:        getAvatarColor(member.id),
         name:         member.name,
-        role:         member.role,
+        role:         member.jobTitle,
         email:        member.email,
         isActive:     member.isActive,
-        projectCount: member.projectCount,
+        projectCount: member.activeProjectsCount,
       }}
       selected={selected}
       onToggle={onToggle}
-      onView={() => onView(member)}
+      onView={onView}
       onToggleActive={onToggleActive}
       isAr={isAr}
     />

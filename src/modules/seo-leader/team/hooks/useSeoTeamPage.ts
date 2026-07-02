@@ -1,28 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
-import { toast }                         from 'sonner';
+import { useState, useEffect, useMemo } from 'react';
+import { toast }             from 'sonner';
 import { seoTeamApi }                    from '../api/seoTeam.api';
+import { getAvatarColor, matchesSearch } from '@/shared/utils';
 import { downloadTeamExcel }             from '@/shared/modules/team/utils/exportTeam';
 import type { SeoTeamApiMember, SeoTeamInvitePayload } from '../types/seoTeam.types';
 
-const PER_PAGE = 4;
-const DEBOUNCE = 300;
-
-const AVATAR_COLORS = [
-  'bg-emerald-500', 'bg-sky-500',   'bg-violet-500', 'bg-amber-500',
-  'bg-rose-500',    'bg-teal-500',  'bg-indigo-500', 'bg-orange-500',
-];
-
-function avatarColor(name: string) {
-  const hash = [...name].reduce((s, c) => s + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
-}
+const PAGE_SIZE       = 4;
+const FETCH_PAGE_SIZE = 100;
 
 export type { SeoTeamApiMember };
 
+// Backend `search` matching isn't reliable for Arabic name variants (e.g. "احمد" vs "أحمد"),
+// so the full roster is fetched once and searched client-side with normalization instead.
+async function fetchAllMembers(): Promise<SeoTeamApiMember[]> {
+  const first = await seoTeamApi.getTeam({ per_page: FETCH_PAGE_SIZE, page: 1 });
+  const { data: firstBatch, last_page } = first.data.data;
+  if (last_page <= 1) return firstBatch;
+
+  const restPages = Array.from({ length: last_page - 1 }, (_, i) => i + 2);
+  const rest = await Promise.all(
+    restPages.map(page => seoTeamApi.getTeam({ per_page: FETCH_PAGE_SIZE, page }).then(r => r.data.data.data))
+  );
+  return [firstBatch, ...rest].flat();
+}
+
 export function useSeoTeamPage(isAr = true) {
-  const [members,       setMembers]       = useState<SeoTeamApiMember[]>([]);
-  const [total,         setTotal]         = useState(0);
-  const [lastPage,      setLastPage]      = useState(1);
+  const [allMembers,    setAllMembers]    = useState<SeoTeamApiMember[]>([]);
   const [isLoading,     setIsLoading]     = useState(true);
   const [page,          setPage]          = useState(1);
   const [search,        setSearch]        = useState('');
@@ -31,32 +34,27 @@ export function useSeoTeamPage(isAr = true) {
   const [profileMember, setProfileMember] = useState<SeoTeamApiMember | null>(null);
   const [showInvite,    setShowInvite]    = useState(false);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   useEffect(() => {
     let cancelled = false;
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    debounceRef.current = setTimeout(async () => {
-      setIsLoading(true);
-      try {
-        const res   = await seoTeamApi.getTeam({ search: search || undefined, per_page: PER_PAGE, page });
-        const paged = res.data.data;
-        if (!cancelled) {
-          setMembers(paged.data);
-          setTotal(paged.total);
-          setLastPage(paged.last_page);
-        }
-      } catch {
-        /* leave previous state on error */
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }, DEBOUNCE);
-
+    setIsLoading(true);
+    fetchAllMembers()
+      .then(members => { if (!cancelled) setAllMembers(members); })
+      .catch(() => { /* leave previous state on error */ })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
     return () => { cancelled = true; };
-  }, [page, search, refreshTick]);
+  }, [refreshTick]);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return allMembers;
+    return allMembers.filter(m => matchesSearch(
+      [m.name, m.email, m.phone, m.jobTitle?.name, m.team?.name, m.team?.nameAr],
+      search,
+    ));
+  }, [allMembers, search]);
+
+  const total     = filtered.length;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const members   = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function handleSearch(value: string) {
     setSearch(value);
@@ -84,14 +82,14 @@ export function useSeoTeamPage(isAr = true) {
   }
 
   function openProfile(id: string) {
-    const m = members.find(m => m.id === id);
+    const m = allMembers.find(m => m.id === id);
     if (m) setProfileMember(m);
   }
 
   function toggleActive(id: string) {
-    const member   = members.find(m => m.id === id);
+    const member   = allMembers.find(m => m.id === id);
     const newState = !(member?.isActive ?? true);
-    setMembers(prev =>
+    setAllMembers(prev =>
       prev.map(m => m.id === id ? { ...m, isActive: newState, statusLabel: newState ? 'نشط' : 'غير نشط' } : m)
     );
     toast[newState ? 'success' : 'warning'](
@@ -100,11 +98,11 @@ export function useSeoTeamPage(isAr = true) {
   }
 
   function getColor(member: SeoTeamApiMember) {
-    return avatarColor(member.name);
+    return getAvatarColor(member.id);
   }
 
   function exportSelected() {
-    const toExport = members.filter(m => selected.has(m.id));
+    const toExport = allMembers.filter(m => selected.has(m.id));
     if (toExport.length === 0) return;
 
     const headers = isAr
@@ -141,7 +139,7 @@ export function useSeoTeamPage(isAr = true) {
     total,
     page,
     setPage,
-    pageCount: lastPage,
+    pageCount,
     selected,
     selectedCount: selected.size,
     isAllSelected,
