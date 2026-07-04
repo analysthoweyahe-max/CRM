@@ -25,7 +25,7 @@ function mapAdminRole(roles: string[]): Role {
 }
 
 function mapEmployeeRole(roles: string[]): Role {
-  if (roles?.includes('seo-member')) return 'seo-member';
+  if (roles?.includes('seo-employee') || roles?.includes('seo-member')) return 'seo-member';
   return 'employee';
 }
 
