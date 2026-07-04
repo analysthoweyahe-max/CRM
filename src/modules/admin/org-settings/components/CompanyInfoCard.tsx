@@ -19,8 +19,8 @@ export function CompanyInfoCard({ settings, onChange, isAr }: Props) {
 
       <FormField label={isAr ? 'شعار الشركة' : 'Company Logo'}>
         <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-xl bg-[#A0CD39] flex items-center justify-center shrink-0">
-            <span className="text-2xl font-bold text-white">{settings.logoInitial}</span>
+          <div className="w-14 h-14 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+            <img src="/logo.png" alt={isAr ? 'شعار الشركة' : 'Company logo'} className="w-full h-full object-contain" />
           </div>
           <div className="space-y-1">
             <Button variant="secondary" size="sm">{isAr ? 'تغيير الشعار' : 'Change Logo'}</Button>

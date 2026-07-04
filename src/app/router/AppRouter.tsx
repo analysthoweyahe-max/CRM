@@ -131,7 +131,7 @@ export function AppRouter() {
                 </Route>
               </Route>
 
-              <Route element={<RoleGuard allowedRoles={['manager']} />}>
+              <Route element={<RoleGuard allowedRoles={['manager', 'admin']} />}>
                 <Route element={<ProjectManagerLayout />}>
                   <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
@@ -142,7 +142,7 @@ export function AppRouter() {
                 </Route>
               </Route>
 
-              <Route element={<RoleGuard allowedRoles={['employee']} />}>
+              <Route element={<RoleGuard allowedRoles={['employee', 'admin']} />}>
                 <Route element={<EmployeeLayout />}>
                   <Route path={ROUTES.EMPLOYEE.DASHBOARD}     element={<EmployeeDashboardPage />} />
                   <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />} />
@@ -155,7 +155,7 @@ export function AppRouter() {
                 </Route>
               </Route>
 
-              <Route element={<RoleGuard allowedRoles={['seo-leader']} />}>
+              <Route element={<RoleGuard allowedRoles={['seo-leader', 'admin']} />}>
                 <Route element={<SeoLeaderLayout />}>
                   <Route path={ROUTES.SEO_LEADER.DASHBOARD} element={<SeoLeaderDashboardPage />} />
                   <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />
@@ -166,7 +166,7 @@ export function AppRouter() {
                 </Route>
               </Route>
 
-              <Route element={<RoleGuard allowedRoles={['seo-member']} />}>
+              <Route element={<RoleGuard allowedRoles={['seo-member', 'admin']} />}>
                 <Route element={<SeoMemberLayout />}>
                   <Route path={ROUTES.SEO_MEMBER.DASHBOARD}        element={<SeoMemberDashboardPage />} />
                   <Route path={ROUTES.SEO_MEMBER.TASKS}            element={<SeoMemberTasksPage />} />

@@ -17,6 +17,7 @@ function isEmail(value: string): boolean {
 }
 
 function mapAdminRole(roles: string[]): Role {
+  if (roles.includes('super-admin'))      return 'admin';
   if (roles.includes('hr-manager'))       return 'hr';
   if (roles.includes('manager'))          return 'manager';
   if (roles.includes('project-manager'))  return 'manager';
@@ -73,18 +74,12 @@ function getStoredUser(): AuthUser | null {
 async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> {
   const { password, rememberMe = false } = credentials;
   const employeeId = credentials.employeeId.trim();
-
-  if (isEmail(employeeId)) {
-    const { data } = await authApi.employeeLogin({ email: employeeId, password });
-    const { accessToken, employee } = data.data;
-    const user = buildEmployeeUser(employee);
-    storeAuth(accessToken, user, rememberMe);
-    return { token: accessToken, user };
-  }
-
+  const employeePayload = isEmail(employeeId)
+    ? { email: employeeId, password }
+    : { employee_id: employeeId, password };
 
   try {
-    const { data } = await authApi.employeeLogin({ employee_id: employeeId, password });
+    const { data } = await authApi.employeeLogin(employeePayload);
     const { accessToken, employee } = data.data;
     const user = buildEmployeeUser(employee);
     storeAuth(accessToken, user, rememberMe);

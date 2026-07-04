@@ -3,7 +3,7 @@ import { useLocation, NavLink } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavItem } from './NavItem';
 import { useLang } from '@/app/providers/LanguageProvider';
-import { NAV_BY_VARIANT, SUBTITLE } from './appSidebar.config';
+import { NAV_BY_VARIANT, SUBTITLE, BRAND_NAME } from './appSidebar.config';
 import type { AppSidebarProps as _Base } from './appSidebar.types';
 
 export interface AppSidebarProps extends _Base {
@@ -77,9 +77,11 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
               }`}
             />
             <div className={`min-w-0 transition-all duration-200 ${collapsed ? 'lg:hidden' : ''}`}>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight whitespace-nowrap">
-                Howaya HR
-              </p>
+              {BRAND_NAME[variant] && (
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight whitespace-nowrap">
+                  {BRAND_NAME[variant]}
+                </p>
+              )}
               <p className="text-[11px] text-[#709028] dark:text-[#A0CD39] whitespace-nowrap font-medium">
                 {isAr ? subtitle.ar : subtitle.en}
               </p>

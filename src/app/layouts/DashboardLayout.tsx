@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { Outlet }   from 'react-router-dom';
+import { useAuth }    from '@/modules/auth/context/AuthContext';
 import { AppSidebar } from './components/AppSidebar';
 import { Topbar }     from './components/Topbar';
 
 export function DashboardLayout() {
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed,   setCollapsed]   = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppSidebar
-        variant="hr"
+        variant={user?.role === 'admin' ? 'admin' : 'hr'}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}

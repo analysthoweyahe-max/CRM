@@ -1,10 +1,23 @@
 import {
   LayoutDashboard, Users, Clock, Banknote, MessageSquare, Settings,
-  UserPlus, FileText, CalendarDays, TrendingDown, Gift,
+  UserPlus, FileText, CalendarDays, TrendingDown, Gift, ShieldCheck,
   FilePlus2, ClipboardList, CheckSquare, BarChart2,
 } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
 import type { NavSectionDef } from './appSidebar.types';
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export const ADMIN_NAV: NavSectionDef[] = [
+  {
+    items: [
+      { key: 'admin-dash',      labelAr: 'الرئيسية',           labelEn: 'Dashboard',           icon: LayoutDashboard, path: ROUTES.ADMIN.DASHBOARD  },
+      { key: 'admin-employees', labelAr: 'إدارة الموظفين',     labelEn: 'Employees',           icon: Users,           path: ROUTES.ADMIN.EMPLOYEES  },
+      { key: 'admin-roles',     labelAr: 'الأدوار والصلاحيات', labelEn: 'Roles & Permissions', icon: ShieldCheck,     path: ROUTES.ADMIN.ROLES      },
+      { key: 'admin-settings',  labelAr: 'إعدادات المؤسسة',    labelEn: 'Org Settings',        icon: Settings,        path: ROUTES.ADMIN.SETTINGS   },
+    ],
+  },
+];
 
 // ── HR ────────────────────────────────────────────────────────────────────────
 
@@ -113,7 +126,8 @@ export const SEO_MEMBER_NAV: NavSectionDef[] = [
 
 // ── Lookup maps ───────────────────────────────────────────────────────────────
 
-export const NAV_BY_VARIANT: Record<'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', NavSectionDef[]> = {
+export const NAV_BY_VARIANT: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', NavSectionDef[]> = {
+  admin:       ADMIN_NAV,
   hr:          HR_NAV,
   pm:          PM_NAV,
   employee:    EMPLOYEE_NAV,
@@ -121,10 +135,20 @@ export const NAV_BY_VARIANT: Record<'hr' | 'pm' | 'employee' | 'seo' | 'seo-memb
   'seo-member': SEO_MEMBER_NAV,
 };
 
-export const SUBTITLE: Record<'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', { ar: string; en: string }> = {
+export const SUBTITLE: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', { ar: string; en: string }> = {
+  admin:        { ar: 'لوحة المشرف العام',    en: 'Admin Panel'     },
   hr:           { ar: 'نظام الموارد البشرية', en: 'HR System'       },
   pm:           { ar: 'مدير المشاريع',        en: 'Project Manager' },
   employee:     { ar: 'بوابة الموظف',         en: 'Employee Portal' },
   seo:          { ar: 'قائد SEO',             en: 'SEO Leader'      },
   'seo-member': { ar: 'موظف SEO',             en: 'SEO Member'      },
+};
+
+export const BRAND_NAME: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', string> = {
+  admin:        '',
+  hr:           'Howaya HR',
+  pm:           'Howaya HR',
+  employee:     'Howaya HR',
+  seo:          'Howaya HR',
+  'seo-member': 'Howaya HR',
 };
