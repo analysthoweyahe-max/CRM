@@ -35,14 +35,14 @@ export function useSeoLeaveRequestModal(onClose: () => void, isAr: boolean) {
 
     if (file) {
       const fd = new FormData();
-      fd.append('leaveType',  leaveType);
-      fd.append('startDate',  startDate);
-      fd.append('endDate',    endDate);
+      fd.append('leave_type', leaveType);
+      fd.append('start_date', startDate);
+      fd.append('end_date',   endDate);
       if (reason) fd.append('reason', reason);
       fd.append('attachment', file);
       create(fd, { onSuccess, onError });
     } else {
-      const body: Record<string, string> = { leaveType, startDate, endDate };
+      const body: Record<string, string> = { leave_type: leaveType, start_date: startDate, end_date: endDate };
       if (reason) body.reason = reason;
       create(body, { onSuccess, onError });
     }
