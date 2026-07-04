@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceApi } from '@/modules/hr/attendance/api/attendance.api';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 
 const QUERY_KEY = ['employee', 'attendance', 'today'];
 
@@ -21,6 +22,8 @@ export interface AttendanceWidgetProps {
 }
 
 export function useAttendanceWidget(): AttendanceWidgetProps {
+  const { user } = useAuth();
+  const hasAttendanceRecord = user?.role === 'employee' || user?.role === 'seo-member' || user?.role === 'admin';
   const queryClient = useQueryClient();
 
   /**
@@ -37,6 +40,7 @@ export function useAttendanceWidget(): AttendanceWidgetProps {
     queryFn:  () => attendanceApi.employeeToday(),
     staleTime: 60_000,
     retry: 1,
+    enabled: hasAttendanceRecord,
   });
 
   useEffect(() => {

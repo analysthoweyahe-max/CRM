@@ -1,10 +1,12 @@
-import { useState }    from 'react';
-import { CheckCircle, Eye, RefreshCw, Clock, ChevronDown, FolderOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, Eye, RefreshCw, Clock, CalendarCheck } from 'lucide-react';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { useAuth }     from '@/modules/auth/context/AuthContext';
-import { DashboardStatCard }      from '@/shared/components/ui/DashboardStatCard';
-import { useSeoMemberDashboard }  from '../hooks/useSeoMemberDashboard';
-import type { ProjectSection }    from '../types/seoMemberDashboard.types';
+import { ROUTES }      from '@/app/router/routes';
+import { DashboardStatCard }     from '@/shared/components/ui/DashboardStatCard';
+import { useSeoMemberDashboard } from '../hooks/useSeoMemberDashboard';
+import { useTodayTasks }         from '../hooks/useTodayTasks';
+import { TodayTaskCard }         from '../components/TodayTaskCard';
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
@@ -20,64 +22,9 @@ function DashboardSkeleton() {
       <div className="space-y-3">
         <div className="h-5 w-28 rounded bg-gray-200 dark:bg-gray-700" />
         {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="h-14 rounded-xl bg-gray-200 dark:bg-gray-700" />
+          <div key={i} className="h-24 rounded-xl bg-gray-200 dark:bg-gray-700" />
         ))}
       </div>
-    </div>
-  );
-}
-
-// ─── Project section accordion ───────────────────────────────────────────────
-
-function ProjectSectionCard({ section, isAr }: { section: ProjectSection; isAr: boolean }) {
-  const [expanded, setExpanded] = useState(section.defaultExpanded);
-
-  return (
-    <div className="border border-gray-100 dark:border-gray-700/60 rounded-2xl overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3
-                   bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50
-                   transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-            {section.label}
-          </span>
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full
-                           bg-[#D8EBAE] dark:bg-[#A0CD39]/20 text-[#709028] dark:text-[#A0CD39]">
-            {section.total}
-          </span>
-        </div>
-        <ChevronDown
-          size={16}
-          className={`text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {expanded && (
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/40 space-y-2">
-          {section.projects.length === 0 ? (
-            <div className="flex items-center justify-center gap-2 py-4 text-gray-400">
-              <FolderOpen size={16} className="opacity-50" />
-              <p className="text-xs">{isAr ? 'لا توجد مشاريع' : 'No projects'}</p>
-            </div>
-          ) : (
-            section.projects.map(project => (
-              <div
-                key={project.id}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl
-                           bg-white dark:bg-gray-800
-                           border border-gray-100 dark:border-gray-700/40"
-              >
-                <div className="w-2 h-2 rounded-full bg-[#A0CD39] shrink-0" />
-                <p className="text-sm text-gray-800 dark:text-gray-100 truncate">{project.name}</p>
-              </div>
-            ))
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -88,7 +35,9 @@ export function SeoMemberDashboardPage() {
   const { lang }  = useLang();
   const isAr      = lang === 'ar';
   const { user }  = useAuth();
-  const { tasksOverview, sections, isLoading } = useSeoMemberDashboard();
+  const navigate  = useNavigate();
+  const { tasksOverview, isLoading } = useSeoMemberDashboard();
+  const { tasks: todayTasks, isLoading: tasksLoading } = useTodayTasks();
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -139,16 +88,35 @@ export function SeoMemberDashboardPage() {
         />
       </div>
 
-      {/* My projects */}
+      {/* Today's tasks */}
       <div>
         <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4">
-          {isAr ? 'مشاريعي' : 'My Projects'}
+          {isAr ? 'مهام اليوم' : "Today's Tasks"}
         </h2>
-        <div className="space-y-3">
-          {sections.map(section => (
-            <ProjectSectionCard key={section.key} section={section} isAr={isAr} />
-          ))}
-        </div>
+
+        {tasksLoading ? (
+          <div className="space-y-3 animate-pulse">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="h-24 rounded-xl bg-gray-200 dark:bg-gray-700" />
+            ))}
+          </div>
+        ) : todayTasks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-12 text-gray-400 dark:text-gray-500">
+            <CalendarCheck size={28} className="opacity-50" />
+            <p className="text-sm">{isAr ? 'لا توجد مهام اليوم' : 'No tasks today'}</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {todayTasks.map(task => (
+              <TodayTaskCard
+                key={task.id}
+                task={task}
+                isAr={isAr}
+                onDetails={id => navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(id))}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

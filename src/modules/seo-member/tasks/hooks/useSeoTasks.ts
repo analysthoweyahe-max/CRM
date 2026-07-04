@@ -4,7 +4,8 @@ import { seoTaskApi } from '../api/seoTask.api';
 export function useSeoTasks(projectUuid?: string) {
   return useQuery({
     queryKey: ['seo-member', 'tasks', projectUuid],
-    queryFn:  () => seoTaskApi.list(projectUuid),
+    queryFn:  () => seoTaskApi.list(projectUuid!),
+    enabled:  !!projectUuid,
     select: res => {
       const phases = res.data.data.phases;
       const tasks  = phases.flatMap(p => p.tasks);

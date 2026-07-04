@@ -13,7 +13,7 @@ export function useEmpDashboard() {
 
   const overview = data?.tasksOverview ?? EMPTY_OVERVIEW;
   const pending  = Math.max(0, overview.totalAssigned - overview.inProgress - overview.completed);
-  const sections = data?.myProjects.sections ?? [];
+  const sections = data?.myProjects?.sections ?? [];
 
   return { isLoading, isError, overview, pending, sections };
 }
