@@ -3,6 +3,6 @@ import type { PmDashboardApiResponse } from '../types/dashboard.types';
 
 export const pmDashboardApi = {
   get() {
-    return http.get<PmDashboardApiResponse>('/v1/pm/manager/dashboard');
+    return http.get<PmDashboardApiResponse>('/v1/pm/dashboard');
   },
 };
