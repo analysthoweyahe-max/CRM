@@ -1,8 +1,8 @@
 import { http } from '@/shared/services/http.service';
-import type { EmpDashboardApiResponse } from '../types/dashboard.types';
+import type { EmpProjectListResponse } from '../types/dashboard.types';
 
 export const empDashboardApi = {
-  get() {
-    return http.get<EmpDashboardApiResponse>('/v1/pm/dashboard');
+  myProjects() {
+    return http.get<EmpProjectListResponse>('/v1/pm/my-projects');
   },
 };

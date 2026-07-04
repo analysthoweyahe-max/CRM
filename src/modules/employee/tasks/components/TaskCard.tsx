@@ -13,7 +13,7 @@ export function TaskCard({ task, isAr, onDetails, projectLabel }: TaskCardProps)
   const { activeTask, startTimer, stopTimer } = useTaskTimer();
   const navigate = useNavigate();
   const isActive = activeTask?.id === task.id;
-  const handleDetails = onDetails ? () => onDetails(task.id) : () => navigate(ROUTES.EMPLOYEE.TASK_DETAIL(task.id));
+  const handleDetails = onDetails ? () => onDetails(task.id) : () => navigate(ROUTES.EMPLOYEE.TASK_DETAIL(task.projectId, task.id));
 
   return (
     <Card

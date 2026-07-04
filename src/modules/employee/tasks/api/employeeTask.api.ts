@@ -1,24 +1,78 @@
-import type { EmpTaskListResponse } from '../types/employeeTask.types';
+import { http } from '@/shared/services/http.service';
+import type { EmployeeTask, EmpTaskListResponse, EmpTaskStatus, EmpTaskPriority, CreateSelfTaskPayload } from '../types/employeeTask.types';
 
-function delay<T>(data: T, ms = 400): Promise<{ data: T }> {
-  return new Promise(res => setTimeout(() => res({ data }), ms));
+/* ── Raw backend shape — GET /v1/pm/tasks?mine=1 ─────────────────────────
+   Confirmed: grouped into status columns, same as GET /v1/pm/projects/{id}/tasks —
+   NOT a flat paginated list. */
+interface RawPmTaskRef { id: number; name: string; }
+
+interface RawPmTask {
+  id:             number;
+  title:          string;
+  status:         string;   // 'pending' | 'in_progress' | 'completed' | ...
+  priority:       string;   // 'low' | 'normal' | 'high'
+  dueDate:        string | null;
+  phase?:         RawPmTaskRef | null;
+  project?:       RawPmTaskRef | null;
 }
 
-const mockTasks: EmpTaskListResponse['data']['data'] = [
-  { id: '1', titleAr: 'تصميم واجهة لوحة التحكم',    titleEn: 'Design dashboard UI',         projectAr: 'نظام الموارد البشرية', projectEn: 'HR System',       deadline: '2026-07-10', priority: 'high',   status: 'inProgress' },
-  { id: '2', titleAr: 'تطوير API المستخدمين',        titleEn: 'Develop users API',           projectAr: 'نظام الموارد البشرية', projectEn: 'HR System',       deadline: '2026-07-15', priority: 'high',   status: 'inProgress' },
-  { id: '3', titleAr: 'مراجعة متطلبات المشروع',      titleEn: 'Review project requirements', projectAr: 'تطبيق الموبايل',       projectEn: 'Mobile App',      deadline: '2026-06-28', priority: 'medium', status: 'completed'  },
-  { id: '4', titleAr: 'كتابة وثائق الـ API',         titleEn: 'Write API documentation',     projectAr: 'تطبيق الموبايل',       projectEn: 'Mobile App',      deadline: '2026-07-20', priority: 'low',    status: 'pending'    },
-  { id: '5', titleAr: 'إعداد بيئة الاختبار',         titleEn: 'Setup test environment',      projectAr: 'بوابة العميل',         projectEn: 'Client Portal',   deadline: '2026-07-05', priority: 'medium', status: 'pending'    },
-  { id: '6', titleAr: 'تحسين أداء قاعدة البيانات',   titleEn: 'Optimize database performance',projectAr: 'نظام الموارد البشرية', projectEn: 'HR System',       deadline: '2026-06-25', priority: 'high',   status: 'completed'  },
-  { id: '7', titleAr: 'اختبار وحدات الدفع',          titleEn: 'Test payment modules',        projectAr: 'بوابة العميل',         projectEn: 'Client Portal',   deadline: '2026-07-18', priority: 'medium', status: 'pending'    },
-];
+interface RawPmTaskColumn {
+  status:      string;
+  statusLabel: string;
+  tasks:       RawPmTask[];
+}
+
+interface RawPmTaskListResponse {
+  status:  string;
+  message: string;
+  data: {
+    columns: RawPmTaskColumn[];
+    total:   number;
+  };
+}
+
+const STATUS_MAP: Record<string, EmpTaskStatus> = {
+  pending:     'pending',
+  in_progress: 'inProgress',
+  completed:   'completed',
+};
+
+const PRIORITY_MAP: Record<string, EmpTaskPriority> = {
+  low:    'low',
+  normal: 'medium',
+  high:   'high',
+};
+
+function toEmployeeTask(raw: RawPmTask): EmployeeTask {
+  const projectName = raw.project?.name ?? raw.phase?.name ?? '';
+  return {
+    id:        String(raw.id),
+    projectId: String(raw.project?.id ?? ''),
+    titleAr:   raw.title,
+    titleEn:   raw.title,
+    projectAr: projectName,
+    projectEn: projectName,
+    deadline:  raw.dueDate ?? '',
+    priority:  PRIORITY_MAP[raw.priority] ?? 'medium',
+    status:    STATUS_MAP[raw.status]     ?? 'pending',
+    phaseId:   raw.phase ? String(raw.phase.id) : undefined,
+    phaseName: raw.phase?.name,
+  };
+}
 
 export const employeeTaskApi = {
-  list() {
-    return delay<EmpTaskListResponse>({
-      status: 'success',
-      data:   { data: [...mockTasks] },
-    });
+  async list(): Promise<{ data: EmpTaskListResponse }> {
+    const res = await http.get<RawPmTaskListResponse>('/v1/pm/tasks', { params: { mine: 1 } });
+    const tasks = res.data.data.columns.flatMap(c => c.tasks);
+    return {
+      data: {
+        status: res.data.status,
+        data:   { data: tasks.map(toEmployeeTask) },
+      },
+    };
+  },
+
+  createSelfTask(projectId: string, payload: CreateSelfTaskPayload) {
+    return http.post(`/v1/pm/projects/${projectId}/tasks/self`, payload);
   },
 };

@@ -1,67 +1,194 @@
+import { http } from '@/shared/services/http.service';
+import { getAvatarColor } from '@/shared/utils/avatar.utils';
 import type { TaskDetail, TaskComment, TaskSession } from '../types/taskDetail.types';
+import type { EmpTaskStatus, EmpTaskPriority } from '../types/employeeTask.types';
 
-function delay<T>(data: T, ms = 500): Promise<{ data: T }> {
-  return new Promise(res => setTimeout(() => res({ data }), ms));
+/* ── Raw backend shape — GET /v1/pm/projects/{project_id}/tasks/{task_id} ──
+   Same task resource confirmed for GET /v1/pm/projects/{id}/tasks. */
+interface RawPmTaskDetail {
+  id:             number;
+  title:          string;
+  description:    string | null;
+  status:         string;
+  priority:       string;
+  dueDate:        string | null;
+  estimatedHours: string | number | null;
+  phase:          { id: number; name: string } | null;
+  project?:       { id: number; name: string } | null;
+  createdAt:      string | null;
 }
 
-const DETAIL_DEFAULTS: TaskDetail = {
-  id: '1',
-  titleAr: 'تطوير واجهة المستخدم',
-  titleEn: 'Develop User Interface',
-  descriptionAr: 'وصف تفصيلي للمهمة وما هو مطلوب إنجازه ضمن هذه المرحلة من المشروع.',
-  descriptionEn: 'A detailed description of the task and what needs to be accomplished.',
-  projectAr: 'موقع الشركة الإلكتروني',
-  projectEn: 'Company Website',
-  stage: 'التطوير',
-  assigneeAr: 'محمد علي',
-  assigneeEn: 'Mohammed Ali',
-  assigneeInitials: 'م',
-  createdByAr: 'أحمد المنصور',
-  createdByEn: 'Ahmed Al-Mansour',
-  startDate: '2026-06-10',
-  deadline: '2026-06-25',
-  priority: 'high',
-  status: 'inProgress',
-  allocatedHours: 10,
+interface RawTaskDetailResponse {
+  status:  string;
+  message: string;
+  data:    RawPmTaskDetail;
+}
+
+const STATUS_MAP: Record<string, EmpTaskStatus> = {
+  pending:     'pending',
+  in_progress: 'inProgress',
+  completed:   'completed',
 };
 
-const MOCK_DETAIL: Record<string, TaskDetail> = {
-  '1': { ...DETAIL_DEFAULTS, id: '1' },
-  '2': { ...DETAIL_DEFAULTS, id: '2', titleAr: 'تطوير API المستخدمين', titleEn: 'Develop Users API', status: 'inProgress' },
-  '3': { ...DETAIL_DEFAULTS, id: '3', titleAr: 'مراجعة متطلبات المشروع', titleEn: 'Review Project Requirements', status: 'completed', priority: 'medium' },
+const REVERSE_STATUS_MAP: Record<EmpTaskStatus, string> = {
+  pending:    'pending',
+  inProgress: 'in_progress',
+  completed:  'completed',
 };
 
-const MOCK_COMMENTS: TaskComment[] = [
-  {
-    id: '1',
-    authorAr: 'أحمد المنصور',
-    authorEn: 'Ahmed Al-Mansour',
-    initials: 'أ',
-    avatarBg: 'bg-brand-500',
-    body: 'تأكد من مطابقة التصميم لنظام الألوان @محمد علي',
-    createdAt: '18-06-26 10:20',
-    isMine: false,
-  },
-  {
-    id: '2',
-    authorAr: 'محمد علي',
-    authorEn: 'Mohammed Ali',
-    initials: 'م',
-    avatarBg: 'bg-purple-500',
-    body: 'تم. سأرفع النسخة المحدثة قريباً.',
-    createdAt: '18-06-26 11:05',
-    isMine: true,
-  },
-];
+const PRIORITY_MAP: Record<string, EmpTaskPriority> = {
+  low:    'low',
+  normal: 'medium',
+  high:   'high',
+};
 
-const MOCK_SESSIONS: TaskSession[] = [
-  { id: '1', date: '18 يونيو 2026', from: '09:00', to: '11:30', durationHours: 2.5  },
-  { id: '2', date: '18 يونيو 2026', from: '13:00', to: '15:45', durationHours: 2.75 },
-  { id: '3', date: '19 يونيو 2026', from: '09:00', to: '10:15', durationHours: 1.25 },
-];
+function toTaskDetail(raw: RawPmTaskDetail, projectId: string): TaskDetail {
+  return {
+    id:             String(raw.id),
+    projectId,
+    title:          raw.title,
+    description:    raw.description ?? '',
+    project:        raw.project?.name ?? '',
+    stage:          raw.phase?.name ?? null,
+    createdAt:      raw.createdAt,
+    deadline:       raw.dueDate ?? '',
+    priority:       PRIORITY_MAP[raw.priority] ?? 'medium',
+    status:         STATUS_MAP[raw.status]     ?? 'pending',
+    allocatedHours: Number(raw.estimatedHours ?? 0),
+  };
+}
+
+/* ── Raw backend shape — .../tasks/{task_id}/time-logs ───────────────────── */
+interface RawTimeLog {
+  id:            number;
+  workDate:      string;
+  startedAt:     string;
+  endedAt:       string;
+  durationHours: number;
+  notes:         string | null;
+  employee:      { id: string; name: string };
+  createdAt:     string;
+}
+
+interface RawTimeLogListResponse {
+  status:  string;
+  message: string;
+  data: {
+    sessions: RawTimeLog[];
+    totalHours:      number;
+    estimatedHours:  number | null;
+    remainingHours:  number;
+    progressPercent: number;
+  };
+}
+
+interface RawTimeLogCreateResponse {
+  status:  string;
+  message: string;
+  data:    RawTimeLog;
+}
+
+function toSession(raw: RawTimeLog): TaskSession {
+  return {
+    id:            String(raw.id),
+    date:          raw.workDate,
+    from:          raw.startedAt,
+    to:            raw.endedAt,
+    durationHours: raw.durationHours,
+  };
+}
+
+/* ── Raw backend shape — .../tasks/{task_id}/comments ───────────────────── */
+interface RawCommentSender {
+  id:            string;
+  name:          string;
+  type:          string;
+  avatarUrl:     string | null;
+  avatarInitial: string;
+}
+
+interface RawComment {
+  id:     number;
+  body:   string;
+  sender: RawCommentSender;
+  sentAt: string;
+}
+
+interface RawCommentListResponse {
+  status:  string;
+  message: string;
+  data: {
+    data:         RawComment[];
+    current_page: number;
+    last_page:    number;
+    total:        number;
+  };
+}
+
+interface RawCommentCreateResponse {
+  status:  string;
+  message: string;
+  data:    RawComment;
+}
+
+function toComment(raw: RawComment, currentUserId: string | undefined): TaskComment {
+  return {
+    id:        String(raw.id),
+    authorAr:  raw.sender.name,
+    authorEn:  raw.sender.name,
+    initials:  raw.sender.avatarInitial,
+    avatarBg:  getAvatarColor(raw.sender.name),
+    body:      raw.body,
+    createdAt: raw.sentAt,
+    isMine:    !!currentUserId && raw.sender.id === currentUserId,
+  };
+}
 
 export const taskDetailApi = {
-  get:         (id: string) => delay(MOCK_DETAIL[id] ?? { ...DETAIL_DEFAULTS, id }, 600),
-  getComments: (_id: string) => delay([...MOCK_COMMENTS], 400),
-  getSessions: (_id: string) => delay([...MOCK_SESSIONS], 450),
+  async get(projectId: string, taskId: string): Promise<{ data: TaskDetail }> {
+    const res = await http.get<RawTaskDetailResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}`);
+    return { data: toTaskDetail(res.data.data, projectId) };
+  },
+
+  async updateStatus(projectId: string, taskId: string, status: EmpTaskStatus): Promise<{ data: TaskDetail }> {
+    const res = await http.patch<RawTaskDetailResponse>(
+      `/v1/pm/projects/${projectId}/tasks/${taskId}/status`,
+      { status: REVERSE_STATUS_MAP[status] },
+    );
+    return { data: toTaskDetail(res.data.data, projectId) };
+  },
+
+  async getComments(projectId: string, taskId: string, currentUserId: string | undefined): Promise<{ data: TaskComment[] }> {
+    const res = await http.get<RawCommentListResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/comments`);
+    return { data: res.data.data.data.map(c => toComment(c, currentUserId)) };
+  },
+
+  async createComment(
+    projectId: string, taskId: string, body: string, currentUserId: string | undefined,
+  ): Promise<{ data: TaskComment }> {
+    const res = await http.post<RawCommentCreateResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/comments`, { body });
+    return { data: toComment(res.data.data, currentUserId) };
+  },
+
+  async getSessions(projectId: string, taskId: string): Promise<{ data: TaskSession[] }> {
+    const res = await http.get<RawTimeLogListResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/time-logs`);
+    return { data: res.data.data.sessions.map(toSession) };
+  },
+
+  async createSession(
+    projectId: string, taskId: string,
+    payload: { workDate: string; startedAt: string; endedAt: string; notes?: string },
+  ): Promise<{ data: TaskSession }> {
+    const res = await http.post<RawTimeLogCreateResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/time-logs`, {
+      work_date:  payload.workDate,
+      started_at: payload.startedAt,
+      ended_at:   payload.endedAt,
+      notes:      payload.notes,
+    });
+    return { data: toSession(res.data.data) };
+  },
+
+  async deleteSession(projectId: string, taskId: string, sessionId: string): Promise<void> {
+    await http.delete(`/v1/pm/projects/${projectId}/tasks/${taskId}/time-logs/${sessionId}`);
+  },
 };

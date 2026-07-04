@@ -28,24 +28,17 @@ export function SeoTaskDetailPage() {
   // Adapt SeoTaskDetail → TaskDetail shape for the reused TaskDetailTimeTracker
   const taskDetailAdapter: TaskDetail | undefined = detail
     ? {
-        id:               String(detail.id),
-        titleAr:          detail.title,
-        titleEn:          detail.title,
-        descriptionAr:    detail.description ?? '',
-        descriptionEn:    detail.description ?? '',
-        projectAr:        detail.phase ?? detail.taskTypeLabel,
-        projectEn:        detail.phase ?? detail.taskTypeLabel,
-        stage:            detail.phase ?? '',
-        assigneeAr:       detail.assignees[0]?.name ?? '—',
-        assigneeEn:       detail.assignees[0]?.name ?? '—',
-        assigneeInitials: detail.assignees[0]?.initials ?? '—',
-        createdByAr:      detail.createdBy,
-        createdByEn:      detail.createdBy,
-        startDate:        detail.startDate ?? '',
-        deadline:         detail.dueDate ?? '',
-        priority:         detail.priority === 'normal' ? 'medium' : (detail.priority as 'high' | 'low'),
-        status:           detail.status === 'blocked' ? 'pending' : (detail.status as 'pending' | 'inProgress' | 'completed'),
-        allocatedHours:   detail.allocatedHours,
+        id:             String(detail.id),
+        projectId:      '',
+        title:          detail.title,
+        description:    detail.description ?? '',
+        project:        detail.phase ?? detail.taskTypeLabel,
+        stage:          detail.phase,
+        createdAt:      detail.startDate,
+        deadline:       detail.dueDate ?? '',
+        priority:       detail.priority === 'normal' ? 'medium' : (detail.priority as 'high' | 'low'),
+        status:         detail.status === 'blocked' ? 'pending' : (detail.status as 'pending' | 'inProgress' | 'completed'),
+        allocatedHours: detail.allocatedHours,
       }
     : undefined;
 

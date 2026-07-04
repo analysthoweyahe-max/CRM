@@ -2,13 +2,19 @@ import { useState } from 'react';
 import { Play, Square, Trash2, Plus, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { useTaskTimer } from '@/app/layouts/components/TaskTimerContext';
+import { useCreateSession, useDeleteSession } from '../hooks/useTaskDetail';
 import type { TaskDetail, TaskSession } from '../types/taskDetail.types';
 
 interface Props {
-  task:      TaskDetail | undefined;
-  sessions:  TaskSession[];
-  isLoading: boolean;
-  isAr:      boolean;
+  task:       TaskDetail | undefined;
+  sessions:   TaskSession[];
+  isLoading:  boolean;
+  isAr:       boolean;
+  // When provided, add/delete persist for real via /v1/pm/.../time-logs.
+  // Omitted by callers (e.g. the SEO task detail reuse) that have no real
+  // backend wiring yet — those fall back to local-only session state.
+  projectId?: string;
+  taskId?:    string;
 }
 
 interface AddSessionForm {
@@ -49,9 +55,14 @@ function Skeleton() {
   );
 }
 
-export function TaskDetailTimeTracker({ task, sessions: initialSessions, isLoading, isAr }: Props) {
+export function TaskDetailTimeTracker({ task, sessions: serverSessions, isLoading, isAr, projectId, taskId }: Props) {
   const { activeTask, elapsed, startTimer, stopTimer } = useTaskTimer();
-  const [sessions, setSessions]   = useState<TaskSession[]>(initialSessions);
+  const canPersist = !!(projectId && taskId);
+  const createSessionMutation = useCreateSession(projectId ?? '', taskId ?? '');
+  const deleteSessionMutation = useDeleteSession(projectId ?? '', taskId ?? '');
+
+  const [localSessions, setLocalSessions] = useState<TaskSession[]>(serverSessions);
+  const sessions = canPersist ? serverSessions : localSessions;
   const [showModal, setShowModal] = useState(false);
   const [form, setForm]           = useState<AddSessionForm>({ date: '', from: '', to: '' });
 
@@ -63,18 +74,28 @@ export function TaskDetailTimeTracker({ task, sessions: initialSessions, isLoadi
   const progressPct = Math.min(100, (consumed / task.allocatedHours) * 100);
 
   const empTask = {
-    id: task.id, titleAr: task.titleAr, titleEn: task.titleEn,
-    project: isAr ? task.projectAr : task.projectEn,
+    id: task.id, titleAr: task.title, titleEn: task.title,
+    project: task.project,
     deadline: task.deadline, priority: task.priority,
   };
 
   function deleteSession(id: string) {
-    setSessions(prev => prev.filter(s => s.id !== id));
+    if (canPersist) { deleteSessionMutation.mutate(id); return; }
+    setLocalSessions(prev => prev.filter(s => s.id !== id));
   }
 
   function handleAddSession() {
     const duration = calcDuration(form.from, form.to);
     if (!form.date || !form.from || !form.to || duration <= 0) return;
+
+    if (canPersist) {
+      createSessionMutation.mutate(
+        { workDate: form.date, startedAt: form.from, endedAt: form.to },
+        { onSuccess: () => { setForm({ date: '', from: '', to: '' }); setShowModal(false); } },
+      );
+      return;
+    }
+
     const newSession: TaskSession = {
       id:            Date.now().toString(),
       date:          form.date,
@@ -82,7 +103,7 @@ export function TaskDetailTimeTracker({ task, sessions: initialSessions, isLoadi
       to:            form.to,
       durationHours: duration,
     };
-    setSessions(prev => [...prev, newSession]);
+    setLocalSessions(prev => [...prev, newSession]);
     setForm({ date: '', from: '', to: '' });
     setShowModal(false);
   }

@@ -29,8 +29,8 @@ export function TaskDetailHeader({ task, isLoading, isAr, onBack }: TaskDetailHe
   if (isLoading || !task) return <Skeleton />;
 
   const status  = STATUS_MAP[task.status];
-  const title   = isAr ? task.titleAr  : task.titleEn;
-  const project = isAr ? task.projectAr : task.projectEn;
+  const title   = task.title;
+  const project = task.project;
   const taskNum = `#${task.id.padStart(3, '0')}`;
 
   return (

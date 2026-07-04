@@ -1,15 +1,17 @@
 import { useLang } from '@/app/providers/LanguageProvider';
 import { useAuth } from '@/modules/auth/context/AuthContext';
-import { EmpStatCards }      from '../components/EmpStatCards';
-import { MyProjectsSection } from '../components/MyProjectsSection';
-import { useEmpDashboard }   from '../hooks/useEmpDashboard';
+import { useEmployeeTasks } from '@/modules/employee/tasks/hooks/useEmployeeTasks';
+import { EmpStatCards }    from '../components/EmpStatCards';
+import { MyTasksSection }  from '../components/MyTasksSection';
+import { useEmpDashboard } from '../hooks/useEmpDashboard';
 
 export function EmployeeDashboardPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const { user } = useAuth();
 
-  const { isLoading, overview, pending, sections } = useEmpDashboard();
+  const { isLoading, overview, pending } = useEmpDashboard();
+  const { data: tasks = [] } = useEmployeeTasks();
 
   if (isLoading) {
     return (
@@ -28,7 +30,7 @@ export function EmployeeDashboardPage() {
 
       <EmpStatCards overview={overview} pending={pending} isAr={isAr} />
 
-      <MyProjectsSection sections={sections} isAr={isAr} />
+      <MyTasksSection tasks={tasks} isAr={isAr} />
 
     </div>
   );

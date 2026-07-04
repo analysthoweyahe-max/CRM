@@ -2,19 +2,12 @@ import type { EmpTaskPriority, EmpTaskStatus } from './employeeTask.types';
 
 export interface TaskDetail {
   id:             string;
-  titleAr:        string;
-  titleEn:        string;
-  descriptionAr:  string;
-  descriptionEn:  string;
-  projectAr:      string;
-  projectEn:      string;
-  stage:          string;
-  assigneeAr:     string;
-  assigneeEn:     string;
-  assigneeInitials: string;
-  createdByAr:    string;
-  createdByEn:    string;
-  startDate:      string;
+  projectId:      string;
+  title:          string;
+  description:    string;
+  project:        string;
+  stage:          string | null;
+  createdAt:      string | null;
   deadline:       string;
   priority:       EmpTaskPriority;
   status:         EmpTaskStatus;

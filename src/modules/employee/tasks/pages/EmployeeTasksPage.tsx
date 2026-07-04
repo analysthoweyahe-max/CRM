@@ -1,14 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { useLang }       from '@/app/providers/LanguageProvider';
 import { PageHeader }    from '@/shared/components/ui/PageHeader';
+import { Button }        from '@/shared/components/ui/Button';
 import { TaskFilters }   from '../components/TaskFilters';
 import { TaskList }      from '../components/TaskList';
+import { AddTaskModal }  from '../components/AddTaskModal';
 import { useTaskFilters } from '../components/useTaskFilters';
 import { useEmployeeTasks } from '../hooks/useEmployeeTasks';
 
 export function EmployeeTasksPage() {
   const { lang } = useLang();
   const isAr = lang === 'ar';
+  const [showAddTask, setShowAddTask] = useState(false);
 
   const { data: allTasks = [], isLoading } = useEmployeeTasks();
 
@@ -24,7 +28,15 @@ export function EmployeeTasksPage() {
 
   return (
     <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
-      <PageHeader title={isAr ? 'مهامي' : 'My Tasks'} subtitle={subtitle} />
+      <PageHeader
+        title={isAr ? 'مهامي' : 'My Tasks'}
+        subtitle={subtitle}
+        actions={
+          <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => setShowAddTask(true)}>
+            {isAr ? 'إضافة مهمة' : 'Add Task'}
+          </Button>
+        }
+      />
 
       <TaskFilters
         statusItems={statusItems} priorityItems={priorityItems}
@@ -36,6 +48,8 @@ export function EmployeeTasksPage() {
       />
 
       <TaskList tasks={filtered} isLoading={isLoading} isAr={isAr} />
+
+      <AddTaskModal open={showAddTask} onClose={() => setShowAddTask(false)} isAr={isAr} />
     </div>
   );
 }

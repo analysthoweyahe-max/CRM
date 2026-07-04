@@ -1,11 +1,17 @@
 import { useRef, useState } from 'react';
 import { Bold, Italic, AtSign, Paperclip, Send } from 'lucide-react';
+import { useCreateComment } from '../hooks/useTaskDetail';
 import type { TaskComment } from '../types/taskDetail.types';
 
 interface Props {
-  comments:  TaskComment[];
-  isLoading: boolean;
-  isAr:      boolean;
+  comments:   TaskComment[];
+  isLoading:  boolean;
+  isAr:       boolean;
+  // When provided, sending persists for real via /v1/pm/.../comments.
+  // Omitted by callers (e.g. the SEO task detail reuse) with no real backend
+  // wiring yet — those fall back to local-only comment state.
+  projectId?: string;
+  taskId?:    string;
 }
 
 function Skeleton() {
@@ -27,8 +33,12 @@ function Skeleton() {
   );
 }
 
-export function TaskDetailComments({ comments: initialComments, isLoading, isAr }: Props) {
-  const [comments, setComments] = useState<TaskComment[]>(initialComments);
+export function TaskDetailComments({ comments: serverComments, isLoading, isAr, projectId, taskId }: Props) {
+  const canPersist = !!(projectId && taskId);
+  const createCommentMutation = useCreateComment(projectId ?? '', taskId ?? '');
+
+  const [localComments, setLocalComments] = useState<TaskComment[]>(serverComments);
+  const comments = canPersist ? serverComments : localComments;
   const [text, setText]         = useState('');
   const textareaRef             = useRef<HTMLTextAreaElement>(null);
   const fileInputRef            = useRef<HTMLInputElement>(null);
@@ -72,6 +82,18 @@ export function TaskDetailComments({ comments: initialComments, isLoading, isAr 
   function sendComment() {
     const trimmed = text.trim();
     if (!trimmed) return;
+
+    if (canPersist) {
+      createCommentMutation.mutate(trimmed, {
+        onSuccess: () => {
+          setText('');
+          selRef.current = { start: 0, end: 0 };
+          textareaRef.current?.focus();
+        },
+      });
+      return;
+    }
+
     const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     const newComment: TaskComment = {
       id:        Date.now().toString(),
@@ -83,7 +105,7 @@ export function TaskDetailComments({ comments: initialComments, isLoading, isAr 
       createdAt: timeStr,
       isMine:    true,
     };
-    setComments(prev => [...prev, newComment]);
+    setLocalComments(prev => [...prev, newComment]);
     setText('');
     selRef.current = { start: 0, end: 0 };
     textareaRef.current?.focus();

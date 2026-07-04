@@ -1,6 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { toast } from 'sonner';
 import { Badge }    from '@/shared/components/ui/Badge';
 import { Combobox } from '@/shared/components/form/Combobox';
+import { useAuth }  from '@/modules/auth/context/AuthContext';
+import { useUpdateTaskStatus } from '../hooks/useTaskDetail';
 import { fmtDeadline, PRIORITY_MAP } from './useTasksTable';
 import type { TaskDetail } from '../types/taskDetail.types';
 import type { EmpTaskStatus } from '../types/employeeTask.types';
@@ -9,6 +12,8 @@ interface Props {
   task:      TaskDetail | undefined;
   isLoading: boolean;
   isAr:      boolean;
+  projectId: string;
+  taskId:    string;
 }
 
 function InfoRow({ label, value }: { label: string; value: ReactNode }) {
@@ -39,54 +44,61 @@ const STATUS_OPTIONS: { value: EmpTaskStatus; ar: string; en: string }[] = [
   { value: 'pending',    ar: 'معلقة',        en: 'Pending'     },
 ];
 
-export function TaskDetailInfo({ task, isLoading, isAr }: Props) {
-  const [status, setStatus] = useState<EmpTaskStatus>(task?.status ?? 'inProgress');
+export function TaskDetailInfo({ task, isLoading, isAr, projectId, taskId }: Props) {
+  const { user } = useAuth();
+  const { mutate: updateStatus, isPending: updatingStatus } = useUpdateTaskStatus(projectId, taskId);
 
   if (isLoading || !task) return <Skeleton />;
 
   const priority = PRIORITY_MAP[task.priority];
-  const title    = isAr ? task.titleAr    : task.titleEn;
-  const desc     = isAr ? task.descriptionAr : task.descriptionEn;
-  const assignee = isAr ? task.assigneeAr : task.assigneeEn;
-  const creator  = isAr ? task.createdByAr : task.createdByEn;
+  const initial  = (user?.fullName ?? 'E').slice(0, 1).toUpperCase();
 
   const statusItems = STATUS_OPTIONS.map(o => ({ id: o.value, label: isAr ? o.ar : o.en }));
+
+  function handleStatusChange(value: string) {
+    updateStatus(value as EmpTaskStatus, {
+      onError: () => toast.error(isAr ? 'تعذّر تحديث الحالة' : 'Failed to update status'),
+    });
+  }
 
   return (
     <div>
       <InfoRow
         label={isAr ? 'العنوان' : 'Title'}
-        value={<span className="font-medium">{title}</span>}
+        value={<span className="font-medium">{task.title}</span>}
       />
       <InfoRow
         label={isAr ? 'الوصف التفصيلي' : 'Description'}
         value={
           <span className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
-            {desc || (isAr ? 'وصف تفصيلي للمهمة وما هو مطلوب إنجازه ضمن هذه المرحلة من المشروع.' : 'Detailed description...')}
+            {task.description || (isAr ? 'لا يوجد وصف' : 'No description')}
           </span>
         }
       />
-      <InfoRow
-        label={isAr ? 'المرحلة' : 'Stage'}
-        value={
-          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-            {task.stage}
-          </span>
-        }
-      />
+      {task.stage && (
+        <InfoRow
+          label={isAr ? 'المرحلة' : 'Stage'}
+          value={
+            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+              {task.stage}
+            </span>
+          }
+        />
+      )}
       <InfoRow
         label={isAr ? 'المسؤول عن التنفيذ' : 'Assignee'}
         value={
           <div className="flex items-center gap-2 justify-end">
-            <span>{assignee}</span>
+            <span>{user?.fullName ?? ''}</span>
             <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-semibold">
-              {task.assigneeInitials}
+              {initial}
             </div>
           </div>
         }
       />
-      <InfoRow label={isAr ? 'تم الإنشاء بواسطة' : 'Created By'} value={creator} />
-      <InfoRow label={isAr ? 'تاريخ البداية' : 'Start Date'}     value={fmtDeadline(task.startDate, isAr)} />
+      {task.createdAt && (
+        <InfoRow label={isAr ? 'تاريخ الإنشاء' : 'Created At'} value={fmtDeadline(task.createdAt, isAr)} />
+      )}
       <InfoRow label={isAr ? 'تاريخ التسليم' : 'Deadline'}       value={fmtDeadline(task.deadline, isAr)} />
       <InfoRow
         label={isAr ? 'الأولوية' : 'Priority'}
@@ -104,8 +116,9 @@ export function TaskDetailInfo({ task, isLoading, isAr }: Props) {
           <div className="w-40">
             <Combobox
               items={statusItems}
-              value={status}
-              onChange={v => setStatus(v as EmpTaskStatus)}
+              value={task.status}
+              onChange={handleStatusChange}
+              disabled={updatingStatus}
               searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
               noResultsText={isAr ? 'لا نتائج' : 'No results'}
             />

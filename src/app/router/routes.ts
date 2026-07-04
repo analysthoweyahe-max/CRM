@@ -58,7 +58,8 @@ export const ROUTES = {
     REQUESTS:      '/employee/requests',
     REPORTS:       '/employee/reports',
     TASKS:         '/employee/tasks',
-    TASK_DETAIL:   (id = ':id') => `/employee/tasks/${id}`,
+    TASK_DETAIL:   (projectId: string | number = ':projectId', taskId: string | number = ':taskId') =>
+      `/employee/tasks/${projectId}/${taskId}`,
     DAILY_REPORTS: '/employee/daily-reports',
     PROFILE:       '/employee/profile',
   },

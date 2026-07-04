@@ -4,22 +4,19 @@ export interface EmpTasksOverview {
   completed:     number;
 }
 
-export interface EmpProjectSection {
-  key:      string;
-  label:    string;
-  total?:   number;
-  projects: unknown[];
+export interface EmpProject {
+  id:               number;
+  name:             string;
+  status:           string;
+  statusLabel?:     string;
+  tasksTotal?:      number;
+  tasksCompleted?:  number;
+  progressPercent?: number;
+  tasksUrl?:        string;
 }
 
-export interface EmpDashboardData {
-  tasksOverview: EmpTasksOverview;
-  myProjects: {
-    sections: EmpProjectSection[];
-  };
-}
-
-export interface EmpDashboardApiResponse {
+export interface EmpProjectListResponse {
   status:  string;
   message: string;
-  data:    EmpDashboardData;
+  data:    { data: EmpProject[] };
 }

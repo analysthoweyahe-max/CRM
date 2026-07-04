@@ -8,7 +8,7 @@ import { TaskDetailAttachments }    from '../components/TaskDetailAttachments';
 import { TaskDetailTimeTracker }    from '../components/TaskDetailTimeTracker';
 
 export function TaskDetailPage() {
-  const { isAr, goBack, activeTab, setActiveTab, task, comments, sessions, isLoading } = useTaskDetailPage();
+  const { isAr, goBack, activeTab, setActiveTab, task, comments, sessions, isLoading, projectId, taskId } = useTaskDetailPage();
 
   return (
     <div className="space-y-4" dir={isAr ? 'rtl' : 'ltr'}>
@@ -16,10 +16,25 @@ export function TaskDetailPage() {
       <Card>
         <TaskDetailTabs activeTab={activeTab} onTabChange={setActiveTab} isAr={isAr} />
         <div className="p-5">
-          {activeTab === 'comments'    && <TaskDetailComments    comments={comments} isLoading={isLoading} isAr={isAr} />}
-          {activeTab === 'info'        && <TaskDetailInfo        task={task}        isLoading={isLoading} isAr={isAr} />}
+          {activeTab === 'comments'    && (
+            <TaskDetailComments
+              comments={comments} isLoading={isLoading} isAr={isAr}
+              projectId={projectId} taskId={taskId}
+            />
+          )}
+          {activeTab === 'info'        && (
+            <TaskDetailInfo
+              task={task} isLoading={isLoading} isAr={isAr}
+              projectId={projectId} taskId={taskId}
+            />
+          )}
           {activeTab === 'attachments' && <TaskDetailAttachments                    isLoading={isLoading} isAr={isAr} />}
-          {activeTab === 'time'        && <TaskDetailTimeTracker task={task} sessions={sessions} isLoading={isLoading} isAr={isAr} />}
+          {activeTab === 'time'        && (
+            <TaskDetailTimeTracker
+              task={task} sessions={sessions} isLoading={isLoading} isAr={isAr}
+              projectId={projectId} taskId={taskId}
+            />
+          )}
         </div>
       </Card>
     </div>
