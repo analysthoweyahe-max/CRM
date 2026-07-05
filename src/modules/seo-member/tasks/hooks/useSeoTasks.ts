@@ -1,18 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { seoTaskApi } from '../api/seoTask.api';
+import type { SeoTaskProjectRef } from '../types/seoTask.types';
 
-export function useSeoTasks(projectUuid?: string) {
+export function useSeoTasks() {
   return useQuery({
-    queryKey: ['seo-member', 'tasks', projectUuid],
-    queryFn:  () => seoTaskApi.list(projectUuid!),
-    enabled:  !!projectUuid,
-    select: res => {
-      const phases = res.data.data.phases;
-      const tasks  = phases.flatMap(p => p.tasks);
+    queryKey: ['seo-member', 'tasks'],
+    queryFn:  () => seoTaskApi.list(),
+    select: ({ tasks, total }) => {
       const phaseNames = [...new Set(
-        phases.map(p => p.phase).filter((p): p is string => !!p)
+        tasks.map((t) => t.phase).filter((p): p is string => !!p),
       )];
-      return { tasks, phaseNames, total: res.data.data.total };
+      const projectsById = new Map<string, SeoTaskProjectRef>();
+      tasks.forEach((t) => { if (t.project) projectsById.set(t.project.id, t.project); });
+      return { tasks, phaseNames, projects: [...projectsById.values()], total };
     },
     staleTime: 30_000,
   });

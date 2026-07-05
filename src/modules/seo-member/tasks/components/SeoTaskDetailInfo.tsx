@@ -6,9 +6,10 @@ import type { SeoTaskDetail } from '../types/seoTaskDetail.types';
 import type { SeoTaskStatus } from '../types/seoTask.types';
 
 interface Props {
-  task:      SeoTaskDetail | undefined;
-  isLoading: boolean;
-  isAr:      boolean;
+  task:           SeoTaskDetail | undefined;
+  isLoading:      boolean;
+  isAr:           boolean;
+  onStatusChange?: (status: SeoTaskStatus) => void;
 }
 
 const PRIORITY_BADGE: Record<string, { ar: string; en: string; variant: 'error' | 'warning' | 'gray' }> = {
@@ -88,7 +89,7 @@ function LinkList({
   );
 }
 
-export function SeoTaskDetailInfo({ task, isLoading, isAr }: Props) {
+export function SeoTaskDetailInfo({ task, isLoading, isAr, onStatusChange }: Props) {
   const {
     status, setStatus,
     metaTitle, setMetaTitle,
@@ -109,6 +110,7 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr }: Props) {
   const STATUS_OPTIONS: { value: SeoTaskStatus; arLabel: string; enLabel: string }[] = [
     { value: 'pending',    arLabel: 'لم تبدأ بعد', enLabel: 'Not Started' },
     { value: 'inProgress', arLabel: 'قيد التنفيذ', enLabel: 'In Progress' },
+    { value: 'inReview',   arLabel: 'قيد المراجعة', enLabel: 'In Review'  },
     { value: 'completed',  arLabel: 'مكتملة',       enLabel: 'Completed'  },
     { value: 'blocked',    arLabel: 'محظورة',        enLabel: 'Blocked'    },
   ];
@@ -147,7 +149,7 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr }: Props) {
       )}
 
       <InfoRow label={isAr ? 'تم الإنشاء بواسطة' : 'Created by'}>
-        {task.createdBy}
+        {task.createdBy?.name ?? '—'}
       </InfoRow>
 
       <InfoRow label={isAr ? 'تاريخ البداية' : 'Start date'}>
@@ -169,7 +171,11 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr }: Props) {
       <InfoRow label={isAr ? 'الحالة' : 'Status'}>
         <select
           value={status}
-          onChange={e => setStatus(e.target.value as SeoTaskStatus)}
+          onChange={e => {
+            const next = e.target.value as SeoTaskStatus;
+            setStatus(next);
+            onStatusChange?.(next);
+          }}
           className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400"
         >
           {STATUS_OPTIONS.map(opt => (

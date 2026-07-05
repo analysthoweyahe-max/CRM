@@ -1,12 +1,16 @@
+import { useState }      from 'react';
 import { useNavigate }   from 'react-router-dom';
+import { Plus }          from 'lucide-react';
 import { useLang }       from '@/app/providers/LanguageProvider';
 import { ROUTES }        from '@/app/router/routes';
 import { PageHeader }    from '@/shared/components/ui/PageHeader';
+import { Button }        from '@/shared/components/ui/Button';
 import { Card }          from '@/shared/components/ui/Card';
 import { TaskFilters }   from '@/modules/employee/tasks/components/TaskFilters';
 import { useSeoTasks }       from '../hooks/useSeoTasks';
 import { useSeoTaskFilters } from '../hooks/useSeoTaskFilters';
 import { SeoTaskCard }       from '../components/SeoTaskCard';
+import { AddSelfSeoTaskModal } from '../components/AddSelfSeoTaskModal';
 
 function SeoTaskSkeleton() {
   return (
@@ -36,6 +40,7 @@ export function SeoMemberTasksPage() {
   const navigate = useNavigate();
   const { lang } = useLang();
   const isAr = lang === 'ar';
+  const [showAdd, setShowAdd] = useState(false);
 
   const { data, isLoading } = useSeoTasks();
   const tasks      = data?.tasks      ?? [];
@@ -57,6 +62,11 @@ export function SeoMemberTasksPage() {
       <PageHeader
         title={isAr ? 'مهامي' : 'My Tasks'}
         subtitle={isAr ? `${total} مهمة` : `${total} tasks`}
+        actions={
+          <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => setShowAdd(true)}>
+            {isAr ? 'إضافة مهمة' : 'Add Task'}
+          </Button>
+        }
       />
 
       <TaskFilters
@@ -90,11 +100,20 @@ export function SeoMemberTasksPage() {
               key={task.id}
               task={task}
               isAr={isAr}
-              onDetails={id => navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(id))}
+              onDetails={id => {
+                const projectId = task.project?.id;
+                if (projectId) navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(projectId, id));
+              }}
             />
           ))}
         </div>
       )}
+
+      <AddSelfSeoTaskModal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        isAr={isAr}
+      />
 
     </div>
   );

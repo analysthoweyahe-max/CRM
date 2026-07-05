@@ -85,7 +85,7 @@ export function EmployeeDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="secondary" startIcon={<MessageSquare size={15} />}>
+          <Button variant="secondary" startIcon={<MessageSquare size={15} />} onClick={() => navigate(ROUTES.MESSAGES)}>
             {isAr ? 'مراسلة' : 'Message'}
           </Button>
           <Button
@@ -242,7 +242,7 @@ export function EmployeeDetailPage() {
       )}
 
       {activeTab === 'employment' && <EmployeeDetailEmployment emp={emp} isAr={isAr} />}
-      {activeTab === 'payroll'    && <EmployeeDetailPayroll    isAr={isAr} />}
+      {activeTab === 'payroll'    && <EmployeeDetailPayroll    employeeId={emp.id} isAr={isAr} />}
       {activeTab === 'attendance' && <EmployeeDetailAttendance employeeId={emp.id} isAr={isAr} />}
       {activeTab === 'leaves'     && <EmployeeDetailLeaves     employeeId={emp.id} isAr={isAr} />}
 

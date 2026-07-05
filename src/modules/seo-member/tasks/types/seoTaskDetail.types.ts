@@ -1,7 +1,7 @@
 import type { SeoTask } from './seoTask.types';
 
 export interface SeoAssignee {
-  id:       number;
+  id:       string;
   name:     string;
   initials: string;
   avatarBg: string;
@@ -9,7 +9,7 @@ export interface SeoAssignee {
 
 export interface SeoTaskDetail extends SeoTask {
   assignees:         SeoAssignee[];
-  createdBy:         string;
+  createdBy:         { id: string; name: string } | null;
   startDate:         string | null;
   siteLinks:         string[];
   referenceLinks:    string[];
@@ -22,4 +22,10 @@ export interface SeoTaskDetail extends SeoTask {
   metaTitle:         string | null;
   metaDescription:   string | null;
   allocatedHours:    number;
+}
+
+export interface SeoTaskDetailResponse {
+  status:  string;
+  message: string;
+  data:    SeoTaskDetail;
 }

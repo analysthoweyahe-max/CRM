@@ -31,7 +31,7 @@ export function MessagesPage() {
   const uidRef = useRef('');
 
   const { data: convData, isLoading } = useConversations({ per_page: 15 });
-  const conversations = convData?.data ?? [];
+  const conversations = convData ?? [];
 
   const { mutateAsync: createConversation, isPending: creating } = useCreateConversation();
 

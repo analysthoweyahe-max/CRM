@@ -71,7 +71,8 @@ export const ROUTES = {
   SEO_MEMBER: {
     DASHBOARD:     '/seo-member',
     TASKS:         '/seo-member/tasks',
-    TASK_DETAIL:   (id: string | number = ':taskId') => `/seo-member/tasks/${id}`,
+    TASK_DETAIL:   (projectId: string | number = ':projectId', taskId: string | number = ':taskId') =>
+      `/seo-member/tasks/${projectId}/${taskId}`,
     MESSAGES:      '/seo-member/messages',
     REQUESTS:      '/seo-member/requests',
     REPORTS:       '/seo-member/reports',

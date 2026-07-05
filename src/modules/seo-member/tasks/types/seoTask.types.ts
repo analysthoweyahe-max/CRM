@@ -1,31 +1,31 @@
-export type SeoTaskStatus   = 'pending' | 'inProgress' | 'completed' | 'blocked';
+export type SeoTaskStatus   = 'pending' | 'inProgress' | 'inReview' | 'completed' | 'blocked';
 export type SeoTaskPriority = 'high' | 'normal' | 'low';
 
+export interface SeoTaskProjectRef {
+  id:   string;
+  name: string;
+}
+
 export interface SeoTask {
-  id: number;
-  taskNumber: number;
-  title: string;
-  phase: string | null;
-  taskType: string;
+  id:            number;
+  taskNumber:    number;
+  title:         string;
+  phase:         string | null;
+  taskType:      string;
   taskTypeLabel: string;
-  status: SeoTaskStatus;
-  statusLabel: string;
-  priority: SeoTaskPriority;
+  status:        SeoTaskStatus;
+  statusLabel:   string;
+  priority:      SeoTaskPriority;
   priorityLabel: string;
-  dueDate: string | null;
-  description: string | null;
+  dueDate:       string | null;
+  description:   string | null;
+  project:       SeoTaskProjectRef | null;
 }
 
-export interface SeoTaskPhase {
-  phase: string;
-  tasks: SeoTask[];
-}
-
-export interface SeoTaskListResponse {
-  status: string;
-  message: string;
-  data: {
-    phases: SeoTaskPhase[];
-    total: number;
-  };
+export interface CreateSelfSeoTaskPayload {
+  title:            string;
+  description?:     string;
+  priority:         SeoTaskPriority;
+  due_date?:        string;
+  estimated_hours?: number;
 }

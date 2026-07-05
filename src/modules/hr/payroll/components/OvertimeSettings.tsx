@@ -45,9 +45,9 @@ export function OvertimeSettings() {
     save(
       {
         enabled,
-        threshold_minutes:  thresholdMinutes,
-        rate_multiplier:    rateMultiplier,
-        monthly_work_hours: monthlyWorkHours,
+        thresholdMinutes,
+        rateMultiplier,
+        monthlyWorkHours,
       },
       {
         onSuccess: () => toast.success(isAr ? 'تم حفظ الإعدادات' : 'Settings saved'),

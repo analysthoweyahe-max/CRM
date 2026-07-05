@@ -186,41 +186,46 @@ export const campaignApi = {
     return http.get<CampaignLookupResponse>('/v1/seo/projects/lookups/statuses');
   },
 
-  /* ── Tasks ─────────────────────────────────────────────────────────── */
+  /* ── Tasks (manager) ──────────────────────────────────────────────────
+     Confirmed prefix: /v1/seo/manager/... — distinct from the /v1/seo/projects/...
+     prefix used by the project-level (non-task) endpoints above. */
+  listAllTasks(params?: { project_id?: string | number; status?: string; search?: string }) {
+    return http.get<ApiResponse<PhasedTasksResponse>>('/v1/seo/manager/tasks', { params });
+  },
+
   getTasks(projectId: string | number, params?: { status?: string; search?: string }) {
     return http.get<ApiResponse<PhasedTasksResponse>>(
-      `/v1/seo/projects/${projectId}/tasks`, { params }
+      `/v1/seo/manager/projects/${projectId}/tasks`, { params }
     );
   },
 
   getTask(projectId: string | number, taskId: string | number) {
     return http.get<ApiResponse<SeoTaskDetail>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}`
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}`
     );
   },
 
   createTask(projectId: string | number, payload: CreateSeoTaskPayload) {
     return http.post<ApiResponse<SeoTask>>(
-      `/v1/seo/projects/${projectId}/tasks`, payload
+      `/v1/seo/manager/projects/${projectId}/tasks`, payload
     );
   },
 
   updateTask(projectId: string | number, taskId: string | number, payload: Partial<CreateSeoTaskPayload>) {
-    console.log('[updateTask] payload:', JSON.stringify(payload, null, 2));
     return http.put<ApiResponse<SeoTaskDetail>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}`, payload
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}`, payload
     );
   },
 
   updateTaskStatus(projectId: string | number, taskId: string | number, status: string) {
     return http.patch<ApiResponse<{ status: string }>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status }
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/status`, { status }
     );
   },
 
   updateAssignees(projectId: string | number, taskId: string | number, assigneeIds: string[]) {
-    return http.patch<ApiResponse<unknown>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/assignees`, { assignees: assigneeIds }
+    return http.put<ApiResponse<unknown>>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/assignees`, { assignees: assigneeIds }
     );
   },
 
@@ -228,8 +233,20 @@ export const campaignApi = {
     const fd = new FormData();
     fd.append('file', file);
     return http.post<ApiResponse<{ id: number; name: string; url: string }>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/attachments`, fd,
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/attachments`, fd,
       { headers: { 'Content-Type': undefined } }
+    );
+  },
+
+  getTimeLogs(projectId: string | number, taskId: string | number) {
+    return http.get<ApiResponse<{ id: number; hours: number; note?: string; loggedAt: string }[]>>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/time-logs`
+    );
+  },
+
+  addTimeLog(projectId: string | number, taskId: string | number, payload: { hours: number; note?: string }) {
+    return http.post<ApiResponse<{ id: number; hours: number; note?: string; loggedAt: string }>>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/time-logs`, payload
     );
   },
 
@@ -274,16 +291,16 @@ export const campaignApi = {
     );
   },
 
-  /* ── Task Comments ─────────────────────────────────────────────────── */
+  /* ── Task Comments (manager) ──────────────────────────────────────────── */
   getComments(projectId: string | number, taskId: string | number) {
     return http.get<ApiResponse<SeoComment[] | { data: SeoComment[] }>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments`
     );
   },
 
   addComment(projectId: string | number, taskId: string | number, body: string) {
     return http.post<ApiResponse<{ comment: SeoComment }>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`, { body }
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments`, { body }
     );
   },
 };

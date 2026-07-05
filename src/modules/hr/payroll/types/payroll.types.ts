@@ -200,14 +200,11 @@ export interface OvertimeSettingsResponse {
   data:    OvertimeSettingsData;
 }
 
-/* Write payload — unconfirmed exact keys (no sample PUT seen yet), snake_case
- * chosen to match every other confirmed write endpoint in this app. Verify
- * against a real save and adjust if the backend rejects it. */
 export interface UpdateOvertimeSettingsPayload {
-  enabled?:            boolean;
-  threshold_minutes?:  number;
-  rate_multiplier?:    number;
-  monthly_work_hours?: number;
+  enabled:           boolean;
+  thresholdMinutes:  number;
+  rateMultiplier:    number;
+  monthlyWorkHours:  number;
 }
 
 export interface OvertimeProcessResponse {

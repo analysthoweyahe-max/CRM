@@ -30,7 +30,9 @@ export function useDashboard() {
 
   const attendanceQ = useQuery({
     queryKey: ['dashboard', 'attendance'],
-    queryFn:  () => attendanceApi.daily().then(r => r.data.data),
+    // Match the Attendance page's default (unfiltered, page 1) request exactly,
+    // so the dashboard summary always agrees with the table's summary.
+    queryFn:  () => attendanceApi.daily({ per_page: 15, page: 1 }).then(r => r.data.data),
     staleTime: 60 * 1000,
   });
 

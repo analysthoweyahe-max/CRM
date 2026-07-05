@@ -5,6 +5,7 @@ import type { SeoTask, SeoTaskPriority, SeoTaskStatus } from '../types/seoTask.t
 const STATUS_MAP: Record<SeoTaskStatus, { ar: string; en: string; variant: 'brand' | 'success' | 'gray' | 'error' }> = {
   pending:    { ar: 'لم تبدأ بعد', en: 'Not Started', variant: 'gray'    },
   inProgress: { ar: 'قيد التنفيذ', en: 'In Progress',  variant: 'brand'   },
+  inReview:   { ar: 'قيد المراجعة', en: 'In Review',   variant: 'brand'   },
   completed:  { ar: 'مكتملة',      en: 'Completed',    variant: 'success' },
   blocked:    { ar: 'محظورة',      en: 'Blocked',      variant: 'error'   },
 };
