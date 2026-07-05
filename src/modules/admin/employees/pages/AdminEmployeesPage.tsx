@@ -1,17 +1,12 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Plus } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES }  from '@/app/router/routes';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button }     from '@/shared/components/ui/Button';
-import { getAvatarColor, getInitial } from '@/shared/utils';
 import { AdminEmployeeFilters } from '../components/AdminEmployeeFilters';
 import { AdminEmployeeTable }   from '../components/AdminEmployeeTable';
-import { EmployeeFormModal }    from '../components/EmployeeFormModal';
 import { useAdminEmployees }    from '../hooks/useAdminEmployees';
-import { MANAGER_ITEMS } from '../data/employeeData';
-import type { NewAdminEmployeeInput } from '../types/adminEmployee.types';
 
 export function AdminEmployeesPage() {
   const { lang } = useLang();
@@ -23,43 +18,7 @@ export function AdminEmployeesPage() {
     search, department, role, status,
     setSearch, setDepartment, setRole, setStatus,
     departmentOptions, roleOptions,
-    addEmployee,
   } = useAdminEmployees();
-
-  const [showAdd, setShowAdd] = useState(false);
-
-  function handleAdd(input: NewAdminEmployeeInput) {
-    const today = new Date().toISOString().slice(0, 10);
-    addEmployee({
-      id:                String(Date.now()),
-      name:              input.fullName,
-      email:             input.email,
-      avatarInitial:     getInitial(input.fullName),
-      avatarColor:       getAvatarColor(input.fullName),
-      department:        input.department || '—',
-      jobTitle:          input.jobTitle,
-      role:              input.role,
-      status:            input.accountStatus === 'نشط' ? 'active' : 'disabled',
-      statusLabelAr:     input.accountStatus,
-      statusLabelEn:     input.accountStatus === 'نشط' ? 'Active' : 'Disabled',
-      lastLoginAr:       isAr ? 'لم يسجل الدخول بعد' : 'Never logged in',
-      lastLoginEn:       'Never logged in',
-      phone:             input.phone,
-      address:           input.address,
-      employeeNumber:    `EMP-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-      managerName:       MANAGER_ITEMS.find(m => m.id === input.managerId)?.label ?? '—',
-      joiningDateAr:     input.joiningDate || today,
-      joiningDateEn:     input.joiningDate || today,
-      employmentTypeAr:  'دوام كامل',
-      employmentTypeEn:  'Full Time',
-      accountCreatedAr:  today,
-      accountCreatedEn:  today,
-      stats:             { projects: 0, tasksAssigned: 0, totalHours: 0, completionRate: 0 },
-      activity:          [{ id: 'a1', titleAr: 'إنشاء الحساب', titleEn: 'Account created', timeAr: isAr ? 'الآن' : 'Just now', timeEn: 'Just now' }],
-      customPermissions: {},
-    });
-    setShowAdd(false);
-  }
 
   function handleExport() {
     const headers = isAr
@@ -99,7 +58,7 @@ export function AdminEmployeesPage() {
             <Button variant="secondary" startIcon={<Download size={15} />} onClick={handleExport}>
               {isAr ? 'تصدير' : 'Export'}
             </Button>
-            <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => setShowAdd(true)}>
+            <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => navigate(ROUTES.EMPLOYEES.NEW)}>
               {isAr ? 'إضافة موظف' : 'Add Employee'}
             </Button>
           </>
@@ -119,14 +78,6 @@ export function AdminEmployeesPage() {
         page={page} pageCount={pageCount} total={total} pageSize={pageSize}
         onPage={setPage}
         onRowClick={id => navigate(ROUTES.ADMIN.EMPLOYEE_DETAIL(id))}
-      />
-
-      <EmployeeFormModal
-        open={showAdd}
-        onClose={() => setShowAdd(false)}
-        departmentOptions={departmentOptions}
-        onSubmit={handleAdd}
-        isAr={isAr}
       />
 
     </div>

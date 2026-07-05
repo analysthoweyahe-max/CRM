@@ -9,7 +9,7 @@ import type { AdminEmployee } from '../types/adminEmployee.types';
 
 const STATUS_VARIANT: Record<AdminEmployee['status'], 'success' | 'error' | 'warning'> = {
   active:   'success',
-  disabled: 'error',
+  inactive: 'error',
   pending:  'warning',
 };
 
@@ -58,15 +58,6 @@ export function AdminEmployeeTable({ employees, isAr, page, pageCount, total, pa
           label={isAr ? info.row.original.statusLabelAr : info.row.original.statusLabelEn}
           variant={STATUS_VARIANT[info.getValue()]}
         />
-      ),
-    }),
-    col.display({
-      id:     'lastLogin',
-      header: isAr ? 'آخر دخول' : 'Last Login',
-      cell:   ({ row }) => (
-        <span className="text-gray-500 dark:text-gray-400">
-          {isAr ? row.original.lastLoginAr : row.original.lastLoginEn}
-        </span>
       ),
     }),
     col.display({

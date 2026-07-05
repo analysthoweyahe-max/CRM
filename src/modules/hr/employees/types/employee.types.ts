@@ -30,6 +30,9 @@ export interface ApiEmployee {
   shift_end?:          string | null;
   onboardingStep?:     number;
   manager?:            ApiLookup | null;
+  roles?:              string[];
+  createdAt?:          string;
+  updatedAt?:          string;
 }
 
 // ── List response ─────────────────────────────────────────────────────────────

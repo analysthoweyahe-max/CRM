@@ -7,7 +7,7 @@ import type { AdminEmployeeDetail } from '../types/adminEmployee.types';
 
 const STATUS_VARIANT: Record<AdminEmployeeDetail['status'], 'success' | 'error' | 'warning'> = {
   active:   'success',
-  disabled: 'error',
+  inactive: 'error',
   pending:  'warning',
 };
 

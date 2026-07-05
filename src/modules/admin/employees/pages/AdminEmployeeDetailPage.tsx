@@ -6,20 +6,21 @@ import { ActivityLogCard }       from '../components/ActivityLogCard';
 import { PersonalInfoCard }      from '../components/PersonalInfoCard';
 import { EmploymentInfoCard }    from '../components/EmploymentInfoCard';
 import { CustomPermissionsCard } from '../components/CustomPermissionsCard';
-import { EmployeeFormModal }     from '../components/EmployeeFormModal';
 import { useAdminEmployeeDetail } from '../hooks/useAdminEmployeeDetail';
-import { useAdminEmployees }      from '../hooks/useAdminEmployees';
 
 export function AdminEmployeeDetailPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
 
-  const {
-    employee, editInitial,
-    showEdit, openEdit, closeEdit, saveEdit, resetPassword,
-  } = useAdminEmployeeDetail(isAr);
+  const { employee, isLoading, editEmployee, resetPassword } = useAdminEmployeeDetail(isAr);
 
-  const { departmentOptions } = useAdminEmployees();
+  if (isLoading) {
+    return (
+      <div className="text-center py-16 text-sm text-gray-400 dark:text-gray-500">
+        {isAr ? 'جاري التحميل...' : 'Loading...'}
+      </div>
+    );
+  }
 
   if (!employee) {
     return (
@@ -32,7 +33,7 @@ export function AdminEmployeeDetailPage() {
   return (
     <div className="space-y-5">
 
-      <EmployeeDetailHeader employee={employee} isAr={isAr} onEdit={openEdit} onResetPassword={resetPassword} />
+      <EmployeeDetailHeader employee={employee} isAr={isAr} onEdit={editEmployee} onResetPassword={resetPassword} />
 
       <EmployeeStatCards stats={employee.stats} isAr={isAr} />
 
@@ -47,15 +48,6 @@ export function AdminEmployeeDetailPage() {
           <CustomPermissionsCard permissions={employee.customPermissions} isAr={isAr} />
         </div>
       </div>
-
-      <EmployeeFormModal
-        open={showEdit}
-        onClose={closeEdit}
-        departmentOptions={departmentOptions}
-        onSubmit={saveEdit}
-        initial={editInitial}
-        isAr={isAr}
-      />
 
     </div>
   );

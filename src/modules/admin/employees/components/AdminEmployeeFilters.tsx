@@ -1,5 +1,6 @@
 import { Search } from 'lucide-react';
 import { Combobox } from '@/shared/components/form/Combobox';
+import { getRoleLabel } from '../types/adminEmployee.types';
 
 interface Props {
   isAr:              boolean;
@@ -25,10 +26,15 @@ export function AdminEmployeeFilters({
     ...opts.map(o => ({ id: o, label: o })),
   ];
 
+  const roleItems = [
+    { id: '', label: isAr ? 'كل الأدوار' : 'All Roles' },
+    ...roleOptions.map(o => ({ id: o, label: getRoleLabel(o, isAr) })),
+  ];
+
   const statusItems = [
     { id: '',         label: isAr ? 'كل الحالات' : 'All Statuses' },
     { id: 'active',   label: isAr ? 'نشط'  : 'Active'   },
-    { id: 'disabled', label: isAr ? 'معطل' : 'Disabled' },
+    { id: 'inactive', label: isAr ? 'معطل' : 'Inactive' },
     { id: 'pending',  label: isAr ? 'معلق' : 'Pending'  },
   ];
 
@@ -46,7 +52,7 @@ export function AdminEmployeeFilters({
 
       <div className="w-40">
         <Combobox
-          items={toItems(roleOptions, isAr ? 'كل الأدوار' : 'All Roles')}
+          items={roleItems}
           value={role}
           onChange={onRole}
           searchPlaceholder={isAr ? 'ابحث عن دور...' : 'Search role...'}

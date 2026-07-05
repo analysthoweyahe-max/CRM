@@ -15,7 +15,6 @@ export function PersonalInfoCard({ employee, isAr }: Props) {
       </h2>
       <InfoRow label={isAr ? 'البريد الإلكتروني' : 'Email'} value={employee.email} />
       <InfoRow label={isAr ? 'رقم الهاتف' : 'Phone Number'} value={employee.phone || '—'} />
-      <InfoRow label={isAr ? 'العنوان' : 'Address'} value={employee.address || '—'} />
     </Card>
   );
 }

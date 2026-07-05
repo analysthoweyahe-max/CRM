@@ -5,7 +5,7 @@ import type { AdminEmployeeDetail } from '../types/adminEmployee.types';
 
 const STATUS_VARIANT: Record<AdminEmployeeDetail['status'], 'success' | 'error' | 'warning'> = {
   active:   'success',
-  disabled: 'error',
+  inactive: 'error',
   pending:  'warning',
 };
 
@@ -25,7 +25,6 @@ export function SystemAccessCard({ employee, isAr }: Props) {
         label={isAr ? 'حالة الحساب' : 'Account Status'}
         value={<Badge label={isAr ? employee.statusLabelAr : employee.statusLabelEn} variant={STATUS_VARIANT[employee.status]} />}
       />
-      <InfoRow label={isAr ? 'آخر تسجيل دخول' : 'Last Login'} value={isAr ? employee.lastLoginAr : employee.lastLoginEn} />
       <InfoRow label={isAr ? 'تاريخ إنشاء الحساب' : 'Account Created'} value={isAr ? employee.accountCreatedAr : employee.accountCreatedEn} />
     </Card>
   );

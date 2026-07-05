@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Clock, Banknote, MessageSquare, Settings,
   UserPlus, FileText, CalendarDays, TrendingDown, Gift, ShieldCheck,
-  FilePlus2, ClipboardList, CheckSquare, BarChart2,
+  FilePlus2, ClipboardList, CheckSquare, BarChart2, Building2,
 } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
 import type { NavSectionDef } from './appSidebar.types';
@@ -12,8 +12,9 @@ export const ADMIN_NAV: NavSectionDef[] = [
   {
     items: [
       { key: 'admin-dash',      labelAr: 'الرئيسية',           labelEn: 'Dashboard',           icon: LayoutDashboard, path: ROUTES.ADMIN.DASHBOARD  },
-      { key: 'admin-employees', labelAr: 'إدارة الموظفين',     labelEn: 'Employees',           icon: Users,           path: ROUTES.ADMIN.EMPLOYEES  },
-      { key: 'admin-roles',     labelAr: 'الأدوار والصلاحيات', labelEn: 'Roles & Permissions', icon: ShieldCheck,     path: ROUTES.ADMIN.ROLES      },
+      { key: 'admin-employees', labelAr: 'إدارة الموظفين',     labelEn: 'Employees',           icon: Users,           path: ROUTES.ADMIN.EMPLOYEES    },
+      { key: 'admin-departments', labelAr: 'الأقسام',         labelEn: 'Departments',         icon: Building2,       path: ROUTES.ADMIN.DEPARTMENTS  },
+      { key: 'admin-roles',     labelAr: 'الأدوار والصلاحيات', labelEn: 'Roles & Permissions', icon: ShieldCheck,     path: ROUTES.ADMIN.ROLES        },
       { key: 'admin-settings',  labelAr: 'إعدادات المؤسسة',    labelEn: 'Org Settings',        icon: Settings,        path: ROUTES.ADMIN.SETTINGS   },
     ],
   },
