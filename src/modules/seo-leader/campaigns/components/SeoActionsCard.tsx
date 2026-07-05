@@ -33,7 +33,7 @@ function buildExcel(data: SeoExportData, isAr: boolean): string {
 
   const rows = isAr
     ? [
-        ['اسم الحملة',       data.name],
+        ['اسم المشروع',      data.name],
         ['الدومين المستهدف', data.targetDomain ?? '—'],
         ['الحالة',           data.statusLabel  ?? data.status ?? '—'],
         ['النوع',            data.campaignTypeLabel ?? '—'],
@@ -42,7 +42,7 @@ function buildExcel(data: SeoExportData, isAr: boolean): string {
         ['الوصف',            data.description  ?? '—'],
       ]
     : [
-        ['Campaign Name',   data.name],
+        ['Project Name',    data.name],
         ['Target Domain',   data.targetDomain ?? '—'],
         ['Status',          data.statusLabel  ?? data.status ?? '—'],
         ['Type',            data.campaignTypeLabel ?? '—'],
@@ -52,7 +52,7 @@ function buildExcel(data: SeoExportData, isAr: boolean): string {
       ];
 
   const header = isAr ? ['الحقل', 'القيمة'] : ['Field', 'Value'];
-  const sheet  = isAr ? 'معلومات الحملة' : 'Campaign Info';
+  const sheet  = isAr ? 'معلومات المشروع' : 'Project Info';
 
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -115,7 +115,7 @@ export function SeoActionsCard({ campaignId, campaignName, exportData, isAr }: P
         open={openArchive}
         onClose={() => setOpenArchive(false)}
         size="sm"
-        title={isAr ? 'أرشفة الحملة' : 'Archive Campaign'}
+        title={isAr ? 'أرشفة المشروع' : 'Archive Project'}
         footer={
           <div className="flex items-center gap-3 justify-start flex-row-reverse">
             <Button variant="secondary" startIcon={<Archive size={14} />} onClick={handleArchive}>
@@ -134,7 +134,7 @@ export function SeoActionsCard({ campaignId, campaignName, exportData, isAr }: P
           <p className="text-sm text-gray-600 dark:text-gray-300">
             {isAr
               ? <> سيتم نقل <span className="font-semibold text-gray-900 dark:text-gray-100">"{campaignName}"</span> إلى الأرشيف.</>
-              : <> Campaign <span className="font-semibold">"{campaignName}"</span> will be moved to archive.</>
+              : <> Project <span className="font-semibold">"{campaignName}"</span> will be moved to archive.</>
             }
           </p>
           <div className="w-full rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 px-4 py-2.5 text-center">

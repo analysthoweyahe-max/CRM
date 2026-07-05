@@ -1,41 +1,31 @@
-import { useState }          from 'react';
-import { CalendarDays, Sun, Moon, LayoutGrid } from 'lucide-react';
-import { useLang }            from '@/app/providers/LanguageProvider';
-import { PageHeader }         from '@/shared/components/ui/PageHeader';
-import { StartDayForm }        from '@/modules/employee/daily-reports/components/StartDayForm';
-import { EndDayForm }          from '@/modules/employee/daily-reports/components/EndDayForm';
-import { WeeklyScheduleTable } from '@/modules/employee/daily-reports/components/WeeklyScheduleTable';
-import { DailyReportList }     from '@/modules/employee/daily-reports/components/DailyReportList';
-import { useHistory, useWeeklySchedule } from '@/modules/employee/daily-reports/hooks/useDailyReports';
+import { useState } from 'react';
+import { CalendarDays, FilePlus2 } from 'lucide-react';
+import { useLang }        from '@/app/providers/LanguageProvider';
+import { PageHeader }     from '@/shared/components/ui/PageHeader';
+import { DailyReportForm } from '../components/DailyReportForm';
+import { DailyReportList } from '@/modules/employee/daily-reports/components/DailyReportList';
+import { useHistory }      from '../hooks/useDailyReports';
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
-type Tab = 'start-day' | 'end-day' | 'weekly' | 'history';
+type Tab = 'submit' | 'history';
 
 const TABS = [
-  { id: 'start-day' as Tab, arLabel: 'بداية اليوم',     enLabel: 'Start of Day', Icon: Sun          },
-  { id: 'end-day'   as Tab, arLabel: 'نهاية اليوم',     enLabel: 'End of Day',   Icon: Moon         },
-  { id: 'weekly'    as Tab, arLabel: 'الجدول الأسبوعي', enLabel: 'Weekly',       Icon: LayoutGrid   },
-  { id: 'history'   as Tab, arLabel: 'السجل',            enLabel: 'Log',          Icon: CalendarDays },
+  { id: 'submit'  as Tab, arLabel: 'تقديم تقرير', enLabel: 'Submit Report', Icon: FilePlus2   },
+  { id: 'history' as Tab, arLabel: 'السجل',        enLabel: 'Log',          Icon: CalendarDays },
 ] as const;
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function SeoMemberDailyReportsPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
 
-  const [activeTab, setActiveTab] = useState<Tab>('start-day');
-
+  const [activeTab, setActiveTab] = useState<Tab>('submit');
   const { data: history = [], isLoading: histLoading } = useHistory();
-  const { data: weekly  = [], isLoading: weekLoading  } = useWeeklySchedule();
 
   return (
     <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
 
       <PageHeader
         title={isAr ? 'التقارير اليومية' : 'Daily Reports'}
-        subtitle={isAr ? 'سجّل بداية ونهاية يومك' : 'Log your day start and end'}
+        subtitle={isAr ? 'قدّم تقريرك اليومي وتابع سجلك' : 'Submit your daily report and track your log'}
       />
 
       {/* Tabs */}
@@ -62,10 +52,8 @@ export function SeoMemberDailyReportsPage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'start-day' && <StartDayForm isAr={isAr} />}
-      {activeTab === 'end-day'   && <EndDayForm   isAr={isAr} />}
-      {activeTab === 'weekly'    && <WeeklyScheduleTable rows={weekly}    isLoading={weekLoading} isAr={isAr} />}
-      {activeTab === 'history'   && <DailyReportList    reports={history} isLoading={histLoading} isAr={isAr} />}
+      {activeTab === 'submit'  && <DailyReportForm isAr={isAr} />}
+      {activeTab === 'history' && <DailyReportList reports={history} isLoading={histLoading} isAr={isAr} />}
 
     </div>
   );

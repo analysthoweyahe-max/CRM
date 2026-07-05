@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bonusesApi } from '../api/payroll.api';
-import type { BonusListParams, CreateBonusPayload, OvertimeSettingsData } from '../types/payroll.types';
+import type { BonusListParams, CreateBonusPayload, UpdateOvertimeSettingsPayload } from '../types/payroll.types';
 
 export function useBonusList(params?: BonusListParams) {
   return useQuery({
@@ -36,7 +36,7 @@ export function useOvertimeSettings() {
 export function useUpdateOvertimeSettings() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: OvertimeSettingsData) => bonusesApi.updateOvertimeSettings(payload),
+    mutationFn: (payload: UpdateOvertimeSettingsPayload) => bonusesApi.updateOvertimeSettings(payload),
     onSuccess:  () => qc.invalidateQueries({ queryKey: ['bonuses', 'overtime', 'settings'] }),
   });
 }

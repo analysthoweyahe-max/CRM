@@ -53,7 +53,7 @@ export function CampaignFormFields({
       {/* Campaign name */}
       <div>
         <label className={LABEL}>
-          {isAr ? 'اسم الحملة' : 'Campaign Name'}
+          {isAr ? 'اسم المشروع' : 'Project Name'}
           <span className="text-red-500 ms-1">*</span>
         </label>
         <input
@@ -85,12 +85,12 @@ export function CampaignFormFields({
 
       {/* Description */}
       <div>
-        <label className={LABEL}>{isAr ? 'وصف الحملة' : 'Campaign Description'}</label>
+        <label className={LABEL}>{isAr ? 'وصف المشروع' : 'Project Description'}</label>
         <textarea
           rows={3}
           value={description}
           onChange={e => setDesc(e.target.value)}
-          placeholder={isAr ? 'نبذة عن الحملة وأهدافها' : 'Brief about the campaign and its goals'}
+          placeholder={isAr ? 'نبذة عن المشروع وأهدافه' : 'Brief about the project and its goals'}
           className={`${INPUT} resize-none`}
         />
       </div>
@@ -99,7 +99,7 @@ export function CampaignFormFields({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>
-            {isAr ? 'نوع الحملة' : 'Campaign Type'}
+            {isAr ? 'نوع المشروع' : 'Project Type'}
             <span className="text-red-500 ms-1">*</span>
           </label>
           <Combobox
@@ -113,7 +113,7 @@ export function CampaignFormFields({
         </div>
         <div>
           <label className={LABEL}>
-            {isAr ? 'حالة الحملة' : 'Campaign Status'}
+            {isAr ? 'حالة المشروع' : 'Project Status'}
             <span className="text-red-500 ms-1">*</span>
           </label>
           <Combobox

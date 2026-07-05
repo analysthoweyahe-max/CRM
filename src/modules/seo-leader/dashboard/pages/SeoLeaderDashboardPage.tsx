@@ -24,8 +24,8 @@ export function SeoLeaderDashboardPage() {
           icon={<FolderKanban size={22} className="text-[#709028]" />}
           iconBg="bg-[#D8EBAE] dark:bg-[#A0CD39]/20"
           value={stats?.total_projects ?? 0}
-          labelAr="إجمالي الحملات"
-          labelEn="Total Campaigns"
+          labelAr="إجمالي المشاريع"
+          labelEn="Total Projects"
           isAr={isAr}
         />
         <StatCard
@@ -49,8 +49,8 @@ export function SeoLeaderDashboardPage() {
           icon={<CheckCircle2 size={22} className="text-emerald-600" />}
           iconBg="bg-emerald-100 dark:bg-emerald-900/30"
           value={stats?.completed_projects ?? 0}
-          labelAr="الحملات المكتملة"
-          labelEn="Completed Campaigns"
+          labelAr="المشاريع المكتملة"
+          labelEn="Completed Projects"
           isAr={isAr}
         />
       </div>

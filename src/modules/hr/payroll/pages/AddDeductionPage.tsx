@@ -48,12 +48,12 @@ export function AddDeductionPage() {
 
   const typeItems = useMemo<ComboboxItem[]>(() => [
     { id: '', label: isAr ? 'اختر نوع الخصم...' : 'Select type...' },
-    ...(typesRaw ?? []).map((t) => ({ id: t.key, label: isAr ? (t.label_ar ?? t.label) : t.label })),
+    ...(typesRaw ?? []).map((t) => ({ id: t.value, label: t.label })),
   ], [typesRaw, isAr]);
 
   const empItems = useMemo<ComboboxItem[]>(() => [
     { id: '', label: isAr ? 'اختر موظفاً...' : 'Select employee...' },
-    ...(empList ?? []).map((e) => ({ id: e.id, label: e.name })),
+    ...(empList ?? []).map((e) => ({ id: e.employeeNumber ?? e.id, label: e.name })),
   ], [empList, isAr]);
 
   const monthItems = useMemo(() => buildMonthItems(isAr), [isAr]);
@@ -67,7 +67,7 @@ export function AddDeductionPage() {
 
   async function onSubmit(values: AddDeductionFormValues) {
     await createDeduction.mutateAsync({
-      employee_id:     values.employee_id,
+      employee_number: values.employee_id,
       deduction_type:  values.deduction_type,
       financial_month: values.financial_month,
       amount:          Number(values.amount),

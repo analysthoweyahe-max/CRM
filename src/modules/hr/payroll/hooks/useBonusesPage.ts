@@ -35,7 +35,7 @@ export function useBonusesPage() {
 
   const typeItems = useMemo(() => [
     { id: '', label: isAr ? 'كل الأنواع' : 'All Types' },
-    ...(typesRaw ?? []).map((t) => ({ id: t.key, label: isAr ? (t.label_ar ?? t.label) : t.label })),
+    ...(typesRaw ?? []).map((t) => ({ id: t.value, label: t.label })),
   ], [typesRaw, isAr]);
 
   const deptItems = useMemo(() => [

@@ -43,12 +43,12 @@ export function DeductionsPage() {
 
   const typeItems   = useMemo<ComboboxItem[]>(() => [
     { id: '', label: isAr ? 'كل الأنواع'  : 'All types'   },
-    ...(typesRaw   ?? []).map((t) => ({ id: t.key, label: isAr ? (t.label_ar ?? t.label) : t.label })),
+    ...(typesRaw   ?? []).map((t) => ({ id: t.value, label: t.label })),
   ], [typesRaw, isAr]);
 
   const sourceItems = useMemo<ComboboxItem[]>(() => [
     { id: '', label: isAr ? 'كل المصادر' : 'All sources' },
-    ...(sourcesRaw ?? []).map((s) => ({ id: s.key, label: isAr ? (s.label_ar ?? s.label) : s.label })),
+    ...(sourcesRaw ?? []).map((s) => ({ id: s.value, label: s.label })),
   ], [sourcesRaw, isAr]);
 
   const monthItems = useMemo(() => buildMonthItems(isAr), [isAr]);

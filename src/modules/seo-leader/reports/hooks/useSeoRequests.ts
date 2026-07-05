@@ -1,61 +1,65 @@
-import { useState }  from 'react';
-import { toast }     from 'sonner';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { getAvatarColor } from '@/shared/utils';
+import { seoRequestsApi } from '../api/requests.api';
+import type { RawSeoRequest } from '../api/requests.api';
 import type { RequestItem, FilterKey } from '@/shared/modules/team-reports/types/teamReport.types';
 
-const MOCK: RequestItem[] = [
-  {
-    id: '1',
-    memberName: 'سارة خليل', memberInitial: 'س', memberColor: 'bg-emerald-500',
-    typeAr: 'إجازة', typeEn: 'Leave',
-    bodyAr: 'إجازة سنوية لمدة يومين', bodyEn: 'Annual leave for 2 days',
-    targetDate: '25 يونيو 2026', submittedDate: '20 يونيو 2026',
-    status: 'pending',
-  },
-  {
-    id: '2',
-    memberName: 'محمد علي', memberInitial: 'م', memberColor: 'bg-purple-500',
-    typeAr: 'إذن', typeEn: 'Permit',
-    bodyAr: 'إذن انصراف مبكر', bodyEn: 'Early departure permit',
-    targetDate: '19 يونيو 2026', submittedDate: '19 يونيو 2026',
-    status: 'approved', comment: 'موافق',
-  },
-  {
-    id: '3',
-    memberName: 'يوسف حسن', memberInitial: 'ي', memberColor: 'bg-sky-500',
-    typeAr: 'طلب دعم', typeEn: 'Support',
-    bodyAr: 'طلب ترخيص أداة تطوير', bodyEn: 'Development tool license request',
-    targetDate: '17 يونيو 2026', submittedDate: '17 يونيو 2026',
-    status: 'rejected', comment: 'غير متاح حالياً',
-  },
-  {
-    id: '4',
-    memberName: 'سارة خليل', memberInitial: 'س', memberColor: 'bg-emerald-500',
-    typeAr: 'إجازة', typeEn: 'Leave',
-    bodyAr: 'إجازة مرضية ليوم واحد', bodyEn: 'Sick leave for 1 day',
-    targetDate: '28 يونيو 2026', submittedDate: '27 يونيو 2026',
-    status: 'pending',
-  },
-];
+const QUERY_KEY = ['seo-requests'];
+
+function toRequestItem(r: RawSeoRequest): RequestItem {
+  return {
+    id:            r.id,
+    memberName:    r.employee.name,
+    memberInitial: r.employee.avatarInitial,
+    memberColor:   getAvatarColor(r.employee.name),
+    typeAr:        r.requestTypeLabel,
+    typeEn:        r.requestTypeLabel,
+    bodyAr:        r.description || r.title,
+    bodyEn:        r.description || r.title,
+    targetDate:    r.startDate === r.endDate ? r.startDate : `${r.startDate} - ${r.endDate}`,
+    submittedDate: r.submittedAt,
+    status:        r.status,
+    comment:       r.reviewerComment ?? undefined,
+  };
+}
 
 export function useSeoRequests(isAr: boolean) {
-  const [items,  setItems]  = useState<RequestItem[]>(MOCK);
   const [filter, setFilter] = useState<FilterKey>('all');
+  const queryClient = useQueryClient();
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn:  () => seoRequestsApi.list({ per_page: 100 }).then(r => r.data.data.data.map(toRequestItem)),
+  });
 
   const visible = filter === 'all' ? items : items.filter(r => r.status === filter);
 
-  function approve(id: string) {
-    setItems(prev => prev.map(r =>
-      r.id === id ? { ...r, status: 'approved', comment: isAr ? 'موافق' : 'Approved' } : r
-    ));
-    toast.success(isAr ? 'تمت الموافقة على الطلب' : 'Request approved');
-  }
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => seoRequestsApi.approve(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success(isAr ? 'تمت الموافقة على الطلب' : 'Request approved');
+    },
+    onError: () => toast.error(isAr ? 'تعذّرت الموافقة على الطلب' : 'Failed to approve request'),
+  });
 
-  function reject(id: string) {
-    setItems(prev => prev.map(r =>
-      r.id === id ? { ...r, status: 'rejected', comment: isAr ? 'مرفوض' : 'Rejected' } : r
-    ));
-    toast.success(isAr ? 'تم رفض الطلب' : 'Request rejected');
-  }
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => seoRequestsApi.reject(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success(isAr ? 'تم رفض الطلب' : 'Request rejected');
+    },
+    onError: () => toast.error(isAr ? 'تعذّر رفض الطلب' : 'Failed to reject request'),
+  });
 
-  return { visible, filter, setFilter, approve, reject };
+  return {
+    visible,
+    filter,
+    setFilter,
+    isLoading,
+    approve: (id: string) => approveMutation.mutate(id),
+    reject:  (id: string) => rejectMutation.mutate(id),
+  };
 }

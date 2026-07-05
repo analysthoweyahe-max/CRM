@@ -11,13 +11,17 @@ function formatElapsed(seconds: number): string {
   return `${h}:${m}:${s}`;
 }
 
-function formatTime(iso: string | null, isAr: boolean): string {
-  if (!iso) return '--:--';
-  return new Date(iso).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', {
-    hour:   '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  });
+/** checkInTime is a bare "HH:MM:SS" string (not a full date), so format it
+ * directly instead of going through `new Date()` — that would be an invalid
+ * date and either render "Invalid Date" or throw depending on the browser. */
+function formatTime(time: string | null, isAr: boolean): string {
+  if (!time) return '--:--';
+  const [hStr, mStr] = time.split(':');
+  const h24 = parseInt(hStr, 10);
+  if (Number.isNaN(h24)) return '--:--';
+  const period = h24 >= 12 ? (isAr ? 'م' : 'PM') : (isAr ? 'ص' : 'AM');
+  const h12    = h24 % 12 || 12;
+  return `${String(h12).padStart(2, '0')}:${mStr} ${period}`;
 }
 
 export function AttendanceWidget(props: AttendanceWidgetProps) {

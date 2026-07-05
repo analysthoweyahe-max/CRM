@@ -35,7 +35,7 @@ export function CampaignsSection({ campaigns, isAr, onNewCampaign }: Props) {
       {/* Header */}
       <div className="flex items-center justify-end px-5 pt-5 pb-0">
         <Button variant="primary" onClick={onNewCampaign} startIcon={<Plus size={16} />}>
-          {isAr ? 'حملة جديدة' : 'New Campaign'}
+          {isAr ? 'مشروع جديد' : 'New Project'}
         </Button>
       </div>
 
@@ -74,7 +74,7 @@ export function CampaignsSection({ campaigns, isAr, onNewCampaign }: Props) {
           <div className="py-16 text-center">
             <Megaphone size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-sm text-gray-400 dark:text-gray-500">
-              {isAr ? 'لا توجد حملات في هذه الحالة' : 'No campaigns in this status'}
+              {isAr ? 'لا توجد مشاريع في هذه الحالة' : 'No projects in this status'}
             </p>
           </div>
         ) : (

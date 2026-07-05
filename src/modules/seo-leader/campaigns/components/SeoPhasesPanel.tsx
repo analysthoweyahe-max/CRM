@@ -15,7 +15,7 @@ export function SeoPhasesPanel({ isAr: _isAr }: { isAr: boolean }) {
   return (
     <StagesPanel
       title="قالب مراحل SEO الكامل"
-      subtitle="أنشئ سير عمل لل SEO لتُعيّن القياسية تلقائياً لهذه الحملة"
+      subtitle="أنشئ سير عمل لل SEO لتُعيّن القياسية تلقائياً لهذا المشروع"
       icon={<Sparkles size={17} className="text-[#A0CD39] shrink-0" />}
       stages={SEO_PHASES}
     />

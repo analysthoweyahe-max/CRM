@@ -39,7 +39,7 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
   function handleDelete() {
     /* TODO: call DELETE /v1/seo/projects/{id} */
     archiveSeoProject(Number(campaignId));
-    toast.success(isAr ? 'تم حذف الحملة' : 'Campaign deleted');
+    toast.success(isAr ? 'تم حذف المشروع' : 'Project deleted');
     navigate(ROUTES.SEO_LEADER.DASHBOARD);
   }
 
@@ -84,10 +84,10 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
         projectName={settings?.name ?? name}
         onDelete={handleDelete}
         isAr={isAr}
-        deleteLabel={isAr ? 'حذف الحملة نهائياً' : 'Delete Campaign'}
+        deleteLabel={isAr ? 'حذف المشروع نهائياً' : 'Delete Project'}
         description={isAr
-          ? 'حذف الحملة نهائياً مع جميع مهامها وبياناتها.'
-          : 'Permanently delete this campaign and all its tasks and data.'}
+          ? 'حذف المشروع نهائياً مع جميع مهامه وبياناته.'
+          : 'Permanently delete this project and all its tasks and data.'}
       />
     </div>
   );

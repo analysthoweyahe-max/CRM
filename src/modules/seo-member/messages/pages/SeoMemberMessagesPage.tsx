@@ -1,89 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
 import { AtSign, FileText, MessageSquare, Paperclip, Send } from 'lucide-react';
 import { useLang }               from '@/app/providers/LanguageProvider';
+import { useAuth }               from '@/modules/auth/context/AuthContext';
 import { EmpConversationList }   from '@/modules/employee/messages/components/EmpConversationList';
 import type { EmpConversation }  from '@/modules/employee/messages/types/messages.types';
-
-// ─── Dummy data ───────────────────────────────────────────────────────────────
-
-const ME_ID = 'seo-me';
-
-interface DummyMessage {
-  id:           string;
-  body:         string;
-  sender:       { id: string; name: string };
-  created_at:   string;
-  attachment?:  { name: string; size: number };
-}
-
-const DUMMY_CONVERSATIONS: EmpConversation[] = [
-  {
-    id:           'c1',
-    name:         'حملة برند إكس',
-    unread_count: 3,
-    last_message: { body: 'تم رفع التقرير الأسبوعي', created_at: '2026-07-01T10:30:00' },
-  },
-  {
-    id:           'c2',
-    name:         'حملة الإلكترونيات',
-    unread_count: 0,
-    last_message: { body: 'شكراً على المتابعة', created_at: '2026-07-01T09:15:00' },
-  },
-  {
-    id:           'c3',
-    name:         'مشروع التجارة الإلكترونية',
-    unread_count: 1,
-    last_message: { body: 'محتاج تعديل على الكلمات', created_at: '2026-06-30T18:00:00' },
-  },
-  {
-    id:           'c4',
-    name:         'حملة المنتج الجديد',
-    unread_count: 0,
-    last_message: { body: 'ممتاز، استمر', created_at: '2026-06-30T14:00:00' },
-  },
-];
-
-const DUMMY_MESSAGES: Record<string, DummyMessage[]> = {
-  c1: [
-    { id: 'm1', body: 'مرحباً، تم مراجعة التقرير الأسبوعي وهناك بعض التعديلات المطلوبة',          sender: { id: 'leader1', name: 'أحمد السيد' },   created_at: '2026-07-01T09:00:00' },
-    { id: 'm2', body: 'تمام، سأقوم بالتعديل فوراً',                                               sender: { id: ME_ID,    name: 'أنا' },            created_at: '2026-07-01T09:05:00' },
-    { id: 'm3', body: 'نحتاج أيضاً لزيادة كثافة الكلمات المفتاحية في الصفحة الرئيسية',           sender: { id: 'leader1', name: 'أحمد السيد' },   created_at: '2026-07-01T09:15:00' },
-    { id: 'm4', body: '',                                                                           sender: { id: 'leader1', name: 'أحمد السيد' },   created_at: '2026-07-01T09:20:00', attachment: { name: 'SEO_Report_Week23.pdf', size: 2411724 } },
-    { id: 'm5', body: 'تم الاطلاع على الملف، سأبدأ العمل عليه الآن',                              sender: { id: ME_ID,    name: 'أنا' },            created_at: '2026-07-01T09:30:00' },
-    { id: 'm6', body: 'هل هناك أولوية لصفحات معينة؟',                                             sender: { id: ME_ID,    name: 'أنا' },            created_at: '2026-07-01T09:31:00' },
-    { id: 'm7', body: 'تم رفع التقرير الأسبوعي',                                                  sender: { id: 'leader1', name: 'أحمد السيد' },   created_at: '2026-07-01T10:30:00' },
-  ],
-  c2: [
-    { id: 'm1', body: 'كيف تسير حملة الإلكترونيات؟',                                              sender: { id: 'leader2', name: 'سارة محمد' },    created_at: '2026-07-01T08:00:00' },
-    { id: 'm2', body: 'الأمور تسير بشكل جيد، وصلنا لـ 85% من الهدف',                             sender: { id: ME_ID,    name: 'أنا' },            created_at: '2026-07-01T08:30:00' },
-    { id: 'm3', body: 'شكراً على المتابعة',                                                        sender: { id: 'leader2', name: 'سارة محمد' },    created_at: '2026-07-01T09:15:00' },
-  ],
-  c3: [
-    { id: 'm1', body: 'محتاج تعديل على الكلمات المفتاحية للصفحة',                                 sender: { id: 'leader3', name: 'خالد إبراهيم' }, created_at: '2026-06-30T17:00:00' },
-    { id: 'm2', body: 'حسناً، أي كلمات تحديداً؟',                                                 sender: { id: ME_ID,    name: 'أنا' },            created_at: '2026-06-30T17:30:00' },
-    { id: 'm3', body: 'محتاج تعديل على الكلمات',                                                   sender: { id: 'leader3', name: 'خالد إبراهيم' }, created_at: '2026-06-30T18:00:00' },
-  ],
-  c4: [
-    { id: 'm1', body: 'عمل رائع على حملة المنتج الجديد',                                           sender: { id: 'leader1', name: 'أحمد السيد' },   created_at: '2026-06-30T13:00:00' },
-    { id: 'm2', body: 'شكراً جزيلاً!',                                                             sender: { id: ME_ID,    name: 'أنا' },            created_at: '2026-06-30T13:15:00' },
-    { id: 'm3', body: 'ممتاز، استمر',                                                              sender: { id: 'leader1', name: 'أحمد السيد' },   created_at: '2026-06-30T14:00:00' },
-  ],
-};
+import {
+  useSeoConversations, useSeoMessages, useSendSeoMessage, useMarkSeoRead, useSeoMentionables,
+} from '../hooks/useSeoMessages';
+import type { SeoMessage } from '../types/messages.types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmtTime(raw: string, isAr: boolean) {
-  return new Date(raw).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', {
+function fmtTime(msg: SeoMessage, isAr: boolean) {
+  const raw = msg.sentAt ?? msg.created_at;
+  if (msg.sentTime) return msg.sentTime;
+  if (!raw) return '';
+  return new Date(raw.replace(' ', 'T')).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', {
     hour: '2-digit', minute: '2-digit',
   });
 }
 
-function fmtSize(bytes: number) {
+function fmtSize(bytes?: number) {
+  if (!bytes) return '';
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// ─── Dummy Chat Window ────────────────────────────────────────────────────────
+// ─── Chat window ────────────────────────────────────────────────────────────
 
 interface ChatProps {
   conversation: EmpConversation;
@@ -91,17 +34,21 @@ interface ChatProps {
 }
 
 function SeoMemberChatWindow({ conversation, isAr }: ChatProps) {
+  const { user }  = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
+  const currentUserId = user?.employeeId ?? user?.id ?? '';
 
-  const [text, setText]       = useState('');
-  const [messages, setMessages] = useState<DummyMessage[]>(
-    () => DUMMY_MESSAGES[conversation.id] ?? [],
-  );
+  const [text, setText] = useState('');
+  const [showMentions, setShowMentions] = useState(false);
+
+  const { data: messages = [], isLoading } = useSeoMessages(conversation.id);
+  const { mutate: sendText, isPending: sending } = useSendSeoMessage(conversation.id);
+  const { mutate: markRead } = useMarkSeoRead();
+  const { data: mentionables = [] } = useSeoMentionables(showMentions);
 
   useEffect(() => {
-    setMessages(DUMMY_MESSAGES[conversation.id] ?? []);
-    setText('');
+    if (conversation.id) markRead(conversation.id);
   }, [conversation.id]);
 
   useEffect(() => {
@@ -110,16 +57,18 @@ function SeoMemberChatWindow({ conversation, isAr }: ChatProps) {
 
   function handleSend() {
     const body = text.trim();
-    if (!body) return;
-    setMessages(prev => [
-      ...prev,
-      { id: String(Date.now()), body, sender: { id: ME_ID, name: 'أنا' }, created_at: new Date().toISOString() },
-    ]);
+    if (!body || sending) return;
     setText('');
+    sendText(body);
   }
 
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  }
+
+  function insertMention(name: string) {
+    setText(prev => (prev.endsWith(' ') || !prev ? prev : `${prev} `) + `@${name} `);
+    setShowMentions(false);
   }
 
   const convName = conversation.name ?? (isAr ? 'محادثة' : 'Chat');
@@ -145,60 +94,71 @@ function SeoMemberChatWindow({ conversation, isAr }: ChatProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50 dark:bg-gray-950">
-        {messages.map(msg => {
-          const isOwn = msg.sender.id === ME_ID;
-          return (
-            <div key={msg.id} className={`flex ${isOwn ? 'justify-start' : 'justify-end'}`}>
-              <div className={[
-                'max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm',
-                isOwn
-                  ? 'bg-[#A0CD39] text-gray-900 rounded-ss-sm'
-                  : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-700/60 rounded-se-sm',
-              ].join(' ')}>
-
-                {/* Attachment */}
-                {msg.attachment && (
-                  <div className={`flex items-center gap-2 mb-2 p-2 rounded-xl text-xs
-                                   ${isOwn ? 'bg-white/30' : 'bg-gray-50 dark:bg-gray-700'}`}>
-                    <FileText size={14} className="shrink-0" />
-                    <span className="truncate max-w-37.5">{msg.attachment.name}</span>
-                    <span className="shrink-0 opacity-60">{fmtSize(msg.attachment.size)}</span>
-                  </div>
-                )}
-
-                {/* Body */}
-                {msg.body && (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">{msg.body}</p>
-                )}
-
-                {/* Timestamp */}
-                <p className={`text-[10px] mt-1 text-end ${isOwn ? 'text-gray-700/70' : 'text-gray-400'}`}>
-                  {fmtTime(msg.created_at, isAr)}
-                </p>
-              </div>
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'} animate-pulse`}>
+              <div className="h-10 rounded-2xl bg-gray-200 dark:bg-gray-700 w-48" />
             </div>
-          );
-        })}
+          ))
+        ) : messages.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-8">
+            {isAr ? 'ابدأ المحادثة...' : 'Start the conversation...'}
+          </p>
+        ) : (
+          messages.map(msg => {
+            const isOwn = msg.isMine ?? (msg.sender.id === currentUserId);
+            return (
+              <div key={msg.id} className={`flex ${isOwn ? 'justify-start' : 'justify-end'}`}>
+                <div className={[
+                  'max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm',
+                  isOwn
+                    ? 'bg-[#A0CD39] text-gray-900 rounded-ss-sm'
+                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-700/60 rounded-se-sm',
+                ].join(' ')}>
+
+                  {msg.attachments?.map((att, i) => (
+                    <div key={i} className={`flex items-center gap-2 mb-2 p-2 rounded-xl text-xs
+                                            ${isOwn ? 'bg-white/30' : 'bg-gray-50 dark:bg-gray-700'}`}>
+                      <FileText size={14} className="shrink-0" />
+                      <span className="truncate max-w-37.5">{att.name ?? att.fileName ?? 'file'}</span>
+                      {att.size != null && <span className="shrink-0 opacity-60">{fmtSize(att.size)}</span>}
+                    </div>
+                  ))}
+
+                  {msg.body && (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">{msg.body}</p>
+                  )}
+
+                  <p className={`text-[10px] mt-1 text-end ${isOwn ? 'text-gray-700/70' : 'text-gray-400'}`}>
+                    {fmtTime(msg, isAr)}
+                  </p>
+                </div>
+              </div>
+            );
+          })
+        )}
         <div ref={bottomRef} />
       </div>
 
       {/* Composer */}
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700/60
-                      bg-white dark:bg-gray-900">
+                      bg-white dark:bg-gray-900 relative">
         <div className="flex items-end gap-2">
-          {/* Send */}
           <button
             type="button"
             onClick={handleSend}
-            disabled={!text.trim()}
+            disabled={!text.trim() || sending}
             className="w-10 h-10 rounded-full bg-[#A0CD39] hover:bg-[#709028]
                        flex items-center justify-center transition-colors shrink-0
                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send size={16} className="text-gray-900" style={{ transform: isAr ? 'scaleX(-1)' : 'none' }} />
+            {sending ? (
+              <span className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send size={16} className="text-gray-900" style={{ transform: isAr ? 'scaleX(-1)' : 'none' }} />
+            )}
           </button>
 
-          {/* Input */}
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
@@ -214,19 +174,40 @@ function SeoMemberChatWindow({ conversation, isAr }: ChatProps) {
                        max-h-28 overflow-y-auto"
           />
 
-          {/* @ mention */}
-          <button
-            type="button"
-            className="w-8 h-8 rounded-full flex items-center justify-center
-                       text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 transition-colors"
-          >
-            <AtSign size={16} />
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowMentions(o => !o)}
+              className="w-8 h-8 rounded-full flex items-center justify-center
+                         text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 transition-colors"
+            >
+              <AtSign size={16} />
+            </button>
+            {showMentions && (
+              <div className="absolute bottom-full mb-2 end-0 w-56 max-h-56 overflow-y-auto
+                              rounded-xl border border-gray-200 dark:border-gray-600
+                              bg-white dark:bg-gray-800 shadow-xl z-10 py-1">
+                {mentionables.length === 0 ? (
+                  <p className="px-3 py-2.5 text-xs text-gray-400 text-center">
+                    {isAr ? 'لا يوجد أعضاء' : 'No members'}
+                  </p>
+                ) : mentionables.map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => insertMention(m.name)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-end
+                               text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  >
+                    <span className="truncate">{m.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {/* Attach */}
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
             className="w-8 h-8 rounded-full flex items-center justify-center
                        text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 transition-colors"
           >
@@ -246,6 +227,7 @@ export function SeoMemberMessagesPage() {
   const isAr      = lang === 'ar';
 
   const [activeConv, setActiveConv] = useState<EmpConversation | null>(null);
+  const { data: conversations = [], isLoading } = useSeoConversations();
 
   return (
     <div
@@ -278,9 +260,9 @@ export function SeoMemberMessagesPage() {
       {/* Conversation list */}
       <div className="w-72 shrink-0 flex flex-col">
         <EmpConversationList
-          conversations={DUMMY_CONVERSATIONS}
+          conversations={conversations}
           activeId={activeConv?.id ?? null}
-          loading={false}
+          loading={isLoading}
           isAr={isAr}
           onSelect={conv => setActiveConv(conv)}
         />

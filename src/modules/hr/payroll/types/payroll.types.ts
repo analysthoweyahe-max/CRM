@@ -1,28 +1,34 @@
 /* ── Deduction ─────────────────────────────────────────────── */
 
 export type DeductionSource = 'auto' | 'manual';
-export type DeductionStatus = 'active' | 'cancelled' | 'pending';
+export type DeductionStatus = string;
 
-export interface ApiDeductionEmployee {
-  id:               string;
-  name:             string;
-  employee_number?: string;
-  department?:      string;
+export interface ApiCreatedBy {
+  id:   string;
+  name: string;
 }
 
 export interface ApiDeduction {
   id:                   string;
-  employee:             ApiDeductionEmployee;
-  deduction_type:       string;
-  deduction_type_label: string;
+  employeeNumber:       string;
+  employeeName:         string;
+  employeeId:           string;
+  department:           string;
+  source:               DeductionSource;
+  sourceLabel:          string;
+  deductionType:        string;
+  deductionTypeLabel:   string;
   amount:               number;
   reason:               string;
-  notes?:               string;
-  date?:                string;
-  financial_month:      string;
-  source:               DeductionSource;
-  source_label?:        string;
+  notes:                string | null;
+  deductionDate:        string;
+  financialMonth:       string;
   status:               DeductionStatus;
+  statusLabel:          string;
+  createdBy:            ApiCreatedBy;
+  statusUpdatedAt:      string | null;
+  createdAt:            string;
+  updatedAt:            string;
 }
 
 export interface DeductionListSummary {
@@ -62,9 +68,8 @@ export interface DeductionListParams {
 }
 
 export interface DeductionLookupItem {
-  key:       string;
-  label:     string;
-  label_ar?: string;
+  value: string;
+  label: string;
 }
 
 export interface DeductionLookupResponse {
@@ -87,9 +92,9 @@ export interface DeductionEmployeeLookupResponse {
 }
 
 export interface CreateDeductionPayload {
-  employee_id:      string;
-  deduction_type:   string;
-  financial_month:  string;
+  employee_number:  string;
+  deduction_type?:  string;
+  financial_month?: string;
   amount:           number;
   reason:           string;
   notes?:           string;
@@ -113,25 +118,27 @@ export interface EmployeeDeductionListResponse {
 
 /* ── Bonuses ────────────────────────────────────────────────── */
 
-export interface ApiBonusEmployee {
-  id:               string;
-  name:             string;
-  employee_number?: string;
-  department?:      string;
-}
-
 export interface ApiBonus {
-  id:                      string;
-  employee:                ApiBonusEmployee;
-  adjustment_type:         string;
-  adjustment_type_label?:  string;
-  amount:                  number;
-  reason?:                 string;
-  notes?:                  string;
-  date?:                   string;
-  financial_month?:        string;
-  source?:                 'auto' | 'manual';
-  status?:                 string;
+  id:                    string;
+  employeeNumber:        string;
+  employeeName:          string;
+  employeeId:            string;
+  department:            string;
+  source:                'auto' | 'manual';
+  sourceLabel:           string;
+  adjustmentType:        string;
+  adjustmentTypeLabel:   string;
+  amount:                number;
+  reason:                string;
+  notes:                 string | null;
+  adjustmentDate:        string;
+  financialMonth:        string;
+  overtimeHours:         number | null;
+  hourlyRate:            number | null;
+  rateMultiplier:        number | null;
+  createdBy:             ApiCreatedBy;
+  createdAt:             string;
+  updatedAt:             string;
 }
 
 export interface BonusListSummary {
@@ -170,9 +177,8 @@ export interface BonusListParams {
 }
 
 export interface BonusLookupItem {
-  key:       string;
-  label:     string;
-  label_ar?: string;
+  value: string;
+  label: string;
 }
 
 export interface BonusLookupResponse {
@@ -182,9 +188,10 @@ export interface BonusLookupResponse {
 }
 
 export interface OvertimeSettingsData {
-  enabled?:     boolean;
-  daily_limit?: number;
-  multiplier?:  string;
+  enabled:           boolean;
+  thresholdMinutes:  number;
+  rateMultiplier:    number;
+  monthlyWorkHours:  number;
 }
 
 export interface OvertimeSettingsResponse {
@@ -193,17 +200,27 @@ export interface OvertimeSettingsResponse {
   data:    OvertimeSettingsData;
 }
 
+/* Write payload — unconfirmed exact keys (no sample PUT seen yet), snake_case
+ * chosen to match every other confirmed write endpoint in this app. Verify
+ * against a real save and adjust if the backend rejects it. */
+export interface UpdateOvertimeSettingsPayload {
+  enabled?:            boolean;
+  threshold_minutes?:  number;
+  rate_multiplier?:    number;
+  monthly_work_hours?: number;
+}
+
 export interface OvertimeProcessResponse {
   status:  string;
   message: string;
-  data?: {
-    processed_count?: number;
-    total_amount?:    number;
+  data: {
+    count:   number;
+    records: unknown[];
   };
 }
 
 export interface CreateBonusPayload {
-  employee_id:     string;
+  employee_number: string;
   adjustment_type: string;
   financial_month: string;
   amount:          number;

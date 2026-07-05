@@ -20,10 +20,10 @@ export function NewCampaignPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-          {isAr ? 'إنشاء حملة SEO جديدة' : 'Create New SEO Campaign'}
+          {isAr ? 'إنشاء مشروع SEO جديد' : 'Create New SEO Project'}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {isAr ? 'أملأ تفاصيل الحملة وحدد مراحل الـ SEO' : 'Fill in campaign details and define SEO phases'}
+          {isAr ? 'أملأ تفاصيل المشروع وحدد مراحل الـ SEO' : 'Fill in project details and define SEO phases'}
         </p>
       </div>
 
@@ -59,7 +59,7 @@ export function NewCampaignPage() {
                           animate-[fadeInUp_0.3s_ease]">
             <CheckCircle size={18} className="shrink-0" />
             <span className="text-sm font-semibold">
-              {isAr ? 'تم إنشاء الحملة بنجاح!' : 'Campaign created successfully!'}
+              {isAr ? 'تم إنشاء المشروع بنجاح!' : 'Project created successfully!'}
             </span>
           </div>
         </div>
@@ -72,7 +72,7 @@ export function NewCampaignPage() {
           onClick={() => form.handleSave(false)}
           disabled={!form.isValid || form.saved || form.isSaving}
         >
-          {isAr ? 'حفظ المشروع' : 'Save Campaign'}
+          {isAr ? 'حفظ المشروع' : 'Save Project'}
         </Button>
         <Button
           variant="secondary"

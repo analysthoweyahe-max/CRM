@@ -90,7 +90,7 @@ export function CampaignCard({ campaign, isAr }: Props) {
         onClick={() => navigate(ROUTES.SEO_LEADER.DETAILS(String(campaign.id)))}
         className="hover:border-[#A0CD39] hover:text-[#709028] dark:hover:text-[#A0CD39]"
       >
-        {isAr ? 'تفاصيل الحملة' : 'View Details'}
+        {isAr ? 'تفاصيل المشروع' : 'View Details'}
       </Button>
     </Card>
   );

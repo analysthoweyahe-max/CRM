@@ -12,7 +12,7 @@ export function SeoMemberProfileSummaryCard({ isAr }: Props) {
   const initial     = (user?.fullName ?? 'S').slice(0, 1).toUpperCase();
 
   const STATS = [
-    { icon: <Target      size={16} />, label: isAr ? 'الحملات'         : 'Campaigns',   value: 1          },
+    { icon: <Target      size={16} />, label: isAr ? 'المشاريع'        : 'Projects',    value: 1          },
     { icon: <CheckSquare size={16} />, label: isAr ? 'المهام'           : 'Tasks',       value: taskCount  },
     { icon: <Clock       size={16} />, label: isAr ? 'إجمالي الساعات'  : 'Total Hours', value: 0          },
   ];

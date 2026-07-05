@@ -36,11 +36,11 @@ export function useAddBonusPage() {
   });
 
   const typeItems  = useMemo(() =>
-    (typesRaw ?? []).map((t) => ({ id: t.key, label: isAr ? (t.label_ar ?? t.label) : t.label })),
-  [typesRaw, isAr]);
+    (typesRaw ?? []).map((t) => ({ id: t.value, label: t.label })),
+  [typesRaw]);
 
   const empItems   = useMemo(() =>
-    (empList ?? []).map((e) => ({ id: e.id, label: e.name })),
+    (empList ?? []).map((e) => ({ id: e.employeeNumber ?? e.id, label: e.name })),
   [empList]);
 
   const monthItems = useMemo(() => buildMonthItems(isAr), [isAr]);
@@ -52,7 +52,7 @@ export function useAddBonusPage() {
 
   async function onSubmit(values: AddBonusFormValues) {
     await createBonus({
-      employee_id:     values.employee_id,
+      employee_number: values.employee_id,
       adjustment_type: values.adjustment_type,
       financial_month: values.financial_month,
       amount:          Number(values.amount),

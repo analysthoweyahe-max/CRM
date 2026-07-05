@@ -9,13 +9,12 @@ const col = createColumnHelper<ApiBonus>();
 
 export function getBonusColumns(isAr: boolean) {
   return [
-    col.accessor('employee', {
+    col.accessor('employeeName', {
       id:     'employee',
       header: isAr ? 'الموظف' : 'Employee',
-      cell:   ({ getValue }) => {
-        const emp     = getValue();
-        const name    = emp?.name ?? '';
-        const dept    = emp?.department ?? '–';
+      cell:   ({ row }) => {
+        const name    = row.original.employeeName ?? '';
+        const dept    = row.original.department ?? '–';
         const initial = name ? getInitial(name) : '?';
         const color   = name ? getAvatarColor(name) : 'bg-gray-400';
         return (
@@ -29,8 +28,8 @@ export function getBonusColumns(isAr: boolean) {
         );
       },
     }),
-    col.accessor('adjustment_type_label', {
-      id:     'adjustment_type_label',
+    col.accessor('adjustmentTypeLabel', {
+      id:     'adjustmentTypeLabel',
       header: isAr ? 'نوع المكافأة' : 'Type',
       cell:   (i) => <span className="text-sm text-gray-700 dark:text-gray-300">{i.getValue()}</span>,
     }),
@@ -53,8 +52,8 @@ export function getBonusColumns(isAr: boolean) {
         </span>
       ),
     }),
-    col.accessor('financial_month', {
-      id:            'financial_month',
+    col.accessor('financialMonth', {
+      id:            'financialMonth',
       header:        isAr ? 'الشهر المالي' : 'Month',
       enableSorting: false,
       cell:          (i) => <span className="text-sm text-gray-600 dark:text-gray-400">{i.getValue() ?? '–'}</span>,

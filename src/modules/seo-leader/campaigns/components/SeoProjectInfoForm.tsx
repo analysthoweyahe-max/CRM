@@ -58,12 +58,12 @@ export function SeoProjectInfoForm({
       {/* Name + Start Date */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className={LABEL}>{isAr ? 'اسم الحملة' : 'Campaign Name'}</label>
+          <label className={LABEL}>{isAr ? 'اسم المشروع' : 'Project Name'}</label>
           <input
             type="text"
             value={name}
             onChange={e => onChangeName(e.target.value)}
-            placeholder={isAr ? 'اسم الحملة' : 'Campaign name'}
+            placeholder={isAr ? 'اسم المشروع' : 'Project name'}
             className={INPUT}
           />
         </div>
@@ -98,7 +98,7 @@ export function SeoProjectInfoForm({
           rows={3}
           value={desc}
           onChange={e => onChangeDesc(e.target.value)}
-          placeholder={isAr ? 'وصف الحملة وأهدافها...' : 'Campaign description and goals…'}
+          placeholder={isAr ? 'وصف المشروع وأهدافه...' : 'Project description and goals…'}
           className={`${INPUT} resize-none`}
         />
       </div>

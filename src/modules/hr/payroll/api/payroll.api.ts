@@ -12,8 +12,8 @@ import type {
   BonusListResponse,
   BonusSingleResponse,
   BonusLookupResponse,
-  OvertimeSettingsData,
   OvertimeSettingsResponse,
+  UpdateOvertimeSettingsPayload,
   OvertimeProcessResponse,
   CreateBonusPayload,
   EmployeeBonusListResponse,
@@ -88,7 +88,7 @@ export const bonusesApi = {
     return http.get<OvertimeSettingsResponse>('/v1/payroll/bonuses/overtime/settings');
   },
 
-  updateOvertimeSettings(payload: OvertimeSettingsData) {
+  updateOvertimeSettings(payload: UpdateOvertimeSettingsPayload) {
     return http.put<OvertimeSettingsResponse>('/v1/payroll/bonuses/overtime/settings', payload);
   },
 

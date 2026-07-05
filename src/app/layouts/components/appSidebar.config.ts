@@ -102,7 +102,7 @@ export const SEO_NAV: NavSectionDef[] = [
   {
     items: [
       { key: 'seo-dash',    labelAr: 'الرئيسية',                  labelEn: 'Dashboard',         icon: LayoutDashboard, path: ROUTES.SEO_LEADER.DASHBOARD },
-      { key: 'seo-new',     labelAr: 'إنشاء حملة جديدة',         labelEn: 'New Campaign',       icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW      },
+      { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW      },
       { key: 'seo-team',    labelAr: 'فريق العمل',                labelEn: 'Team',               icon: Users,           path: ROUTES.SEO_LEADER.TEAM     },
       { key: 'seo-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.SEO_LEADER.REPORTS  },
     ],
