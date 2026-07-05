@@ -5,7 +5,7 @@ import { SeoSettingsPhasesSection }  from './SeoSettingsPhasesSection';
 import { SeoActionsCard }            from './SeoActionsCard';
 import type { SeoExportData }        from './SeoActionsCard';
 import { DangerZoneCard }            from '@/shared/modules/project/components/DangerZoneCard';
-import { archiveSeoProject }         from '../store/seoArchivedStore';
+import { campaignApi }               from '../api/campaign.api';
 import { useSeoProjectSettings }     from '../hooks/useSeoProjectSettings';
 import { toast }                     from 'sonner';
 
@@ -37,10 +37,21 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
   };
 
   function handleDelete() {
-    /* TODO: call DELETE /v1/seo/projects/{id} */
-    archiveSeoProject(Number(campaignId));
-    toast.success(isAr ? 'تم حذف المشروع' : 'Project deleted');
-    navigate(ROUTES.SEO_LEADER.DASHBOARD);
+    campaignApi.remove(campaignId)
+      .then(() => {
+        toast.success(isAr ? 'تم حذف المشروع' : 'Project deleted');
+        navigate(ROUTES.SEO_LEADER.DASHBOARD);
+      })
+      .catch((err: unknown) => {
+        const httpStatus = (err as { response?: { status?: number } })?.response?.status;
+        if (httpStatus === 403) {
+          toast.error(isAr
+            ? 'ليس لديك صلاحية لحذف هذا المشروع. هذا الإجراء متاح فقط لمدير النظام (Super Admin).'
+            : "You don't have permission to delete this project. Only a Super Admin can do this.");
+        } else {
+          toast.error(isAr ? 'حدث خطأ أثناء حذف المشروع' : 'Failed to delete the project');
+        }
+      });
   }
 
   if (isLoading) {

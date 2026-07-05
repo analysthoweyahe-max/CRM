@@ -14,6 +14,7 @@ export const ROUTES = {
     JOB_TITLES:      '/admin-job-titles',
     ROLES:           '/admin-roles',
     PERMISSIONS:     '/admin-permissions',
+    SEO_TASK_STATUSES: '/admin-seo-task-statuses',
     SETTINGS:        '/admin-org-settings',
   },
   EMPLOYEES: {

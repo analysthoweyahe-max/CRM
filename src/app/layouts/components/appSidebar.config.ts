@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Clock, Banknote, MessageSquare, Settings,
   UserPlus, FileText, CalendarDays, TrendingDown, Gift, ShieldCheck,
-  FilePlus2, ClipboardList, CheckSquare, BarChart2, Building2, Briefcase,
+  FilePlus2, ClipboardList, CheckSquare, BarChart2, Building2, Briefcase, Tags,
 } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
 import type { NavSectionDef } from './appSidebar.types';
@@ -16,6 +16,7 @@ export const ADMIN_NAV: NavSectionDef[] = [
       { key: 'admin-departments', labelAr: 'الأقسام',         labelEn: 'Departments',         icon: Building2,       path: ROUTES.ADMIN.DEPARTMENTS  },
       { key: 'admin-job-titles', labelAr: 'المسميات الوظيفية', labelEn: 'Job Titles',         icon: Briefcase,       path: ROUTES.ADMIN.JOB_TITLES   },
       { key: 'admin-roles',     labelAr: 'الأدوار والصلاحيات', labelEn: 'Roles & Permissions', icon: ShieldCheck,     path: ROUTES.ADMIN.ROLES        },
+      { key: 'admin-seo-task-statuses', labelAr: 'حالات مهام SEO', labelEn: 'SEO Task Statuses', icon: Tags,        path: ROUTES.ADMIN.SEO_TASK_STATUSES },
       { key: 'admin-settings',  labelAr: 'إعدادات المؤسسة',    labelEn: 'Org Settings',        icon: Settings,        path: ROUTES.ADMIN.SETTINGS   },
     ],
   },

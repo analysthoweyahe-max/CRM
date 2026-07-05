@@ -174,6 +174,10 @@ export const campaignApi = {
     );
   },
 
+  remove(id: string | number) {
+    return http.delete<{ status: string; message: string }>(`/v1/seo/projects/${id}`);
+  },
+
   getCampaignTypes() {
     return http.get<CampaignLookupResponse>('/v1/seo/projects/lookups/campaign-types');
   },
