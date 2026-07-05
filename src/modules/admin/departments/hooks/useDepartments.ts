@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toApiArray } from '@/shared/utils/apiList.utils';
 import { departmentApi } from '../api/department.api';
-import type { CreateDepartmentPayload } from '../types/adminDepartment.types';
+import type { ApiDepartment, CreateDepartmentPayload } from '../types/adminDepartment.types';
 
 export function useDepartmentList() {
   return useQuery({
     queryKey: ['admin', 'departments'],
-    queryFn:  () => departmentApi.list().then((r) => r.data.data),
+    queryFn:  () => departmentApi.list().then((r) => toApiArray<ApiDepartment>(r.data.data)),
   });
 }
 

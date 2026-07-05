@@ -1,56 +1,53 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { OrgSettings } from '../types/orgSettings.types';
+import { extractApiError } from '@/shared/utils/error.utils';
+import { orgSettingsApi } from '../api/orgSettings.api';
+import type { OrgSettings, UpdateOrgSettingsPayload } from '../types/orgSettings.types';
 
-const DEFAULT_SETTINGS: OrgSettings = {
-  workDays:          ['sun', 'mon', 'tue', 'wed', 'thu'],
-  workStart:         '09:00',
-  workEnd:           '17:00',
-  timezone:          'riyadh',
-  companyName:       'هوية لتطوير البرمجيات',
-  companyEmail:      'info@howeyah.com',
-  companyPhone:      '+966 11 234 5678',
-  companyWebsite:    'www.howeyah.com',
-  companyAddress:    'الرياض، حي العليا، المملكة العربية السعودية',
-  logoInitial:       'H',
-  passwordPolicy:    'strong',
-  sessionTimeout:    '30',
-  twoFactorEnabled:  false,
-  inviteMethod:      'email',
-  defaultDepartment: 'التطوير',
-  defaultRole:       'employee',
-};
+const ORG_SETTINGS_KEY = ['admin', 'org-settings'];
 
-export function useOrgSettings(isAr: boolean) {
-  const [saved,   setSaved]   = useState(DEFAULT_SETTINGS);
-  const [draft,   setDraft]   = useState(DEFAULT_SETTINGS);
-  const [saving,  setSaving]  = useState(false);
+function useOrgSettingsQuery() {
+  return useQuery({
+    queryKey: ORG_SETTINGS_KEY,
+    queryFn:  () => orgSettingsApi.get().then((r) => r.data.data),
+  });
+}
+
+function useUpdateOrgSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateOrgSettingsPayload) => orgSettingsApi.update(payload),
+    onSuccess:  (r) => qc.setQueryData(ORG_SETTINGS_KEY, r.data.data),
+  });
+}
+
+export function useOrgSettingsPage(isAr: boolean) {
+  const { data, isLoading } = useOrgSettingsQuery();
+  const { mutate: update, isPending: saving } = useUpdateOrgSettings();
+
+  const [draft, setDraft] = useState<OrgSettings | null>(null);
+
+  useEffect(() => {
+    if (data) setDraft(data);
+  }, [data]);
 
   function set<K extends keyof OrgSettings>(key: K, value: OrgSettings[K]) {
-    setDraft(prev => ({ ...prev, [key]: value }));
+    setDraft((prev) => prev ? { ...prev, [key]: value } : prev);
   }
 
-  function toggleWorkDay(day: string) {
-    setDraft(prev => ({
-      ...prev,
-      workDays: prev.workDays.includes(day)
-        ? prev.workDays.filter(d => d !== day)
-        : [...prev.workDays, day],
-    }));
-  }
-
-  async function save() {
-    setSaving(true);
-    // No real endpoint yet — persists locally for this session.
-    await new Promise(res => setTimeout(res, 400));
-    setSaved(draft);
-    setSaving(false);
-    toast.success(isAr ? 'تم حفظ التغييرات' : 'Changes saved');
+  function save() {
+    if (!draft) return;
+    const { updatedAt: _updatedAt, ...payload } = draft;
+    update(payload, {
+      onSuccess: () => toast.success(isAr ? 'تم حفظ التغييرات' : 'Changes saved'),
+      onError:   (err) => toast.error(extractApiError(err)),
+    });
   }
 
   function cancel() {
-    setDraft(saved);
+    if (data) setDraft(data);
   }
 
-  return { settings: draft, set, toggleWorkDay, save, cancel, saving };
+  return { settings: draft, isLoading, set, save, cancel, saving };
 }

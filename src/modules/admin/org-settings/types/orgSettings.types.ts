@@ -1,18 +1,22 @@
 export interface OrgSettings {
-  workDays:        string[];
-  workStart:       string;
-  workEnd:         string;
-  timezone:        string;
-  companyName:     string;
-  companyEmail:    string;
-  companyPhone:    string;
-  companyWebsite:  string;
-  companyAddress:  string;
-  logoInitial:     string;
-  passwordPolicy:  string;
-  sessionTimeout:  string;
-  twoFactorEnabled: boolean;
-  inviteMethod:    string;
-  defaultDepartment: string;
-  defaultRole:     string;
+  companyName:          string;
+  officialEmail:        string;
+  timezone:             string;
+  annualLeave:          number;
+  sickLeave:            number;
+  maxCarryover:         number;
+  notifyBeforeDays:     number;
+  dailyWorkHours:       number;
+  lateAllowanceMinutes: number;
+  workStartTime:        string;
+  workEndTime:          string;
+  updatedAt:            string;
 }
+
+export interface OrgSettingsResponse {
+  status:  string;
+  message: string;
+  data:    OrgSettings;
+}
+
+export type UpdateOrgSettingsPayload = Omit<OrgSettings, 'updatedAt'>;

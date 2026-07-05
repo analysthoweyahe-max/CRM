@@ -13,6 +13,7 @@ export const ROUTES = {
     DEPARTMENTS:     '/admin-departments',
     JOB_TITLES:      '/admin-job-titles',
     ROLES:           '/admin-roles',
+    PERMISSIONS:     '/admin-permissions',
     SETTINGS:        '/admin-org-settings',
   },
   EMPLOYEES: {

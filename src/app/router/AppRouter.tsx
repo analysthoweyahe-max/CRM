@@ -26,6 +26,7 @@ const AdminEmployeesPage = lazy(() => import('@/modules/admin/employees/pages/Ad
 const AdminEmployeeDetailPage = lazy(() => import('@/modules/admin/employees/pages/AdminEmployeeDetailPage').then(m => ({ default: m.AdminEmployeeDetailPage })));
 const AdminDepartmentsPage = lazy(() => import('@/modules/admin/departments/pages/AdminDepartmentsPage').then(m => ({ default: m.AdminDepartmentsPage })));
 const AdminJobTitlesPage = lazy(() => import('@/modules/admin/job-titles/pages/AdminJobTitlesPage').then(m => ({ default: m.AdminJobTitlesPage })));
+const AdminPermissionsPage = lazy(() => import('@/modules/admin/permissions/pages/AdminPermissionsPage').then(m => ({ default: m.AdminPermissionsPage })));
 const OrgSettingsPage    = lazy(() => import('@/modules/admin/org-settings/pages/OrgSettingsPage')   .then(m => ({ default: m.OrgSettingsPage })));
 const AdminRolesPage     = lazy(() => import('@/modules/admin/roles/pages/AdminRolesPage')           .then(m => ({ default: m.AdminRolesPage })));
 
@@ -113,6 +114,7 @@ export function AppRouter() {
                   <Route path={ROUTES.ADMIN.DEPARTMENTS}      element={<AdminDepartmentsPage />} />
                   <Route path={ROUTES.ADMIN.JOB_TITLES}       element={<AdminJobTitlesPage />} />
                   <Route path={ROUTES.ADMIN.ROLES}            element={<AdminRolesPage />} />
+                  <Route path={ROUTES.ADMIN.PERMISSIONS}      element={<AdminPermissionsPage />} />
                   <Route path={ROUTES.ADMIN.SETTINGS}         element={<OrgSettingsPage />} />
 
                   <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
