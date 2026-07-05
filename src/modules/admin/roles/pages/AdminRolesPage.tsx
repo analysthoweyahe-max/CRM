@@ -1,10 +1,11 @@
-import { Plus } from 'lucide-react';
+import { Plus, UserPlus } from 'lucide-react';
 import { useLang }    from '@/app/providers/LanguageProvider';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button }     from '@/shared/components/ui/Button';
 import { RoleCard }              from '../components/RoleCard';
 import { PermissionMatrixTable } from '../components/PermissionMatrixTable';
 import { RoleFormModal }         from '../components/RoleFormModal';
+import { AddManagerModal }       from '../components/AddManagerModal';
 import { useAdminRoles }         from '../hooks/useAdminRoles';
 
 export function AdminRolesPage() {
@@ -15,6 +16,8 @@ export function AdminRolesPage() {
     roles, matrixRoles, matrix, toggleMatrixPermission,
     showModal, editingInput,
     openCreate, openEdit, closeModal, submitRole,
+    showManagerModal, creatingManager,
+    openManagerModal, closeManagerModal, submitManager,
   } = useAdminRoles(isAr);
 
   return (
@@ -26,9 +29,14 @@ export function AdminRolesPage() {
           ? 'إدارة أدوار المستخدمين وصلاحياتهم داخل المؤسسة'
           : 'Manage user roles and permissions within the organization'}
         actions={
-          <Button variant="primary" startIcon={<Plus size={15} />} onClick={openCreate}>
-            {isAr ? 'إنشاء دور جديد' : 'Create New Role'}
-          </Button>
+          <>
+            <Button variant="secondary" startIcon={<UserPlus size={15} />} onClick={openManagerModal}>
+              {isAr ? 'إضافة مدير' : 'Add Manager'}
+            </Button>
+            <Button variant="primary" startIcon={<Plus size={15} />} onClick={openCreate}>
+              {isAr ? 'إنشاء دور جديد' : 'Create New Role'}
+            </Button>
+          </>
         }
       />
 
@@ -50,6 +58,14 @@ export function AdminRolesPage() {
         onClose={closeModal}
         onSubmit={submitRole}
         initial={editingInput}
+        isAr={isAr}
+      />
+
+      <AddManagerModal
+        open={showManagerModal}
+        onClose={closeManagerModal}
+        onSubmit={submitManager}
+        isLoading={creatingManager}
         isAr={isAr}
       />
 

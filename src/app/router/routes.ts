@@ -11,6 +11,7 @@ export const ROUTES = {
     EMPLOYEES:       '/admin-employees',
     EMPLOYEE_DETAIL: (id = ':id') => `/admin-employees/${id}`,
     DEPARTMENTS:     '/admin-departments',
+    JOB_TITLES:      '/admin-job-titles',
     ROLES:           '/admin-roles',
     SETTINGS:        '/admin-org-settings',
   },

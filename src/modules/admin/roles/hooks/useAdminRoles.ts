@@ -1,13 +1,29 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { extractApiError } from '@/shared/utils/error.utils';
 import { INITIAL_ROLES, INITIAL_MATRIX } from '../data/roleData';
+import { useCreateAdmin } from './useCreateAdmin';
 import type { RoleDef, PermissionMatrix, PermissionAction, RoleFormInput } from '../types/adminRole.types';
+import type { CreateAdminPayload } from '../types/adminManager.types';
 
 export function useAdminRoles(isAr: boolean) {
   const [roles,       setRoles]       = useState<RoleDef[]>(INITIAL_ROLES);
   const [matrix,       setMatrix]      = useState<PermissionMatrix>(INITIAL_MATRIX);
   const [editingRole,  setEditingRole] = useState<RoleDef | null>(null);
   const [showModal,    setShowModal]   = useState(false);
+
+  const [showManagerModal, setShowManagerModal] = useState(false);
+  const { mutate: createAdmin, isPending: creatingManager } = useCreateAdmin();
+
+  function submitManager(payload: CreateAdminPayload) {
+    createAdmin(payload, {
+      onSuccess: () => {
+        toast.success(isAr ? 'تم إنشاء المدير' : 'Manager created');
+        setShowManagerModal(false);
+      },
+      onError: (err) => toast.error(extractApiError(err)),
+    });
+  }
 
   function toggleMatrixPermission(roleKey: string, moduleKey: string, action: PermissionAction) {
     setMatrix(prev => {
@@ -52,5 +68,9 @@ export function useAdminRoles(isAr: boolean) {
     toggleMatrixPermission,
     showModal, editingInput,
     openCreate, openEdit, closeModal, submitRole,
+    showManagerModal, creatingManager,
+    openManagerModal:  () => setShowManagerModal(true),
+    closeManagerModal: () => setShowManagerModal(false),
+    submitManager,
   };
 }
