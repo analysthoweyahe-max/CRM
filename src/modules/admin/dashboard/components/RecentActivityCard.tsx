@@ -20,6 +20,11 @@ export function RecentActivityCard({ activity, isAr }: Props) {
         {isAr ? 'آخر النشاطات' : 'Recent Activities'}
       </h3>
 
+      {activity.length === 0 ? (
+        <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">
+          {isAr ? 'لا يوجد نشاط بعد' : 'No activity yet'}
+        </p>
+      ) : (
       <div className="divide-y divide-gray-100 dark:divide-gray-700">
         {activity.map(item => (
           <div key={item.id} className="flex items-start justify-between gap-4 py-3.5">
@@ -40,6 +45,7 @@ export function RecentActivityCard({ activity, isAr }: Props) {
           </div>
         ))}
       </div>
+      )}
     </Card>
   );
 }

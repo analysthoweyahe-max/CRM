@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, ShieldCheck, Briefcase, UserCog, FolderKanban } from 'lucide-react';
+import { Users, UserCheck, Clock, FolderKanban, FolderOpenDot } from 'lucide-react';
 import { StatCard } from '@/shared/components/ui/StatCard';
 import { ROUTES } from '@/app/router/routes';
 import type { AdminDashboardStats } from '../types/adminDashboard.types';
@@ -13,16 +13,15 @@ export function AdminStatCards({ stats, isAr }: Props) {
   const navigate = useNavigate();
 
   const CARDS = [
-    { value: stats.totalEmployees,  labelAr: 'إجمالي الموظفين',   labelEn: 'Total Employees',  icon: Users,       iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20', iconColor: 'text-[#709028] dark:text-[#A0CD39]', to: ROUTES.ADMIN.EMPLOYEES },
-    { value: stats.activeEmployees, labelAr: 'الموظفون النشطون', labelEn: 'Active Employees', icon: UserCheck,   iconBg: 'bg-emerald-100 dark:bg-emerald-900/30', iconColor: 'text-emerald-600', to: ROUTES.ADMIN.EMPLOYEES },
-    { value: stats.hrUsers,         labelAr: 'مستخدمو HR',       labelEn: 'HR Users',         icon: ShieldCheck, iconBg: 'bg-purple-100 dark:bg-purple-900/30', iconColor: 'text-purple-600', to: ROUTES.DASHBOARD },
-    { value: stats.projectManagers, labelAr: 'مديرو المشاريع',   labelEn: 'Project Managers', icon: Briefcase,   iconBg: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600', to: ROUTES.PROJECT_MANAGER.DASHBOARD },
-    { value: stats.employees,       labelAr: 'الموظفون',         labelEn: 'Employees',        icon: UserCog,     iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20', iconColor: 'text-[#709028] dark:text-[#A0CD39]', to: ROUTES.EMPLOYEE.DASHBOARD },
-    { value: stats.activeProjects,  labelAr: 'المشاريع النشطة',  labelEn: 'Active Projects',  icon: FolderKanban, iconBg: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600', to: ROUTES.PROJECT_MANAGER.DASHBOARD },
+    { value: stats.totalEmployees,   labelAr: 'إجمالي الموظفين',   labelEn: 'Total Employees',   icon: Users,          iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20', iconColor: 'text-[#709028] dark:text-[#A0CD39]', to: ROUTES.ADMIN.EMPLOYEES },
+    { value: stats.activeEmployees,  labelAr: 'الموظفون النشطون', labelEn: 'Active Employees',  icon: UserCheck,      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30', iconColor: 'text-emerald-600', to: ROUTES.ADMIN.EMPLOYEES },
+    { value: stats.pendingEmployees, labelAr: 'قيد التفعيل',      labelEn: 'Pending Activation', icon: Clock,      iconBg: 'bg-amber-100 dark:bg-amber-900/30', iconColor: 'text-amber-600', to: ROUTES.ADMIN.EMPLOYEES },
+    { value: stats.activeProjects,   labelAr: 'المشاريع النشطة',  labelEn: 'Active Projects',   icon: FolderOpenDot,  iconBg: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600', to: ROUTES.PROJECT_MANAGER.DASHBOARD },
+    { value: stats.totalProjects,    labelAr: 'إجمالي المشاريع',  labelEn: 'Total Projects',    icon: FolderKanban,   iconBg: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600', to: ROUTES.PROJECT_MANAGER.DASHBOARD },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
       {CARDS.map(card => (
         <StatCard
           key={card.labelEn}
