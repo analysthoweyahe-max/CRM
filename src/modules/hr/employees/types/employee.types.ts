@@ -1,5 +1,5 @@
 export type EmployeeStatus  = 'active' | 'inactive' | 'pending';
-export type EmploymentType  = 'full_time' | 'part_time' | 'freelance';
+export type EmploymentType  = 'full_time' | 'part_time' | 'contract' | 'remote' | 'internship';
 
 // ── Lookup shape used inside employee objects ─────────────────────────────────
 export interface ApiLookup {
@@ -58,6 +58,18 @@ export interface LookupListResponse {
   data:    ApiLookup[];
 }
 
+// ── Employment type lookup (value/label shape, distinct from ApiLookup) ────────
+export interface EmploymentTypeLookup {
+  value: string;
+  label: string;
+}
+
+export interface EmploymentTypeLookupResponse {
+  status:  string;
+  message: string;
+  data:    EmploymentTypeLookup[];
+}
+
 // ── Request payloads ──────────────────────────────────────────────────────────
 export interface CreateEmployeePayload {
   name:           string;
@@ -105,9 +117,11 @@ export function getLookupLabel(lookup: ApiLookup | null | undefined, isAr: boole
 
 export function mapEmploymentType(type: EmploymentType | null | undefined, isAr: boolean): string {
   const map: Record<EmploymentType, [string, string]> = {
-    full_time: ['دوام كامل', 'Full Time'],
-    part_time: ['دوام جزئي', 'Part Time'],
-    freelance: ['مستقل',     'Freelance'],
+    full_time:  ['دوام كامل',  'Full Time'],
+    part_time:  ['دوام جزئي',  'Part Time'],
+    contract:   ['عقد',        'Contract'],
+    remote:     ['عن بُعد',    'Remote'],
+    internship: ['تدريب',      'Internship'],
   };
   if (!type) return isAr ? 'غير محدد' : 'Not set';
   return isAr ? map[type][0] : map[type][1];

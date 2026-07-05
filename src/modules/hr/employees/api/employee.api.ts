@@ -3,6 +3,7 @@ import type {
   EmployeeListResponse,
   EmployeeSingleResponse,
   LookupListResponse,
+  EmploymentTypeLookupResponse,
   CreateEmployeePayload,
   UpdateEmployeePayload,
   EmploymentType,
@@ -49,5 +50,9 @@ export const employeeApi = {
     return http.get<LookupListResponse>('/v1/employees/lookups/job-titles', {
       params: departmentId ? { department_id: departmentId } : {},
     });
+  },
+
+  lookupEmploymentTypes() {
+    return http.get<EmploymentTypeLookupResponse>('/v1/employees/lookups/employment-types');
   },
 };

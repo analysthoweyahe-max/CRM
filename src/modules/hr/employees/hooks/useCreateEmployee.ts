@@ -3,13 +3,6 @@ import { employeeApi } from '../api/employee.api';
 import type { AllFormData } from '../components/NewEmployeeForm/newEmployeeForm.types';
 import type { EmploymentType } from '../types/employee.types';
 
-function mapJobType(jt: string): EmploymentType {
-  if (jt === 'part-time') return 'part_time';
-  if (jt === 'freelance') return 'freelance';
-  return 'full_time';
-}
-
-
 export function useCreateEmployee() {
   const queryClient = useQueryClient();
 
@@ -34,7 +27,7 @@ export function useCreateEmployee() {
       // 2. Employment type — skip if already done
       if (step < 2) {
         await employeeApi.updateEmploymentType(id, {
-          employment_type: mapJobType(d.jobType),
+          employment_type: d.jobType as EmploymentType,
         });
       }
 
@@ -55,7 +48,7 @@ export function useCreateEmployee() {
       // (the backend has no GET /employees/:id endpoint)
       const finalEmp = {
         ...emp,
-        employmentType: mapJobType(d.jobType),
+        employmentType: d.jobType as EmploymentType,
         salary:         d.salary,
         shiftStart:     d.startTime,
         shiftEnd:       d.endTime,

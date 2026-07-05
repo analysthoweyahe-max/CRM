@@ -11,25 +11,10 @@ import { Combobox }      from '@/shared/components/form/Combobox';
 import { Input }         from '@/shared/components/ui/Input';
 import { Button }        from '@/shared/components/ui/Button';
 import { useEmployee }   from '../hooks/useEmployee';
-import { useDepartments, useJobTitles } from '../hooks/useLookups';
+import { useDepartments, useJobTitles, useEmploymentTypes } from '../hooks/useLookups';
 import { employeeApi }   from '../api/employee.api';
 import type { EmploymentType } from '../types/employee.types';
-import { JOB_TYPES, MANAGERS } from '../components/NewEmployeeForm/newEmployeeForm.types';
-
-/* ── helpers ──────────────────────────────────────────── */
-
-function mapJobType(jt: string): EmploymentType {
-  if (jt === 'part-time') return 'part_time';
-  if (jt === 'freelance') return 'freelance';
-  return 'full_time';
-}
-
-function apiTypeToForm(t: EmploymentType | null | undefined): string {
-  if (t === 'part_time') return 'part-time';
-  if (t === 'freelance') return 'freelance';
-  return 'full-time';
-}
-
+import { MANAGERS } from '../components/NewEmployeeForm/newEmployeeForm.types';
 
 /* ── form values ──────────────────────────────────────── */
 
@@ -66,7 +51,7 @@ export function EmployeeEditPage() {
       phone:          emp.phone ?? '',
       department:     String(emp.department?.id ?? ''),
       jobTitle:       String(emp.jobTitle?.id ?? ''),
-      employmentType: apiTypeToForm(emp.employmentType),
+      employmentType: emp.employmentType ?? '',
       basicSalary:    String(emp.salary ?? ''),
       managerId:      String(emp.manager?.id ?? 'none'),
       status:         emp.status ?? 'active',
@@ -75,12 +60,13 @@ export function EmployeeEditPage() {
     } : undefined,
   });
 
-  const selectedDept             = useWatch({ control, name: 'department' });
-  const { data: jobTitles = [] } = useJobTitles(selectedDept || undefined);
+  const selectedDept                   = useWatch({ control, name: 'department' });
+  const { data: jobTitles = [] }       = useJobTitles(selectedDept || undefined);
+  const { data: employmentTypes = [] } = useEmploymentTypes();
 
   const deptItems    = departments.map((d) => ({ id: String(d.id), label: isAr ? (d.nameAr || d.name) : d.name }));
   const jTitleItems  = jobTitles.map((j)   => ({ id: String(j.id), label: isAr ? (j.nameAr || j.name) : j.name }));
-  const empTypeItems = JOB_TYPES.map((t)   => ({ id: t.id, label: isAr ? t.labelAr : t.labelEn }));
+  const empTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
   const managerItems = MANAGERS.map((m)    => ({ id: m.id, label: m.label }));
 
   const statusItems = [
@@ -110,10 +96,10 @@ export function EmployeeEditPage() {
       );
 
       /* Step 2 — Employment type */
-      if (data.employmentType !== apiTypeToForm(emp?.employmentType)) {
+      if (data.employmentType && data.employmentType !== (emp?.employmentType ?? '')) {
         calls.push(
           employeeApi.updateEmploymentType(id!, {
-            employment_type: mapJobType(data.employmentType),
+            employment_type: data.employmentType as EmploymentType,
           }).catch(() => {}),
         );
       }

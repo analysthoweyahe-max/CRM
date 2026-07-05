@@ -25,13 +25,11 @@ export interface EmpLeaveRequest {
 }
 
 export interface EmpLeaveSummaryItem {
-  type?:      string;
-  label?:     string;
-  typeLabel?: string;
-  balance?:   number;
-  total?:     number;
-  used?:      number;
-  remaining?: number;
+  leaveType:      string;
+  leaveTypeLabel: string;
+  entitled:       number;
+  used:           number;
+  remaining:      number;
 }
 
 export interface EmpLeaveTypesResponse {
@@ -47,8 +45,13 @@ export interface EmpLeaveListResponse {
 }
 
 export interface EmpLeaveSummaryResponse {
-  status: string;
-  data:   EmpLeaveSummaryItem[] | Record<string, unknown>;
+  status:  string;
+  message: string;
+  data: {
+    balances:            EmpLeaveSummaryItem[];
+    requests:            unknown[];
+    viewFullHistoryUrl?: string;
+  };
 }
 
 export interface EmpLeaveCreateResponse {

@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { getAvatarColor } from '@/shared/utils';
-import { pmProjectMessagesApi } from '../api/messages.api';
-import type { ChatMessage, PmMessage, PmMentionable } from '../types/message.types';
+import { empProjectMessagesApi } from '../api/projectMessages.api';
+import type { ChatMessage, PmMessage, PmMentionable } from '../types/projectMessage.types';
 
 function toChatMessage(m: PmMessage, currentUserId: string | undefined): ChatMessage {
   const time = m.createdAt.split(' ')[1]?.slice(0, 5) ?? '';
@@ -28,8 +28,8 @@ export function useProjectMessages(projectId: string) {
   const queryClient          = useQueryClient();
 
   const { data: mentionables = [] } = useQuery({
-    queryKey: ['pm-project-mentionables', projectId],
-    queryFn:  () => pmProjectMessagesApi.mentionables(projectId).then(r => r.data.data.data),
+    queryKey: ['emp-project-mentionables', projectId],
+    queryFn:  () => empProjectMessagesApi.mentionables(projectId).then(r => r.data.data.data),
     enabled:  showMentions && !!projectId,
     staleTime: 60_000,
   });
@@ -40,8 +40,8 @@ export function useProjectMessages(projectId: string) {
   }
 
   const { data: messages = [], isLoading } = useQuery({
-    queryKey: ['pm-project-messages', projectId],
-    queryFn:  () => pmProjectMessagesApi.list(projectId)
+    queryKey: ['emp-project-messages', projectId],
+    queryFn:  () => empProjectMessagesApi.list(projectId)
       .then(r => r.data.data.data.map(m => toChatMessage(m, user?.id))),
     refetchInterval: 5_000,
     enabled: !!projectId,
@@ -56,8 +56,8 @@ export function useProjectMessages(projectId: string) {
     : messages;
 
   const sendMutation = useMutation({
-    mutationFn: (body: string) => pmProjectMessagesApi.send(projectId, body),
-    onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['pm-project-messages', projectId] }),
+    mutationFn: (body: string) => empProjectMessagesApi.send(projectId, body),
+    onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['emp-project-messages', projectId] }),
   });
 
   function send() {

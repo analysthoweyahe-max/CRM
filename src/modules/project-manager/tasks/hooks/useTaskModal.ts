@@ -1,68 +1,82 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast }        from 'sonner';
-import { deleteTask, moveTask, updateTask } from '../store/taskStore';
-import { pmTaskApi }    from '../api/task.api';
-import type { Task, TaskPriority, TaskStatus } from '../types/task.types';
+import { getAvatarColor } from '@/shared/utils';
+import { useRemoveTaskLocally, useInvalidateProjectTasks } from '../store/taskStore';
+import { pmTaskApi } from '../api/task.api';
+import type { RawPmComment, RawPmTaskAttachment } from '../api/task.api';
+import type { Task } from '../types/task.types';
 import type { TaskModalTab, TimeSession, TaskAttachment, TaskComment } from '../types/taskModal.types';
 
-const MOCK_SESSIONS: TimeSession[] = [
-  { id: '1', date: '18 يونيو', from: '09:00', to: '11:30', hours: 2.5  },
-  { id: '2', date: '18 يونيو', from: '13:00', to: '15:45', hours: 2.75 },
-  { id: '3', date: '19 يونيو', from: '09:00', to: '10:15', hours: 1.25 },
-];
-
-const MOCK_ATTACHMENTS: TaskAttachment[] = [
-  { id: 'a1', name: 'mockup.png', sizeLabel: '240 KB', uploadedBy: 'سارة خليل',    uploadedAt: '17 يونيو 2026', fileType: 'image' },
-  { id: 'a2', name: 'spec.pdf',   sizeLabel: '1.2 MB', uploadedBy: 'أحمد المنصور', uploadedAt: '16 يونيو 2026', fileType: 'pdf'   },
-];
-
-const MOCK_COMMENTS: TaskComment[] = [
-  { id: 'c1', author: 'أحمد المنصور', authorInitial: 'أ', authorColor: 'bg-orange-500',
-    text: 'تأكد من مطابقة التصميم لنظام الألوان @محمد علي', dateLabel: '18 يونيو 10:20' },
-  { id: 'c2', author: 'محمد علي', authorInitial: 'م', authorColor: 'bg-blue-500',
-    text: 'تم، سأرفع النسخة المحدثة قريباً.', dateLabel: '18 يونيو 11:05' },
-];
-
-function formatSize(bytes: number): string {
+function formatSize(bytes?: number): string {
+  if (!bytes) return '';
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function hoursBetween(startedAt: string, endedAt: string): number {
-  const [sh, sm] = startedAt.split(':').map(Number);
-  const [eh, em] = endedAt.split(':').map(Number);
-  return Math.max(0, +(((eh * 60 + em) - (sh * 60 + sm)) / 60).toFixed(2));
+function toAttachment(raw: RawPmTaskAttachment): TaskAttachment {
+  const name = raw.name ?? raw.fileName ?? 'file';
+  const ext  = name.split('.').pop()?.toLowerCase();
+  const fileType: TaskAttachment['fileType'] =
+    raw.mimeType?.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext ?? '')
+      ? 'image'
+      : raw.mimeType === 'application/pdf' || ext === 'pdf'
+      ? 'pdf'
+      : 'other';
+  return {
+    id:         String(raw.id),
+    name,
+    sizeLabel:  formatSize(raw.size),
+    uploadedBy: raw.uploadedBy?.name ?? '',
+    uploadedAt: raw.uploadedAt ?? '',
+    fileType,
+    url:        raw.url,
+  };
+}
+
+function toComment(raw: RawPmComment): TaskComment {
+  return {
+    id:            String(raw.id),
+    author:        raw.sender.name,
+    authorInitial: raw.sender.avatarInitial,
+    authorColor:   getAvatarColor(raw.sender.name),
+    text:          raw.body,
+    dateLabel:     raw.sentAt,
+  };
 }
 
 export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => void, projectId: string) {
-  const [activeTab,    setActiveTab]    = useState<TaskModalTab>('info');
-  const [sessions,     setSessions]     = useState<TimeSession[]>(MOCK_SESSIONS);
-  const [loggingTime,  setLoggingTime]  = useState(false);
-  const [attachments,  setAttachments]  = useState<TaskAttachment[]>(MOCK_ATTACHMENTS);
-  const [comments,     setComments]     = useState<TaskComment[]>(MOCK_COMMENTS);
-  const [commentText,  setCommentText]  = useState('');
+  const [activeTab, setActiveTab] = useState<TaskModalTab>('info');
+  const [commentText, setCommentText] = useState('');
+  const queryClient = useQueryClient();
+  const invalidateProjectTasks = useInvalidateProjectTasks(projectId);
+  const removeTaskLocally      = useRemoveTaskLocally(projectId);
 
-  // Edit modal
-  const [isEditOpen,    setIsEditOpen]    = useState(false);
-  const [editTitle,     setEditTitle]     = useState(task?.title ?? '');
-  const [editPriority,  setEditPriority]  = useState<string>(task?.priority ?? '');
-  const [editDueDate,   setEditDueDate]   = useState(task?.dueDate ?? '');
-  const [editEstHours,  setEditEstHours]  = useState(String(task?.estimatedHours ?? 10));
-  const [savingEdit,    setSavingEdit]    = useState(false);
+  const detailKey = ['pm-task-detail', projectId, task?.id];
+  const { data: detail, isLoading: detailLoading } = useQuery({
+    queryKey: detailKey,
+    queryFn:  () => pmTaskApi.get(projectId, task!.id).then(r => r.data.data),
+    enabled:  !!task,
+  });
 
-  // Status change (Info tab)
-  const [changingStatus, setChangingStatus] = useState(false);
+  function invalidateDetail() {
+    queryClient.invalidateQueries({ queryKey: detailKey });
+  }
 
-  // Delete modal
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  /* ── Time tracking ── */
+  const sessions: TimeSession[] = (detail?.tabs.timeTracking.sessions ?? []).map(s => ({
+    id:    String(s.id),
+    date:  s.workDate,
+    from:  s.startedAt,
+    to:    s.endedAt,
+    hours: s.durationHours,
+  }));
+  const totalHours     = detail?.tabs.timeTracking.totalHours ?? 0;
+  const estimatedHours = detail?.tabs.timeTracking.estimatedHours ?? (task?.estimatedHours ?? 0);
+  const remainingHours = detail?.tabs.timeTracking.remainingHours ?? 0;
+  const progress        = detail?.tabs.timeTracking.progressPercent ?? 0;
 
-  // Time tracking
-  const totalHours     = useMemo(() => sessions.reduce((s, ss) => s + ss.hours, 0), [sessions]);
-  const estimatedHours = task?.estimatedHours ?? 10;
-  const remainingHours = Math.max(0, estimatedHours - totalHours);
-  const progress       = Math.min(100, Math.round((totalHours / estimatedHours) * 100));
-
-  /* ── Time logs ── */
+  const [loggingTime, setLoggingTime] = useState(false);
   async function addTimeLog(payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) {
     if (!task || loggingTime) return;
     setLoggingTime(true);
@@ -73,13 +87,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
         ended_at:   payload.endedAt,
         notes:      payload.notes || undefined,
       });
-      setSessions(prev => [...prev, {
-        id:    String(Date.now()),
-        date:  payload.workDate,
-        from:  payload.startedAt,
-        to:    payload.endedAt,
-        hours: hoursBetween(payload.startedAt, payload.endedAt),
-      }]);
+      invalidateDetail();
       toast.success(isAr ? 'تم تسجيل الوقت' : 'Time logged');
     } catch {
       toast.error(isAr ? 'تعذر تسجيل الوقت' : 'Failed to log time');
@@ -89,52 +97,78 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   }
 
   /* ── Comments ── */
+  const commentsKey = ['pm-task-comments', projectId, task?.id];
+  const { data: comments = [] } = useQuery({
+    queryKey: commentsKey,
+    queryFn:  () => pmTaskApi.getComments(projectId, task!.id).then(r => r.data.data.data.map(toComment)),
+    enabled:  !!task,
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: (body: string) => pmTaskApi.createComment(projectId, task!.id, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentsKey });
+      invalidateDetail();
+    },
+    onError: () => toast.error(isAr ? 'تعذر إرسال التعليق' : 'Failed to send comment'),
+  });
+
   function addComment() {
     const trimmed = commentText.trim();
-    if (!trimmed) return;
-    const now = new Date();
-    setComments(prev => [...prev, {
-      id: String(now.getTime()),
-      author: 'أحمد المنصور', authorInitial: 'أ', authorColor: 'bg-orange-500',
-      text: trimmed,
-      dateLabel: `${now.getDate()} يونيو ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
-    }]);
+    if (!trimmed || commentMutation.isPending) return;
     setCommentText('');
+    commentMutation.mutate(trimmed);
   }
 
   /* ── Attachments ── */
-  function removeAttachment(id: string) {
-    setAttachments(prev => prev.filter(a => a.id !== id));
-  }
+  const attachments: TaskAttachment[] = (detail?.task.attachments ?? []).map(toAttachment);
+
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => pmTaskApi.uploadAttachment(projectId, task!.id, file),
+    onSuccess:  () => invalidateDetail(),
+    onError:    () => toast.error(isAr ? 'تعذر رفع الملف' : 'Failed to upload file'),
+  });
 
   function addAttachment(file: File) {
-    const fileType: TaskAttachment['fileType'] = file.type.startsWith('image/') ? 'image'
-      : file.type === 'application/pdf' ? 'pdf' : 'other';
-    setAttachments(prev => [...prev, {
-      id: String(Date.now()),
-      name: file.name,
-      sizeLabel: formatSize(file.size),
-      uploadedBy: 'أحمد المنصور',
-      uploadedAt: `${new Date().getDate()} يونيو 2026`,
-      fileType,
-      file,
-    }]);
+    if (!task) return;
+    uploadMutation.mutate(file);
+  }
+
+  const removeAttachmentMutation = useMutation({
+    mutationFn: (attachmentId: string) => pmTaskApi.deleteAttachment(projectId, task!.id, attachmentId),
+    onSuccess:  () => invalidateDetail(),
+    onError:    () => toast.error(isAr ? 'تعذر حذف الملف' : 'Failed to remove file'),
+  });
+
+  function removeAttachment(id: string) {
+    removeAttachmentMutation.mutate(id);
   }
 
   function downloadAttachment(att: TaskAttachment) {
-    if (att.file) {
-      const url = URL.createObjectURL(att.file);
-      const a = Object.assign(document.createElement('a'), { href: url, download: att.name });
-      a.click();
-      URL.revokeObjectURL(url);
+    if (att.url) {
+      window.open(att.url, '_blank', 'noopener,noreferrer');
     } else {
-      toast.info(isAr ? 'الملف التجريبي غير متاح للتنزيل' : 'Demo file not available');
+      toast.info(isAr ? 'رابط الملف غير متاح' : 'File link not available');
     }
   }
 
   /* ── Edit modal ── */
-  function openEdit()  { setIsEditOpen(true);  }
+  const [isEditOpen,   setIsEditOpen]   = useState(false);
+  const [editTitle,    setEditTitle]    = useState(task?.title ?? '');
+  const [editPriority, setEditPriority] = useState<string>(task?.priority ?? '');
+  const [editDueDate,  setEditDueDate]  = useState(task?.dueDate ?? '');
+  const [editEstHours, setEditEstHours] = useState(String(task?.estimatedHours ?? 10));
+  const [savingEdit,   setSavingEdit]   = useState(false);
+
+  function openEdit() {
+    setEditTitle(task?.title ?? '');
+    setEditPriority(task?.priority ?? '');
+    setEditDueDate(task?.dueDate ?? '');
+    setEditEstHours(String(task?.estimatedHours ?? 10));
+    setIsEditOpen(true);
+  }
   function closeEdit() { setIsEditOpen(false); }
+
   async function saveEdit() {
     if (!task || !editTitle.trim() || savingEdit) return;
     setSavingEdit(true);
@@ -145,12 +179,8 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
         due_date:         editDueDate,
         estimated_hours:  editEstHours ? Number(editEstHours) : undefined,
       });
-      updateTask(task.id, {
-        title:          editTitle.trim(),
-        priority:       editPriority as TaskPriority,
-        dueDate:        editDueDate,
-        estimatedHours: editEstHours ? Number(editEstHours) : undefined,
-      });
+      invalidateProjectTasks();
+      invalidateDetail();
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
       closeEdit();
     } catch {
@@ -161,12 +191,14 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   }
 
   /* ── Status change (Info tab) ── */
+  const [changingStatus, setChangingStatus] = useState(false);
   async function changeStatus(status: string) {
     if (!task || status === task.status || changingStatus) return;
     setChangingStatus(true);
     try {
       await pmTaskApi.updateStatus(projectId, task.id, status);
-      moveTask(task.id, status as TaskStatus);
+      invalidateProjectTasks();
+      invalidateDetail();
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
     } catch {
       toast.error(isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status');
@@ -175,19 +207,22 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     }
   }
 
-  /* ── Delete modal ── */
+  /* ── Delete modal — no confirmed delete endpoint yet, so this only hides
+     the task from the current view (resets on refetch). ── */
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   function openDelete()  { setIsDeleteOpen(true);  }
   function closeDelete() { setIsDeleteOpen(false); }
   function confirmDelete() {
     if (!task) return;
-    deleteTask(task.id);
-    toast.success(isAr ? 'تم حذف المهمة' : 'Task deleted');
+    removeTaskLocally(task.id);
+    toast.success(isAr ? 'تم إخفاء المهمة' : 'Task hidden');
     setIsDeleteOpen(false);
     onClose();
   }
 
   return {
     activeTab, setActiveTab,
+    detailLoading,
     sessions, totalHours, estimatedHours, remainingHours, progress,
     addTimeLog, loggingTime,
     attachments, removeAttachment, addAttachment, downloadAttachment,

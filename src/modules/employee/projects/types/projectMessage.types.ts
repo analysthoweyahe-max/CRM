@@ -9,7 +9,7 @@ export interface ChatMessage {
   isRead:        boolean;
 }
 
-/* ── Raw backend shapes — /v1/pm/projects/{project_id}/messages ─────────── */
+/* ── Raw backend shapes — /v1/pm/employee/projects/{project_id}/messages ─── */
 export interface PmMessageSender {
   id:            string;
   name:          string;

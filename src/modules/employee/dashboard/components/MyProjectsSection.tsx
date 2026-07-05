@@ -1,5 +1,7 @@
-import { FolderKanban } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { FolderKanban, MessageSquare } from 'lucide-react';
 import { Card } from '@/shared/components/ui/Card';
+import { ROUTES } from '@/app/router/routes';
 import type { EmpProject } from '../types/dashboard.types';
 
 interface Props {
@@ -8,6 +10,8 @@ interface Props {
 }
 
 export function MyProjectsSection({ projects, isAr }: Props) {
+  const navigate = useNavigate();
+
   return (
     <Card className="p-5">
       <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4">
@@ -24,22 +28,29 @@ export function MyProjectsSection({ projects, isAr }: Props) {
       ) : (
         <div className="space-y-3">
           {projects.map(project => (
-            <a
+            <div
               key={project.id}
-              href={project.tasksUrl ?? undefined}
               className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl
                          bg-white dark:bg-gray-800
                          border border-gray-100 dark:border-gray-700/40
                          hover:border-brand-300 dark:hover:border-brand-700/60 transition-colors"
             >
-              <div className="flex items-center gap-2 min-w-0">
+              <a href={project.tasksUrl ?? undefined} className="flex items-center gap-2 min-w-0 flex-1">
                 <div className="w-2 h-2 rounded-full bg-[#A0CD39] shrink-0" />
                 <p className="text-sm text-gray-800 dark:text-gray-100 truncate">{project.name}</p>
-              </div>
+              </a>
               {project.statusLabel && (
                 <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{project.statusLabel}</span>
               )}
-            </a>
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.EMPLOYEE.PROJECT_MESSAGES(project.id))}
+                title={isAr ? 'رسائل المشروع' : 'Project messages'}
+                className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <MessageSquare size={15} />
+              </button>
+            </div>
           ))}
         </div>
       )}

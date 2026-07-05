@@ -7,7 +7,7 @@ import { Button }    from '@/shared/components/ui/Button';
 import { Combobox }  from '@/shared/components/form/Combobox';
 import { FormField } from '@/shared/components/form/FormField';
 import { employeeApi } from '../../api/employee.api';
-import { JOB_TYPES }   from '../NewEmployeeForm/newEmployeeForm.types';
+import { useEmploymentTypes } from '../../hooks/useLookups';
 import type { EmploymentType } from '../../types/employee.types';
 
 interface Props {
@@ -18,27 +18,16 @@ interface Props {
   isAr:       boolean;
 }
 
-function mapJobType(jt: string): EmploymentType {
-  if (jt === 'part-time') return 'part_time';
-  if (jt === 'freelance') return 'freelance';
-  return 'full_time';
-}
-
-function apiTypeToForm(t: EmploymentType | null | undefined): string {
-  if (t === 'part_time') return 'part-time';
-  if (t === 'freelance') return 'freelance';
-  return 'full-time';
-}
-
 export function EditEmploymentTypeModal({ open, onClose, employeeId, current, isAr }: Props) {
   const queryClient = useQueryClient();
+  const { data: employmentTypes = [] } = useEmploymentTypes();
 
   const { control, handleSubmit, reset } = useForm({
-    defaultValues: { employmentType: apiTypeToForm(current) },
+    defaultValues: { employmentType: current ?? '' },
   });
 
   useEffect(() => {
-    if (open) reset({ employmentType: apiTypeToForm(current) });
+    if (open) reset({ employmentType: current ?? '' });
   }, [open]);
 
   const mutation = useMutation({
@@ -53,14 +42,14 @@ export function EditEmploymentTypeModal({ open, onClose, employeeId, current, is
     onError: () => toast.error(isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save'),
   });
 
-  const items   = JOB_TYPES.map((t) => ({ id: t.id, label: isAr ? t.labelAr : t.labelEn }));
+  const items   = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
   const cbProps = isAr
     ? { searchPlaceholder: 'ابحث...', noResultsText: 'لا نتائج' }
     : { searchPlaceholder: 'Search...', noResultsText: 'No results' };
 
   function onSubmit(data: { employmentType: string }) {
-    if (data.employmentType === apiTypeToForm(current)) { onClose(); return; }
-    mutation.mutate(mapJobType(data.employmentType));
+    if (data.employmentType === (current ?? '')) { onClose(); return; }
+    mutation.mutate(data.employmentType as EmploymentType);
   }
 
   return (

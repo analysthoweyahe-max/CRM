@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { taskDetailApi } from '../api/taskDetail.api';
 import type { EmpTaskStatus } from '../types/employeeTask.types';
+import type { UpdateTaskPayload } from '../types/taskDetail.types';
 
 export function useTaskDetail(projectId: string, taskId: string) {
   return useQuery({
@@ -15,6 +16,17 @@ export function useUpdateTaskStatus(projectId: string, taskId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (status: EmpTaskStatus) => taskDetailApi.updateStatus(projectId, taskId, status),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['task-detail', projectId, taskId] });
+      qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });
+    },
+  });
+}
+
+export function useUpdateTask(projectId: string, taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateTaskPayload) => taskDetailApi.update(projectId, taskId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['task-detail', projectId, taskId] });
       qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });

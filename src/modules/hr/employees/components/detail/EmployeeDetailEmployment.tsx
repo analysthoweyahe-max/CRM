@@ -26,7 +26,7 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
           onEdit={() => setOpenModal('employmentType')}
         >
           <Field icon={<Briefcase size={15} />} label={isAr ? 'نوع التوظيف' : 'Type'}>
-            {mapEmploymentType(emp.employmentType, isAr)}
+            {emp.employmentTypeLabel || mapEmploymentType(emp.employmentType, isAr)}
           </Field>
         </Section>
 

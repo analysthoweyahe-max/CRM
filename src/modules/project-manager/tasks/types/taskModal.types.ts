@@ -16,6 +16,7 @@ export interface TaskAttachment {
   uploadedAt: string;
   fileType:   'image' | 'pdf' | 'other';
   file?:      File;
+  url?:       string;
 }
 
 export interface TaskComment {

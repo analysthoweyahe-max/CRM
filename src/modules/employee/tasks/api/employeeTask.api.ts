@@ -1,7 +1,7 @@
 import { http } from '@/shared/services/http.service';
 import type { EmployeeTask, EmpTaskListResponse, EmpTaskStatus, EmpTaskPriority, CreateSelfTaskPayload } from '../types/employeeTask.types';
 
-/* ── Raw backend shape — GET /v1/pm/tasks?mine=1 ─────────────────────────
+/* ── Raw backend shape — GET /v1/pm/employee/tasks?mine=1 ────────────────
    Confirmed: grouped into status columns, same as GET /v1/pm/projects/{id}/tasks —
    NOT a flat paginated list. */
 interface RawPmTaskRef { id: number; name: string; }
@@ -62,7 +62,7 @@ function toEmployeeTask(raw: RawPmTask): EmployeeTask {
 
 export const employeeTaskApi = {
   async list(): Promise<{ data: EmpTaskListResponse }> {
-    const res = await http.get<RawPmTaskListResponse>('/v1/pm/tasks', { params: { mine: 1 } });
+    const res = await http.get<RawPmTaskListResponse>('/v1/pm/employee/tasks', { params: { mine: 1 } });
     const tasks = res.data.data.columns.flatMap(c => c.tasks);
     return {
       data: {

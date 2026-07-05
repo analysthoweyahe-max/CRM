@@ -62,6 +62,7 @@ export const ROUTES = {
       `/employee/tasks/${projectId}/${taskId}`,
     DAILY_REPORTS: '/employee/daily-reports',
     PROFILE:       '/employee/profile',
+    PROJECT_MESSAGES: (projectId: string | number = ':projectId') => `/employee/projects/${projectId}/messages`,
   },
   SEO_MEMBER: {
     DASHBOARD:     '/seo-member',

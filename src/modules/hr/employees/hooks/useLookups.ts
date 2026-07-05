@@ -16,3 +16,11 @@ export function useJobTitles(departmentId?: string) {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useEmploymentTypes() {
+  return useQuery({
+    queryKey: ['lookups', 'employment-types'],
+    queryFn:  () => employeeApi.lookupEmploymentTypes().then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
+}

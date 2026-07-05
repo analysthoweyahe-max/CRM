@@ -14,6 +14,14 @@ export interface TaskDetail {
   allocatedHours: number;
 }
 
+export interface UpdateTaskPayload {
+  title:          string;
+  description:    string;
+  priority:       EmpTaskPriority;
+  deadline:       string;
+  allocatedHours: number;
+}
+
 export interface TaskComment {
   id:        string;
   authorAr:  string;

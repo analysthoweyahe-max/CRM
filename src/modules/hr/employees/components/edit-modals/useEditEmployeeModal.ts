@@ -3,22 +3,10 @@ import { useForm, useWatch } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { employeeApi } from '../../api/employee.api';
-import { useDepartments, useJobTitles } from '../../hooks/useLookups';
-import { JOB_TYPES, MANAGERS } from '../NewEmployeeForm/newEmployeeForm.types';
+import { useDepartments, useJobTitles, useEmploymentTypes } from '../../hooks/useLookups';
+import { MANAGERS } from '../NewEmployeeForm/newEmployeeForm.types';
 import type { EmploymentType } from '../../types/employee.types';
 import type { FormValues, EditEmployeeModalProps } from './EditEmployeeModal.types';
-
-function mapJobType(jt: string): EmploymentType {
-  if (jt === 'part-time') return 'part_time';
-  if (jt === 'freelance') return 'freelance';
-  return 'full_time';
-}
-
-function apiTypeToForm(t: EmploymentType | null | undefined): string {
-  if (t === 'part_time') return 'part-time';
-  if (t === 'freelance') return 'freelance';
-  return 'full-time';
-}
 
 function apiErrMsg(err: unknown): string | null {
   return (err as any)?.response?.data?.message ?? null;
@@ -31,7 +19,7 @@ function formDefaults(emp: EditEmployeeModalProps['emp']): FormValues {
     phone:          emp.phone ?? '',
     department:     String(emp.department?.id ?? ''),
     jobTitle:       String(emp.jobTitle?.id ?? ''),
-    employmentType: apiTypeToForm(emp.employmentType),
+    employmentType: emp.employmentType ?? '',
     salary:         String(emp.salary ?? ''),
     shiftStart:     (emp.shiftStart ?? emp.shift_start ?? '').slice(0, 5),
     shiftEnd:       (emp.shiftEnd   ?? emp.shift_end   ?? '').slice(0, 5),
@@ -53,13 +41,14 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
     if (open) reset(formDefaults(emp));
   }, [open]);
 
-  const { data: departments = [] } = useDepartments();
-  const selectedDept               = useWatch({ control, name: 'department' });
-  const { data: jobTitles = [] }   = useJobTitles(selectedDept || undefined);
+  const { data: departments = [] }      = useDepartments();
+  const selectedDept                    = useWatch({ control, name: 'department' });
+  const { data: jobTitles = [] }        = useJobTitles(selectedDept || undefined);
+  const { data: employmentTypes = [] }  = useEmploymentTypes();
 
   const deptItems    = departments.map((d) => ({ id: String(d.id), label: isAr ? (d.nameAr || d.name) : d.name }));
   const jTitleItems  = jobTitles.map((j)   => ({ id: String(j.id), label: isAr ? (j.nameAr || j.name) : j.name }));
-  const empTypeItems = JOB_TYPES.map((t)   => ({ id: t.id, label: isAr ? t.labelAr : t.labelEn }));
+  const empTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
   const managerItems = MANAGERS.map((m)    => ({ id: m.id, label: m.label }));
 
   const cbProps = isAr
@@ -75,10 +64,10 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
 
       const calls: Promise<unknown>[] = [];
 
-      if (data.employmentType !== apiTypeToForm(emp.employmentType)) {
+      if (data.employmentType && data.employmentType !== (emp.employmentType ?? '')) {
         calls.push(
           employeeApi.updateEmploymentType(emp.id, {
-            employment_type: mapJobType(data.employmentType),
+            employment_type: data.employmentType as EmploymentType,
           }).catch(log('employment-type')),
         );
       }

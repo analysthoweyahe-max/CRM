@@ -8,7 +8,6 @@ import { Button }          from '@/shared/components/ui/Button';
 import { Combobox }        from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { ROUTES }          from '@/app/router/routes';
-import { getAvatarColor }  from '@/shared/utils';
 import { useProjectDetails }   from '../hooks/useProjectDetails';
 import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
 import { pmProjectsApi }   from '../api/project.api';
@@ -21,7 +20,6 @@ import { ProjectTeamTab }     from '../components/ProjectTeamTab';
 import { ProjectMessagesTab } from '../components/ProjectMessagesTab';
 import { ProjectClientUpdatesTab } from '../components/ProjectClientUpdatesTab';
 import { ProjectDetailsSkeleton } from '../components/ProjectDetailsSkeleton';
-import type { TeamMember, PmProjectTeamMember } from '../types/project.types';
 
 type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings';
 
@@ -33,17 +31,6 @@ const TABS: { key: TabKey; ar: string; en: string }[] = [
   { key: 'progress', ar: 'سجل الإنجاز',     en: 'Progress Log'   },
   { key: 'settings', ar: 'إعدادات المشروع', en: 'Settings'       },
 ];
-
-function toLegacyTeamMember(m: PmProjectTeamMember): TeamMember {
-  return {
-    initial:  m.avatarInitial,
-    color:    getAvatarColor(m.id),
-    name:     m.name,
-    role:     m.projectRole || m.jobTitle,
-    email:    m.email,
-    isActive: m.status === 'active',
-  };
-}
 
 export function ProjectDetailsPage() {
   const { lang }  = useLang();
@@ -81,7 +68,6 @@ export function ProjectDetailsPage() {
   }
 
   const statusItems: ComboboxItem[] = statuses.map(s => ({ id: s.value, label: s.label }));
-  const legacyTeam = project.teamMembers.map(toLegacyTeamMember);
 
   // No progress/task-count fields on the project API yet — computed from the local Kanban tasks for now.
   const tasksTotal     = tasks.length;
@@ -203,7 +189,7 @@ export function ProjectDetailsPage() {
       {activeTab === 'team'     && <ProjectTeamTab projectId={String(project.id)} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
-      {activeTab === 'messages' && <ProjectMessagesTab team={legacyTeam} isAr={isAr} />}
+      {activeTab === 'messages' && <ProjectMessagesTab projectId={String(project.id)} isAr={isAr} />}
 
       {/* Add Task Modal */}
       <AddTaskModal
@@ -212,7 +198,6 @@ export function ProjectDetailsPage() {
         projectId={String(project.id)}
         team={project.teamMembers}
         phases={project.phases}
-        taskCount={tasks.length}
         isAr={isAr}
       />
     </div>

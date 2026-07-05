@@ -9,10 +9,10 @@ import { Combobox }  from '@/shared/components/form/Combobox';
 import { NavButtons } from './StepWizard';
 import {
   makeAllDataSchema,
-  MANAGERS, JOB_TYPES, CURRENCIES,
+  MANAGERS, CURRENCIES,
   type AllDataValues,
 } from './newEmployeeForm.types';
-import { useDepartments, useJobTitles } from '../../hooks/useLookups';
+import { useDepartments, useJobTitles, useEmploymentTypes } from '../../hooks/useLookups';
 
 interface Step1Props {
   isAr:           boolean;
@@ -40,8 +40,9 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
   }, [selectedDept, setValue]);
 
   // Lookups from API
-  const { data: departments = [], isLoading: deptsLoading } = useDepartments();
-  const { data: jobTitles   = [], isLoading: titlesLoading } = useJobTitles(selectedDept || undefined);
+  const { data: departments = [], isLoading: deptsLoading }   = useDepartments();
+  const { data: jobTitles   = [], isLoading: titlesLoading }  = useJobTitles(selectedDept || undefined);
+  const { data: employmentTypes = [], isLoading: typesLoading } = useEmploymentTypes();
 
   const deptItems  = departments.map((d) => ({
     id:    String(d.id),
@@ -53,13 +54,13 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
     label: isAr ? (t.nameAr || t.name) : t.name,
   }));
 
-  const salaryLabel = jobType === 'part-time'
+  const salaryLabel = jobType === 'part_time'
     ? (isAr ? 'الراتب بالساعة (ج.م)'     : 'Hourly Rate (EGP)')
-    : jobType === 'freelance'
+    : jobType === 'contract'
     ? (isAr ? 'الأتعاب لكل مشروع (ج.م)' : 'Project Fee (EGP)')
     : (isAr ? 'الراتب الشهري (ج.م)'      : 'Monthly Salary (EGP)');
 
-  const jobTypeItems = JOB_TYPES.map((t) => ({ id: t.id, label: isAr ? t.labelAr : t.labelEn }));
+  const jobTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
 
   return (
     <form onSubmit={handleSubmit(onNext)} noValidate>
@@ -152,7 +153,9 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               <Controller name="jobType" control={control} render={({ field }) => (
                 <Combobox items={jobTypeItems} value={field.value ?? ''} onChange={field.onChange}
                   error={!!errors.jobType}
-                  placeholder={isAr ? 'مثل: دوام كامل ....' : 'e.g. Full Time ...'}
+                  placeholder={typesLoading
+                    ? (isAr ? 'جاري التحميل...' : 'Loading...')
+                    : (isAr ? 'مثل: دوام كامل ....' : 'e.g. Full Time ...')}
                   searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
                   noResultsText={isAr ? 'لا نتائج' : 'No results'} />
               )} />

@@ -2,18 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { employeeApi } from '../api/employee.api';
 import type { ApiEmployee, EmploymentType } from '../types/employee.types';
 
-function mapJobType(jt: string): EmploymentType {
-  if (jt === 'part-time') return 'part_time';
-  if (jt === 'freelance') return 'freelance';
-  return 'full_time';
-}
-
-function apiTypeToForm(t: EmploymentType | null | undefined): string {
-  if (t === 'part_time') return 'part-time';
-  if (t === 'freelance') return 'freelance';
-  return 'full-time';
-}
-
 export interface UpdateEmployeeFormData {
   name:           string;
   email:          string;
@@ -34,10 +22,10 @@ export function useUpdateEmployee(employeeId: string, original?: ApiEmployee) {
     mutationFn: async (data: UpdateEmployeeFormData) => {
       const calls: Promise<unknown>[] = [];
 
-      if (data.employmentType !== apiTypeToForm(original?.employmentType)) {
+      if (data.employmentType && data.employmentType !== (original?.employmentType ?? '')) {
         calls.push(
           employeeApi.updateEmploymentType(employeeId, {
-            employment_type: mapJobType(data.employmentType),
+            employment_type: data.employmentType as EmploymentType,
           }),
         );
       }

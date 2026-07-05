@@ -1,51 +1,57 @@
-import { useState, useEffect } from 'react';
-import type { Task, TaskStatus } from '../types/task.types';
-import { INITIAL_TASKS } from '../data/taskData';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getAvatarColor } from '@/shared/utils';
+import { pmTaskApi } from '../api/task.api';
+import type { RawPmTask } from '../api/task.api';
+import type { Task, TaskPriority, TaskStatus } from '../types/task.types';
 
-type Listener = () => void;
-
-let tasks: Task[] = [...INITIAL_TASKS];
-const listeners = new Set<Listener>();
-
-function notify() { listeners.forEach(fn => fn()); }
-
-export function getAllTasks(): Task[] {
-  return tasks;
+export function queryKey(projectId: string) {
+  return ['pm-project-tasks', projectId] as const;
 }
 
-export function getProjectTasks(projectId: string): Task[] {
-  return tasks.filter(t => t.projectId === projectId);
-}
-
-export function moveTask(taskId: string, newStatus: TaskStatus): void {
-  tasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t);
-  notify();
-}
-
-export function addTask(task: Task): void {
-  tasks = [...tasks, task];
-  notify();
-}
-
-export function updateTask(id: string, updates: Partial<Omit<Task, 'id'>>): void {
-  tasks = tasks.map(t => t.id === id ? { ...t, ...updates } : t);
-  notify();
-}
-
-export function deleteTask(id: string): void {
-  tasks = tasks.filter(t => t.id !== id);
-  notify();
+export function toTask(raw: RawPmTask, projectId: string): Task {
+  return {
+    id:              String(raw.id),
+    projectId,
+    title:           raw.title,
+    description:     raw.description ?? undefined,
+    phaseId:         raw.phase?.id,
+    phaseName:       raw.phase?.name,
+    priority:        raw.priority as TaskPriority,
+    assigneeName:    raw.assignee?.name ?? '',
+    assigneeInitial: raw.assignee?.avatarInitial ?? '',
+    assigneeColor:   getAvatarColor(raw.assignee?.name ?? raw.title),
+    dueDate:         raw.dueDate ?? '',
+    estimatedHours:  raw.estimatedHours != null ? Number(raw.estimatedHours) : undefined,
+    status:          raw.status as TaskStatus,
+    taskNumber:      `#${String(raw.taskNumber).padStart(3, '0')}`,
+  };
 }
 
 export function useProjectTasks(projectId: string): Task[] {
-  const [state, setState] = useState<Task[]>(() => getProjectTasks(projectId));
+  const { data } = useQuery({
+    queryKey: queryKey(projectId),
+    queryFn:  () => pmTaskApi.list(projectId).then(r =>
+      r.data.data.columns.flatMap(c => c.tasks.map(t => toTask(t, projectId))),
+    ),
+    enabled: !!projectId,
+  });
 
-  useEffect(() => {
-    setState(getProjectTasks(projectId));
-    const unsub = () => setState([...getProjectTasks(projectId)]);
-    listeners.add(unsub);
-    return () => { listeners.delete(unsub); };
-  }, [projectId]);
+  return data ?? [];
+}
 
-  return state;
+/** Invalidate the task list after a create/update/status/delete mutation succeeds. */
+export function useInvalidateProjectTasks(projectId: string) {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: queryKey(projectId) });
+}
+
+/** Optimistically remove a task from the cached list — there is no confirmed
+ * delete endpoint yet, so this only affects the current view (resets on refetch). */
+export function useRemoveTaskLocally(projectId: string) {
+  const queryClient = useQueryClient();
+  return (taskId: string) => {
+    queryClient.setQueryData<Task[]>(queryKey(projectId), (old) =>
+      (old ?? []).filter(t => t.id !== taskId),
+    );
+  };
 }

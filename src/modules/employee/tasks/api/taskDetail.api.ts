@@ -1,6 +1,6 @@
 import { http } from '@/shared/services/http.service';
 import { getAvatarColor } from '@/shared/utils/avatar.utils';
-import type { TaskDetail, TaskComment, TaskSession } from '../types/taskDetail.types';
+import type { TaskDetail, TaskComment, TaskSession, UpdateTaskPayload } from '../types/taskDetail.types';
 import type { EmpTaskStatus, EmpTaskPriority } from '../types/employeeTask.types';
 
 /* ── Raw backend shape — GET /v1/pm/projects/{project_id}/tasks/{task_id} ──
@@ -39,6 +39,12 @@ const REVERSE_STATUS_MAP: Record<EmpTaskStatus, string> = {
 const PRIORITY_MAP: Record<string, EmpTaskPriority> = {
   low:    'low',
   normal: 'medium',
+  high:   'high',
+};
+
+const REVERSE_PRIORITY_MAP: Record<EmpTaskPriority, string> = {
+  low:    'low',
+  medium: 'normal',
   high:   'high',
 };
 
@@ -155,6 +161,17 @@ export const taskDetailApi = {
       `/v1/pm/projects/${projectId}/tasks/${taskId}/status`,
       { status: REVERSE_STATUS_MAP[status] },
     );
+    return { data: toTaskDetail(res.data.data, projectId) };
+  },
+
+  async update(projectId: string, taskId: string, payload: UpdateTaskPayload): Promise<{ data: TaskDetail }> {
+    const res = await http.patch<RawTaskDetailResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}`, {
+      title:           payload.title,
+      description:     payload.description,
+      priority:        REVERSE_PRIORITY_MAP[payload.priority],
+      due_date:        payload.deadline,
+      estimated_hours: payload.allocatedHours,
+    });
     return { data: toTaskDetail(res.data.data, projectId) };
   },
 

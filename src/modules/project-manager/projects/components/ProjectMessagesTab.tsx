@@ -1,16 +1,17 @@
 import { AtSign, Paperclip, Search, Send } from 'lucide-react';
 import { Avatar }               from '@/shared/components/ui/Avatar';
 import { useProjectMessages }   from '../hooks/useProjectMessages';
-import type { TeamMember }      from '../types/project.types';
 
 interface Props {
-  team: TeamMember[];
-  isAr: boolean;
+  projectId: string;
+  isAr:      boolean;
 }
 
-export function ProjectMessagesTab({ team, isAr }: Props) {
-  const { filtered, text, setText, search, setSearch, send, handleKey, bottomRef } =
-    useProjectMessages(team);
+export function ProjectMessagesTab({ projectId, isAr }: Props) {
+  const {
+    filtered, text, setText, search, setSearch, send, handleKey, bottomRef, isLoading,
+    showMentions, setShowMentions, mentionables, insertMention,
+  } = useProjectMessages(projectId);
 
   return (
     <div className="flex flex-col rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
@@ -39,7 +40,15 @@ export function ProjectMessagesTab({ team, isAr }: Props) {
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5
                       min-h-[380px] max-h-[460px]
                       bg-gray-50/70 dark:bg-gray-900/20">
-        {filtered.map(msg =>
+        {isLoading ? (
+          <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-10">
+            {isAr ? 'جاري التحميل...' : 'Loading...'}
+          </p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-10">
+            {isAr ? 'لا توجد رسائل بعد' : 'No messages yet'}
+          </p>
+        ) : filtered.map(msg =>
           msg.isOwn ? (
             /* Own message — right side */
             <div key={msg.id} className="flex flex-col items-end gap-1">
@@ -111,10 +120,37 @@ export function ProjectMessagesTab({ team, isAr }: Props) {
           />
 
           {/* Icon buttons — visually on the left in RTL (last in DOM) */}
-          <button type="button"
-            className="text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors">
-            <AtSign size={17} />
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowMentions(o => !o)}
+              className="text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
+            >
+              <AtSign size={17} />
+            </button>
+            {showMentions && (
+              <div className="absolute bottom-full mb-2 end-0 w-56 max-h-56 overflow-y-auto
+                              rounded-xl border border-gray-200 dark:border-gray-600
+                              bg-white dark:bg-gray-800 shadow-xl z-10 py-1">
+                {mentionables.length === 0 ? (
+                  <p className="px-3 py-2.5 text-xs text-gray-400 text-center">
+                    {isAr ? 'لا يوجد أعضاء' : 'No members'}
+                  </p>
+                ) : mentionables.map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => insertMention(m)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-end
+                               text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  >
+                    <Avatar initial={m.avatarInitial} color="bg-gray-400" size="sm" />
+                    <span className="truncate">{m.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button type="button"
             className="text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors">
             <Paperclip size={17} />

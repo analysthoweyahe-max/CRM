@@ -15,7 +15,7 @@ export const leavesApi = {
   },
 
   show(id: string) {
-    return http.get<LeaveSingleResponse>(`/v1/hr/leave/${id}`);
+    return http.get<LeaveSingleResponse>(`/v1/hr/leave/${id}`, { params: { with: 'employee' } });
   },
 
   approve(id: string, notes?: string) {

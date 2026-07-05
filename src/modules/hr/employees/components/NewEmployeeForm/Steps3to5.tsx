@@ -3,9 +3,10 @@ import { Mail } from 'lucide-react';
 import { Card }      from '@/shared/components/ui/Card';
 import { NavButtons } from './StepWizard';
 import {
-  DEPARTMENTS, JOB_TITLES, MANAGERS, JOB_TYPES,
+  DEPARTMENTS, JOB_TITLES, MANAGERS,
   type AllFormData,
 } from './newEmployeeForm.types';
+import { useEmploymentTypes } from '../../hooks/useLookups';
 
 interface Step2Props {
   isAr:     boolean;
@@ -26,6 +27,7 @@ function ReviewField({ label, value }: { label: string; value: string }) {
 
 export function Step2Review({ isAr, isRTL, formData, onBack, onSubmit }: Step2Props) {
   const { handleSubmit, formState: { isSubmitting } } = useForm();
+  const { data: employmentTypes = [] } = useEmploymentTypes();
 
   const s1 = formData.step1;
 
@@ -34,7 +36,7 @@ export function Step2Review({ isAr, isRTL, formData, onBack, onSubmit }: Step2Pr
   const managerLabel = !s1?.managerId || s1.managerId === 'none'
     ? (isAr ? 'بدون' : 'None')
     : (MANAGERS.find((m) => m.id === s1.managerId)?.label ?? '—');
-  const jobTypeLabel = JOB_TYPES.find((t) => t.id === s1?.jobType)?.[isAr ? 'labelAr' : 'labelEn'] ?? s1?.jobType ?? '—';
+  const jobTypeLabel = employmentTypes.find((t) => t.value === s1?.jobType)?.label ?? s1?.jobType ?? '—';
   const salaryFmt    = s1?.salary ? `${Number(s1.salary).toLocaleString()} ${s1.currency ?? 'EGP'}` : '—';
   const schedule     = s1?.startTime && s1?.endTime ? `${s1.startTime} - ${s1.endTime}` : '—';
 

@@ -6,13 +6,18 @@ import { TaskDetailComments }       from '../components/TaskDetailComments';
 import { TaskDetailInfo }           from '../components/TaskDetailInfo';
 import { TaskDetailAttachments }    from '../components/TaskDetailAttachments';
 import { TaskDetailTimeTracker }    from '../components/TaskDetailTimeTracker';
+import { EditTaskModal }            from '../components/EditTaskModal';
 
 export function TaskDetailPage() {
-  const { isAr, goBack, activeTab, setActiveTab, task, comments, sessions, isLoading, projectId, taskId } = useTaskDetailPage();
+  const {
+    isAr, goBack, activeTab, setActiveTab, task, comments, sessions, isLoading, projectId, taskId,
+    isEditOpen, openEdit, closeEdit,
+  } = useTaskDetailPage();
 
   return (
     <div className="space-y-4" dir={isAr ? 'rtl' : 'ltr'}>
-      <TaskDetailHeader task={task} isLoading={isLoading} isAr={isAr} onBack={goBack} />
+      <TaskDetailHeader task={task} isLoading={isLoading} isAr={isAr} onBack={goBack} onEdit={openEdit} />
+      {task && <EditTaskModal open={isEditOpen} onClose={closeEdit} task={task} isAr={isAr} />}
       <Card>
         <TaskDetailTabs activeTab={activeTab} onTabChange={setActiveTab} isAr={isAr} />
         <div className="p-5">

@@ -8,12 +8,23 @@ import type {
   InviteTokenPayload,
 } from '@/modules/auth/types/auth.types';
 import type { Role } from '@/shared/types/role.types';
-import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY } from '@/app/config/constants';
+import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function isEmail(value: string): boolean {
   return EMAIL_RE.test(value);
+}
+
+type AccountType = 'employee' | 'admin';
+
+function getCachedAccountType(identifier: string): AccountType | null {
+  const value = localStorage.getItem(ACCOUNT_TYPE_KEY + identifier);
+  return value === 'employee' || value === 'admin' ? value : null;
+}
+
+function setCachedAccountType(identifier: string, type: AccountType): void {
+  localStorage.setItem(ACCOUNT_TYPE_KEY + identifier, type);
 }
 
 function mapAdminRole(roles: string[]): Role {
@@ -71,35 +82,64 @@ function getStoredUser(): AuthUser | null {
 
 // ── Auth operations ───────────────────────────────────────────────────────────
 
-async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> {
-  const { password, rememberMe = false } = credentials;
-  const employeeId = credentials.employeeId.trim();
+async function loginAsEmployee(
+  employeeId: string,
+  password: string,
+  rememberMe: boolean,
+): Promise<AuthLoginResponse> {
   const employeePayload = isEmail(employeeId)
     ? { email: employeeId, password }
     : { employee_id: employeeId, password };
+  const { data } = await authApi.employeeLogin(employeePayload);
+  const { accessToken, employee } = data.data;
+  const user = buildEmployeeUser(employee);
+  storeAuth(accessToken, user, rememberMe);
+  setCachedAccountType(employeeId, 'employee');
+  return { token: accessToken, user };
+}
+
+async function loginAsAdmin(
+  employeeId: string,
+  password: string,
+  rememberMe: boolean,
+): Promise<AuthLoginResponse> {
+  const { data } = await authApi.adminLogin({ admin_id: employeeId, password });
+  const payload = data.data;
+  if (!payload?.accessToken || !payload?.admin) {
+    throw new Error('Invalid admin login response');
+  }
+  const { accessToken, admin } = payload;
+  const user: AuthUser = {
+    id:         admin.id,
+    employeeId: admin.id,
+    fullName:   admin.name,
+    role:       mapAdminRole(admin.roles ?? []),
+    avatarUrl:  admin.avatar_url,
+  };
+  storeAuth(accessToken, user, rememberMe);
+  setCachedAccountType(employeeId, 'admin');
+  return { token: accessToken, user };
+}
+
+async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> {
+  const { password, rememberMe = false } = credentials;
+  const employeeId = credentials.employeeId.trim();
+  const cachedType = getCachedAccountType(employeeId);
+
+  // Try the account type we last succeeded with (if any) first, so returning
+  // users don't hit the wrong login endpoint and see a spurious 422 every time.
+  if (cachedType === 'admin') {
+    try {
+      return await loginAsAdmin(employeeId, password, rememberMe);
+    } catch {
+      return await loginAsEmployee(employeeId, password, rememberMe);
+    }
+  }
 
   try {
-    const { data } = await authApi.employeeLogin(employeePayload);
-    const { accessToken, employee } = data.data;
-    const user = buildEmployeeUser(employee);
-    storeAuth(accessToken, user, rememberMe);
-    return { token: accessToken, user };
+    return await loginAsEmployee(employeeId, password, rememberMe);
   } catch {
-    const { data } = await authApi.adminLogin({ admin_id: employeeId, password });
-    const payload = data.data;
-    if (!payload?.accessToken || !payload?.admin) {
-      throw new Error('Invalid admin login response');
-    }
-    const { accessToken, admin } = payload;
-    const user: AuthUser = {
-      id:         admin.id,
-      employeeId: admin.id,
-      fullName:   admin.name,
-      role:       mapAdminRole(admin.roles ?? []),
-      avatarUrl:  admin.avatar_url,
-    };
-    storeAuth(accessToken, user, rememberMe);
-    return { token: accessToken, user };
+    return await loginAsAdmin(employeeId, password, rememberMe);
   }
 }
 

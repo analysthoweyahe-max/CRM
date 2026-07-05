@@ -7,10 +7,6 @@ import type {
   EmpLeaveRequest,
 } from '../types/employeeLeave.types';
 
-function delay<T>(data: T, ms = 400): Promise<{ data: T }> {
-  return new Promise(res => setTimeout(() => res({ data }), ms));
-}
-
 /* ── Raw backend shapes ──────────────────────────────────────────────── */
 interface RawRequestType { value: string; label: string; }
 interface RawRequestTypesResponse { status: string; message: string; data: RawRequestType[]; }
@@ -63,15 +59,8 @@ function toLocalRequest(r: RawRequestItem): EmpLeaveRequest {
 }
 
 export const empLeaveApi = {
-  // No real endpoint yet for leave-balance summary — still mock.
   summary() {
-    return delay<EmpLeaveSummaryResponse>({
-      status: 'success',
-      data: [
-        { type: 'annual', label: 'إجازة سنوية', balance: 21, used: 12, remaining: 9  },
-        { type: 'sick',   label: 'إجازة مرضية', balance: 14, used: 4,  remaining: 10 },
-      ],
-    });
+    return http.get<EmpLeaveSummaryResponse>('/v1/employee/leave/summary');
   },
 
   async types(): Promise<{ data: EmpLeaveTypesResponse }> {

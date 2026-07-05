@@ -80,6 +80,7 @@ const EmployeeTasksPage        = lazy(() => import('@/modules/employee/tasks/pag
 const EmployeeTaskDetailPage   = lazy(() => import('@/modules/employee/tasks/pages/TaskDetailPage')                  .then(m => ({ default: m.TaskDetailPage })));
 const EmployeeDailyReportsPage = lazy(() => import('@/modules/employee/daily-reports/pages/EmployeeDailyReportsPage').then(m => ({ default: m.EmployeeDailyReportsPage })));
 const EmployeeProfilePage      = lazy(() => import('@/modules/employee/profile/pages/EmployeeProfilePage')           .then(m => ({ default: m.EmployeeProfilePage })));
+const EmployeeProjectMessagesPage = lazy(() => import('@/modules/employee/projects/pages/ProjectMessagesPage')        .then(m => ({ default: m.ProjectMessagesPage })));
 
 /* ── Router ───────────────────────────────────────────────────────── */
 export function AppRouter() {
@@ -152,6 +153,7 @@ export function AppRouter() {
                   <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
                   <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
                   <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />} />
+                  <Route path={ROUTES.EMPLOYEE.PROJECT_MESSAGES()} element={<EmployeeProjectMessagesPage />} />
                 </Route>
               </Route>
 

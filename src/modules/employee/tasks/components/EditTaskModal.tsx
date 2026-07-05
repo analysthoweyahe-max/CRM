@@ -1,0 +1,126 @@
+import { useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { toast } from 'sonner';
+import { Modal }     from '@/shared/components/ui/Modal';
+import { Button }    from '@/shared/components/ui/Button';
+import { Input }     from '@/shared/components/ui/Input';
+import { FormField } from '@/shared/components/form/FormField';
+import { Combobox }  from '@/shared/components/form/Combobox';
+import { useUpdateTask } from '../hooks/useTaskDetail';
+import type { TaskDetail } from '../types/taskDetail.types';
+import type { EmpTaskPriority } from '../types/employeeTask.types';
+
+interface Props {
+  open:      boolean;
+  onClose:   () => void;
+  task:      TaskDetail;
+  isAr:      boolean;
+}
+
+interface FormValues {
+  title:          string;
+  description:    string;
+  priority:       EmpTaskPriority;
+  deadline:       string;
+  allocatedHours: string;
+}
+
+function formDefaults(task: TaskDetail): FormValues {
+  return {
+    title:          task.title,
+    description:    task.description,
+    priority:       task.priority,
+    deadline:       task.deadline.slice(0, 10),
+    allocatedHours: String(task.allocatedHours || ''),
+  };
+}
+
+export function EditTaskModal({ open, onClose, task, isAr }: Props) {
+  const { register, control, handleSubmit, reset } = useForm<FormValues>({
+    defaultValues: formDefaults(task),
+  });
+
+  useEffect(() => {
+    if (open) reset(formDefaults(task));
+  }, [open]);
+
+  const mutation = useUpdateTask(task.projectId, task.id);
+
+  const priorityItems = [
+    { id: 'low',    label: isAr ? 'منخفضة' : 'Low'    },
+    { id: 'medium', label: isAr ? 'متوسطة' : 'Medium' },
+    { id: 'high',   label: isAr ? 'عالية'  : 'High'   },
+  ];
+
+  function onSubmit(data: FormValues) {
+    mutation.mutate({
+      title:          data.title.trim(),
+      description:    data.description.trim(),
+      priority:       data.priority,
+      deadline:       data.deadline,
+      allocatedHours: Number(data.allocatedHours) || 0,
+    }, {
+      onSuccess: () => {
+        toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
+        onClose();
+      },
+      onError: () => toast.error(isAr ? 'تعذّر حفظ التعديلات' : 'Failed to save changes'),
+    });
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={isAr ? 'تعديل المهمة' : 'Edit Task'}
+      size="md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            {isAr ? 'إلغاء' : 'Cancel'}
+          </Button>
+          <Button isLoading={mutation.isPending} onClick={handleSubmit(onSubmit)}>
+            {isAr ? 'حفظ' : 'Save'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <FormField label={isAr ? 'العنوان' : 'Title'}>
+          <Input {...register('title')} placeholder={isAr ? 'عنوان المهمة' : 'Task title'} />
+        </FormField>
+
+        <FormField label={isAr ? 'الوصف' : 'Description'}>
+          <textarea
+            {...register('description')}
+            rows={3}
+            dir={isAr ? 'rtl' : 'ltr'}
+            placeholder={isAr ? 'وصف المهمة...' : 'Task description...'}
+            className="w-full rounded-lg border text-sm text-gray-800 dark:text-gray-200
+                       bg-white dark:bg-gray-700/50 border-gray-200 dark:border-gray-600
+                       outline-none transition placeholder:text-gray-400 dark:placeholder:text-gray-500
+                       focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 p-3 resize-none"
+          />
+        </FormField>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField label={isAr ? 'الأولوية' : 'Priority'}>
+            <Controller name="priority" control={control} render={({ field }) => (
+              <Combobox items={priorityItems} value={field.value} onChange={field.onChange}
+                searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
+                noResultsText={isAr ? 'لا نتائج' : 'No results'} />
+            )} />
+          </FormField>
+
+          <FormField label={isAr ? 'تاريخ التسليم' : 'Due Date'}>
+            <Input {...register('deadline')} type="date" />
+          </FormField>
+        </div>
+
+        <FormField label={isAr ? 'الساعات المقدرة' : 'Estimated Hours'}>
+          <Input {...register('allocatedHours')} type="number" min={0} placeholder="0" />
+        </FormField>
+      </div>
+    </Modal>
+  );
+}

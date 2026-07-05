@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowLeft, FolderOpen } from 'lucide-react';
+import { ArrowRight, ArrowLeft, FolderOpen, SquarePen } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/Badge';
 import { STATUS_MAP } from './useTasksTable';
 import type { TaskDetail } from '../types/taskDetail.types';
@@ -8,6 +8,7 @@ interface TaskDetailHeaderProps {
   isLoading: boolean;
   isAr:      boolean;
   onBack:    () => void;
+  onEdit:    () => void;
 }
 
 function Skeleton() {
@@ -25,7 +26,7 @@ function Skeleton() {
   );
 }
 
-export function TaskDetailHeader({ task, isLoading, isAr, onBack }: TaskDetailHeaderProps) {
+export function TaskDetailHeader({ task, isLoading, isAr, onBack, onEdit }: TaskDetailHeaderProps) {
   if (isLoading || !task) return <Skeleton />;
 
   const status  = STATUS_MAP[task.status];
@@ -50,6 +51,13 @@ export function TaskDetailHeader({ task, isLoading, isAr, onBack }: TaskDetailHe
           icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
         />
         <div className="flex items-center gap-2">
+          <button
+            onClick={onEdit}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
+            aria-label={isAr ? 'تعديل المهمة' : 'Edit task'}
+          >
+            <SquarePen size={16} />
+          </button>
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
           <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums">{taskNum}</span>
         </div>

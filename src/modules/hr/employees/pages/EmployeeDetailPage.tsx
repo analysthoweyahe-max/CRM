@@ -137,7 +137,7 @@ export function EmployeeDetailPage() {
             <div className="flex items-center gap-5 text-sm">
               <div className="text-center">
                 <p className="font-bold text-gray-800 dark:text-gray-100">
-                  {mapEmploymentType(emp.employmentType, isAr)}
+                  {emp.employmentTypeLabel || mapEmploymentType(emp.employmentType, isAr)}
                 </p>
                 <p className="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
                   {isAr ? 'نوع التوظيف' : 'Employment Type'}

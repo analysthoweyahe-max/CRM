@@ -4,11 +4,9 @@ import { Modal }       from '@/shared/components/ui/Modal';
 import { Button }      from '@/shared/components/ui/Button';
 import { Combobox }    from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
-import { getAvatarColor } from '@/shared/utils';
-import type { TaskPriority, TaskStatus } from '../../tasks/types/task.types';
 import type { PmProjectTeamMember, PmProjectPhase } from '../types/project.types';
 import { pmTaskApi } from '../../tasks/api/task.api';
-import { addTask }   from '../../tasks/store/taskStore';
+import { useInvalidateProjectTasks } from '../../tasks/store/taskStore';
 import { usePmTaskLookups } from '../hooks/usePmTaskLookups';
 
 const INPUT = [
@@ -27,12 +25,12 @@ interface Props {
   projectId: string;
   team:      PmProjectTeamMember[];
   phases:    PmProjectPhase[];
-  taskCount: number;
   isAr:      boolean;
 }
 
-export function AddTaskModal({ open, onClose, projectId, team, phases, taskCount, isAr }: Props) {
+export function AddTaskModal({ open, onClose, projectId, team, phases, isAr }: Props) {
   const { statuses, priorities } = usePmTaskLookups();
+  const invalidateTasks = useInvalidateProjectTasks(projectId);
 
   const [title,          setTitle]          = useState('');
   const [description,    setDescription]    = useState('');
@@ -68,7 +66,7 @@ export function AddTaskModal({ open, onClose, projectId, team, phases, taskCount
     if (!isValid || submitting) return;
     setSubmitting(true);
     try {
-      const res = await pmTaskApi.create(projectId, {
+      await pmTaskApi.create(projectId, {
         title:            title.trim(),
         description:      description.trim() || undefined,
         employee_id:      assigneeId,
@@ -79,27 +77,7 @@ export function AddTaskModal({ open, onClose, projectId, team, phases, taskCount
         status,
       });
 
-      const member = team.find(m => m.id === assigneeId);
-      const phase  = phases.find(p => String(p.id) === phaseId);
-      const num    = String(taskCount + 1).padStart(3, '0');
-
-      addTask({
-        id:              String(res.data.data.id),
-        projectId,
-        title:           title.trim(),
-        description:     description.trim() || undefined,
-        phaseId:         phase?.id,
-        phaseName:       phase?.name,
-        priority:        priority as TaskPriority,
-        assigneeName:    member?.name ?? '',
-        assigneeInitial: member?.avatarInitial ?? '؟',
-        assigneeColor:   getAvatarColor(assigneeId),
-        dueDate,
-        estimatedHours:  estimatedHours ? Number(estimatedHours) : undefined,
-        status:          status as TaskStatus,
-        taskNumber:      `#${num}`,
-      });
-
+      invalidateTasks();
       toast.success(isAr ? 'تمت إضافة المهمة' : 'Task added');
       resetForm();
       onClose();

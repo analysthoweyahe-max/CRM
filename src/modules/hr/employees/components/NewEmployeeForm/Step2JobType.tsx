@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card } from '@/shared/components/ui/Card';
 import { NavButtons } from './StepWizard';
-import { step2Schema, JOB_TYPES, type Step2Values } from './newEmployeeForm.types';
+import {
+  step2Schema, EMPLOYMENT_TYPE_ICONS, DEFAULT_EMPLOYMENT_TYPE_ICON, EMPLOYMENT_TYPE_DESCRIPTIONS,
+  type Step2Values,
+} from './newEmployeeForm.types';
+import { useEmploymentTypes } from '../../hooks/useLookups';
 
 interface Step2Props {
   isAr:           boolean;
@@ -14,14 +18,21 @@ interface Step2Props {
 }
 
 export function Step2JobType({ isAr, isRTL, defaultValues, onNext, onBack }: Step2Props) {
+  const { data: employmentTypes = [] } = useEmploymentTypes();
+
   const { setValue, handleSubmit, formState: { isSubmitting } } = useForm<Step2Values>({
     resolver: zodResolver(step2Schema),
-    defaultValues: { jobType: 'full-time', ...defaultValues },
+    defaultValues: { jobType: '', ...defaultValues },
   });
 
-  const [selected, setSelected] = useState<Step2Values['jobType']>(
-    defaultValues?.jobType ?? 'full-time',
-  );
+  const [selected, setSelected] = useState<Step2Values['jobType']>(defaultValues?.jobType ?? '');
+
+  // Default to the first employment type once the lookup loads, if nothing was chosen yet
+  useEffect(() => {
+    if (!selected && employmentTypes.length > 0) {
+      handleSelect(employmentTypes[0].value);
+    }
+  }, [employmentTypes]);
 
   function handleSelect(id: Step2Values['jobType']) {
     setSelected(id);
@@ -37,13 +48,15 @@ export function Step2JobType({ isAr, isRTL, defaultValues, onNext, onBack }: Ste
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {JOB_TYPES.map(({ id, labelAr, labelEn, descAr, descEn, Icon }) => {
-            const isSelected = selected === id;
+          {employmentTypes.map(({ value, label }) => {
+            const isSelected = selected === value;
+            const Icon       = EMPLOYMENT_TYPE_ICONS[value] ?? DEFAULT_EMPLOYMENT_TYPE_ICON;
+            const desc       = EMPLOYMENT_TYPE_DESCRIPTIONS[value];
             return (
               <button
-                key={id}
+                key={value}
                 type="button"
-                onClick={() => handleSelect(id as Step2Values['jobType'])}
+                onClick={() => handleSelect(value)}
                 className={[
                   'flex flex-col items-center gap-3 p-5 rounded-xl border-2 text-center transition-all',
                   isSelected
@@ -63,11 +76,13 @@ export function Step2JobType({ isAr, isRTL, defaultValues, onNext, onBack }: Ste
                 </div>
                 <div>
                   <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                    {isAr ? labelAr : labelEn}
+                    {label}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-relaxed">
-                    {isAr ? descAr : descEn}
-                  </p>
+                  {desc && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-relaxed">
+                      {isAr ? desc.ar : desc.en}
+                    </p>
+                  )}
                 </div>
               </button>
             );

@@ -12,6 +12,7 @@ export function useTaskDetailPage() {
   const navigate     = useNavigate();
 
   const [activeTab, setActiveTab] = useState<TabId>('comments');
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const { data: task,     isLoading: tl } = useTaskDetail(projectId, taskId);
   const { data: comments = [], isLoading: cl } = useTaskComments(projectId, taskId);
@@ -21,5 +22,8 @@ export function useTaskDetailPage() {
 
   function goBack() { navigate(ROUTES.EMPLOYEE.TASKS); }
 
-  return { isAr, goBack, activeTab, setActiveTab, task, comments, sessions, isLoading, projectId, taskId };
+  return {
+    isAr, goBack, activeTab, setActiveTab, task, comments, sessions, isLoading, projectId, taskId,
+    isEditOpen, openEdit: () => setIsEditOpen(true), closeEdit: () => setIsEditOpen(false),
+  };
 }

@@ -12,20 +12,7 @@ export function useEmpLeaveSummary() {
   return useQuery({
     queryKey: KEYS.summary,
     queryFn:  () => empLeaveApi.summary(),
-    select:   res => {
-      const raw = res.data.data;
-      if (Array.isArray(raw)) return raw as EmpLeaveSummaryItem[];
-      return Object.entries(raw as Record<string, unknown>).map(([key, val]) => {
-        const v = val as Record<string, unknown>;
-        return {
-          type:      key,
-          label:     (v.label ?? v.name ?? key) as string,
-          balance:   (v.total ?? v.balance ?? 0) as number,
-          used:      (v.used ?? 0) as number,
-          remaining: (v.remaining ?? 0) as number,
-        } satisfies EmpLeaveSummaryItem;
-      });
-    },
+    select:   res => res.data.data.balances as EmpLeaveSummaryItem[],
   });
 }
 
