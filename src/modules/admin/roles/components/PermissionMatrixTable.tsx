@@ -1,16 +1,14 @@
 import { Card } from '@/shared/components/ui/Card';
 import { PermissionChip } from './PermissionChip';
-import { MODULES, ACTION_LABELS } from '../data/roleData';
-import type { RoleDef, PermissionMatrix, PermissionAction } from '../types/adminRole.types';
+import { PERMISSION_GROUPS, getRoleNameLabel } from '../types/adminRole.types';
+import type { ApiRole } from '../types/adminRole.types';
 
 interface Props {
-  roles:    RoleDef[];
-  matrix:   PermissionMatrix;
-  onToggle: (roleKey: string, moduleKey: string, action: PermissionAction) => void;
-  isAr:     boolean;
+  roles: ApiRole[];
+  isAr:  boolean;
 }
 
-export function PermissionMatrixTable({ roles, matrix, onToggle, isAr }: Props) {
+export function PermissionMatrixTable({ roles, isAr }: Props) {
   return (
     <Card overflow>
       <div className="overflow-x-auto">
@@ -20,28 +18,27 @@ export function PermissionMatrixTable({ roles, matrix, onToggle, isAr }: Props) 
               <th className="px-5 py-3 text-end text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
                 {isAr ? 'الوحدة' : 'Module'}
               </th>
-              {roles.map(r => (
-                <th key={r.key} className="px-5 py-3 text-end text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                  {isAr ? r.nameAr : r.nameEn}
+              {roles.map((r) => (
+                <th key={r.id} className="px-5 py-3 text-end text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                  {getRoleNameLabel(r.name, isAr)}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-            {MODULES.map(mod => (
-              <tr key={mod.key}>
+            {PERMISSION_GROUPS.map((group) => (
+              <tr key={group.key}>
                 <td className="px-5 py-3.5 text-end font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                  {isAr ? mod.labelAr : mod.labelEn}
+                  {isAr ? group.labelAr : group.labelEn}
                 </td>
-                {roles.map(r => (
-                  <td key={r.key} className="px-5 py-3.5">
+                {roles.map((r) => (
+                  <td key={r.id} className="px-5 py-3.5">
                     <div className="flex flex-wrap gap-1.5 justify-end">
-                      {mod.actions.map(action => (
+                      {group.slugs.map(({ slug, labelAr, labelEn }) => (
                         <PermissionChip
-                          key={action}
-                          label={isAr ? ACTION_LABELS[action].ar : ACTION_LABELS[action].en}
-                          active={matrix[r.key]?.[mod.key]?.includes(action) ?? false}
-                          onToggle={() => onToggle(r.key, mod.key, action)}
+                          key={slug}
+                          label={isAr ? labelAr : labelEn}
+                          active={r.permissions.includes(slug)}
                         />
                       ))}
                     </div>

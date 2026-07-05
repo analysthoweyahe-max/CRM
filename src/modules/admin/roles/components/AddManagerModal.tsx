@@ -4,8 +4,8 @@ import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
-import { PermissionChip } from './PermissionChip';
-import { MANAGER_ROLE_OPTIONS, MANAGER_PERMISSION_GROUPS } from '../types/adminManager.types';
+import { PermissionGroupList } from './PermissionGroupList';
+import { MANAGER_ROLE_OPTIONS } from '../types/adminManager.types';
 import type { CreateAdminPayload } from '../types/adminManager.types';
 
 interface Props {
@@ -86,25 +86,7 @@ export function AddManagerModal({ open, onClose, onSubmit, isLoading, isAr }: Pr
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             {isAr ? 'الصلاحيات' : 'Permissions'}
           </p>
-          <div className="rounded-xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700/50">
-            {MANAGER_PERMISSION_GROUPS.map((group) => (
-              <div key={group.key} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="flex flex-wrap gap-1.5">
-                  {group.slugs.map(({ slug, labelAr, labelEn }) => (
-                    <PermissionChip
-                      key={slug}
-                      label={isAr ? labelAr : labelEn}
-                      active={permissions.includes(slug)}
-                      onToggle={() => toggle(slug)}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">
-                  {isAr ? group.labelAr : group.labelEn}
-                </span>
-              </div>
-            ))}
-          </div>
+          <PermissionGroupList selected={permissions} onToggle={toggle} isAr={isAr} />
         </div>
       </div>
     </Modal>
