@@ -1,5 +1,6 @@
 export interface AddSeoTaskForm {
   title:          string;
+  phase:          string;
   description:    string;
   assignee:       string;
   priority:       string;
@@ -9,16 +10,17 @@ export interface AddSeoTaskForm {
   targetUrl:      string;
 }
 
+/** POST /v1/seo/manager/projects/{id}/tasks — title/phase/employee_ids required, rest optional */
 export interface CreateSeoTaskPayload {
   title:               string;
+  phase:               string;
+  employee_ids:        string[];
   description?:        string;
-  employee_id:         string;
-  priority:            string;
+  priority?:           string;
   due_date?:           string;
   start_date?:         string;
   estimated_hours?:    number;
-  phase_id:            number;
-  status:              string;
+  status?:             string;
   target_keyword?:     string;
   target_url?:         string;
   search_intent?:      string;

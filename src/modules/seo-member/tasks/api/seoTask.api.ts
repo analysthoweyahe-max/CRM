@@ -26,18 +26,17 @@ export interface RawSeoTask {
   project?:       RawSeoTaskRef | null;
 }
 
-export interface RawSeoTaskColumn {
-  status:      string;
-  statusLabel: string;
-  tasks:       RawSeoTask[];
+export interface RawSeoTaskPhaseGroup {
+  phase: string;
+  tasks: RawSeoTask[];
 }
 
 export interface RawSeoTaskListResponse {
   status:  string;
   message: string;
   data: {
-    columns: RawSeoTaskColumn[];
-    total:   number;
+    phases: RawSeoTaskPhaseGroup[];
+    total:  number;
   };
 }
 
@@ -82,8 +81,8 @@ export function toSeoTask(raw: RawSeoTask): SeoTask {
   };
 }
 
-function flattenColumns(res: RawSeoTaskListResponse) {
-  const tasks = res.data.columns.flatMap((c) => c.tasks).map(toSeoTask);
+function flattenPhases(res: RawSeoTaskListResponse) {
+  const tasks = res.data.phases.flatMap((p) => p.tasks).map(toSeoTask);
   return { tasks, total: res.data.total };
 }
 
@@ -93,7 +92,7 @@ export const seoTaskApi = {
     const res = await http.get<RawSeoTaskListResponse>('/v1/seo/employee/tasks', {
       params: { mine: 1, ...params },
     });
-    return flattenColumns(res.data);
+    return flattenPhases(res.data);
   },
 
   // "My tasks" scoped to one project — GET /v1/seo/employee/projects/{project}/tasks?mine=1
@@ -102,6 +101,6 @@ export const seoTaskApi = {
       `/v1/seo/employee/projects/${projectId}/tasks`,
       { params: { mine: 1, ...params } },
     );
-    return flattenColumns(res.data);
+    return flattenPhases(res.data);
   },
 };

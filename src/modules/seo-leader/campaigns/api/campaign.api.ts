@@ -18,35 +18,35 @@ export interface SeoTaskAssignee {
   avatarInitial?: string;
 }
 
-export interface SeoTaskPhase {
-  id:   number;
-  name: string;
-}
-
 export interface SeoTask {
-  id:               number;
-  uuid:             string;
-  taskNumber:       number;
-  title:            string;
-  description?:     string;
-  status:           string;
-  statusLabel?:     string;
-  priority:         string;
-  priorityLabel?:   string;
-  dueDate?:         string | null;
-  estimatedHours?:  string | null;
-  phase?:           SeoTaskPhase;
-  assignee?:        SeoTaskAssignee;
-  completedAt?:     string | null;
-  attachments:      { id: number; name: string; url?: string }[];
-  attachmentsCount?: number;
-  createdAt:        string;
-  updatedAt:        string;
+  id:              number;
+  taskNumber:      number;
+  phase:           string | null;
+  title:           string;
+  description?:    string | null;
+  taskType:        string;
+  taskTypeLabel:   string;
+  statusId?:       number | null;
+  status:          string;
+  statusLabel?:    string;
+  priority:        string;
+  priorityLabel?:  string;
+  startDate?:      string | null;
+  dueDate?:        string | null;
+  estimatedHours?: number | string | null;
+  siteLinks:       string[];
+  notes?:          string | null;
+  referenceLinks:  string[];
+  assignees:       SeoTaskAssignee[];
+  attachments:     { id: number; name: string; url?: string }[];
+  completedAt?:    string | null;
+  createdAt:       string;
+  updatedAt:       string;
 }
 
-interface ColumnedTasksResponse {
-  columns: { status: string; statusLabel: string; tasks: SeoTask[] }[];
-  total:   number;
+interface PhasedTasksResponse {
+  phases: { phase: string; tasks: SeoTask[] }[];
+  total:  number;
 }
 
 export interface SeoMessageSender {
@@ -86,11 +86,44 @@ export interface Mentionable {
 export interface SeoComment {
   id:          number;
   body:        string;
-  type?:       string;
-  sender:      { id: string; name: string; type?: string; avatarUrl?: string | null };
-  mentions?:   unknown[];
-  attachments?: unknown[];
+  type:        string;
+  sender:      { id: string; name: string; type: string; avatarUrl: string | null };
+  mentions:    unknown[];
+  attachments: unknown[];
   sentAt:      string;
+}
+
+export interface SeoCommentsPage {
+  data:         SeoComment[];
+  current_page: number;
+  last_page:    number;
+  total:        number;
+}
+
+export interface SeoTaskTimeLog {
+  id:            number;
+  workDate:      string;
+  startedAt:     string;
+  endedAt:       string;
+  durationHours: number;
+  notes?:        string | null;
+  employee:      { id: string; name: string };
+  createdAt:     string;
+}
+
+export interface SeoTaskTimeLogSummary {
+  sessions:        SeoTaskTimeLog[];
+  totalHours:      number;
+  estimatedHours:  number;
+  remainingHours:  number;
+  progressPercent: number;
+}
+
+export interface AddSeoTimeLogPayload {
+  work_date:  string;
+  started_at: string;
+  ended_at:   string;
+  notes?:     string;
 }
 
 export interface SelectOption {
@@ -198,11 +231,11 @@ export const campaignApi = {
      Confirmed prefix: /v1/seo/manager/... — distinct from the /v1/seo/projects/...
      prefix used by the project-level (non-task) endpoints above. */
   listAllTasks(params?: { project_id?: string | number; status?: string; search?: string }) {
-    return http.get<ApiResponse<ColumnedTasksResponse>>('/v1/seo/manager/tasks', { params });
+    return http.get<ApiResponse<PhasedTasksResponse>>('/v1/seo/manager/tasks', { params });
   },
 
   getTasks(projectId: string | number, params?: { status?: string; search?: string }) {
-    return http.get<ApiResponse<ColumnedTasksResponse>>(
+    return http.get<ApiResponse<PhasedTasksResponse>>(
       `/v1/seo/manager/projects/${projectId}/tasks`, { params }
     );
   },
@@ -232,8 +265,8 @@ export const campaignApi = {
   },
 
   updateAssignees(projectId: string | number, taskId: string | number, assigneeIds: string[]) {
-    return http.put<ApiResponse<unknown>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/assignees`, { assignees: assigneeIds }
+    return http.put<ApiResponse<SeoTask>>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/assignees`, { employee_ids: assigneeIds }
     );
   },
 
@@ -246,15 +279,27 @@ export const campaignApi = {
     );
   },
 
+  deleteAttachment(projectId: string | number, taskId: string | number, attachmentId: string | number) {
+    return http.delete<{ status: string; message: string; data?: unknown }>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`
+    );
+  },
+
   getTimeLogs(projectId: string | number, taskId: string | number) {
-    return http.get<ApiResponse<{ id: number; hours: number; note?: string; loggedAt: string }[]>>(
+    return http.get<ApiResponse<SeoTaskTimeLogSummary>>(
       `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/time-logs`
     );
   },
 
-  addTimeLog(projectId: string | number, taskId: string | number, payload: { hours: number; note?: string }) {
-    return http.post<ApiResponse<{ id: number; hours: number; note?: string; loggedAt: string }>>(
+  addTimeLog(projectId: string | number, taskId: string | number, payload: AddSeoTimeLogPayload) {
+    return http.post<ApiResponse<SeoTaskTimeLog>>(
       `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/time-logs`, payload
+    );
+  },
+
+  deleteTimeLog(projectId: string | number, taskId: string | number, timeLogId: string | number) {
+    return http.delete<ApiResponse<SeoTaskTimeLogSummary>>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/time-logs/${timeLogId}`
     );
   },
 
@@ -301,7 +346,7 @@ export const campaignApi = {
 
   /* ── Task Comments (manager) ──────────────────────────────────────────── */
   getComments(projectId: string | number, taskId: string | number) {
-    return http.get<ApiResponse<SeoComment[] | { data: SeoComment[] }>>(
+    return http.get<ApiResponse<SeoCommentsPage>>(
       `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments`
     );
   },
@@ -309,6 +354,18 @@ export const campaignApi = {
   addComment(projectId: string | number, taskId: string | number, body: string) {
     return http.post<ApiResponse<{ comment: SeoComment }>>(
       `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments`, { body }
+    );
+  },
+
+  updateComment(projectId: string | number, taskId: string | number, commentId: string | number, body: string) {
+    return http.put<ApiResponse<SeoCommentsPage>>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { body }
+    );
+  },
+
+  deleteComment(projectId: string | number, taskId: string | number, commentId: string | number) {
+    return http.delete<ApiResponse<SeoCommentsPage>>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments/${commentId}`
     );
   },
 };

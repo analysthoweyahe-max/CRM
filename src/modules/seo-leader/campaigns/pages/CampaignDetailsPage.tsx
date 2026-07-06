@@ -58,13 +58,13 @@ const PRIORITY_MAP: Record<string, Task['priority']> = {
 };
 
 function toLocalTask(t: SeoTask, projectId: string): Task {
-  const assignee = t.assignee?.name ?? '';
+  const assignee = t.assignees?.[0]?.name ?? '';
   return {
     id:              String(t.id),
     projectId,
     title:           t.title,
     description:     t.description ?? '',
-    phaseName:       t.phase?.name ?? 'مهمة SEO',
+    phaseName:       t.phase ?? t.taskTypeLabel ?? 'مهمة SEO',
     priority:        PRIORITY_MAP[t.priority] ?? 'normal',
     assigneeName:    assignee,
     assigneeInitial: assignee ? assignee[0].toUpperCase() : '?',
@@ -135,7 +135,7 @@ export function CampaignDetailsPage() {
     queryKey: ['campaign-tasks', id],
     queryFn:  async () => {
       const r = await campaignApi.getTasks(id);
-      return (r.data.data.columns ?? []).flatMap(c => c.tasks);
+      return (r.data.data.phases ?? []).flatMap(p => p.tasks);
     },
     enabled:   !!id,
     staleTime: 30_000,
@@ -153,16 +153,6 @@ export function CampaignDetailsPage() {
     ),
     [baseTasks, statusOverrides],
   );
-
-  /* ── Phase options for the Add Task modal — derived from tasks already
-     loaded (no dedicated "list phases" endpoint exists yet) ────────────── */
-  const phaseItems = useMemo(() => {
-    const seen = new Map<number, string>();
-    for (const t of rawTasks ?? []) {
-      if (t.phase) seen.set(t.phase.id, t.phase.name);
-    }
-    return Array.from(seen, ([phaseId, label]) => ({ id: String(phaseId), label }));
-  }, [rawTasks]);
 
   /* ── Drag-drop: optimistic status override + API call ─────────────── */
   function handleDrop(taskId: string, toStatus: TaskStatus) {
@@ -323,7 +313,6 @@ export function CampaignDetailsPage() {
         campaignId={id}
         prefillUrl={campaign?.targetDomain ?? ''}
         teamItems={teamItems}
-        phaseItems={phaseItems}
         isAr={isAr}
       />
     </div>

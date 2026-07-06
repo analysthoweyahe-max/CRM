@@ -15,6 +15,7 @@ export function AddSelfSeoTaskModal({ open, onClose, isAr }: Props) {
   const {
     projectId, setProjectId, projectItems,
     title, setTitle,
+    phase, setPhase,
     description, setDescription,
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
@@ -59,6 +60,15 @@ export function AddSelfSeoTaskModal({ open, onClose, isAr }: Props) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={isAr ? 'عنوان المهمة' : 'Task title'}
+            className={inputCls(false)}
+          />
+        </FormField>
+
+        <FormField label={isAr ? 'المرحلة' : 'Phase'} required>
+          <input
+            value={phase}
+            onChange={(e) => setPhase(e.target.value)}
+            placeholder={isAr ? 'مثال: On-Page SEO' : 'e.g. On-Page SEO'}
             className={inputCls(false)}
           />
         </FormField>

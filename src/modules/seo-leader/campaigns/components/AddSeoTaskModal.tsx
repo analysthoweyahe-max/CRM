@@ -29,7 +29,6 @@ interface Props {
   campaignId:    string;
   prefillUrl?:   string;
   teamItems?:    ComboboxItem[];
-  phaseItems?:   ComboboxItem[];
   isAr:          boolean;
 }
 
@@ -40,11 +39,10 @@ export function AddSeoTaskModal({
   campaignId,
   prefillUrl  = '',
   teamItems   = [],
-  phaseItems  = [],
   isAr,
 }: Props) {
   const { form, apiError, set, isValid, isSaving, handleAdd } =
-    useAddSeoTask(campaignId, prefillUrl, onClose, phaseItems);
+    useAddSeoTask(campaignId, prefillUrl, onClose);
 
   return (
     <Modal
@@ -87,6 +85,21 @@ export function AddSeoTaskModal({
             value={form.title}
             onChange={e => set('title', e.target.value)}
             placeholder={isAr ? 'عنوان المهمة' : 'Task title'}
+            className={INPUT}
+          />
+        </div>
+
+        {/* Phase */}
+        <div>
+          <label className={LABEL}>
+            {isAr ? 'المرحلة' : 'Phase'}
+            <span className="text-red-500 ms-1">*</span>
+          </label>
+          <input
+            type="text"
+            value={form.phase}
+            onChange={e => set('phase', e.target.value)}
+            placeholder={isAr ? 'مثال: On-Page SEO' : 'e.g. On-Page SEO'}
             className={INPUT}
           />
         </div>

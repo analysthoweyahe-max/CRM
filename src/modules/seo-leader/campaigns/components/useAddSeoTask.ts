@@ -2,10 +2,10 @@ import { useState }                        from 'react';
 import { useMutation, useQueryClient }      from '@tanstack/react-query';
 import { campaignApi }                      from '../api/campaign.api';
 import type { AddSeoTaskForm }              from './AddSeoTaskModal.types';
-import type { ComboboxItem }                from '@/shared/components/form/Combobox';
 
 const INITIAL: AddSeoTaskForm = {
   title:          '',
+  phase:          '',
   description:    '',
   assignee:       '',
   priority:       'medium',
@@ -19,7 +19,6 @@ export function useAddSeoTask(
   campaignId: string,
   prefillUrl: string,
   onClose:    () => void,
-  phaseItems: ComboboxItem[] = [],
 ) {
   const queryClient = useQueryClient();
   const [form,      setForm]     = useState<AddSeoTaskForm>({ ...INITIAL, targetUrl: prefillUrl });
@@ -30,22 +29,18 @@ export function useAddSeoTask(
     setApiError(null);
   }
 
-  /* Phase isn't user-facing — silently default to the project's first phase. */
-  const phaseId = phaseItems[0]?.id;
-
   const mutation = useMutation({
     mutationFn: () => {
       const payload = {
         title:            form.title.trim(),
+        phase:            form.phase.trim(),
+        employee_ids:     [form.assignee],
         description:      form.description.trim() || undefined,
-        employee_id:      form.assignee,
-        priority:         form.priority,
+        priority:         form.priority || undefined,
         due_date:         form.dueDate            || undefined,
         estimated_hours:  form.estimatedHours ? Number(form.estimatedHours) : undefined,
-        phase_id:         Number(phaseId),
         target_keyword:   form.targetKeyword.trim() || undefined,
         target_url:       form.targetUrl.trim()     || undefined,
-        status:           'pending' as const,
       };
       return campaignApi.createTask(campaignId, payload);
     },
@@ -71,7 +66,7 @@ export function useAddSeoTask(
     form,
     apiError,
     set,
-    isValid:   !!form.title.trim() && !!form.assignee && !!phaseId,
+    isValid:   !!form.title.trim() && !!form.assignee && !!form.phase.trim(),
     isSaving:  mutation.isPending,
     handleAdd: () => mutation.mutate(),
   };

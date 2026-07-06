@@ -2,7 +2,11 @@ import { http } from '@/shared/services/http.service';
 import { STATUS_TO_WIRE, toSeoTask } from './seoTask.api';
 import type { RawSeoTask, RawSeoTaskRef } from './seoTask.api';
 import type { SeoTaskStatus } from '../types/seoTask.types';
-import type { SeoTaskDetail, SeoTaskDetailResponse, SeoAssignee } from '../types/seoTaskDetail.types';
+import type {
+  SeoTaskDetail, SeoTaskDetailResponse, SeoAssignee,
+  SeoTaskComment, SeoTaskCommentsPage,
+  SeoTaskTimeLog, SeoTaskTimeLogSummary, AddTimeLogPayload,
+} from '../types/seoTaskDetail.types';
 import type { CreateSelfSeoTaskPayload } from '../types/seoTask.types';
 
 interface RawSeoAssignee {
@@ -61,18 +65,18 @@ function toSeoTaskDetail(raw: RawSeoTaskDetail): SeoTaskDetail {
 
 export const seoTaskDetailApi = {
   async getById(projectId: string, taskId: string): Promise<SeoTaskDetail> {
-    const res = await http.get<{ status: string; message: string; data: RawSeoTaskDetail }>(
+    const res = await http.get<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
       `/v1/seo/employee/projects/${projectId}/tasks/${taskId}`,
     );
-    return toSeoTaskDetail(res.data.data);
+    return toSeoTaskDetail(res.data.data.task);
   },
 
   async updateStatus(projectId: string, taskId: string, status: SeoTaskStatus): Promise<SeoTaskDetail> {
-    const res = await http.patch<{ status: string; message: string; data: RawSeoTaskDetail }>(
+    const res = await http.patch<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
       `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/status`,
       { status: STATUS_TO_WIRE[status] },
     );
-    return toSeoTaskDetail(res.data.data);
+    return toSeoTaskDetail(res.data.data.task);
   },
 
   createSelfTask(projectId: string, payload: CreateSelfSeoTaskPayload) {
@@ -92,27 +96,51 @@ export const seoTaskDetailApi = {
     );
   },
 
+  deleteAttachment(projectId: string, taskId: string, attachmentId: string | number) {
+    return http.delete<{ status: string; message: string; data?: unknown }>(
+      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`,
+    );
+  },
+
   getTimeLogs(projectId: string, taskId: string) {
-    return http.get<{ status: string; message: string; data: { id: number; hours: number; note?: string; loggedAt: string }[] }>(
+    return http.get<{ status: string; message: string; data: SeoTaskTimeLogSummary }>(
       `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/time-logs`,
     );
   },
 
-  addTimeLog(projectId: string, taskId: string, payload: { hours: number; note?: string }) {
-    return http.post<{ status: string; message: string; data: { id: number; hours: number; note?: string; loggedAt: string } }>(
+  addTimeLog(projectId: string, taskId: string, payload: AddTimeLogPayload) {
+    return http.post<{ status: string; message: string; data: SeoTaskTimeLog }>(
       `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/time-logs`, payload,
     );
   },
 
+  deleteTimeLog(projectId: string, taskId: string, timeLogId: string | number) {
+    return http.delete<{ status: string; message: string; data: SeoTaskTimeLogSummary }>(
+      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/time-logs/${timeLogId}`,
+    );
+  },
+
   getComments(projectId: string, taskId: string) {
-    return http.get<{ status: string; message: string; data: unknown }>(
+    return http.get<{ status: string; message: string; data: SeoTaskCommentsPage }>(
       `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/comments`,
     );
   },
 
   addComment(projectId: string, taskId: string, body: string) {
-    return http.post<{ status: string; message: string; data: unknown }>(
+    return http.post<{ status: string; message: string; data: { comment: SeoTaskComment } }>(
       `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/comments`, { body },
+    );
+  },
+
+  updateComment(projectId: string, taskId: string, commentId: string | number, body: string) {
+    return http.put<{ status: string; message: string; data: SeoTaskCommentsPage }>(
+      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { body },
+    );
+  },
+
+  deleteComment(projectId: string, taskId: string, commentId: string | number) {
+    return http.delete<{ status: string; message: string; data: SeoTaskCommentsPage }>(
+      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
     );
   },
 };
