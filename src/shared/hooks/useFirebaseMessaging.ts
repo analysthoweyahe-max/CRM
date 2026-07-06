@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
 import { getMessagingInstance } from '@/shared/lib/firebase';
 import { notificationsApi } from '@/shared/services/notifications.service';
@@ -6,6 +6,15 @@ import { notificationsApi } from '@/shared/services/notifications.service';
 /** onPush fires when a foreground push arrives — the caller should refetch
     the real notifications list rather than trust the push payload directly. */
 export function useFirebaseMessaging(onPush: () => void) {
+  // The effect below only runs once ([] deps, intentionally — it must not
+  // re-register the token/listener on every render). `onPush` is a fresh
+  // closure each render (it wraps `refetch`, which is scoped to the current
+  // user's role), so without this ref the effect would keep calling the
+  // FIRST render's `onPush` forever — silently refetching the wrong query
+  // if the role wasn't settled yet on that first render.
+  const onPushRef = useRef(onPush);
+  useEffect(() => { onPushRef.current = onPush; }, [onPush]);
+
   useEffect(() => {
     if (!('Notification' in window)) return;
 
@@ -39,11 +48,10 @@ export function useFirebaseMessaging(onPush: () => void) {
           });
         }
 
-        onPush();
+        onPushRef.current();
       });
     });
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
