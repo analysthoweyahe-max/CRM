@@ -8,6 +8,8 @@ import { Button }                 from '@/shared/components/ui/Button';
 import { ROUTES }                 from '@/app/router/routes';
 import { campaignApi }                       from '../api/campaign.api';
 import type { SeoTask }                      from '../api/campaign.api';
+import { seoTeamApi }                        from '../../team/api/seoTeam.api';
+import type { SeoProjectMember }             from '../../team/types/seoTeam.types';
 import { AddSeoTaskModal }        from '../components/AddSeoTaskModal';
 import { SeoTaskDrawer }          from '../components/SeoTaskDrawer';
 import { ProjectMessages }        from '../components/ProjectMessages';
@@ -56,13 +58,13 @@ const PRIORITY_MAP: Record<string, Task['priority']> = {
 };
 
 function toLocalTask(t: SeoTask, projectId: string): Task {
-  const assignee = t.assignees?.[0]?.name ?? '';
+  const assignee = t.assignee?.name ?? '';
   return {
     id:              String(t.id),
     projectId,
     title:           t.title,
     description:     t.description ?? '',
-    phaseName:       t.taskTypeLabel ?? 'مهمة SEO',
+    phaseName:       t.phase?.name ?? 'مهمة SEO',
     priority:        PRIORITY_MAP[t.priority] ?? 'normal',
     assigneeName:    assignee,
     assigneeInitial: assignee ? assignee[0].toUpperCase() : '?',
@@ -105,7 +107,6 @@ export function CampaignDetailsPage() {
   const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showAddTask,    setShowAddTask]    = useState(false);
-  const [addedTasks,     setAddedTasks]     = useState<Task[]>([]);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, TaskStatus>>({});
 
   /* ── Campaign header ──────────────────────────────────────────────── */
@@ -116,12 +117,25 @@ export function CampaignDetailsPage() {
     staleTime: 30_000,
   });
 
+  /* ── Project team (assignee options for the Add Task modal) ────────── */
+  const { data: teamItems = [] } = useQuery({
+    queryKey: ['campaign-team', id],
+    queryFn:  async () => {
+      const teamRes = await seoTeamApi.getProjectTeam(id);
+      const env = teamRes.data as unknown as { data: { data: SeoProjectMember[] } };
+      const members = env.data?.data ?? [];
+      return members.map(m => ({ id: m.id, label: m.name }));
+    },
+    enabled:   !!id,
+    staleTime: 30_000,
+  });
+
   /* ── Tasks from backend ───────────────────────────────────────────── */
   const { data: rawTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['campaign-tasks', id],
     queryFn:  async () => {
       const r = await campaignApi.getTasks(id);
-      return (r.data.data.phases ?? []).flatMap(p => p.tasks);
+      return (r.data.data.columns ?? []).flatMap(c => c.tasks);
     },
     enabled:   !!id,
     staleTime: 30_000,
@@ -133,17 +147,22 @@ export function CampaignDetailsPage() {
     [rawTasks, id],
   );
 
-  const tasks = useMemo(() => {
-    const withOverrides = baseTasks.map(t =>
+  const tasks = useMemo(
+    () => baseTasks.map(t =>
       statusOverrides[t.id] ? { ...t, status: statusOverrides[t.id] } : t,
-    );
-    return [...withOverrides, ...addedTasks];
-  }, [baseTasks, statusOverrides, addedTasks]);
+    ),
+    [baseTasks, statusOverrides],
+  );
 
-  /* ── Immediately add newly created task ───────────────────────────── */
-  function handleTaskCreated(task: SeoTask) {
-    setAddedTasks(prev => [...prev, toLocalTask(task, id)]);
-  }
+  /* ── Phase options for the Add Task modal — derived from tasks already
+     loaded (no dedicated "list phases" endpoint exists yet) ────────────── */
+  const phaseItems = useMemo(() => {
+    const seen = new Map<number, string>();
+    for (const t of rawTasks ?? []) {
+      if (t.phase) seen.set(t.phase.id, t.phase.name);
+    }
+    return Array.from(seen, ([phaseId, label]) => ({ id: String(phaseId), label }));
+  }, [rawTasks]);
 
   /* ── Drag-drop: optimistic status override + API call ─────────────── */
   function handleDrop(taskId: string, toStatus: TaskStatus) {
@@ -303,8 +322,9 @@ export function CampaignDetailsPage() {
         onClose={() => setShowAddTask(false)}
         campaignId={id}
         prefillUrl={campaign?.targetDomain ?? ''}
+        teamItems={teamItems}
+        phaseItems={phaseItems}
         isAr={isAr}
-        onCreated={handleTaskCreated}
       />
     </div>
   );

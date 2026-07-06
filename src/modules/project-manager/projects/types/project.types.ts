@@ -157,3 +157,12 @@ export interface PmAddProjectMemberPayload {
   employee_id:  string;
   project_role: string;
 }
+
+/** POST /v1/pm/projects/{id}/team/invite — invite brand-new member */
+export interface PmProjectInvitePayload {
+  name:          string;
+  email:         string;
+  department_id: number;
+  job_title_id:  number;
+  project_role:  string;
+}

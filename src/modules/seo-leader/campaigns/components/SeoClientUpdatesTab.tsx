@@ -310,7 +310,7 @@ function AddMilestoneModal({ open, onClose, onAdd, isAr }: AddModalProps) {
 
   return (
     <Modal
-      isOpen={open}
+      open={open}
       onClose={onClose}
       title={isAr ? 'إضافة مرحلة جديدة' : 'Add New Milestone'}
     >

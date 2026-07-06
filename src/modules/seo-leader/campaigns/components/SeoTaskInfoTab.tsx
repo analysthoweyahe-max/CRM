@@ -54,15 +54,6 @@ const INTENT_ITEMS: ComboboxItem[] = [
   { id: 'navigational',   label: 'تنقلية'      },
 ];
 
-/* ── Date formatting ──────────────────────────────────────────────────── */
-const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-function fmtDateAr(d?: string | null) {
-  if (!d) return '—';
-  const parsed = new Date(d);
-  if (isNaN(parsed.getTime())) return d;
-  return `${parsed.getDate()} ${MONTHS_AR[parsed.getMonth()]} ${parsed.getFullYear()}`;
-}
-
 /* ── Link list field ──────────────────────────────────────────────────── */
 function LinkList({
   label, items, onAdd, onRemove, placeholder,

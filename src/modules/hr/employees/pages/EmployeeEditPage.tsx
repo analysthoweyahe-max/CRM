@@ -13,7 +13,7 @@ import { Button }        from '@/shared/components/ui/Button';
 import { useEmployee }   from '../hooks/useEmployee';
 import { useDepartments, useJobTitles, useEmploymentTypes } from '../hooks/useLookups';
 import { employeeApi }   from '../api/employee.api';
-import type { EmploymentType } from '../types/employee.types';
+import type { EmploymentType, EmployeeStatus } from '../types/employee.types';
 import { MANAGERS } from '../components/NewEmployeeForm/newEmployeeForm.types';
 
 /* ── form values ──────────────────────────────────────── */
@@ -80,53 +80,21 @@ export function EmployeeEditPage() {
     : { searchPlaceholder: 'Search...', noResultsText: 'No results' };
 
   const mutation = useMutation({
-    mutationFn: async (data: EditFormValues) => {
-      const calls: Promise<unknown>[] = [];
-
-      /* Basic info — silent fail if endpoint not supported */
-      calls.push(
-        employeeApi.update(id!, {
-          name:          data.fullName,
-          email:         data.email,
-          phone:         data.phone,
-          department_id: data.department,
-          job_title_id:  data.jobTitle,
-          manager_id:    data.managerId === 'none' ? null : data.managerId,
-        }).catch(() => {}),
-      );
-
-      /* Step 2 — Employment type */
-      if (data.employmentType && data.employmentType !== (emp?.employmentType ?? '')) {
-        calls.push(
-          employeeApi.updateEmploymentType(id!, {
-            employment_type: data.employmentType as EmploymentType,
-          }).catch(() => {}),
-        );
-      }
-
-      /* Step 3 — Salary */
-      const salary = parseFloat(data.basicSalary);
-      if (salary > 0 && salary !== (emp?.salary ?? 0)) {
-        calls.push(employeeApi.updateSalary(id!, { salary }).catch(() => {}));
-      }
-
-      /* Step 4 — Work schedule */
-      const origStart = (emp?.shiftStart ?? emp?.shift_start ?? '').slice(0, 5);
-      const origEnd   = (emp?.shiftEnd   ?? emp?.shift_end   ?? '').slice(0, 5);
-      if (
-        data.shiftStart && data.shiftEnd &&
-        (data.shiftStart !== origStart || data.shiftEnd !== origEnd)
-      ) {
-        calls.push(
-          employeeApi.updateWorkSchedule(id!, {
-            shift_start: data.shiftStart,
-            shift_end:   data.shiftEnd,
-          }).catch(() => {}),
-        );
-      }
-
-      await Promise.all(calls);
-    },
+    mutationFn: (data: EditFormValues) =>
+      employeeApi.update(id!, {
+        name:            data.fullName,
+        email:           data.email,
+        phone:           data.phone,
+        department_id:   Number(data.department),
+        job_title_id:    Number(data.jobTitle),
+        manager_id:      data.managerId === 'none' ? null : data.managerId,
+        joining_date:    emp?.joiningDate ?? undefined,
+        status:          data.status as EmployeeStatus,
+        employment_type: data.employmentType as EmploymentType,
+        salary:          parseFloat(data.basicSalary) || undefined,
+        shift_start:     data.shiftStart || undefined,
+        shift_end:       data.shiftEnd   || undefined,
+      }),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee', id] });
@@ -135,10 +103,10 @@ export function EmployeeEditPage() {
       navigate(ROUTES.EMPLOYEES.DETAIL(id!));
     },
 
-    onError: (err) => {
-      const msg = (err as any)?.response?.data?.message;
-      console.error('[EmployeeEditPage]', (err as any)?.response?.data);
-      toast.error(msg || (isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes'));
+    onError: (err: unknown) => {
+      const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      console.error('[EmployeeEditPage]', data);
+      toast.error(data?.message || (isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes'));
     },
   });
 

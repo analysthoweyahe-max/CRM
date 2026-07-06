@@ -51,14 +51,12 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
           <Button variant="secondary" onClick={onClose}>
             {isAr ? 'إلغاء' : 'Cancel'}
           </Button>
-          {!onboardingLocked && (
-            <Button
-              isLoading={mutation.isPending}
-              onClick={handleSubmit((d) => mutation.mutate(d))}
-            >
-              {isAr ? 'حفظ التعديلات' : 'Save Changes'}
-            </Button>
-          )}
+          <Button
+            isLoading={mutation.isPending}
+            onClick={handleSubmit((d) => mutation.mutate(d))}
+          >
+            {isAr ? 'حفظ التعديلات' : 'Save Changes'}
+          </Button>
         </>
       }
     >
@@ -66,34 +64,34 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
 
         {/* ── Basic info ──────────────────────────────── */}
         <FormField label={isAr ? 'الاسم الكامل' : 'Full Name'} required icon={<User size={15} className="text-gray-400" />}>
-          <Input {...register('fullName')} disabled={onboardingLocked} endIcon={<User size={15} />} placeholder={isAr ? 'مثال: أحمد محمد' : 'e.g. Ahmed Mohamed'} />
+          <Input {...register('fullName')} endIcon={<User size={15} />} placeholder={isAr ? 'مثال: أحمد محمد' : 'e.g. Ahmed Mohamed'} />
         </FormField>
 
         <FormField label={isAr ? 'البريد الإلكتروني' : 'Email'} required icon={<Mail size={15} className="text-gray-400" />}>
-          <Input {...register('email')} disabled={onboardingLocked} type="email" endIcon={<Mail size={15} />} placeholder="name@company.com" />
+          <Input {...register('email')} type="email" endIcon={<Mail size={15} />} placeholder="name@company.com" />
         </FormField>
 
         <FormField label={isAr ? 'رقم الهاتف' : 'Phone'} icon={<Phone size={15} className="text-gray-400" />}>
-          <Input {...register('phone')} disabled={onboardingLocked} type="tel" dir={isAr ? 'rtl' : 'ltr'} endIcon={<Phone size={15} />} placeholder="01xxxxxxxx" />
+          <Input {...register('phone')} type="tel" dir={isAr ? 'rtl' : 'ltr'} endIcon={<Phone size={15} />} placeholder="01xxxxxxxx" />
         </FormField>
 
         <FormField label={isAr ? 'القسم' : 'Department'} icon={<Building2 size={15} className="text-gray-400" />}>
           <Controller name="department" control={control} render={({ field }) => (
-            <Combobox items={deptItems} value={field.value ?? ''} onChange={field.onChange} disabled={onboardingLocked}
+            <Combobox items={deptItems} value={field.value ?? ''} onChange={field.onChange}
               placeholder={isAr ? 'اختر القسم' : 'Select department'} {...cbProps} />
           )} />
         </FormField>
 
         <FormField label={isAr ? 'المسمى الوظيفي' : 'Job Title'} icon={<Briefcase size={15} className="text-gray-400" />}>
           <Controller name="jobTitle" control={control} render={({ field }) => (
-            <Combobox items={jTitleItems} value={field.value ?? ''} onChange={field.onChange} disabled={onboardingLocked}
+            <Combobox items={jTitleItems} value={field.value ?? ''} onChange={field.onChange}
               placeholder={isAr ? 'اختر المسمى' : 'Select job title'} {...cbProps} />
           )} />
         </FormField>
 
         <FormField label={isAr ? 'المدير المباشر' : 'Direct Manager'} icon={<User size={15} className="text-gray-400" />}>
           <Controller name="managerId" control={control} render={({ field }) => (
-            <Combobox items={managerItems} value={field.value ?? 'none'} onChange={field.onChange} disabled={onboardingLocked}
+            <Combobox items={managerItems} value={field.value ?? 'none'} onChange={field.onChange}
               placeholder={isAr ? 'بدون مدير مباشر' : 'No direct manager'} {...cbProps} />
           )} />
         </FormField>

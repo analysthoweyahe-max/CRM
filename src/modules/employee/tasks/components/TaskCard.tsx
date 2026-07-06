@@ -8,7 +8,7 @@ import { ROUTES }        from '@/app/router/routes';
 import { useTaskCard }   from './useTaskCard';
 import type { TaskCardProps } from './TaskCard.types';
 
-export function TaskCard({ task, isAr, onDetails, projectLabel }: TaskCardProps) {
+export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
   const { status, priority, title, project, deadline, taskNum, empTask } = useTaskCard(task, isAr);
   const { activeTask, startTimer, stopTimer } = useTaskTimer();
   const navigate = useNavigate();

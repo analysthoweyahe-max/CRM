@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast }                             from 'sonner';
 import { seoTeamApi }                        from '../../team/api/seoTeam.api';
+import { employeeApi }                       from '@/modules/hr/employees/api/employee.api';
 import type { SeoProjectMember, SeoAvailableMember } from '../../team/types/seoTeam.types';
 import type { ProjectMemberCardData }        from '@/shared/modules/team/components/ProjectMemberCard';
 import type { ComboboxItem }                 from '@/shared/components/form/Combobox';
@@ -26,6 +27,16 @@ export function useSeoProjectTeam(projectId: string, isAr: boolean) {
   const [available,    setAvailable]    = useState<ComboboxItem[]>([]);
   const [selectedId,   setSelectedId]   = useState('');
   const [projectRole,  setProjectRole]  = useState('');
+
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteName,      setInviteName]      = useState('');
+  const [inviteEmail,     setInviteEmail]     = useState('');
+  const [inviteDeptId,    setInviteDeptId]    = useState('');
+  const [inviteJobTitleId, setInviteJobTitleId] = useState('');
+  const [inviteRole,      setInviteRole]      = useState('');
+  const [departments,     setDepartments]     = useState<ComboboxItem[]>([]);
+  const [jobTitles,       setJobTitles]       = useState<ComboboxItem[]>([]);
+  const [isInviting,      setIsInviting]      = useState(false);
 
   /* ── Fetch project team ────────────────────────────────────────────── */
   const fetchTeam = useCallback(async () => {
@@ -54,6 +65,28 @@ export function useSeoProjectTeam(projectId: string, isAr: boolean) {
       })
       .catch(() => setAvailable([]));
   }, [showModal, projectId]);
+
+  /* ── Fetch departments when the invite modal opens ──────────────────── */
+  useEffect(() => {
+    if (!showInviteModal) return;
+    employeeApi.lookupDepartments()
+      .then(res => setDepartments(res.data.data.map(d => ({ id: String(d.id), label: d.name }))))
+      .catch(() => setDepartments([]));
+  }, [showInviteModal]);
+
+  /* ── Fetch job titles when the invite department changes ────────────── */
+  useEffect(() => {
+    if (!inviteDeptId) return;
+    employeeApi.lookupJobTitles(inviteDeptId)
+      .then(res => setJobTitles(res.data.data.map(j => ({ id: String(j.id), label: j.name }))))
+      .catch(() => setJobTitles([]));
+  }, [inviteDeptId]);
+
+  function handleSetInviteDeptId(id: string) {
+    setInviteDeptId(id);
+    setInviteJobTitleId('');
+    if (!id) setJobTitles([]);
+  }
 
   /* ── Map to shared card data ───────────────────────────────────────── */
   function toCardData(m: SeoProjectMember): ProjectMemberCardData {
@@ -104,6 +137,37 @@ export function useSeoProjectTeam(projectId: string, isAr: boolean) {
     setProjectRole('');
   }
 
+  function handleCloseInviteModal() {
+    setShowInviteModal(false);
+    setInviteName('');
+    setInviteEmail('');
+    setInviteDeptId('');
+    setInviteJobTitleId('');
+    setInviteRole('');
+  }
+
+  /* ── Invite new member ─────────────────────────────────────────────── */
+  async function handleInvite() {
+    if (!inviteName.trim() || !inviteEmail.trim() || !inviteDeptId || !inviteJobTitleId || !inviteRole.trim()) return;
+    setIsInviting(true);
+    try {
+      await seoTeamApi.inviteToProject(projectId, {
+        name:          inviteName.trim(),
+        email:         inviteEmail.trim(),
+        department_id: Number(inviteDeptId),
+        job_title_id:  Number(inviteJobTitleId),
+        project_role:  inviteRole.trim(),
+      });
+      toast.success(isAr ? 'تم إرسال الدعوة بنجاح' : 'Invitation sent successfully');
+      handleCloseInviteModal();
+      fetchTeam();
+    } catch {
+      toast.error(isAr ? 'فشل إرسال الدعوة' : 'Failed to send invitation');
+    } finally {
+      setIsInviting(false);
+    }
+  }
+
   return {
     members: members.map(toCardData),
     isLoading,
@@ -115,6 +179,19 @@ export function useSeoProjectTeam(projectId: string, isAr: boolean) {
     projectRole, setProjectRole,
     canAdd: !!selectedId && !!projectRole.trim(),
     handleAddExisting,
+    showInviteModal,
+    openInviteModal:  () => setShowInviteModal(true),
+    closeInviteModal: handleCloseInviteModal,
+    inviteName,       setInviteName,
+    inviteEmail,      setInviteEmail,
+    inviteDeptId,     setInviteDeptId: handleSetInviteDeptId,
+    inviteJobTitleId, setInviteJobTitleId,
+    inviteRole,       setInviteRole,
+    departments,
+    jobTitles,
+    isInviting,
+    canInvite: !!inviteName.trim() && !!inviteEmail.trim() && !!inviteDeptId && !!inviteJobTitleId && !!inviteRole.trim(),
+    handleInvite,
     deleteTarget,
     requestRemove: (id: string) => {
       const m = members.find(m => m.id === id);

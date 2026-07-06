@@ -25,11 +25,11 @@ export function useSeoLeaveSummary() {
     select:   res => {
       const balances: SeoLeaveBalance[] = res.data.data?.balances ?? [];
       return balances.map((b): EmpLeaveSummaryItem => ({
-        type:      b.leaveType,
-        label:     b.leaveTypeLabel,
-        total:     b.entitled,
-        used:      b.used,
-        remaining: b.remaining,
+        leaveType:      b.leaveType,
+        leaveTypeLabel: b.leaveTypeLabel,
+        entitled:       b.entitled,
+        used:           b.used,
+        remaining:      b.remaining,
       }));
     },
     staleTime: 60_000,

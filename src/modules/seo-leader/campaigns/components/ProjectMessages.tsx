@@ -135,10 +135,9 @@ export function ProjectMessages({ projectId, isAr }: Props) {
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed'
               }>
                 {imgUrl ? (
-                  <img
+                  <AuthImage
                     src={imgUrl}
                     alt={imgAttachment?.fileName ?? 'attachment'}
-                    className="max-w-xs max-h-56 rounded-xl object-cover cursor-pointer"
                     onClick={() => window.open(imgUrl, '_blank', 'noopener,noreferrer')}
                   />
                 ) : (

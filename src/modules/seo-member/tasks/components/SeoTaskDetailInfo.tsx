@@ -49,11 +49,11 @@ function Skeleton() {
 }
 
 function LinkList({
-  links, newLink, setNewLink, onAdd, onRemove, isAr, placeholder,
+  links, newLink, setNewLink, onAdd, onRemove, placeholder,
 }: {
   links: string[]; newLink: string; setNewLink: (v: string) => void;
   onAdd: () => void; onRemove: (i: number) => void;
-  isAr: boolean; placeholder: string;
+  placeholder: string;
 }) {
   return (
     <div className="space-y-2">
@@ -292,7 +292,6 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr, onStatusChange }: Pro
           setNewLink={setNewSiteLink}
           onAdd={addSiteLink}
           onRemove={removeSiteLink}
-          isAr={isAr}
           placeholder={isAr ? '/مسار-الصفحة' : '/page-path'}
         />
       </InfoRow>
@@ -305,7 +304,6 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr, onStatusChange }: Pro
           setNewLink={setNewRefLink}
           onAdd={addRefLink}
           onRemove={removeRefLink}
-          isAr={isAr}
           placeholder="https://..."
         />
       </InfoRow>

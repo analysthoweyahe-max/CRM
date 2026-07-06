@@ -6,7 +6,6 @@ import type { SeoTaskTab }                from './SeoTaskModal.types';
 export function useSeoTaskModal(
   projectId: string,
   taskId:    string | null,
-  onClose:   () => void,
 ) {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<SeoTaskTab>('info');
@@ -50,7 +49,8 @@ export function useSeoTaskModal(
       title:           title.trim(),
       description:     description.trim() || undefined,
       priority,
-      stage:           stage           || undefined,
+      /* TODO: confirm real field name for updating a task's phase via this endpoint
+         (was sending `stage`, which doesn't exist in the confirmed create/list schema). */
       status,
       due_date:        dueDate         || undefined,
       estimated_hours: estimatedHours  ? Number(estimatedHours) : undefined,

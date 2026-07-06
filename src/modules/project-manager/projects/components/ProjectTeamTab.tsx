@@ -1,8 +1,9 @@
-import { UserPlus }            from 'lucide-react';
+import { UserPlus, Mail }      from 'lucide-react';
 import { Button }              from '@/shared/components/ui/Button';
 import { Modal }               from '@/shared/components/ui/Modal';
 import { ProjectMemberCard }   from '@/shared/modules/team/components/ProjectMemberCard';
 import { AddTeamMemberModal }  from './AddTeamMemberModal';
+import { PmInviteMemberModal } from './PmInviteMemberModal';
 import { MemberProfileModal }  from './MemberProfileModal';
 import { useProjectTeamTab }   from '../hooks/useProjectTeamTab';
 
@@ -18,6 +19,14 @@ export function ProjectTeamTab({ projectId, isAr }: Props) {
     available, selectedId, setSelectedId,
     projectRole, setProjectRole,
     canAdd, handleAddExisting,
+    showInviteModal, openInviteModal, closeInviteModal,
+    inviteName, setInviteName,
+    inviteEmail, setInviteEmail,
+    inviteDeptId, setInviteDeptId,
+    inviteJobTitleId, setInviteJobTitleId,
+    inviteRole, setInviteRole,
+    departments, jobTitles, isInviting,
+    canInvite, handleInvite,
     deleteTarget, requestRemove, confirmRemove, cancelDelete,
     viewTarget, requestView, cancelView,
   } = useProjectTeamTab(projectId, isAr);
@@ -25,8 +34,11 @@ export function ProjectTeamTab({ projectId, isAr }: Props) {
   return (
     <div className="space-y-4">
 
-      {/* Add button */}
-      <div className="flex justify-end">
+      {/* Add / Invite buttons */}
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" startIcon={<Mail size={15} />} onClick={openInviteModal}>
+          {isAr ? 'دعوة عضو جديد' : 'Invite New Member'}
+        </Button>
         <Button variant="primary" startIcon={<UserPlus size={15} />} onClick={openModal}>
           {isAr ? 'إضافة عضو جديد' : 'Add New Member'}
         </Button>
@@ -73,6 +85,28 @@ export function ProjectTeamTab({ projectId, isAr }: Props) {
         onSetRole={setProjectRole}
         canAdd={canAdd}
         onConfirm={handleAddExisting}
+      />
+
+      {/* Invite Member Modal */}
+      <PmInviteMemberModal
+        open={showInviteModal}
+        onClose={closeInviteModal}
+        isAr={isAr}
+        name={inviteName}
+        email={inviteEmail}
+        departmentId={inviteDeptId}
+        jobTitleId={inviteJobTitleId}
+        projectRole={inviteRole}
+        departments={departments}
+        jobTitles={jobTitles}
+        onSetName={setInviteName}
+        onSetEmail={setInviteEmail}
+        onSetDepartment={setInviteDeptId}
+        onSetJobTitle={setInviteJobTitleId}
+        onSetRole={setInviteRole}
+        canInvite={canInvite}
+        isSubmitting={isInviting}
+        onConfirm={handleInvite}
       />
 
       {/* Member Profile Modal */}

@@ -123,7 +123,8 @@ export function useSeoTaskDrawer(
   const saveMutation = useMutation({
     mutationFn: () => campaignApi.updateTask(projectId, taskId!, {
       description:        description.trim()        || undefined,
-      task_type:          taskType                  || undefined,
+      /* TODO: confirm real field name for updating a task's phase via this endpoint
+         (was sending `task_type`, which doesn't exist in the confirmed create/list schema). */
       priority,
       status,
       start_date:         startDate                 || undefined,

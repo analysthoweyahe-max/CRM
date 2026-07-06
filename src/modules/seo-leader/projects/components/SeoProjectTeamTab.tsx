@@ -1,10 +1,11 @@
-import { UserPlus }                 from 'lucide-react';
-import { Button }                   from '@/shared/components/ui/Button';
-import { Modal }                    from '@/shared/components/ui/Modal';
-import { ProjectMemberCard }        from '@/shared/modules/team/components/ProjectMemberCard';
-import { SeoAddProjectMemberModal } from './SeoAddProjectMemberModal';
-import { SeoMemberProfileModal }    from './SeoMemberProfileModal';
-import { useSeoProjectTeam }        from '../hooks/useSeoProjectTeam';
+import { UserPlus, Mail }              from 'lucide-react';
+import { Button }                      from '@/shared/components/ui/Button';
+import { Modal }                       from '@/shared/components/ui/Modal';
+import { ProjectMemberCard }           from '@/shared/modules/team/components/ProjectMemberCard';
+import { SeoAddProjectMemberModal }    from './SeoAddProjectMemberModal';
+import { SeoInviteProjectMemberModal } from './SeoInviteProjectMemberModal';
+import { SeoMemberProfileModal }       from './SeoMemberProfileModal';
+import { useSeoProjectTeam }           from '../hooks/useSeoProjectTeam';
 
 interface Props {
   projectId: string;
@@ -19,6 +20,14 @@ export function SeoProjectTeamTab({ projectId, isAr }: Props) {
     selectedId, setSelectedId,
     projectRole, setProjectRole,
     canAdd, handleAddExisting,
+    showInviteModal, openInviteModal, closeInviteModal,
+    inviteName, setInviteName,
+    inviteEmail, setInviteEmail,
+    inviteDeptId, setInviteDeptId,
+    inviteJobTitleId, setInviteJobTitleId,
+    inviteRole, setInviteRole,
+    departments, jobTitles, isInviting,
+    canInvite, handleInvite,
     deleteTarget, requestRemove, confirmRemove, cancelDelete,
     viewTarget, requestView, cancelView,
   } = useSeoProjectTeam(projectId, isAr);
@@ -26,8 +35,11 @@ export function SeoProjectTeamTab({ projectId, isAr }: Props) {
   return (
     <div className="space-y-4">
 
-      {/* Add button */}
-      <div className="flex justify-end">
+      {/* Add / Invite buttons */}
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" startIcon={<Mail size={15} />} onClick={openInviteModal}>
+          {isAr ? 'دعوة عضو جديد' : 'Invite New Member'}
+        </Button>
         <Button variant="primary" startIcon={<UserPlus size={15} />} onClick={openModal}>
           {isAr ? 'إضافة عضو جديد' : 'Add New Member'}
         </Button>
@@ -74,6 +86,28 @@ export function SeoProjectTeamTab({ projectId, isAr }: Props) {
         onSetRole={setProjectRole}
         canAdd={canAdd}
         onConfirm={handleAddExisting}
+      />
+
+      {/* Invite Member Modal */}
+      <SeoInviteProjectMemberModal
+        open={showInviteModal}
+        onClose={closeInviteModal}
+        isAr={isAr}
+        name={inviteName}
+        email={inviteEmail}
+        departmentId={inviteDeptId}
+        jobTitleId={inviteJobTitleId}
+        projectRole={inviteRole}
+        departments={departments}
+        jobTitles={jobTitles}
+        onSetName={setInviteName}
+        onSetEmail={setInviteEmail}
+        onSetDepartment={setInviteDeptId}
+        onSetJobTitle={setInviteJobTitleId}
+        onSetRole={setInviteRole}
+        canInvite={canInvite}
+        isSubmitting={isInviting}
+        onConfirm={handleInvite}
       />
 
       {/* Member Profile Modal */}

@@ -8,6 +8,7 @@ import type {
   PmAvailableMembersApiResponse,
   PmProjectTeamListApiResponse,
   PmAddProjectMemberPayload,
+  PmProjectInvitePayload,
 } from '../types/project.types';
 
 export const pmProjectsApi = {
@@ -53,6 +54,10 @@ export const pmProjectTeamApi = {
 
   addMember(projectId: number | string, payload: PmAddProjectMemberPayload) {
     return http.post<{ status: string; message: string }>(`/v1/pm/projects/${projectId}/team/members`, payload);
+  },
+
+  invite(projectId: number | string, payload: PmProjectInvitePayload) {
+    return http.post<{ status: string; message: string }>(`/v1/pm/projects/${projectId}/team/invite`, payload);
   },
 
   remove(projectId: number | string, employeeId: string) {

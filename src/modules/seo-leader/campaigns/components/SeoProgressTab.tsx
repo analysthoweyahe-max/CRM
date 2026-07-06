@@ -29,7 +29,7 @@ function ActivityIcon({ type }: { type: string }) {
 }
 
 /* ── Single activity row ─────────────────────────────────────────────── */
-function ActivityRow({ item, isAr }: { item: SeoActivityItem; isAr: boolean }) {
+function ActivityRow({ item }: { item: SeoActivityItem }) {
   const initial = item.actor.avatarInitial ?? item.actor.name?.[0]?.toUpperCase() ?? '?';
 
   return (
@@ -50,8 +50,7 @@ function ActivityRow({ item, isAr }: { item: SeoActivityItem; isAr: boolean }) {
           <span className="text-[11px] text-gray-400 dark:text-gray-500">{item.timeAgo}</span>
           <span className="text-[11px] text-gray-400 dark:text-gray-500">·</span>
           <span className="text-[11px] text-gray-500 dark:text-gray-400">{item.actor.name}</span>
-          <Avatar initial={initial} size="sm"
-            color={item.actor.avatarUrl ? undefined : 'bg-[#A0CD39]'} />
+          <Avatar initial={initial} size="sm" color="bg-[#A0CD39]" />
         </div>
       </div>
     </div>
@@ -102,7 +101,7 @@ function SeoActivityFeed({ projectId, isAr }: { projectId: string; isAr: boolean
         <>
           <div>
             {items.map(item => (
-              <ActivityRow key={item.id} item={item} isAr={isAr} />
+              <ActivityRow key={item.id} item={item} />
             ))}
           </div>
 

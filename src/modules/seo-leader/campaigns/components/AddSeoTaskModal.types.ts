@@ -5,7 +5,6 @@ export interface AddSeoTaskForm {
   priority:       string;
   dueDate:        string;
   estimatedHours: string;
-  stage:          string;
   targetKeyword:  string;
   targetUrl:      string;
 }
@@ -13,13 +12,12 @@ export interface AddSeoTaskForm {
 export interface CreateSeoTaskPayload {
   title:               string;
   description?:        string;
-  assignee?:           string;
+  employee_id:         string;
   priority:            string;
   due_date?:           string;
   start_date?:         string;
   estimated_hours?:    number;
-  stage?:              string;
-  task_type?:          string;
+  phase_id:            number;
   status:              string;
   target_keyword?:     string;
   target_url?:         string;

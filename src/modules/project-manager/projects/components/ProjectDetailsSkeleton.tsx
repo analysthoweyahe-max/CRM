@@ -1,5 +1,7 @@
-function Pulse({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-100 dark:bg-gray-700/60 ${className}`} />;
+import type { CSSProperties } from 'react';
+
+function Pulse({ className, style }: { className: string; style?: CSSProperties }) {
+  return <div className={`animate-pulse rounded-xl bg-gray-100 dark:bg-gray-700/60 ${className}`} style={style} />;
 }
 
 function KanbanColumnSkeleton() {

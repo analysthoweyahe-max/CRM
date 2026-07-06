@@ -3,7 +3,6 @@ import { Button }       from '@/shared/components/ui/Button';
 import { Combobox }     from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { useAddSeoTask } from './useAddSeoTask';
-import type { SeoTask }  from '../api/campaign.api';
 
 /* ── Shared style tokens ─────────────────────────────────────────────── */
 const INPUT = [
@@ -23,17 +22,6 @@ const PRIORITY_ITEMS: ComboboxItem[] = [
   { id: 'low',    label: 'منخفضة'  },
 ];
 
-const STAGE_ITEMS: ComboboxItem[] = [
-  { id: 'keyword_research',    label: 'بحث الكلمات المفتاحية' },
-  { id: 'content_optimization',label: 'تحسين المحتوى'          },
-  { id: 'link_building',       label: 'بناء الروابط'           },
-  { id: 'competitor_analysis', label: 'تحليل المنافسين'         },
-  { id: 'technical_seo',       label: 'تحسين تقني'             },
-  { id: 'on_page_seo',         label: 'تحسين على الصفحة'        },
-  { id: 'off_page_seo',        label: 'تحسين خارج الصفحة'       },
-  { id: 'reporting',           label: 'التقارير والتحليل'       },
-];
-
 /* ── Props ───────────────────────────────────────────────────────────── */
 interface Props {
   open:          boolean;
@@ -41,8 +29,8 @@ interface Props {
   campaignId:    string;
   prefillUrl?:   string;
   teamItems?:    ComboboxItem[];
+  phaseItems?:   ComboboxItem[];
   isAr:          boolean;
-  onCreated?:    (task: SeoTask) => void;
 }
 
 /* ── Component ───────────────────────────────────────────────────────── */
@@ -52,11 +40,11 @@ export function AddSeoTaskModal({
   campaignId,
   prefillUrl  = '',
   teamItems   = [],
+  phaseItems  = [],
   isAr,
-  onCreated,
 }: Props) {
   const { form, apiError, set, isValid, isSaving, handleAdd } =
-    useAddSeoTask(campaignId, prefillUrl, onClose, onCreated);
+    useAddSeoTask(campaignId, prefillUrl, onClose, phaseItems);
 
   return (
     <Modal
@@ -118,7 +106,10 @@ export function AddSeoTaskModal({
         {/* Assignee + Priority */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={LABEL}>{isAr ? 'المسؤول' : 'Assignee'}</label>
+            <label className={LABEL}>
+              {isAr ? 'المسؤول' : 'Assignee'}
+              <span className="text-red-500 ms-1">*</span>
+            </label>
             <Combobox
               items={teamItems}
               value={form.assignee}
@@ -162,19 +153,6 @@ export function AddSeoTaskModal({
               className={INPUT}
             />
           </div>
-        </div>
-
-        {/* Stage */}
-        <div>
-          <label className={LABEL}>{isAr ? 'المرحلة' : 'Stage'}</label>
-          <Combobox
-            items={STAGE_ITEMS}
-            value={form.stage}
-            onChange={v => set('stage', v)}
-            placeholder={isAr ? 'اختر المرحلة' : 'Select stage'}
-            searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
-            noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
-          />
         </div>
 
         {/* SEO Details */}

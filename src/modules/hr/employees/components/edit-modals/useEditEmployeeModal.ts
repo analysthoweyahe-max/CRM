@@ -9,7 +9,7 @@ import type { EmploymentType } from '../../types/employee.types';
 import type { FormValues, EditEmployeeModalProps } from './EditEmployeeModal.types';
 
 function apiErrMsg(err: unknown): string | null {
-  return (err as any)?.response?.data?.message ?? null;
+  return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? null;
 }
 
 function formDefaults(emp: EditEmployeeModalProps['emp']): FormValues {
@@ -56,42 +56,22 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
     : { searchPlaceholder: 'Search...', noResultsText: 'No results' };
 
   const mutation = useMutation({
-    mutationFn: async (data: FormValues) => {
-      if (onboardingLocked) return;
-
-      const log = (label: string) => (e: unknown) =>
-        console.warn(`[EditEmployee] ${label} failed:`, (e as any)?.response?.data);
-
-      const calls: Promise<unknown>[] = [];
-
-      if (data.employmentType && data.employmentType !== (emp.employmentType ?? '')) {
-        calls.push(
-          employeeApi.updateEmploymentType(emp.id, {
-            employment_type: data.employmentType as EmploymentType,
-          }).catch(log('employment-type')),
-        );
-      }
-
-      const salary = parseFloat(data.salary);
-      if (salary > 0 && salary !== (emp.salary ?? 0)) {
-        calls.push(employeeApi.updateSalary(emp.id, { salary }).catch(log('salary')));
-      }
-
-      if (
-        data.shiftStart && data.shiftEnd &&
-        (data.shiftStart !== (emp.shiftStart ?? emp.shift_start ?? '').slice(0, 5) ||
-         data.shiftEnd   !== (emp.shiftEnd   ?? emp.shift_end   ?? '').slice(0, 5))
-      ) {
-        calls.push(
-          employeeApi.updateWorkSchedule(emp.id, {
-            shift_start: data.shiftStart,
-            shift_end:   data.shiftEnd,
-          }).catch(log('work-schedule')),
-        );
-      }
-
-      await Promise.all(calls);
-    },
+    mutationFn: (data: FormValues) =>
+      employeeApi.update(emp.id, {
+        name:            data.fullName,
+        email:           data.email,
+        phone:           data.phone,
+        department_id:   Number(data.department),
+        job_title_id:    Number(data.jobTitle),
+        manager_id:      data.managerId === 'none' ? null : data.managerId,
+        /* Employment type / salary / schedule are locked once onboarding is submitted. */
+        ...(onboardingLocked ? {} : {
+          employment_type: data.employmentType as EmploymentType || undefined,
+          salary:          parseFloat(data.salary) || undefined,
+          shift_start:     data.shiftStart || undefined,
+          shift_end:       data.shiftEnd   || undefined,
+        }),
+      }),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee', emp.id] });
@@ -100,8 +80,8 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
       onClose();
     },
 
-    onError: (err) => {
-      console.error('[EditEmployeeModal]', (err as any)?.response?.data);
+    onError: (err: unknown) => {
+      console.error('[EditEmployeeModal]', (err as { response?: { data?: unknown } })?.response?.data);
       toast.error(apiErrMsg(err) || (isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes'));
     },
   });

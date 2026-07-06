@@ -1,8 +1,8 @@
 import { useState }                        from 'react';
 import { useMutation, useQueryClient }      from '@tanstack/react-query';
 import { campaignApi }                      from '../api/campaign.api';
-import type { SeoTask }                     from '../api/campaign.api';
 import type { AddSeoTaskForm }              from './AddSeoTaskModal.types';
+import type { ComboboxItem }                from '@/shared/components/form/Combobox';
 
 const INITIAL: AddSeoTaskForm = {
   title:          '',
@@ -11,7 +11,6 @@ const INITIAL: AddSeoTaskForm = {
   priority:       'medium',
   dueDate:        '',
   estimatedHours: '',
-  stage:          '',
   targetKeyword:  '',
   targetUrl:      '',
 };
@@ -20,7 +19,7 @@ export function useAddSeoTask(
   campaignId: string,
   prefillUrl: string,
   onClose:    () => void,
-  onCreated?: (task: SeoTask) => void,
+  phaseItems: ComboboxItem[] = [],
 ) {
   const queryClient = useQueryClient();
   const [form,      setForm]     = useState<AddSeoTaskForm>({ ...INITIAL, targetUrl: prefillUrl });
@@ -31,16 +30,19 @@ export function useAddSeoTask(
     setApiError(null);
   }
 
+  /* Phase isn't user-facing — silently default to the project's first phase. */
+  const phaseId = phaseItems[0]?.id;
+
   const mutation = useMutation({
     mutationFn: () => {
       const payload = {
         title:            form.title.trim(),
         description:      form.description.trim() || undefined,
-        assignee:         form.assignee           || undefined,
+        employee_id:      form.assignee,
         priority:         form.priority,
         due_date:         form.dueDate            || undefined,
         estimated_hours:  form.estimatedHours ? Number(form.estimatedHours) : undefined,
-        stage:            form.stage              || undefined,
+        phase_id:         Number(phaseId),
         target_keyword:   form.targetKeyword.trim() || undefined,
         target_url:       form.targetUrl.trim()     || undefined,
         status:           'pending' as const,
@@ -48,12 +50,9 @@ export function useAddSeoTask(
       return campaignApi.createTask(campaignId, payload);
     },
 
-    onSuccess: (response) => {
-      /* Immediately show the task in the kanban via callback */
-      const newTask = response?.data?.data;
-      if (newTask) onCreated?.(newTask);
-
-      /* Also force a background refetch so the list is in sync */
+    onSuccess: () => {
+      /* Refetch so the kanban shows the task with a fully populated assignee name
+         — the create response itself doesn't return a resolved assignee. */
       queryClient.refetchQueries({ queryKey: ['campaign-tasks', campaignId] });
 
       setForm({ ...INITIAL, targetUrl: prefillUrl });
@@ -72,7 +71,7 @@ export function useAddSeoTask(
     form,
     apiError,
     set,
-    isValid:   !!form.title.trim(),
+    isValid:   !!form.title.trim() && !!form.assignee && !!phaseId,
     isSaving:  mutation.isPending,
     handleAdd: () => mutation.mutate(),
   };

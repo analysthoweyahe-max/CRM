@@ -11,34 +11,42 @@ import type { CreateSeoTaskPayload } from '../components/AddSeoTaskModal.types';
 import type { SeoTaskDetail }        from '../components/SeoTaskModal.types';
 
 export interface SeoTaskAssignee {
-  id:      string;
-  name:    string;
-  avatar?: string;
+  id:             string;
+  name:           string;
+  email?:         string;
+  avatarUrl?:     string | null;
+  avatarInitial?: string;
+}
+
+export interface SeoTaskPhase {
+  id:   number;
+  name: string;
 }
 
 export interface SeoTask {
-  id:            number;
-  taskNumber:    number;
-  phase:         string;
-  title:         string;
-  description?:  string;
-  taskType:      string;
-  taskTypeLabel: string;
-  status:        string;
-  statusLabel?:  string;
-  priority:      string;
-  priorityLabel?: string;
-  dueDate?:      string | null;
-  startDate?:    string | null;
-  assignees:     SeoTaskAssignee[];
-  attachments:   { id: number; name: string; url?: string }[];
-  createdAt:     string;
-  updatedAt:     string;
+  id:               number;
+  uuid:             string;
+  taskNumber:       number;
+  title:            string;
+  description?:     string;
+  status:           string;
+  statusLabel?:     string;
+  priority:         string;
+  priorityLabel?:   string;
+  dueDate?:         string | null;
+  estimatedHours?:  string | null;
+  phase?:           SeoTaskPhase;
+  assignee?:        SeoTaskAssignee;
+  completedAt?:     string | null;
+  attachments:      { id: number; name: string; url?: string }[];
+  attachmentsCount?: number;
+  createdAt:        string;
+  updatedAt:        string;
 }
 
-interface PhasedTasksResponse {
-  phases: { phase: string; tasks: SeoTask[] }[];
-  total:  number;
+interface ColumnedTasksResponse {
+  columns: { status: string; statusLabel: string; tasks: SeoTask[] }[];
+  total:   number;
 }
 
 export interface SeoMessageSender {
@@ -190,11 +198,11 @@ export const campaignApi = {
      Confirmed prefix: /v1/seo/manager/... — distinct from the /v1/seo/projects/...
      prefix used by the project-level (non-task) endpoints above. */
   listAllTasks(params?: { project_id?: string | number; status?: string; search?: string }) {
-    return http.get<ApiResponse<PhasedTasksResponse>>('/v1/seo/manager/tasks', { params });
+    return http.get<ApiResponse<ColumnedTasksResponse>>('/v1/seo/manager/tasks', { params });
   },
 
   getTasks(projectId: string | number, params?: { status?: string; search?: string }) {
-    return http.get<ApiResponse<PhasedTasksResponse>>(
+    return http.get<ApiResponse<ColumnedTasksResponse>>(
       `/v1/seo/manager/projects/${projectId}/tasks`, { params }
     );
   },

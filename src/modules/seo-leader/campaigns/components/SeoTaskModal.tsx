@@ -56,12 +56,6 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
-function fmtSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
-}
-
 /* ── Props ───────────────────────────────────────────────────────────── */
 interface Props {
   taskId:    string | null;
@@ -73,7 +67,7 @@ interface Props {
 /* ── Component ───────────────────────────────────────────────────────── */
 export function SeoTaskModal({ taskId, projectId, onClose, isAr }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const m       = useSeoTaskModal(projectId, taskId, onClose);
+  const m       = useSeoTaskModal(projectId, taskId);
 
   if (!taskId) return null;
 

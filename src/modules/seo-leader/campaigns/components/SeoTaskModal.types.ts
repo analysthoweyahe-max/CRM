@@ -18,6 +18,8 @@ export interface SeoTaskFull {
   notes?:           string | null;
   assignees:        SeoAssigneeDetail[];
   attachments:      SeoAttachmentDetail[];
+  stage?:           string | null;
+  estimatedHours?:  number | null;
   completedAt?:     string | null;
   createdAt:        string;
   updatedAt:        string;
@@ -54,4 +56,4 @@ export type SeoAssignee    = SeoAssigneeDetail;
 export type SeoAttachment  = SeoAttachmentDetail;
 
 export type SeoDrawerTab = 'info' | 'time' | 'attachments' | 'comments';
-export type SeoTaskTab   = SeoDrawerTab;
+export type SeoTaskTab   = 'info' | 'assignees' | 'attachments';

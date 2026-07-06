@@ -85,12 +85,18 @@ export interface CreateEmployeePayload {
 }
 
 export interface UpdateEmployeePayload {
-  name?:          string;
-  email?:         string;
-  phone?:         string;
-  department_id?: string;
-  job_title_id?:  string;
-  manager_id?:    string | null;
+  name?:            string;
+  email?:           string;
+  phone?:           string;
+  department_id?:   number;
+  job_title_id?:    number;
+  manager_id?:      string | null;
+  joining_date?:    string;
+  status?:          EmployeeStatus;
+  employment_type?: EmploymentType;
+  salary?:          number;
+  shift_start?:     string;
+  shift_end?:       string;
 }
 
 // ── Avatar helpers ────────────────────────────────────────────────────────────

@@ -23,7 +23,7 @@ export const employeeApi = {
   },
 
   update(id: string, payload: UpdateEmployeePayload) {
-    return http.put<EmployeeSingleResponse>(`/v1/employees/${id}`, payload);
+    return http.post<EmployeeSingleResponse>(`/v1/employees/${id}`, payload);
   },
 
   updateEmploymentType(id: string, payload: { employment_type: EmploymentType }) {
