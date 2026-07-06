@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { CalendarCheck, MessageSquare, Bell } from 'lucide-react';
+import { CalendarCheck, MessageSquare, Wallet, AtSign, Bell } from 'lucide-react';
 import type { AppNotification } from '@/shared/types/notification.types';
+import { formatTimeAgo } from '@/shared/utils/date.utils';
 
 interface Props {
   notifications: AppNotification[];
@@ -9,17 +10,26 @@ interface Props {
   onMarkRead:    (id: string) => void;
 }
 
-const TYPE_ICON = {
-  leave:   <CalendarCheck size={14} />,
-  message: <MessageSquare size={14} />,
-  general: <Bell size={14} />,
+/* Backend notification `type` values seen so far — anything else falls back
+   to a generic bell icon rather than needing every type enumerated up front. */
+const TYPE_ICON: Record<string, React.ReactNode> = {
+  leave:             <CalendarCheck size={14} />,
+  message:           <MessageSquare size={14} />,
+  deduction_applied: <Wallet size={14} />,
+  bonus_applied:     <Wallet size={14} />,
+  PmMentionNotification: <AtSign size={14} />,
 };
 
-const TYPE_ICON_BG = {
-  leave:   'bg-[#D8EBAE] text-[#709028]',
-  message: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-  general: 'bg-gray-100 dark:bg-gray-700 text-gray-500',
+const TYPE_ICON_BG: Record<string, string> = {
+  leave:             'bg-[#D8EBAE] text-[#709028]',
+  message:           'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  deduction_applied: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+  bonus_applied:     'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+  PmMentionNotification: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
 };
+
+const DEFAULT_ICON = <Bell size={14} />;
+const DEFAULT_ICON_BG = 'bg-gray-100 dark:bg-gray-700 text-gray-500';
 
 export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMarkRead }: Props) {
   const [visible, setVisible] = useState(false);
@@ -29,7 +39,7 @@ export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMar
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.readAt).length;
 
   return (
     <>
@@ -96,32 +106,34 @@ export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMar
               onClick={() => onMarkRead(n.id)}
               className={`w-full text-start px-4 py-3.5 flex items-start gap-3
                           transition-colors duration-150
-                          ${n.read
+                          ${n.readAt
                             ? 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
                             : 'bg-[#D8EBAE]/20 dark:bg-[#D8EBAE]/5 hover:bg-[#D8EBAE]/30 dark:hover:bg-[#D8EBAE]/10'
                           }`}
             >
               <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0
-                               ${TYPE_ICON_BG[n.type]}`}>
-                {TYPE_ICON[n.type]}
+                               ${TYPE_ICON_BG[n.type] ?? DEFAULT_ICON_BG}`}>
+                {TYPE_ICON[n.type] ?? DEFAULT_ICON}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <p className={`text-sm leading-snug
-                                 ${n.read
+                                 ${n.readAt
                                    ? 'font-normal text-gray-500 dark:text-gray-400'
                                    : 'font-semibold text-gray-800 dark:text-gray-100'}`}>
-                    {isAr ? n.titleAr : n.titleEn}
+                    {n.title}
                   </p>
-                  {!n.read && (
+                  {!n.readAt && (
                     <span className="notif-dot-pulse mt-1.5 w-2 h-2 rounded-full bg-[#A0CD39] shrink-0" />
                   )}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug line-clamp-2">
-                  {isAr ? n.bodyAr : n.bodyEn}
+                  {n.body}
                 </p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{n.time}</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                  {formatTimeAgo(n.createdAt, isAr)}
+                </p>
               </div>
             </button>
           ))}

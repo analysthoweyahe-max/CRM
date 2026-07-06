@@ -64,7 +64,7 @@ export const empLeaveApi = {
   },
 
   async types(): Promise<{ data: EmpLeaveTypesResponse }> {
-    const res = await http.get<RawRequestTypesResponse>('/v1/pm/requests/lookups/types');
+    const res = await http.get<RawRequestTypesResponse>('/v1/employee/leave/lookups/types');
     return {
       data: {
         status: res.data.status,
@@ -74,7 +74,7 @@ export const empLeaveApi = {
   },
 
   async list(): Promise<{ data: EmpLeaveListResponse }> {
-    const res = await http.get<RawRequestListResponse>('/v1/pm/requests', { params: { per_page: 15 } });
+    const res = await http.get<RawRequestListResponse>('/v1/employee/leave', { params: { per_page: 15 } });
     return {
       data: {
         status: res.data.status,
@@ -93,7 +93,7 @@ export const empLeaveApi = {
     const description = fd.get('description') as string | null;
     const date        = (fd.get('date') as string | null) || new Date().toISOString().split('T')[0];
 
-    const res = await http.post<RawRequestCreateResponse>('/v1/pm/requests', {
+    const res = await http.post<RawRequestCreateResponse>('/v1/employee/leave', {
       request_type: typeId,
       title:        description || typeLabel || typeId,
       description:  description || undefined,
@@ -112,6 +112,6 @@ export const empLeaveApi = {
   },
 
   show(uuid: string) {
-    return http.get(`/v1/pm/requests/${uuid}`);
+    return http.get(`/v1/employee/leave/${uuid}`);
   },
 };

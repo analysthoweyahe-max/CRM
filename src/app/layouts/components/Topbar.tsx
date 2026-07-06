@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Bell, Globe, LogOut, User, ChevronDown, Moon, Sun, KeyRound } from 'lucide-react';
 import { ChangePasswordModal }        from '@/modules/auth/components/ChangePasswordModal';
@@ -7,7 +7,7 @@ import { useLang }                    from '@/app/providers/LanguageProvider';
 import { useTheme }                   from '@/app/providers/ThemeProvider';
 import { ROUTES }                     from '@/app/router/routes';
 import { useFirebaseMessaging }       from '@/shared/hooks/useFirebaseMessaging';
-import type { AppNotification }       from '@/shared/types/notification.types';
+import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
 
 const ROLE_LABELS: Record<string, { ar: string; en: string }> = {
@@ -16,37 +16,6 @@ const ROLE_LABELS: Record<string, { ar: string; en: string }> = {
   manager:  { ar: 'مدير',             en: 'Manager' },
   employee: { ar: 'موظف',             en: 'Employee' },
 };
-
-const INITIAL_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'n1', type: 'leave', read: false,
-    titleAr: 'طلب إجازة جديد',   titleEn: 'New Leave Request',
-    bodyAr:  'قدم أحمد الشريف طلب إجازة سنوية بانتظار المراجعة.',
-    bodyEn:  'Ahmad Al-Sharif submitted an annual leave request pending review.',
-    time: '09:20 ص',
-  },
-  {
-    id: 'n2', type: 'leave', read: false,
-    titleAr: 'طلب إجازة جديد',   titleEn: 'New Leave Request',
-    bodyAr:  'قدمت رنا منصور طلب إجازة مرضية بانتظار المراجعة.',
-    bodyEn:  'Rana Mansour submitted a sick leave request pending review.',
-    time: '09:15 ص',
-  },
-  {
-    id: 'n3', type: 'message', read: true,
-    titleAr: 'رسالة جديدة',       titleEn: 'New Message',
-    bodyAr:  'لديك رسالة جديدة من سارة منصور.',
-    bodyEn:  'You have a new message from Sara Mansour.',
-    time: '08:50 ص',
-  },
-  {
-    id: 'n4', type: 'leave', read: false,
-    titleAr: 'طلب إجازة جديد',   titleEn: 'New Leave Request',
-    bodyAr:  'قدم علي راشدي طلب إجازة طارئة بانتظار المراجعة.',
-    bodyEn:  'Ali Rashidi submitted an emergency leave request pending review.',
-    time: '08:30 ص',
-  },
-];
 
 interface TopbarProps {
   onMenuToggle:  () => void;
@@ -63,19 +32,14 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
   const [open,          setOpen]          = useState(false);
   const [notifOpen,     setNotifOpen]     = useState(false);
   const [showChangePwd, setShowChangePwd] = useState(false);
-  const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
+
+  const { notifications, unreadCount, markRead, markAllRead, refetch } = useNotifications();
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef    = useRef<HTMLDivElement>(null);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  // Receive foreground FCM notifications
-  const handleNewNotification = useCallback((n: AppNotification) => {
-    setNotifications(prev => [n, ...prev]);
-  }, []);
-
-  useFirebaseMessaging(handleNewNotification);
+  // Foreground FCM push arrived — refetch the real list instead of trusting the payload
+  useFirebaseMessaging(refetch);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -90,13 +54,6 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
     document.addEventListener('mousedown', onOutside);
     return () => document.removeEventListener('mousedown', onOutside);
   }, []);
-
-  function handleMarkAllRead() {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  }
-  function handleMarkRead(id: string) {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  }
 
   const initial   = user?.fullName?.slice(0, 1).toUpperCase() ?? '?';
   const roleLabel = user?.role ? (ROLE_LABELS[user.role]?.[lang] ?? user.role) : '';
@@ -161,8 +118,8 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
             <NotificationDropdown
               notifications={notifications}
               isAr={isAr}
-              onMarkAllRead={handleMarkAllRead}
-              onMarkRead={handleMarkRead}
+              onMarkAllRead={markAllRead}
+              onMarkRead={markRead}
             />
           )}
         </div>

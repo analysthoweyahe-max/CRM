@@ -1,13 +1,11 @@
 import { useEffect } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
 import { getMessagingInstance } from '@/shared/lib/firebase';
-import type { AppNotification } from '@/shared/types/notification.types';
+import { notificationsApi } from '@/shared/services/notifications.service';
 
-function nowTimeAr() {
-  return new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-}
-
-export function useFirebaseMessaging(onNotification: (n: AppNotification) => void) {
+/** onPush fires when a foreground push arrives — the caller should refetch
+    the real notifications list rather than trust the push payload directly. */
+export function useFirebaseMessaging(onPush: () => void) {
   useEffect(() => {
     if (!('Notification' in window)) return;
 
@@ -24,7 +22,7 @@ export function useFirebaseMessaging(onNotification: (n: AppNotification) => voi
 
         getToken(messaging, { vapidKey }).then(token => {
           if (token) {
-            console.log('[FCM] Device token:', token);
+            notificationsApi.registerToken(token, 'web').catch(console.error);
           }
         }).catch(console.error);
       });
@@ -38,16 +36,7 @@ export function useFirebaseMessaging(onNotification: (n: AppNotification) => voi
           });
         }
 
-        onNotification({
-          id:      `fcm-${Date.now()}`,
-          type:    'general',
-          titleAr: title,
-          titleEn: title,
-          bodyAr:  body,
-          bodyEn:  body,
-          time:    nowTimeAr(),
-          read:    false,
-        });
+        onPush();
       });
     });
 
