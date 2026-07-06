@@ -1,27 +1,48 @@
 export type EmpLeaveStatus = 'pending' | 'approved' | 'rejected';
 
 export interface EmpLeaveType {
-  id:      string;
-  name?:   string;
-  nameAr?: string;
-  nameEn?: string;
-  label?:  string;
+  value:         string;
+  label:         string;
+  tracksBalance: boolean;
+}
+
+export interface EmpLeavePeriod {
+  startDate: string;
+  endDate:   string;
+  daysCount: number;
 }
 
 export interface EmpLeaveRequest {
-  id:               string;
-  uuid?:            string;
-  type?:            EmpLeaveType | string;
-  typeLabel?:       string;
-  description?:     string;
-  reason?:          string;
-  date?:            string;
-  start_date?:      string;
-  end_date?:        string;
-  status:           EmpLeaveStatus;
-  manager_comment?: string;
-  attachment?:      string;
-  created_at?:      string;
+  id:              string;
+  leaveType:       string;
+  leaveTypeLabel:  string;
+  startDate:       string;
+  endDate:         string;
+  daysCount:       number;
+  reason:          string;
+  status:          EmpLeaveStatus;
+  statusLabel:     string;
+  requestDate:     string;
+  period:          EmpLeavePeriod;
+  viewDetailsUrl?: string;
+}
+
+export interface EmpLeaveDetail extends EmpLeaveRequest {
+  content:            string | null;
+  durationLabel:      string;
+  requestSubmittedAt: string;
+  approvedAt:         string | null;
+  rejectedAt:         string | null;
+  rejectionReason:    string | null;
+  attachments:        unknown[];
+  employee: {
+    id:             string;
+    employeeNumber: string;
+    name:           string;
+    department:     string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface EmpLeaveSummaryItem {
@@ -40,7 +61,10 @@ export interface EmpLeaveTypesResponse {
 export interface EmpLeaveListResponse {
   status: string;
   data: {
-    data: EmpLeaveRequest[];
+    data:         EmpLeaveRequest[];
+    current_page: number;
+    last_page:    number;
+    total:        number;
   };
 }
 
@@ -49,9 +73,23 @@ export interface EmpLeaveSummaryResponse {
   message: string;
   data: {
     balances:            EmpLeaveSummaryItem[];
-    requests:            unknown[];
+    requests:            EmpLeaveRequest[];
     viewFullHistoryUrl?: string;
   };
+}
+
+export interface EmpLeaveCreatePayload {
+  leave_type: string;
+  start_date: string;
+  end_date:   string;
+  reason:     string;
+  content?:   string;
+}
+
+export interface EmpLeaveDetailResponse {
+  status:  string;
+  message: string;
+  data:    EmpLeaveDetail;
 }
 
 export interface EmpLeaveCreateResponse {

@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { empLeaveApi } from '../api/employeeLeave.api';
-import type { EmpLeaveRequest, EmpLeaveType, EmpLeaveSummaryItem } from '../types/employeeLeave.types';
+import type {
+  EmpLeaveRequest,
+  EmpLeaveType,
+  EmpLeaveSummaryItem,
+  EmpLeaveCreatePayload,
+} from '../types/employeeLeave.types';
 
 const KEYS = {
   summary: ['employee', 'leave', 'summary'] as const,
@@ -35,7 +40,7 @@ export function useEmpLeaveList() {
 export function useEmpLeaveCreate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (fd: FormData) => empLeaveApi.create(fd),
+    mutationFn: (payload: EmpLeaveCreatePayload) => empLeaveApi.create(payload),
     onSuccess:  () => {
       qc.invalidateQueries({ queryKey: KEYS.list });
       qc.invalidateQueries({ queryKey: KEYS.summary });

@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-table';
 import { Badge }     from '@/shared/components/ui/Badge';
 import { DataTable } from '@/shared/components/tables/DataTable';
-import { STATUS_MAP, fmtDate, getTypeName } from './useLeaveRequestsTable';
+import { STATUS_MAP, fmtDate } from './useLeaveRequestsTable';
 import type { LeaveRequestsTableProps }     from './LeaveRequestsTable.types';
 import type { EmpLeaveRequest }             from '../types/employeeLeave.types';
 
@@ -51,7 +51,7 @@ function TableSkeleton() {
 export function LeaveRequestsTable({ requests, isLoading, isAr }: LeaveRequestsTableProps) {
   if (isLoading) return <TableSkeleton />;
   const columns = useMemo(() => [
-    col.accessor(row => getTypeName(row.type, isAr), {
+    col.accessor('leaveTypeLabel', {
       id:     'type',
       header: isAr ? 'النوع' : 'Type',
       cell:   info => (
@@ -64,24 +64,17 @@ export function LeaveRequestsTable({ requests, isLoading, isAr }: LeaveRequestsT
       id:     'description',
       header: isAr ? 'الوصف' : 'Description',
       cell:   ({ row }) => (
-        <div className="max-w-xs">
-          <p className="text-gray-700 dark:text-gray-300 truncate">
-            {row.original.description ?? row.original.reason ?? '–'}
-          </p>
-          {row.original.manager_comment && (
-            <p className="text-xs text-gray-400 truncate mt-0.5">
-              {isAr ? 'تعليق المدير: ' : 'Manager: '}{row.original.manager_comment}
-            </p>
-          )}
-        </div>
+        <p className="max-w-xs text-gray-700 dark:text-gray-300 truncate">
+          {row.original.reason ?? '–'}
+        </p>
       ),
     }),
-    col.accessor(row => row.date ?? row.start_date ?? row.created_at, {
+    col.display({
       id:     'date',
       header: isAr ? 'التاريخ' : 'Date',
-      cell:   info => (
+      cell:   ({ row }) => (
         <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap">
-          {fmtDate(info.getValue(), isAr)}
+          {fmtDate(row.original.startDate, isAr)} – {fmtDate(row.original.endDate, isAr)}
         </span>
       ),
     }),

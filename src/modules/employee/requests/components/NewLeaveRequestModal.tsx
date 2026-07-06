@@ -1,4 +1,4 @@
-import { Calendar, Paperclip } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Button }              from '@/shared/components/ui/Button';
 import { Modal }               from '@/shared/components/ui/Modal';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
@@ -8,12 +8,13 @@ import type { NewLeaveRequestModalProps } from './NewLeaveRequestModal.types';
 
 export function NewLeaveRequestModal({ open, onClose, isAr }: NewLeaveRequestModalProps) {
   const {
-    typeId, setTypeId,
-    description, setDescription,
-    date, setDate,
-    file, fileRef,
-    handleFile, handleSubmit, handleClose,
-    creating, comboItems,
+    leaveType, setLeaveType,
+    startDate, setStartDate,
+    endDate, setEndDate,
+    reason, setReason,
+    content, setContent,
+    handleSubmit, handleClose,
+    creating, comboItems, isValid,
   } = useNewLeaveRequestModal(onClose, isAr);
 
   return (
@@ -29,7 +30,7 @@ export function NewLeaveRequestModal({ open, onClose, isAr }: NewLeaveRequestMod
           <Button
             variant="primary"
             onClick={handleSubmit}
-            disabled={!typeId}
+            disabled={!isValid}
             isLoading={creating}
           >
             {isAr ? 'تقديم الطلب' : 'Submit Request'}
@@ -39,52 +40,63 @@ export function NewLeaveRequestModal({ open, onClose, isAr }: NewLeaveRequestMod
     >
       <div className="space-y-4 pt-1">
 
-        <FormField label={isAr ? 'نوع الطلب' : 'Request Type'} required>
+        <FormField label={isAr ? 'نوع الإجازة' : 'Leave Type'} required>
           <Combobox
             items={comboItems}
-            value={typeId}
-            onChange={setTypeId}
-            placeholder={isAr ? 'اختر نوع الطلب' : 'Select type'}
+            value={leaveType}
+            onChange={setLeaveType}
+            placeholder={isAr ? 'اختر نوع الإجازة' : 'Select leave type'}
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
         </FormField>
 
-        <FormField label={isAr ? 'الوصف' : 'Description'}>
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label={isAr ? 'من تاريخ' : 'Start Date'} required>
+            <div className="relative">
+              <input
+                type="date"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                className={`${inputCls(false)} pe-10`}
+              />
+              <Calendar size={15} className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+          </FormField>
+
+          <FormField label={isAr ? 'إلى تاريخ' : 'End Date'} required>
+            <div className="relative">
+              <input
+                type="date"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+                className={`${inputCls(false)} pe-10`}
+              />
+              <Calendar size={15} className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+          </FormField>
+        </div>
+
+        <FormField label={isAr ? 'السبب' : 'Reason'} required>
           <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            rows={3}
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            rows={2}
             dir="rtl"
-            placeholder={isAr ? 'أكتب وصف الطلب...' : 'Enter description...'}
+            placeholder={isAr ? 'أكتب سبب الطلب...' : 'Enter reason...'}
             className={`${inputCls(false)} h-auto! py-3 resize-none`}
           />
         </FormField>
 
-        <FormField label={isAr ? 'التاريخ المرتبط' : 'Related Date'}>
-          <div className="relative">
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              className={`${inputCls(false)} pe-10`}
-            />
-            <Calendar size={15} className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
-        </FormField>
-
-        <FormField label={isAr ? 'مرفقات' : 'Attachments'}>
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className={`${inputCls(false)} flex items-center justify-between cursor-pointer`}
-          >
-            <Paperclip size={15} className="text-gray-400 shrink-0" />
-            <span className="text-gray-400 truncate flex-1 text-end ms-2">
-              {file ? file.name : (isAr ? 'ارفاق ملف ....' : 'Attach file...')}
-            </span>
-          </button>
-          <input ref={fileRef} type="file" className="hidden" onChange={handleFile} />
+        <FormField label={isAr ? 'تفاصيل إضافية' : 'Additional Details'}>
+          <textarea
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            rows={3}
+            dir="rtl"
+            placeholder={isAr ? 'أكتب تفاصيل إضافية...' : 'Enter additional details...'}
+            className={`${inputCls(false)} h-auto! py-3 resize-none`}
+          />
         </FormField>
 
       </div>
