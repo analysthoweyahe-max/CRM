@@ -10,7 +10,7 @@ firebase.initializeApp({
   projectId:         'howaya-hr-c80e7',
   storageBucket:     'howaya-hr-c80e7.firebasestorage.app',
   messagingSenderId: '1067066414856',
-  appId:             '1:1067066414856:web:88cff02976f88ea461bebd',
+  appId:             '1:1067066414856:web:5eb4d4306ab30ebf61bebd',
 });
 
 const messaging = firebase.messaging();

@@ -17,9 +17,9 @@ interface ApiEnvelope<T> {
 }
 
 /* Each role has its own notifications resource — confirmed: employee, hr,
-   seo-leader/seo-member (share /v1/seo/notifications). admin/manager are
-   unconfirmed guesses (admin per user, manager falls back to hr's prefix)
-   — verify against real traffic before trusting them. */
+   admin, seo-leader/seo-member (share /v1/seo/notifications). manager is
+   still unconfirmed (falls back to hr's prefix as a placeholder) — verify
+   against real traffic before trusting it. */
 const ROLE_NOTIFICATION_PREFIX: Record<Role, string> = {
   employee:    '/v1/employee/notifications',
   hr:          '/v1/hr/notifications',

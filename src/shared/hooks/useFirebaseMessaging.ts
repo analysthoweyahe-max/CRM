@@ -14,13 +14,16 @@ export function useFirebaseMessaging(onPush: () => void) {
     getMessagingInstance().then((messaging) => {
       if (!messaging) return;
 
-      Notification.requestPermission().then(permission => {
+      Notification.requestPermission().then(async permission => {
         if (permission !== 'granted') return;
 
         const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY as string | undefined;
         if (!vapidKey) return;
 
-        getToken(messaging, { vapidKey }).then(token => {
+        if (!('serviceWorker' in navigator)) return;
+        const serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+        getToken(messaging, { vapidKey, serviceWorkerRegistration }).then(token => {
           if (token) {
             notificationsApi.registerToken(token, 'web').catch(console.error);
           }
