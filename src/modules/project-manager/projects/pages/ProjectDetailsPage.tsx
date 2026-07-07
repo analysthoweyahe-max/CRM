@@ -11,9 +11,7 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { ROUTES }          from '@/app/router/routes';
 import { useProjectDetails }   from '../hooks/useProjectDetails';
 import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
-import { pmProjectsApi } from '../api/project.api';
-import { employeeApi } from '@/modules/hr/employees/api/employee.api';
-import { getInitial } from '@/shared/utils/avatar.utils';
+import { pmProjectsApi, pmProjectTeamApi } from '../api/project.api';
 import type { PmProjectTeamMember } from '../types/project.types';
 import { useProjectTasks } from '../../tasks/store/taskStore';
 import { KanbanBoard }     from '../components/KanbanBoard';
@@ -46,22 +44,12 @@ export function ProjectDetailsPage() {
   const { statuses }                              = usePmProjectLookups();
   const tasks = useProjectTasks(id ?? '');
 
-  // project.teamMembers from the project-details endpoint is unreliable, and the
-  // project-scoped /team endpoint's real behavior is unconfirmed — fall back to the
-  // confirmed-working company employee list so the assignee dropdown always has data.
+  // Assignee dropdown must only offer members actually added to this project's
+  // team (via the Team tab), not the whole company roster.
   const { data: teamMembers = [] } = useQuery({
-    queryKey: ['pm-project', id, 'assignable-employees'],
-    queryFn:  () => employeeApi.list({ per_page: 100 }).then((r) => r.data.data.data.map((e): PmProjectTeamMember => ({
-      id:            e.id,
-      name:          e.name,
-      email:         e.email,
-      status:        e.status,
-      projectRole:   '',
-      department:    e.department?.name ?? '',
-      jobTitle:      e.jobTitle?.name ?? '',
-      avatarUrl:     null,
-      avatarInitial: getInitial(e.name),
-    }))),
+    queryKey: ['pm-project', id, 'team'],
+    queryFn:  () => pmProjectTeamApi.list(id!, { per_page: 100 }).then((r): PmProjectTeamMember[] => r.data.data.data),
+    enabled:  !!id,
   });
 
   const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');

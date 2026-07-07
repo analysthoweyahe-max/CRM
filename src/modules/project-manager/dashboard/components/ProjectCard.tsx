@@ -37,7 +37,8 @@ export function ProjectCard({ project, isAr }: Props) {
 
   return (
     <Card className="p-5 flex flex-col gap-4 transition-all duration-200
-                     hover:border-[#A0CD39] hover:shadow-lg">
+                     border-[#D8EBAE]! dark:border-[#A0CD39]/25!
+                     hover:border-[#A0CD39]! hover:shadow-lg">
 
       {/* Title + category */}
       <div className="flex items-start justify-between gap-3">
