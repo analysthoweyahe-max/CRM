@@ -3,7 +3,7 @@ import { useLang }    from '@/app/providers/LanguageProvider';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button }     from '@/shared/components/ui/Button';
 import { DepartmentCard }        from '../components/DepartmentCard';
-import { AddDepartmentModal }    from '../components/AddDepartmentModal';
+import { DepartmentFormModal }   from '../components/DepartmentFormModal';
 import { DeleteDepartmentModal } from '../components/DeleteDepartmentModal';
 import { useAdminDepartmentsPage } from '../hooks/useAdminDepartmentsPage';
 
@@ -14,6 +14,7 @@ export function AdminDepartmentsPage() {
   const {
     departments, isLoading,
     showAdd, openAdd, closeAdd, submitAdd, creating,
+    editingDepartment, openEdit, closeEdit, submitEdit, updating,
     pendingDelete, askDelete, cancelDelete, confirmDelete, deleting,
   } = useAdminDepartmentsPage(isAr);
 
@@ -45,17 +46,27 @@ export function AdminDepartmentsPage() {
               key={dept.id}
               department={dept}
               isAr={isAr}
+              onEdit={() => openEdit(dept)}
               onDelete={() => askDelete(dept)}
             />
           ))}
         </div>
       )}
 
-      <AddDepartmentModal
+      <DepartmentFormModal
         open={showAdd}
         onClose={closeAdd}
         onSubmit={submitAdd}
         isLoading={creating}
+        isAr={isAr}
+      />
+
+      <DepartmentFormModal
+        open={!!editingDepartment}
+        onClose={closeEdit}
+        onSubmit={submitEdit}
+        initial={editingDepartment}
+        isLoading={updating}
         isAr={isAr}
       />
 

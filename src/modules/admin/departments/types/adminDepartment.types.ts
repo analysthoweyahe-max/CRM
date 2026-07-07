@@ -20,7 +20,14 @@ export interface CreateDepartmentPayload {
   image: File;
 }
 
+export interface UpdateDepartmentPayload {
+  name:   string;
+  image?: File;
+}
+
 export interface DeleteDepartmentResponse {
   status:  string;
   message: string;
 }
+
+export type UpdateDepartmentResponse = DepartmentSingleResponse;

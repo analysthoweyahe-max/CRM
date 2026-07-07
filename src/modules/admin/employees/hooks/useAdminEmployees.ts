@@ -18,7 +18,10 @@ export function useAdminEmployees() {
     queryFn:  () => employeeApi.list({ per_page: 200 }).then((r) => r.data.data.data),
   });
 
-  const employees = useMemo(() => (data ?? []).map(toAdminEmployee), [data]);
+  const employees = useMemo(
+    () => (data ?? []).map(toAdminEmployee).sort((a, b) => Number(b.id) - Number(a.id)),
+    [data],
+  );
 
   const filtered = useMemo(() => employees.filter(e => {
     if (search && !`${e.name} ${e.email}`.toLowerCase().includes(search.toLowerCase())) return false;

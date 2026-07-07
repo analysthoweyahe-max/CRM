@@ -23,7 +23,10 @@ export function EmployeeListPage() {
   // Debounce via delayed update is omitted to keep it simple; search resets page on change
   const { data, isLoading } = useEmployeeList({ page, per_page: PAGE_SIZE, search });
 
-  const employees = data?.data         ?? [];
+  const employees = [...(data?.data ?? [])].sort((a, b) => {
+    if (a.createdAt && b.createdAt) return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return Number(b.id) - Number(a.id);
+  });
   const total     = data?.total        ?? 0;
   const lastPage  = data?.last_page    ?? 1;
   const firstRow  = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;

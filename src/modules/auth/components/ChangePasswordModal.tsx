@@ -6,6 +6,8 @@ import { Modal }       from '@/shared/components/ui/Modal';
 import { Input }       from '@/shared/components/ui/Input';
 import { Button }      from '@/shared/components/ui/Button';
 import { FormField }   from '@/shared/components/form/FormField';
+import { authService } from '@/modules/auth/services/auth.service';
+import { extractApiError } from '@/shared/utils/error.utils';
 
 interface ChangePasswordValues {
   currentPassword: string;
@@ -69,11 +71,13 @@ export function ChangePasswordModal({ open, onClose, isAr }: Props) {
   }
 
   async function onSubmit(data: ChangePasswordValues) {
-    await new Promise((r) => setTimeout(r, 600));
-    // TODO: await api.post('/auth/change-password', data)
-    console.log('change password:', data);
-    toast.success(isAr ? 'تم تغيير كلمة المرور بنجاح' : 'Password changed successfully');
-    handleClose();
+    try {
+      await authService.changePassword(data);
+      toast.success(isAr ? 'تم تغيير كلمة المرور بنجاح' : 'Password changed successfully');
+      handleClose();
+    } catch (err) {
+      toast.error(extractApiError(err));
+    }
   }
 
   const newPwd = watch('newPassword');
@@ -114,8 +118,8 @@ export function ChangePasswordModal({ open, onClose, isAr }: Props) {
           {...register('newPassword', {
             required:  isAr ? 'كلمة المرور الجديدة مطلوبة' : 'New password is required',
             minLength: {
-              value:   8,
-              message: isAr ? 'يجب أن تكون 8 أحرف على الأقل' : 'Minimum 8 characters',
+              value:   6,
+              message: isAr ? 'يجب أن تكون 6 أحرف على الأقل' : 'Minimum 6 characters',
             },
           })}
         />

@@ -71,7 +71,7 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
           <div className={`flex items-center gap-3 min-w-0 ${collapsed ? 'lg:justify-center lg:w-full' : ''}`}>
             <img
               src="/logo.png"
-              alt="Howaya"
+              alt="Howeyah"
               className={`object-contain shrink-0 transition-all duration-300 ${
                 collapsed ? 'lg:w-8 lg:h-8 w-20 h-12' : 'w-20 h-12'
               }`}
@@ -187,7 +187,7 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
         {/* ── Footer ── */}
         <div className={`px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 ${collapsed ? 'lg:hidden' : ''}`}>
           <p className="text-[11px] text-center text-gray-400 dark:text-gray-500 whitespace-nowrap">
-            © 2026 Howaya — {isAr ? 'الإصدار 1.0' : 'Version 1.0'}
+            © 2026 Howeyah — {isAr ? 'الإصدار 1.0' : 'Version 1.0'}
           </p>
         </div>
       </aside>

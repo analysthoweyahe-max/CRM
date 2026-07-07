@@ -54,7 +54,7 @@ export function AttendancePolicyCard({ isAr }: { isAr: boolean }) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField label={isAr ? 'ساعات العمل اليومية' : 'Daily Work Hours'}>
             <Input {...register('daily_hours', { valueAsNumber: true })} type="number" min={1} max={24} />
           </FormField>

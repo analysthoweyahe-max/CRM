@@ -230,6 +230,25 @@ async function loadProfile(): Promise<AuthUser | null> {
   }
 }
 
+async function changePassword(payload: {
+  currentPassword: string;
+  newPassword:     string;
+  confirmPassword: string;
+}): Promise<void> {
+  const user = getStoredUser();
+  const apiPayload = {
+    current_password: payload.currentPassword,
+    new_password: payload.newPassword,
+    new_password_confirmation: payload.confirmPassword,
+  };
+
+  if (user?.role === 'employee' || user?.role === 'seo-member') {
+    await authApi.employeeChangePassword(apiPayload);
+  } else {
+    await authApi.adminChangePassword(apiPayload);
+  }
+}
+
 async function logout(): Promise<void> {
   const user = getStoredUser();
   try {
@@ -246,6 +265,7 @@ async function logout(): Promise<void> {
 export const authService = {
   login,
   setPassword,
+  changePassword,
   validateInvite,
   loadProfile,
   logout,

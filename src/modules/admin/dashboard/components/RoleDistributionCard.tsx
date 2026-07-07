@@ -45,7 +45,7 @@ export function RoleDistributionCard({ roles, isAr }: Props) {
         {isAr ? 'توزيع الموظفين حسب الدور' : 'Employee Distribution by Role'}
       </h3>
 
-      <div className="flex items-center gap-6 mt-5">
+      <div className="flex flex-col sm:flex-row items-center gap-6 mt-5">
         <div className="relative shrink-0 w-40 h-40">
           <Doughnut data={data} options={options} />
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -54,7 +54,7 @@ export function RoleDistributionCard({ roles, isAr }: Props) {
           </div>
         </div>
 
-        <div className="flex-1 space-y-2.5">
+        <div className="w-full flex-1 space-y-2.5">
           {roles.map(r => (
             <div key={r.labelEn} className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: r.color }} />

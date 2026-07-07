@@ -149,9 +149,9 @@ export const SUBTITLE: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-
 
 export const BRAND_NAME: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', string> = {
   admin:        '',
-  hr:           'Howaya HR',
-  pm:           'Howaya HR',
-  employee:     'Howaya HR',
-  seo:          'Howaya HR',
-  'seo-member': 'Howaya HR',
+  hr:           'Howeyah HR',
+  pm:           'Howeyah HR',
+  employee:     'Howeyah HR',
+  seo:          'Howeyah HR',
+  'seo-member': 'Howeyah HR',
 };

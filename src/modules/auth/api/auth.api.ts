@@ -5,6 +5,8 @@ import type {
   EmployeeProfileApiResponse,
   AdminInviteApiResponse,
   EmployeeInviteApiResponse,
+  ChangePasswordPayload,
+  ChangePasswordApiResponse,
 } from '@/modules/auth/types/auth.types';
 
 export const authApi = {
@@ -27,6 +29,10 @@ export const authApi = {
       `/v1/admin/auth/invitations/${token}/set-password`,
       payload,
     );
+  },
+
+  adminChangePassword(payload: ChangePasswordPayload) {
+    return http.post<ChangePasswordApiResponse>('/v1/admin/auth/profile/password', payload);
   },
 
   // ── Employee ─────────────────────────────────────────────────────────────
@@ -52,5 +58,9 @@ export const authApi = {
       `/v1/employee/auth/invitations/${token}/set-password`,
       payload,
     );
+  },
+
+  employeeChangePassword(payload: ChangePasswordPayload) {
+    return http.post<ChangePasswordApiResponse>('/v1/employee/auth/profile/password', payload);
   },
 };

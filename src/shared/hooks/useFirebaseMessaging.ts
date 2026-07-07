@@ -34,12 +34,19 @@ export function useFirebaseMessaging(onPush: () => void) {
 
         getToken(messaging, { vapidKey, serviceWorkerRegistration }).then(token => {
           if (token) {
+            // TEMP debug aid — copy this value to test pushes against the
+            // actual browser token instead of guessing which device a
+            // token in Firebase/DB belongs to. Remove once FCM is confirmed stable.
+            console.log('[FCM] Web Token:', token);
             notificationsApi.registerToken(token, 'web').catch(console.error);
           }
         }).catch(console.error);
       });
 
       unsubscribe = onMessage(messaging, payload => {
+        // TEMP debug aid — remove once realtime is confirmed stable.
+        console.log('[FCM] foreground message received', payload);
+
         const { title = 'إشعار جديد', body = '' } = payload.notification ?? {};
 
         if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
@@ -53,5 +60,23 @@ export function useFirebaseMessaging(onPush: () => void) {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  // `onMessage()` above only fires while this tab is the focused/foreground
+  // one at the moment the push arrives — otherwise the browser routes it to
+  // the service worker's onBackgroundMessage (public/firebase-messaging-sw.js),
+  // which shows a native OS notification but has no way to reach an open
+  // page on its own. The SW forwards those pushes here via postMessage so
+  // the dashboard still refetches even when it wasn't the active tab.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    const onSwMessage = (event: MessageEvent) => {
+      // TEMP debug aid — remove once realtime is confirmed stable.
+      console.log('[FCM] message from service worker', event.data);
+      if (event.data?.type === 'FCM_BACKGROUND_MESSAGE') onPushRef.current();
+    };
+    navigator.serviceWorker.addEventListener('message', onSwMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onSwMessage);
   }, []);
 }

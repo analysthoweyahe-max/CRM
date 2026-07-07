@@ -17,14 +17,17 @@ interface ApiEnvelope<T> {
 }
 
 /* Each role has its own notifications resource — confirmed: employee, hr,
-   admin, seo-leader/seo-member (share /v1/seo/notifications). manager is
-   still unconfirmed (falls back to hr's prefix as a placeholder) — verify
-   against real traffic before trusting it. */
+   admin, seo-leader/seo-member (share /v1/seo/notifications). manager (PM)
+   follows the same /v1/<role>/notifications convention every other PM
+   endpoint in this codebase uses (/v1/pm/projects, /v1/pm/tasks, etc.) —
+   not yet independently confirmed against a real Postman response, verify
+   it returns 200 for a PM login. It was previously a placeholder pointing
+   at /v1/hr/notifications, which a real PM account got a 403 from. */
 const ROLE_NOTIFICATION_PREFIX: Record<Role, string> = {
   employee:    '/v1/employee/notifications',
   hr:          '/v1/hr/notifications',
   admin:       '/v1/admin/notifications',
-  manager:     '/v1/hr/notifications', // TODO: unconfirmed — replace once verified
+  manager:     '/v1/pm/notifications',
   'seo-leader': '/v1/seo/notifications',
   'seo-member': '/v1/seo/notifications',
 };

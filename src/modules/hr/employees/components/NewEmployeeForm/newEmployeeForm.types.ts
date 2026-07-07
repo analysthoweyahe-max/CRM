@@ -128,7 +128,8 @@ export function makeAllDataSchema(ar: boolean) {
     managerId:  z.string().optional(),
     jobType:    z.string().min(1, ar ? 'نوع التوظيف مطلوب' : 'Job type is required'),
     salary:     z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
-                  .min(1, ar ? 'الراتب يجب أن يكون أكبر من صفر' : 'Salary must be > 0'),
+                  .min(1, ar ? 'الراتب يجب أن يكون أكبر من صفر' : 'Salary must be > 0')
+                  .optional(),
     currency:   z.string().min(1),
     startTime:  z.string().min(1),
     endTime:    z.string().min(1),

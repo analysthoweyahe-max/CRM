@@ -19,14 +19,14 @@ export function TablePagination({
   canPrev, canNext, onPrev, onNext, onPage, isAr = false,
 }: TablePaginationProps) {
   return (
-    <div className="flex items-center justify-between px-5 py-3.5
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-5 py-3.5
                     border-t border-gray-100 dark:border-gray-700">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 overflow-x-auto max-w-full">
         <button
           type="button"
           onClick={onPrev}
           disabled={!canPrev}
-          className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400
+          className="shrink-0 p-1.5 rounded-lg text-gray-500 dark:text-gray-400
                      hover:bg-gray-100 dark:hover:bg-gray-700
                      disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
@@ -38,7 +38,7 @@ export function TablePagination({
             key={i}
             type="button"
             onClick={() => onPage(i)}
-            className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+            className={`shrink-0 w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
               pageIndex === i
                 ? 'bg-[#A0CD39] text-gray-900'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -52,7 +52,7 @@ export function TablePagination({
           type="button"
           onClick={onNext}
           disabled={!canNext}
-          className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400
+          className="shrink-0 p-1.5 rounded-lg text-gray-500 dark:text-gray-400
                      hover:bg-gray-100 dark:hover:bg-gray-700
                      disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
@@ -60,7 +60,7 @@ export function TablePagination({
         </button>
       </div>
 
-      <p className="text-xs text-gray-400 dark:text-gray-500">
+      <p className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
         {isAr
           ? `عرض ${firstRow}–${lastRow} من ${totalRows}`
           : `Showing ${firstRow}–${lastRow} of ${totalRows}`}

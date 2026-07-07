@@ -5,7 +5,7 @@ export const authTranslations = {
     langToggle: 'English',
 
     branding: {
-      companyName: 'هواية',
+      companyName: 'هوية',
       systemName:  'نظام الموارد البشرية',
       headline:    'إدارة موظفيك بكفاءة وسهولة',
       description: 'منصة متكاملة لإدارة الموارد البشرية، الرواتب، الحضور والإجازات في مكان واحد.',
@@ -15,7 +15,7 @@ export const authTranslations = {
         'إدارة الإجازات والغيابات',
         'معالجة الرواتب والمكافآت',
       ],
-      copyright: '© 2026 هواية — جميع الحقوق محفوظة',
+      copyright: '© 2026 هوية — جميع الحقوق محفوظة',
     },
 
     login: {
@@ -67,7 +67,7 @@ export const authTranslations = {
     langToggle: 'العربية',
 
     branding: {
-      companyName: 'Howaya',
+      companyName: 'Howeyah',
       systemName:  'HR Management System',
       headline:    'Manage your team efficiently',
       description: 'An all-in-one HR platform for managing employees, payroll, attendance, and leaves.',
@@ -77,7 +77,7 @@ export const authTranslations = {
         'Leave & absence management',
         'Payroll & bonuses processing',
       ],
-      copyright: '© 2026 Howaya — All rights reserved',
+      copyright: '© 2026 Howeyah — All rights reserved',
     },
 
     login: {

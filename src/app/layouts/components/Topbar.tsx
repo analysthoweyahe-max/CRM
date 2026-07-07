@@ -156,7 +156,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
           </button>
 
           {open && (
-            <div className="absolute inset-e-0 top-full mt-2 w-56 rounded-xl bg-white dark:bg-gray-800
+            <div className="absolute inset-e-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-gray-800
                             shadow-lg border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
 
               <div className="flex items-center gap-3 px-4 py-3

@@ -112,3 +112,14 @@ export interface EmployeeProfileApiResponse {
     employee: ApiEmployee;
   };
 }
+
+export interface ChangePasswordPayload {
+  current_password:          string;
+  new_password:              string;
+  new_password_confirmation: string;
+}
+
+export interface ChangePasswordApiResponse {
+  status:  string;
+  message: string;
+}

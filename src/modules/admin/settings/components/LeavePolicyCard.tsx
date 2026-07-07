@@ -54,7 +54,7 @@ export function LeavePolicyCard({ isAr }: { isAr: boolean }) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField label={isAr ? 'رصيد الإجازة السنوية' : 'Annual Leave'}>
             <Input {...register('annual_leave', { valueAsNumber: true })} type="number" min={0} />
           </FormField>

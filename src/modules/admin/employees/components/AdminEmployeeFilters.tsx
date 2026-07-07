@@ -40,7 +40,7 @@ export function AdminEmployeeFilters({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="w-40">
+      <div className="w-full sm:w-40">
         <Combobox
           items={toItems(departmentOptions, isAr ? 'كل الأقسام' : 'All Departments')}
           value={department}
@@ -50,7 +50,7 @@ export function AdminEmployeeFilters({
         />
       </div>
 
-      <div className="w-40">
+      <div className="w-full sm:w-40">
         <Combobox
           items={roleItems}
           value={role}
@@ -60,7 +60,7 @@ export function AdminEmployeeFilters({
         />
       </div>
 
-      <div className="w-36">
+      <div className="w-full sm:w-36">
         <Combobox
           items={statusItems}
           value={status}
@@ -70,7 +70,7 @@ export function AdminEmployeeFilters({
         />
       </div>
 
-      <div className="relative flex-1 min-w-52">
+      <div className="relative w-full sm:flex-1 sm:min-w-52">
         <Search size={14} className="absolute inset-y-0 my-auto inset-s-3 text-gray-400 pointer-events-none" />
         <input
           type="text"

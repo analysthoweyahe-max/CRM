@@ -161,10 +161,12 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               )} />
             </FormField>
 
-            <FormField label={salaryLabel} required error={errors.salary?.message}>
+            <FormField label={salaryLabel} error={errors.salary?.message}>
               <div className="flex gap-2">
                 <div className="flex-1 min-w-0">
-                  <Input {...register('salary', { valueAsNumber: true })}
+                  <Input {...register('salary', {
+                      setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+                    })}
                     type="number" min="1" placeholder="10000"
                     hasError={!!errors.salary} endIcon={<Wallet size={15} />} />
                 </div>

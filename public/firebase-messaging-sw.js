@@ -24,13 +24,29 @@ const messaging = firebase.messaging();
 
 // Show notification when app is in background / closed
 messaging.onBackgroundMessage(payload => {
+  // TEMP debug aid — check DevTools → Application → Service Workers →
+  // click "inspect" next to this worker to see this log (it does NOT show
+  // in the regular page Console). Remove once realtime is confirmed stable.
+  console.log('[FCM SW] background message received', payload);
+
   const title = payload.notification?.title ?? 'Howaya HR';
   const body  = payload.notification?.body  ?? '';
 
-  self.registration.showNotification(title, {
-    body,
-    icon:  '/vite.svg',
-    badge: '/vite.svg',
-    data:  payload.data ?? {},
-  });
+  // Both steps are returned together (not fire-and-forget) so the browser
+  // doesn't kill the worker mid-flight after showNotification() resolves —
+  // that would let the OS toast show while silently dropping the postMessage
+  // below before it reaches any open tab.
+  return Promise.all([
+    self.registration.showNotification(title, {
+      body,
+      icon:  '/vite.svg',
+      badge: '/vite.svg',
+      data:  payload.data ?? {},
+    }),
+    // Tell any open dashboard tabs to refetch — they won't get this push via
+    // the page's own onMessage() since it only fires for the focused tab.
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      clients.forEach(client => client.postMessage({ type: 'FCM_BACKGROUND_MESSAGE', payload }));
+    }),
+  ]);
 });
