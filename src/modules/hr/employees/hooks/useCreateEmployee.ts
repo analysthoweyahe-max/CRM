@@ -31,8 +31,8 @@ export function useCreateEmployee() {
         });
       }
 
-      // 3. Salary — skip if already done
-      if (step < 3 && d.salary > 0) {
+      // 3. Salary — optional; skip if not provided or already done
+      if (step < 3 && d.salary && d.salary > 0) {
         await employeeApi.updateSalary(id, { salary: d.salary });
       }
 
