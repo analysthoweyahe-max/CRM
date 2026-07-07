@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Plus, Search, MessageSquare, X } from 'lucide-react';
+import { Plus, MessageSquare, X } from 'lucide-react';
+import { SearchInput } from '@/shared/components/form/SearchInput';
+import { matchesSearch } from '@/shared/utils/search.utils';
 import type { ApiConversation } from '../types/messages.types';
 
 interface Props {
@@ -41,7 +43,7 @@ export function ConversationList({
   const filtered = conversations.filter(conv => {
     if (!search) return true;
     const other = conv.participants.find(p => p.id !== currentUserId) ?? conv.participants[0];
-    return other?.name?.toLowerCase().includes(search.toLowerCase()) ?? false;
+    return matchesSearch([other?.name], search);
   });
 
   return (
@@ -77,21 +79,12 @@ export function ConversationList({
           </button>
         </div>
 
-        <div className="relative">
-          <Search size={13}
-            className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={isAr ? 'بحث في المحادثات...' : 'Search conversations...'}
-            className="w-full ps-8 pe-3 py-2 text-sm rounded-lg
-                       bg-gray-50 dark:bg-gray-800
-                       border border-gray-200 dark:border-gray-700
-                       text-gray-700 dark:text-gray-200
-                       placeholder:text-gray-400 dark:placeholder:text-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-[#A0CD39]/40"
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={isAr ? 'بحث في المحادثات...' : 'Search conversations...'}
+          isAr={isAr}
+        />
       </div>
 
       {/* List */}

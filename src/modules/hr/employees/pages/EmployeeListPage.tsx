@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus }        from 'lucide-react';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
 import { PageHeader }  from '@/shared/components/ui/PageHeader';
 import { Button }      from '@/shared/components/ui/Button';
+import { SearchInput } from '@/shared/components/form/SearchInput';
+import { matchesSearch } from '@/shared/utils/search.utils';
 import { TablePagination }      from '@/shared/components/tables/TablePagination';
 import { EmployeeCard }         from '../components/EmployeeCard';
 import { EmployeeListSkeleton } from '../components/EmployeeListSkeleton';
@@ -18,26 +20,32 @@ export function EmployeeListPage() {
   const navigate  = useNavigate();
 
   const [search, setSearch] = useState('');
-  const [page,   setPage]   = useState(1);       // 1-indexed (matches API)
+  const [page,   setPage]   = useState(1);       // 1-indexed
 
-  // Debounce via delayed update is omitted to keep it simple; search resets page on change
-  const { data, isLoading } = useEmployeeList({ page, per_page: PAGE_SIZE, search });
+  const { data: allEmployees = [], isLoading } = useEmployeeList();
 
-  const employees = [...(data?.data ?? [])].sort((a, b) => {
-    if (a.createdAt && b.createdAt) return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    return Number(b.id) - Number(a.id);
-  });
-  const total     = data?.total        ?? 0;
-  const lastPage  = data?.last_page    ?? 1;
+  const filtered = useMemo(() => {
+    const list = search.trim()
+      ? allEmployees.filter(e => matchesSearch([e.name, e.email, e.phone, e.employeeNumber], search))
+      : allEmployees;
+    return [...list].sort((a, b) => {
+      if (a.createdAt && b.createdAt) return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return Number(b.id) - Number(a.id);
+    });
+  }, [allEmployees, search]);
+
+  const total     = filtered.length;
+  const lastPage  = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const firstRow  = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const lastRow   = Math.min(page * PAGE_SIZE, total);
+  const employees = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function handleSearch(v: string) {
     setSearch(v);
     setPage(1);
   }
 
-  if (isLoading && !data) return <EmployeeListSkeleton />;
+  if (isLoading) return <EmployeeListSkeleton />;
 
   return (
     <div className="space-y-5">
@@ -57,16 +65,12 @@ export function EmployeeListPage() {
 
       {/* Search */}
       <div className="flex gap-3">
-        <input
-          type="search"
+        <SearchInput
           value={search}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={handleSearch}
           placeholder={isAr ? 'بحث عن موظف...' : 'Search employees...'}
-          className="flex-1 max-w-sm rounded-xl border border-gray-200 dark:border-gray-700
-                     bg-white dark:bg-gray-800 px-4 py-2.5 text-sm
-                     text-gray-800 dark:text-gray-100 placeholder:text-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-[#A0CD39]"
-          dir={isAr ? 'rtl' : 'ltr'}
+          isAr={isAr}
+          className="flex-1 max-w-sm"
         />
       </div>
 

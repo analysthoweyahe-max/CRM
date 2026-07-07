@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Search } from 'lucide-react';
+import { X } from 'lucide-react';
+import { SearchInput } from '@/shared/components/form/SearchInput';
 import { useSearchEmployees } from '../hooks/useMessages';
 
 interface Props {
@@ -44,22 +45,13 @@ export function NewConversationModal({ isAr, loading, onSelect, onClose }: Props
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-2 text-end">
             {isAr ? 'ابحث عن موظف لبدء محادثة' : 'Search for an employee to start a conversation'}
           </p>
-          <div className="relative">
-            <Search size={13}
-              className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              autoFocus
-              placeholder={isAr ? 'ابحث باسم الموظف...' : 'Search by name...'}
-              className="w-full ps-8 pe-3 py-2 text-sm rounded-lg
-                         bg-gray-50 dark:bg-gray-700/60
-                         border border-gray-200 dark:border-gray-600
-                         text-gray-700 dark:text-gray-200
-                         placeholder:text-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-[#A0CD39]/40"
-            />
-          </div>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            autoFocus
+            placeholder={isAr ? 'ابحث باسم الموظف...' : 'Search by name...'}
+            isAr={isAr}
+          />
         </div>
 
         {/* Employee list */}

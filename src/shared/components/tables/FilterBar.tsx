@@ -1,5 +1,5 @@
-import { Search } from 'lucide-react';
 import { Combobox, type ComboboxItem } from '@/shared/components/form/Combobox';
+import { SearchInput } from '@/shared/components/form/SearchInput';
 
 interface SearchConfig {
   value:       string;
@@ -29,20 +29,12 @@ export function FilterBar({ search, filters, className = '' }: FilterBarProps) {
     <div className={`flex flex-wrap items-center gap-3 px-5 py-4
                      border-b border-gray-100 dark:border-gray-700 ${className}`}>
       {search && (
-        <div className="relative flex-1 min-w-45">
-          <input
-            type="text"
-            value={search.value}
-            onChange={(e) => search.onChange(e.target.value)}
-            placeholder={search.placeholder}
-            className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-600
-                       bg-gray-50 dark:bg-gray-700/50 ps-4 pe-9
-                       text-sm text-gray-800 dark:text-gray-200
-                       outline-none focus:border-brand-400 focus:ring-2
-                       focus:ring-brand-400/20 transition placeholder:text-gray-400 dark:placeholder:text-gray-500"
-          />
-          <Search size={14} className="absolute inset-y-0 my-auto inset-e-3 text-gray-400 pointer-events-none" />
-        </div>
+        <SearchInput
+          value={search.value}
+          onChange={search.onChange}
+          placeholder={search.placeholder}
+          className="flex-1 min-w-45"
+        />
       )}
 
       {filters?.map((f) => {

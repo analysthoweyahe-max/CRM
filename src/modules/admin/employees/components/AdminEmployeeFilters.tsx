@@ -1,5 +1,5 @@
-import { Search } from 'lucide-react';
 import { Combobox } from '@/shared/components/form/Combobox';
+import { SearchInput } from '@/shared/components/form/SearchInput';
 import { getRoleLabel } from '../types/adminEmployee.types';
 
 interface Props {
@@ -70,19 +70,13 @@ export function AdminEmployeeFilters({
         />
       </div>
 
-      <div className="relative w-full sm:flex-1 sm:min-w-52">
-        <Search size={14} className="absolute inset-y-0 my-auto inset-s-3 text-gray-400 pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => onSearch(e.target.value)}
-          placeholder={isAr ? 'ابحث عن موظف بالاسم أو البريد الإلكتروني...' : 'Search by name or email...'}
-          className="w-full h-10 ps-9 pe-4 rounded-xl border border-gray-200 dark:border-gray-600
-                     bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200
-                     placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A0CD39]/30
-                     focus:border-[#A0CD39] transition text-end"
-        />
-      </div>
+      <SearchInput
+        value={search}
+        onChange={onSearch}
+        placeholder={isAr ? 'ابحث عن موظف بالاسم أو البريد الإلكتروني...' : 'Search by name or email...'}
+        isAr={isAr}
+        className="w-full sm:flex-1 sm:min-w-52"
+      />
     </div>
   );
 }

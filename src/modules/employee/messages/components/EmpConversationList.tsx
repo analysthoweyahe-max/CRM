@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Search, MessageSquare } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
+import { SearchInput } from '@/shared/components/form/SearchInput';
+import { matchesSearch } from '@/shared/utils/search.utils';
 import type { EmpConversation } from '../types/messages.types';
 
 const AVATAR_COLORS = [
@@ -36,7 +38,7 @@ export function EmpConversationList({ conversations, activeId, loading, isAr, on
   const filtered = conversations.filter(c => {
     if (!search) return true;
     const name = c.name ?? c.participants?.[0]?.name ?? '';
-    return name.toLowerCase().includes(search.toLowerCase());
+    return matchesSearch([name], search);
   });
 
   return (
@@ -44,20 +46,12 @@ export function EmpConversationList({ conversations, activeId, loading, isAr, on
 
       {/* Search */}
       <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-700/60">
-        <div className="relative">
-          <Search size={13} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={isAr ? 'بحث في المحادثات...' : 'Search...'}
-            className="w-full ps-8 pe-3 py-2 text-xs rounded-xl
-                       bg-gray-50 dark:bg-gray-800
-                       border border-gray-100 dark:border-gray-700
-                       text-gray-700 dark:text-gray-200
-                       placeholder:text-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-[#A0CD39]/40"
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={isAr ? 'بحث في المحادثات...' : 'Search...'}
+          isAr={isAr}
+        />
       </div>
 
       {/* List */}

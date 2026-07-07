@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeApi } from '@/modules/hr/employees/api/employee.api';
+import { matchesSearch } from '@/shared/utils/search.utils';
 import { toAdminEmployee } from '../types/adminEmployee.types';
 
 const PAGE_SIZE = 7;
@@ -24,7 +25,7 @@ export function useAdminEmployees() {
   );
 
   const filtered = useMemo(() => employees.filter(e => {
-    if (search && !`${e.name} ${e.email}`.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !matchesSearch([e.name, e.email], search)) return false;
     if (department && e.department !== department) return false;
     if (role && !e.roles.includes(role)) return false;
     if (status && e.status !== status) return false;

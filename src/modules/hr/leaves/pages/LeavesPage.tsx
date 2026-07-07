@@ -1,6 +1,6 @@
 import { useLang }     from '@/app/providers/LanguageProvider';
-import { Search }      from 'lucide-react';
 import { Card }        from '@/shared/components/ui/Card';
+import { SearchInput } from '@/shared/components/form/SearchInput';
 import { TablePagination } from '@/shared/components/tables/TablePagination';
 import { LeavesSkeleton }  from '../components/LeavesSkeleton';
 import { LeaveTableRow }   from '../components/LeaveTableRow';
@@ -54,16 +54,12 @@ export function LeavesPage() {
 
         {/* Search */}
         <div className="p-4">
-          <div className="relative">
-            <Search size={15} className="absolute inset-y-0 my-auto inset-e-3 text-gray-400" />
-            <input value={search} onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder={isAr ? 'ابحث باسم الموظف أو القسم...' : 'Search by name or department...'}
-              className="w-full rounded-xl border border-gray-200 dark:border-gray-600
-                         bg-gray-50 dark:bg-gray-700/50 pe-9 ps-4 py-2.5 text-sm
-                         text-gray-800 dark:text-gray-200 placeholder:text-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-[#A0CD39]/40 focus:border-[#A0CD39]
-                         transition-colors" />
-          </div>
+          <SearchInput
+            value={search}
+            onChange={handleSearchChange}
+            placeholder={isAr ? 'ابحث باسم الموظف أو القسم...' : 'Search by name or department...'}
+            isAr={isAr}
+          />
         </div>
 
         {/* Table */}
