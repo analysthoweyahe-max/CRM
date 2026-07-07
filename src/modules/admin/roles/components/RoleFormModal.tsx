@@ -10,23 +10,19 @@ interface Props {
   open:      boolean;
   onClose:   () => void;
   onSubmit:  (input: RoleFormInput) => void;
-  initial?:  RoleFormInput | null;
   isLoading: boolean;
   isAr:      boolean;
 }
 
-const EMPTY: RoleFormInput = { name: '', permissions: [] };
-
-export function RoleFormModal({ open, onClose, onSubmit, initial, isLoading, isAr }: Props) {
+export function RoleFormModal({ open, onClose, onSubmit, isLoading, isAr }: Props) {
   const [name,        setName]        = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
-    const seed = initial ?? EMPTY;
-    setName(seed.name);
-    setPermissions(seed.permissions);
-  }, [open, initial]);
+    setName('');
+    setPermissions([]);
+  }, [open]);
 
   function toggle(slug: string) {
     setPermissions((prev) => prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]);
@@ -43,7 +39,7 @@ export function RoleFormModal({ open, onClose, onSubmit, initial, isLoading, isA
     <Modal
       open={open}
       onClose={onClose}
-      title={initial ? (isAr ? 'تعديل الدور' : 'Edit Role') : (isAr ? 'إنشاء دور جديد' : 'Create New Role')}
+      title={isAr ? 'إنشاء دور جديد' : 'Create New Role'}
       size="lg"
       footer={
         <div className="flex items-center gap-3 justify-start flex-row-reverse">

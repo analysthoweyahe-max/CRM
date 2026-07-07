@@ -1,5 +1,7 @@
 import { Plus, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useLang }    from '@/app/providers/LanguageProvider';
+import { ROUTES }     from '@/app/router/routes';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button }     from '@/shared/components/ui/Button';
 import { RoleCard }              from '../components/RoleCard';
@@ -12,11 +14,12 @@ import { useAdminRoles }         from '../hooks/useAdminRoles';
 export function AdminRolesPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
+  const navigate = useNavigate();
 
   const {
     roles, isLoading, isLocked,
-    showModal, editingInput, creating, updating,
-    openCreate, openEdit, closeModal, submitRole,
+    showModal, creating,
+    openCreate, closeModal, submitRole,
     pendingDelete, askDelete, cancelDelete, confirmDelete, deleting,
     showManagerModal, creatingManager,
     openManagerModal, closeManagerModal, submitManager,
@@ -55,7 +58,7 @@ export function AdminRolesPage() {
                 role={role}
                 isAr={isAr}
                 isLocked={isLocked(role)}
-                onEdit={() => openEdit(role)}
+                onEdit={() => navigate(ROUTES.ADMIN.ROLES_EDIT(String(role.id)))}
                 onDelete={() => askDelete(role)}
               />
             ))}
@@ -74,8 +77,7 @@ export function AdminRolesPage() {
         open={showModal}
         onClose={closeModal}
         onSubmit={submitRole}
-        initial={editingInput}
-        isLoading={creating || updating}
+        isLoading={creating}
         isAr={isAr}
       />
 

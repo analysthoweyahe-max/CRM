@@ -13,6 +13,7 @@ export const ROUTES = {
     DEPARTMENTS:     '/admin-departments',
     JOB_TITLES:      '/admin-job-titles',
     ROLES:           '/admin-roles',
+    ROLES_EDIT:      (id = ':id') => `/admin-roles/${id}/edit`,
     PERMISSIONS:     '/admin-permissions',
     SEO_TASK_STATUSES: '/admin-seo-task-statuses',
     SETTINGS:        '/admin-org-settings',
