@@ -3,8 +3,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { employeeApi } from '../../api/employee.api';
-import { useDepartments, useJobTitles, useEmploymentTypes } from '../../hooks/useLookups';
-import { MANAGERS } from '../NewEmployeeForm/newEmployeeForm.types';
+import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../../hooks/useLookups';
 import type { EmploymentType } from '../../types/employee.types';
 import type { FormValues, EditEmployeeModalProps } from './EditEmployeeModal.types';
 
@@ -49,7 +48,7 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
   const deptItems    = departments.map((d) => ({ id: String(d.id), label: isAr ? (d.nameAr || d.name) : d.name }));
   const jTitleItems  = jobTitles.map((j)   => ({ id: String(j.id), label: isAr ? (j.nameAr || j.name) : j.name }));
   const empTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
-  const managerItems = MANAGERS.map((m)    => ({ id: m.id, label: m.label }));
+  const { items: managerItems } = useManagerOptions(isAr, emp.id);
 
   const cbProps = isAr
     ? { searchPlaceholder: 'ابحث...', noResultsText: 'لا نتائج' }

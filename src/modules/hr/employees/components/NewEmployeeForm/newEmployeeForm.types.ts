@@ -14,45 +14,6 @@ export const CURRENCIES = [
   { id: 'KWD', label: 'KWD', detail: 'دينار كويتي'   },
 ];
 
-/* ─── Combobox data ──────────────────────────────── */
-export const DEPARTMENTS = [
-  { id: 'hr',        label: 'الموارد البشرية' },
-  { id: 'ops',       label: 'العمليات'        },
-  { id: 'cs',        label: 'خدمة العملاء'    },
-  { id: 'sales',     label: 'المبيعات'        },
-  { id: 'it',        label: 'تقنية المعلومات' },
-  { id: 'finance',   label: 'المحاسبة'        },
-  { id: 'marketing', label: 'التسويق'         },
-  { id: 'design',    label: 'التصميم'         },
-];
-
-export const JOB_TITLES = [
-  { id: 'hr-manager',     label: 'مدير موارد بشرية' },
-  { id: 'analyst',        label: 'محلل أعمال'        },
-  { id: 'support-spec',   label: 'متخصص دعم'         },
-  { id: 'sales-manager',  label: 'مدير مبيعات'       },
-  { id: 'hr-spec',        label: 'أخصائي تطوير'      },
-  { id: 'marketing-spec', label: 'أخصائي تسويق'      },
-  { id: 'sales-rep',      label: 'مندوب مبيعات'      },
-  { id: 'frontend-dev',   label: 'مطور واجهات'       },
-  { id: 'accountant',     label: 'محاسب'             },
-  { id: 'backend-dev',    label: 'مطور خلفية'        },
-  { id: 'marketing-mgr',  label: 'مدير تسويق'        },
-  { id: 'designer',       label: 'مصمم جرافيك'       },
-  { id: 'ops-supervisor', label: 'مشرف عمليات'       },
-  { id: 'regional-mgr',   label: 'مدير إقليمي'       },
-  { id: 'gm',             label: 'مدير عام'           },
-];
-
-export const MANAGERS = [
-  { id: 'none',    label: 'بدون مدير مباشر'                        },
-  { id: 'EMP-001', label: 'حسن الخطيب',   detail: 'الموارد البشرية' },
-  { id: 'EMP-004', label: 'رنا صبري',     detail: 'المبيعات'        },
-  { id: 'EMP-010', label: 'ليلى منصور',   detail: 'التسويق'         },
-  { id: 'EMP-013', label: 'طارق فريد',    detail: 'المبيعات'        },
-  { id: 'EMP-014', label: 'منى الشريف',   detail: 'الموارد البشرية' },
-];
-
 /* ─── Job types ──────────────────────────────────────────────────────────
    The set of employment types is now fetched live from
    GET /v1/employees/lookups/employment-types (value/label pairs, already

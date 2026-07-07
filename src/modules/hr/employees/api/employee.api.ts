@@ -42,6 +42,14 @@ export const employeeApi = {
     return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/submit`, {});
   },
 
+  remove(id: string) {
+    return http.delete<{ status: string; message: string }>(`/v1/employees/${id}`);
+  },
+
+  bulkRemove(ids: string[]) {
+    return http.post<{ status: string; message: string }>('/v1/employees/bulk-delete', { ids });
+  },
+
   lookupDepartments() {
     return http.get<LookupListResponse>('/v1/employees/lookups/departments');
   },

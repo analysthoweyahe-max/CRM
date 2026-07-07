@@ -9,10 +9,10 @@ import { Combobox }  from '@/shared/components/form/Combobox';
 import { NavButtons } from './StepWizard';
 import {
   makeAllDataSchema,
-  MANAGERS, CURRENCIES,
+  CURRENCIES,
   type AllDataValues,
 } from './newEmployeeForm.types';
-import { useDepartments, useJobTitles, useEmploymentTypes } from '../../hooks/useLookups';
+import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../../hooks/useLookups';
 
 interface Step1Props {
   isAr:           boolean;
@@ -43,6 +43,7 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
   const { data: departments = [], isLoading: deptsLoading }   = useDepartments();
   const { data: jobTitles   = [], isLoading: titlesLoading }  = useJobTitles(selectedDept || undefined);
   const { data: employmentTypes = [], isLoading: typesLoading } = useEmploymentTypes();
+  const { items: managerItems, isLoading: managersLoading } = useManagerOptions(isAr);
 
   const deptItems  = departments.map((d) => ({
     id:    String(d.id),
@@ -133,8 +134,8 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
 
             <FormField label={isAr ? 'المدير المباشر (اختياري)' : 'Direct Manager (optional)'}>
               <Controller name="managerId" control={control} render={({ field }) => (
-                <Combobox items={MANAGERS} value={field.value ?? 'none'} onChange={field.onChange}
-                  placeholder={isAr ? 'بدون مدير مباشر' : 'No direct manager'}
+                <Combobox items={managerItems} value={field.value ?? 'none'} onChange={field.onChange}
+                  placeholder={managersLoading ? (isAr ? 'جاري التحميل...' : 'Loading...') : (isAr ? 'بدون مدير مباشر' : 'No direct manager')}
                   searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
                   noResultsText={isAr ? 'لا نتائج' : 'No results'} />
               )} />

@@ -2,11 +2,8 @@ import { useForm } from 'react-hook-form';
 import { Mail } from 'lucide-react';
 import { Card }      from '@/shared/components/ui/Card';
 import { NavButtons } from './StepWizard';
-import {
-  DEPARTMENTS, JOB_TITLES, MANAGERS,
-  type AllFormData,
-} from './newEmployeeForm.types';
-import { useEmploymentTypes } from '../../hooks/useLookups';
+import type { AllFormData } from './newEmployeeForm.types';
+import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../../hooks/useLookups';
 
 interface Step2Props {
   isAr:     boolean;
@@ -31,11 +28,17 @@ export function Step2Review({ isAr, isRTL, formData, onBack, onSubmit }: Step2Pr
 
   const s1 = formData.step1;
 
-  const deptLabel    = DEPARTMENTS.find((d) => d.id === s1?.department)?.label ?? s1?.department ?? '—';
-  const titleLabel   = JOB_TITLES.find((t) => t.id === s1?.jobTitle)?.label    ?? s1?.jobTitle   ?? '—';
+  const { data: departments = [] } = useDepartments();
+  const { data: jobTitles   = [] } = useJobTitles(s1?.department || undefined);
+  const { items: managerItems }    = useManagerOptions(isAr);
+
+  const deptLabel    = departments.find((d) => String(d.id) === s1?.department)
+    ?.[isAr ? 'nameAr' : 'name'] || s1?.department || '—';
+  const titleLabel   = jobTitles.find((t) => String(t.id) === s1?.jobTitle)
+    ?.[isAr ? 'nameAr' : 'name'] || s1?.jobTitle || '—';
   const managerLabel = !s1?.managerId || s1.managerId === 'none'
     ? (isAr ? 'بدون' : 'None')
-    : (MANAGERS.find((m) => m.id === s1.managerId)?.label ?? '—');
+    : (managerItems.find((m) => m.id === s1.managerId)?.label ?? '—');
   const jobTypeLabel = employmentTypes.find((t) => t.value === s1?.jobType)?.label ?? s1?.jobType ?? '—';
   const salaryFmt    = s1?.salary ? `${Number(s1.salary).toLocaleString()} ${s1.currency ?? 'EGP'}` : '—';
   const schedule     = s1?.startTime && s1?.endTime ? `${s1.startTime} - ${s1.endTime}` : '—';

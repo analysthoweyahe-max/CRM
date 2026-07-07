@@ -7,14 +7,16 @@ import { Button }  from '@/shared/components/ui/Button';
 import { Modal }   from '@/shared/components/ui/Modal';
 
 interface EmployeeCardProps {
-  emp:       ApiEmployee;
-  isAr:      boolean;
-  onView:    (id: string) => void;
-  onEdit:    (id: string) => void;
-  onDelete?: (id: string) => void;
+  emp:            ApiEmployee;
+  isAr:           boolean;
+  onView:         (id: string) => void;
+  onEdit:         (id: string) => void;
+  onDelete?:      (id: string) => void;
+  selected?:      boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
-export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete }: EmployeeCardProps) {
+export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, onToggleSelect }: EmployeeCardProps) {
   const st   = STATUS_STYLES[emp.status] ?? STATUS_STYLES.pending;
   const [showDelete, setShowDelete] = useState(false);
 
@@ -29,11 +31,25 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete }: EmployeeCa
   return (
     <>
       <div
-        className="rounded-2xl bg-white dark:bg-gray-800 flex flex-col
-                   border border-[#F1F5F9] dark:border-gray-700
-                   transition-all duration-200 ease-out
-                   hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-lg"
+        className={`rounded-2xl bg-white dark:bg-gray-800 flex flex-col
+                   border transition-all duration-200 ease-out
+                   hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-lg
+                   ${selected ? 'border-[#A0CD39] ring-2 ring-[#A0CD39]/20' : 'border-[#F1F5F9] dark:border-gray-700'}`}
       >
+        {/* ── Selection checkbox (kept outside the clickable body — an
+             <input> nested inside a <button> is invalid HTML) ────────── */}
+        {onToggleSelect && (
+          <div className="flex items-center px-4 pt-4">
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={() => onToggleSelect(emp.id)}
+              aria-label={isAr ? 'تحديد الموظف' : 'Select employee'}
+              className="w-4 h-4 shrink-0 rounded border-gray-300 dark:border-gray-600 text-[#A0CD39] focus:ring-[#A0CD39]/40"
+            />
+          </div>
+        )}
+
         {/* ── Clickable body ────────────────────────────── */}
         <button
           type="button"
@@ -41,7 +57,7 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete }: EmployeeCa
           className="flex flex-col text-start flex-1 cursor-pointer"
         >
           {/* Header */}
-          <div className="flex items-center justify-between gap-3 p-4">
+          <div className={`flex items-center justify-between gap-3 p-4 ${onToggleSelect ? 'pt-2' : ''}`}>
             <div className="flex items-center gap-2.5 min-w-0">
               <div
                 className={`w-10 h-10 rounded-full ${getAvatarColor(emp.name)}
@@ -106,14 +122,16 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete }: EmployeeCa
             <SquarePen size={14} />
           </Button>
 
-          <Button
-            variant="icon-danger"
-            type="button"
-            onClick={() => setShowDelete(true)}
-            aria-label={isAr ? 'حذف' : 'Delete'}
-          >
-            <XCircle size={15} />
-          </Button>
+          {onDelete && (
+            <Button
+              variant="icon-danger"
+              type="button"
+              onClick={() => setShowDelete(true)}
+              aria-label={isAr ? 'حذف' : 'Delete'}
+            >
+              <XCircle size={15} />
+            </Button>
+          )}
         </div>
       </div>
 

@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { Download, Plus } from 'lucide-react';
+import { Download, Plus, Trash2 } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES }  from '@/app/router/routes';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button }     from '@/shared/components/ui/Button';
-import { AdminEmployeeFilters } from '../components/AdminEmployeeFilters';
-import { AdminEmployeeTable }   from '../components/AdminEmployeeTable';
-import { useAdminEmployees }    from '../hooks/useAdminEmployees';
+import { AdminEmployeeFilters }     from '../components/AdminEmployeeFilters';
+import { AdminEmployeeTable }       from '../components/AdminEmployeeTable';
+import { DeleteEmployeeModal }      from '../components/DeleteEmployeeModal';
+import { BulkDeleteEmployeesModal } from '../components/BulkDeleteEmployeesModal';
+import { useAdminEmployees }        from '../hooks/useAdminEmployees';
 
 export function AdminEmployeesPage() {
   const { lang } = useLang();
@@ -18,7 +20,10 @@ export function AdminEmployeesPage() {
     search, department, role, status,
     setSearch, setDepartment, setRole, setStatus,
     departmentOptions, roleOptions,
-  } = useAdminEmployees();
+    selected, toggleOne, toggleAllOnPage, selectedCount, clearSelection,
+    pendingDelete, askDelete, cancelDelete, confirmDelete, deleting,
+    showBulkDelete, askBulkDelete, cancelBulkDelete, confirmBulkDelete, bulkDeleting,
+  } = useAdminEmployees(isAr);
 
   function handleExport() {
     const headers = isAr
@@ -72,12 +77,50 @@ export function AdminEmployeesPage() {
         onSearch={setSearch} onDepartment={setDepartment} onRole={setRole} onStatus={setStatus}
       />
 
+      {selectedCount > 0 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl
+                        bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/40">
+          <p className="text-sm text-red-700 dark:text-red-400">
+            {isAr ? `${selectedCount} موظف محدد` : `${selectedCount} employee(s) selected`}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={clearSelection}>
+              {isAr ? 'إلغاء التحديد' : 'Clear selection'}
+            </Button>
+            <Button variant="danger" startIcon={<Trash2 size={14} />} onClick={askBulkDelete}>
+              {isAr ? 'حذف المحدد' : 'Delete Selected'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <AdminEmployeeTable
         employees={employees}
         isAr={isAr}
         page={page} pageCount={pageCount} total={total} pageSize={pageSize}
         onPage={setPage}
         onRowClick={id => navigate(ROUTES.ADMIN.EMPLOYEE_DETAIL(id))}
+        selected={selected}
+        onToggleOne={toggleOne}
+        onToggleAll={toggleAllOnPage}
+        onDelete={askDelete}
+      />
+
+      <DeleteEmployeeModal
+        employee={pendingDelete}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        isLoading={deleting}
+        isAr={isAr}
+      />
+
+      <BulkDeleteEmployeesModal
+        open={showBulkDelete}
+        count={selectedCount}
+        onClose={cancelBulkDelete}
+        onConfirm={confirmBulkDelete}
+        isLoading={bulkDeleting}
+        isAr={isAr}
       />
 
     </div>

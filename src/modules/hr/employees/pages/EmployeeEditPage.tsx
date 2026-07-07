@@ -11,10 +11,9 @@ import { Combobox }      from '@/shared/components/form/Combobox';
 import { Input }         from '@/shared/components/ui/Input';
 import { Button }        from '@/shared/components/ui/Button';
 import { useEmployee }   from '../hooks/useEmployee';
-import { useDepartments, useJobTitles, useEmploymentTypes } from '../hooks/useLookups';
+import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../hooks/useLookups';
 import { employeeApi }   from '../api/employee.api';
 import type { EmploymentType, EmployeeStatus } from '../types/employee.types';
-import { MANAGERS } from '../components/NewEmployeeForm/newEmployeeForm.types';
 
 /* ── form values ──────────────────────────────────────── */
 
@@ -67,7 +66,7 @@ export function EmployeeEditPage() {
   const deptItems    = departments.map((d) => ({ id: String(d.id), label: isAr ? (d.nameAr || d.name) : d.name }));
   const jTitleItems  = jobTitles.map((j)   => ({ id: String(j.id), label: isAr ? (j.nameAr || j.name) : j.name }));
   const empTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
-  const managerItems = MANAGERS.map((m)    => ({ id: m.id, label: m.label }));
+  const { items: managerItems } = useManagerOptions(isAr, id);
 
   const statusItems = [
     { id: 'active',   label: isAr ? 'نشط'    : 'Active'   },
