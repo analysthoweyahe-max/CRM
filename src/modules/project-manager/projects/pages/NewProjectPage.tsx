@@ -24,6 +24,7 @@ export function NewProjectPage() {
   const [status,      setStatus]      = useState('');
   const [startDate,   setDate]        = useState('');
   const [deadline,    setDeadline]    = useState('');
+  const [githubUrl,   setGithubUrl]   = useState('');
   const [saved,       setSaved]       = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
 
@@ -38,13 +39,14 @@ export function NewProjectPage() {
     setSubmitting(true);
     try {
       await pmProjectsApi.create({
-        name:         name.trim(),
-        description:  description.trim(),
-        project_type: projectType,
+        name:          name.trim(),
+        description:   description.trim(),
+        project_type:  projectType,
         status,
-        is_draft:     asDraft,
-        start_date:   startDate,
+        is_draft:      asDraft,
+        start_date:    startDate,
         deadline,
+        workspace_url: githubUrl.trim() || undefined,
       });
       setSaved(true);
       setTimeout(() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD), 1500);
@@ -76,11 +78,13 @@ export function NewProjectPage() {
             name={name}        description={description}
             projectType={projectType} status={status}
             startDate={startDate}     deadline={deadline}
+            githubUrl={githubUrl}
             typeItems={types}  statusItems={statuses}
             isAr={isAr}
             setName={setName}  setDesc={setDesc}
             setType={setType}  setStatus={setStatus}
             setDate={setDate}  setDeadline={setDeadline}
+            setGithubUrl={setGithubUrl}
           />
         </Card>
       </div>

@@ -41,6 +41,7 @@ export interface PmProjectListItem {
   startDate:        string;
   deadline:         string;
   teamAssignedAt:   string | null;
+  workspaceUrl?:    string | null;
   createdBy:        PmProjectCreator;
   createdAt:        string;
   updatedAt:        string;
@@ -106,13 +107,14 @@ export interface PmLookupApiResponse {
 }
 
 export interface PmProjectPayload {
-  name:         string;
-  description:  string;
-  project_type: string;
-  status:       string;
-  is_draft:     boolean;
-  start_date:   string;
-  deadline:     string;
+  name:          string;
+  description:   string;
+  project_type:  string;
+  status:        string;
+  is_draft:      boolean;
+  start_date:    string;
+  deadline:      string;
+  workspace_url?: string;
 }
 
 /* ── Per-project team management (available / members / add / remove) ──── */

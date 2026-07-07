@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { GitBranch }   from 'lucide-react';
 import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
 import { ROUTES }      from '@/app/router/routes';
@@ -42,9 +43,23 @@ export function ProjectCard({ project, isAr }: Props) {
 
       {/* Title + category */}
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-snug">
-          {project.name}
-        </h3>
+        <div className="flex items-center gap-2 min-w-0">
+          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-snug">
+            {project.name}
+          </h3>
+          {project.workspaceUrl && (
+            <a
+              href={project.workspaceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={isAr ? 'رابط GitHub' : 'GitHub link'}
+              className="shrink-0 text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+            >
+              <GitBranch size={16} />
+            </a>
+          )}
+        </div>
         <span className="shrink-0 text-xs px-2.5 py-1 rounded-full border
                          border-gray-200 dark:border-gray-600
                          text-gray-500 dark:text-gray-400 whitespace-nowrap">

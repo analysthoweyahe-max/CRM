@@ -17,6 +17,7 @@ const ROLE_LABEL: Record<string, { ar: string; en: string }> = {
   'project-manager': { ar: 'مدير مشاريع',         en: 'Project Manager'   },
   'seo-employee':    { ar: 'موظف SEO',            en: 'SEO Employee'      },
   'seo-leader':      { ar: 'قائد SEO',             en: 'SEO Leader'        },
+  'seo-manager':     { ar: 'مدير SEO',            en: 'SEO Manager'       },
   admin:             { ar: 'مدير عام',            en: 'Admin'             },
 };
 

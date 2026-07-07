@@ -1,4 +1,4 @@
-import { Plus, UserPlus } from 'lucide-react';
+import { Plus, UserPlus, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLang }    from '@/app/providers/LanguageProvider';
 import { ROUTES }     from '@/app/router/routes';
@@ -65,9 +65,18 @@ export function AdminRolesPage() {
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">
-              {isAr ? 'مصفوفة الصلاحيات' : 'Permissions Matrix'}
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                {isAr ? 'الصلاحيات' : 'Permissions'}
+              </h2>
+              <Button
+                variant="secondary"
+                startIcon={<Pencil size={14} />}
+                onClick={() => navigate(ROUTES.ADMIN.PERMISSIONS)}
+              >
+                {isAr ? 'عرض وتعديل الصلاحيات' : 'View & Edit Permissions'}
+              </Button>
+            </div>
             <PermissionMatrixTable roles={roles} isAr={isAr} />
           </div>
         </>

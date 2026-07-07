@@ -18,7 +18,7 @@ export function useAdminEmployeeDetail(isAr: boolean) {
   const employee = data ? toAdminEmployeeDetail(data) : undefined;
 
   function resetPassword() {
-    toast.success(isAr ? 'تم إرسال رابط إعادة تعيين كلمة المرور' : 'Password reset link sent');
+    toast.success(isAr ? 'تم إرسال رابط تعيين كلمة المرور' : 'Password setup link sent');
   }
 
   return {

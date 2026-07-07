@@ -26,7 +26,7 @@ export function EmployeeDetailHeader({ employee, isAr, onEdit, onResetPassword }
           {isAr ? 'تعديل الموظف' : 'Edit Employee'}
         </Button>
         <Button variant="ghost" startIcon={<RotateCcw size={14} />} onClick={onResetPassword}>
-          {isAr ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+          {isAr ? 'إرسال رابط تعيين كلمة المرور' : 'Send Password Setup Link'}
         </Button>
       </div>
 

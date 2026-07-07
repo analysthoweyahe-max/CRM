@@ -23,6 +23,7 @@ export interface ProjectFormFieldsProps {
   status:       string;
   startDate:    string;
   deadline:     string;
+  githubUrl:    string;
   typeItems:    PmLookupItem[];
   statusItems:  PmLookupItem[];
   isAr:         boolean;
@@ -32,11 +33,12 @@ export interface ProjectFormFieldsProps {
   setStatus:    (v: string) => void;
   setDate:      (v: string) => void;
   setDeadline:  (v: string) => void;
+  setGithubUrl: (v: string) => void;
 }
 
 export function ProjectFormFields({
-  name, description, projectType, status, startDate, deadline, typeItems, statusItems, isAr,
-  setName, setDesc, setType, setStatus, setDate, setDeadline,
+  name, description, projectType, status, startDate, deadline, githubUrl, typeItems, statusItems, isAr,
+  setName, setDesc, setType, setStatus, setDate, setDeadline, setGithubUrl,
 }: ProjectFormFieldsProps) {
   return (
     <div className="space-y-5">
@@ -102,6 +104,21 @@ export function ProjectFormFields({
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
         </div>
+      </div>
+
+      {/* GitHub link */}
+      <div>
+        <label className={LABEL}>
+          {isAr ? 'رابط GitHub' : 'GitHub Link'}
+        </label>
+        <input
+          type="url"
+          value={githubUrl}
+          onChange={e => setGithubUrl(e.target.value)}
+          placeholder="https://github.com/org/repo"
+          dir="ltr"
+          className={INPUT}
+        />
       </div>
 
       {/* Start date + Deadline */}
