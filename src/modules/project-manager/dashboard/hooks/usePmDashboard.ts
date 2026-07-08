@@ -54,7 +54,7 @@ function toProjectVM(p: PmDashboardProject): PmProjectVM {
     tasksTotal:       p.tasksTotal,
     progressPercent:  p.progressPercent,
     teamMembersCount: p.teamMembersCount,
-    githubLink:       p.githubLink ?? p.workspaceUrl ?? null,
+    githubLink:       p.githubLink ?? null,
     team: p.teamMembers.map(m => ({
       id:      m.id,
       name:    m.name,

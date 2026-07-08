@@ -9,6 +9,7 @@ import { Button }                from '@/shared/components/ui/Button';
 import { Combobox }              from '@/shared/components/form/Combobox';
 import { inputCls }              from '@/shared/components/form/FormField';
 import { usePmTaskLookups }      from '../../projects/hooks/usePmTaskLookups';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import type { Task }             from '../types/task.types';
 import type { TaskModalTab }     from '../types/taskModal.types';
 
@@ -34,7 +35,10 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
 
   if (!task) return null;
 
-  const priorityItems = priorities.map(p => ({ id: p.value, label: p.label }));
+  const priorityItems = priorities.map(p => ({
+    id:    p.value,
+    label: translateProjectLookup(p.value, p.label, isAr, p.labelAr),
+  }));
 
   const counts = { attachments: modal.attachments.length, comments: modal.comments.length };
 

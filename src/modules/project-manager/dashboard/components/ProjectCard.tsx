@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { GitBranch }   from 'lucide-react';
 import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
 import { ROUTES }      from '@/app/router/routes';
 import type { PmProjectVM } from '../hooks/usePmDashboard';
 import type { PmProjectStatusKey } from '../types/dashboard.types';
 import { TeamAvatars } from '@/shared/components/ui/TeamAvatars';
+import { GithubIcon }  from '@/shared/components/icons/GithubIcon';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { ensureHttpUrl } from '@/shared/utils';
 
@@ -38,10 +38,18 @@ interface Props {
 export function ProjectCard({ project, isAr }: Props) {
   const navigate = useNavigate();
 
+  const goToDetails = () => navigate(ROUTES.PROJECT_MANAGER.DETAILS(String(project.id)));
+
   return (
-    <Card className="p-5 flex flex-col gap-4 transition-all duration-200
-                     border-2! border-[#D8EBAE]! dark:border-[#A0CD39]/30!
-                     hover:border-[#A0CD39]! hover:shadow-lg">
+    <Card
+      onClick={goToDetails}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToDetails(); } }}
+      className="p-5 flex flex-col gap-4 transition-all duration-200 cursor-pointer
+                 border-2! border-[#D8EBAE]! dark:border-[#A0CD39]/30!
+                 hover:border-[#A0CD39]! hover:shadow-lg
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A0CD39]">
 
       {/* Title + category */}
       <div className="flex items-start justify-between gap-3">
@@ -58,7 +66,7 @@ export function ProjectCard({ project, isAr }: Props) {
               aria-label={isAr ? 'رابط GitHub' : 'GitHub link'}
               className="shrink-0 text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
-              <GitBranch size={16} />
+              <GithubIcon size={16} />
             </a>
           )}
         </div>
@@ -107,7 +115,7 @@ export function ProjectCard({ project, isAr }: Props) {
       <Button
         variant="secondary"
         fullWidth
-        onClick={() => navigate(ROUTES.PROJECT_MANAGER.DETAILS(String(project.id)))}
+        onClick={(e) => { e.stopPropagation(); goToDetails(); }}
         className="hover:border-[#A0CD39] hover:text-[#709028] dark:hover:text-[#A0CD39]"
       >
         {isAr ? 'تفاصيل المشروع' : 'View Details'}

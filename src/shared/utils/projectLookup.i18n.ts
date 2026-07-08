@@ -12,6 +12,19 @@ const LOOKUP_LABELS: Record<string, { ar: string; en: string }> = {
   active:       { ar: 'نشط',           en: 'Active'       },
   inactive:     { ar: 'غير نشط',       en: 'Inactive'     },
 
+  /* ── Task priorities ──────────────────────────── */
+  urgent:       { ar: 'عاجلة',         en: 'Urgent'       },
+  high:         { ar: 'عالية',         en: 'High'         },
+  medium:       { ar: 'متوسطة',        en: 'Medium'       },
+  normal:       { ar: 'متوسطة',        en: 'Normal'       },
+  low:          { ar: 'منخفضة',        en: 'Low'          },
+
+  /* ── Task statuses ────────────────────────────── */
+  needs_review: { ar: 'مراجعة',        en: 'Needs Review' },
+  in_review:    { ar: 'قيد المراجعة',  en: 'In Review'    },
+  review:       { ar: 'مراجعة',        en: 'Review'       },
+  done:         { ar: 'مكتمل',         en: 'Done'         },
+
   /* ── Project / campaign types ─────────────────── */
   seo:              { ar: 'تحسين محركات البحث', en: 'SEO'              },
   technical_seo:    { ar: 'SEO تقني',             en: 'Technical SEO'    },

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Plus, Info } from 'lucide-react';
+import { GithubIcon } from '@/shared/components/icons/GithubIcon';
+import { ensureHttpUrl } from '@/shared/utils';
 import { toast } from 'sonner';
 import { useLang }         from '@/app/providers/LanguageProvider';
 import { Card }            from '@/shared/components/ui/Card';
@@ -11,11 +12,10 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { ROUTES }          from '@/app/router/routes';
 import { useProjectDetails }   from '../hooks/useProjectDetails';
 import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
-import { pmProjectsApi, pmProjectTeamApi } from '../api/project.api';
-import type { PmProjectTeamMember } from '../types/project.types';
+import { pmProjectsApi } from '../api/project.api';
 import { useProjectTasks } from '../../tasks/store/taskStore';
 import { KanbanBoard }     from '../components/KanbanBoard';
-import { AddTaskModal }    from '../components/AddTaskModal';
+import { ProjectDetailsModal } from '../components/ProjectDetailsModal';
 import { ProgressLogTab }     from '../components/ProgressLogTab';
 import { ProjectSettingsTab } from '../components/ProjectSettingsTab';
 import { ProjectTeamTab }     from '../components/ProjectTeamTab';
@@ -45,16 +45,8 @@ export function ProjectDetailsPage() {
   const { statuses }                              = usePmProjectLookups();
   const tasks = useProjectTasks(id ?? '');
 
-  // Assignee dropdown must only offer members actually added to this project's
-  // team (via the Team tab), not the whole company roster.
-  const { data: teamMembers = [] } = useQuery({
-    queryKey: ['pm-project', id, 'team'],
-    queryFn:  () => pmProjectTeamApi.list(id!, { per_page: 100 }).then((r): PmProjectTeamMember[] => r.data.data.data),
-    enabled:  !!id,
-  });
-
   const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');
-  const [showAddTask,    setShowAddTask]    = useState(false);
+  const [showDetails,    setShowDetails]    = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
 
   if (isLoading) return <ProjectDetailsSkeleton />;
@@ -88,27 +80,58 @@ export function ProjectDetailsPage() {
   const tasksCompleted = tasks.filter(t => t.status === 'completed').length;
   const progress       = tasksTotal ? Math.round((tasksCompleted / tasksTotal) * 100) : 0;
 
-  return (
-    <div className="space-y-5">
+  const BackIcon = isAr ? ArrowRight : ArrowLeft;
 
-      {/* Back */}
-      <button
-        type="button"
-        onClick={() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD)}
-        className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400
-                   hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
-      >
-        <ArrowLeft size={15} />
-        {isAr ? 'العودة' : 'Back'}
-      </button>
+  return (
+    <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
+
+      {/* Details + GitHub link + Back */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowDetails(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600
+                       bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200
+                       hover:border-[#A0CD39] hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
+          >
+            <Info size={15} />
+            {isAr ? 'تفاصيل المشروع' : 'Project Details'}
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD)}
+          className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400
+                     hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
+        >
+          <BackIcon size={15} />
+          {isAr ? 'العودة' : 'Back'}
+        </button>
+      </div>
 
       {/* Project header */}
       <Card className="p-5 space-y-3">
         {/* Name + badges */}
-        <div className="flex items-center gap-2.5 flex-wrap justify-end">
+        <div className="flex items-center gap-2.5 flex-wrap justify-start">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             {project.name}
           </h1>
+          {project.githubLink && (
+            <a
+              href={ensureHttpUrl(project.githubLink)}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={isAr ? 'فتح مستودع GitHub' : 'Open GitHub repository'}
+              aria-label="GitHub"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200
+                         dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-white
+                         hover:bg-[#24292f] hover:border-[#24292f] transition-colors"
+            >
+              <GithubIcon size={18} />
+            </a>
+          )}
           <div className="w-40">
             <Combobox
               items={statusItems}
@@ -133,19 +156,19 @@ export function ProjectDetailsPage() {
         {/* Progress */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-semibold text-gray-700 dark:text-gray-200">{progress}%</span>
             <span>{isAr ? 'نسبة الإنجاز' : 'Progress'}</span>
+            <span className="font-semibold text-gray-700 dark:text-gray-200">{progress}%</span>
           </div>
           <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
             <div
-              className="h-full rounded-full bg-[#A0CD39] transition-all duration-500"
+              className={`h-full rounded-full bg-[#A0CD39] transition-all duration-500${isAr ? ' ms-auto' : ''}`}
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
         {/* Tasks count */}
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-end">
+        <p className="text-sm text-gray-500 dark:text-gray-400 text-start">
           {isAr ? 'المهام:' : 'Tasks:'}
           <span className="ms-1.5 font-semibold text-gray-800 dark:text-gray-100">
             {tasksCompleted}/{tasksTotal}
@@ -153,7 +176,7 @@ export function ProjectDetailsPage() {
         </p>
 
         {/* Dates */}
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-end">
+        <p className="text-sm text-gray-500 dark:text-gray-400 text-start">
           {isAr ? 'من' : 'From'}
           <span className="mx-1.5 font-semibold text-gray-800 dark:text-gray-100">{project.startDate}</span>
           {isAr ? 'إلى' : 'to'}
@@ -189,7 +212,7 @@ export function ProjectDetailsPage() {
             <Button
               variant="primary"
               startIcon={<Plus size={15} />}
-              onClick={() => setShowAddTask(true)}
+              onClick={() => navigate(ROUTES.PROJECT_MANAGER.ADD_TASK(String(project.id)))}
             >
               {isAr ? 'إضافة مهمة' : 'Add Task'}
             </Button>
@@ -205,13 +228,11 @@ export function ProjectDetailsPage() {
       {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
       {activeTab === 'messages' && <ProjectMessagesTab projectId={String(project.id)} isAr={isAr} />}
 
-      {/* Add Task Modal */}
-      <AddTaskModal
-        open={showAddTask}
-        onClose={() => setShowAddTask(false)}
-        projectId={String(project.id)}
-        team={teamMembers}
-        phases={project.phases}
+      {/* Project Details Modal */}
+      <ProjectDetailsModal
+        open={showDetails}
+        onClose={() => setShowDetails(false)}
+        project={project}
         isAr={isAr}
       />
     </div>

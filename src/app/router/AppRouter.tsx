@@ -60,6 +60,7 @@ const SettingsPage       = lazy(() => import('@/modules/admin/settings/pages/Set
 const ProjectDashboardPage = lazy(() => import('@/modules/project-manager/dashboard/pages/ProjectDashboardPage') .then(m => ({ default: m.ProjectDashboardPage })));
 const NewProjectPage       = lazy(() => import('@/modules/project-manager/projects/pages/NewProjectPage')        .then(m => ({ default: m.NewProjectPage })));
 const ProjectDetailsPage   = lazy(() => import('@/modules/project-manager/projects/pages/ProjectDetailsPage')    .then(m => ({ default: m.ProjectDetailsPage })));
+const AddPmTaskPage        = lazy(() => import('@/modules/project-manager/projects/pages/AddPmTaskPage')         .then(m => ({ default: m.AddPmTaskPage })));
 const ProjectTeamPage      = lazy(() => import('@/modules/project-manager/team/pages/ProjectTeamPage')           .then(m => ({ default: m.ProjectTeamPage })));
 const ProjectReportsPage   = lazy(() => import('@/modules/project-manager/reports/pages/ProjectReportsPage')     .then(m => ({ default: m.ProjectReportsPage })));
 const PMProfilePage        = lazy(() => import('@/modules/project-manager/profile/pages/PMProfilePage')          .then(m => ({ default: m.PMProfilePage })));
@@ -168,6 +169,7 @@ export function AppRouter() {
                 <Route element={<ProjectManagerLayout />}>
                   <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.ADD_TASK()} element={<AddPmTaskPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.DETAILS()} element={<ProjectDetailsPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.TEAM}      element={<ProjectTeamPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
