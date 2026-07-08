@@ -2,6 +2,7 @@ import { http } from '@/shared/services/http.service';
 import type {
   AdminLoginApiResponse,
   AdminAuthSuccessApiResponse,
+  AdminOtpResendApiResponse,
   EmployeeLoginApiResponse,
   EmployeeProfileApiResponse,
   AdminInviteApiResponse,
@@ -15,6 +16,24 @@ export const authApi = {
 
   adminLogin(credentials: { admin_id: string; password: string }) {
     return http.post<AdminLoginApiResponse>('/v1/admin/auth/login', credentials);
+  },
+
+  // Exchanges the one-time magic-login token (from the super-admin email link)
+  // for a real access token + admin profile.
+  adminMagicLogin(token: string) {
+    return http.get<AdminAuthSuccessApiResponse>('/v1/admin/auth/magic-login', {
+      params: { token },
+    });
+  },
+
+  // Verifies the OTP code emailed to a super-admin on each login attempt.
+  adminVerifyOtp(payload: { admin_id: string; code: string }) {
+    return http.post<AdminAuthSuccessApiResponse>('/v1/admin/auth/login/verify-otp', payload);
+  },
+
+  // Requests a fresh OTP code for the given super-admin.
+  adminResendOtp(payload: { admin_id: string }) {
+    return http.post<AdminOtpResendApiResponse>('/v1/admin/auth/login/resend-otp', payload);
   },
 
   adminLogout() {

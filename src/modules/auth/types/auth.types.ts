@@ -38,7 +38,7 @@ export interface AuthLoginResponse {
 
 export type LoginResult =
   | { status: 'success'; token: string; user: AuthUser }
-  | { status: 'magic_link_required'; expiresAt: string };
+  | { status: 'otp_required'; adminId: string; expiresAt: string };
 
 export interface InviteTokenPayload {
   name:          string;
@@ -83,8 +83,16 @@ export interface AdminLoginApiResponse {
   data: {
     accessToken?:       string;
     admin?:             ApiAdmin;
+    // Backend flags a super-admin login that still needs a second factor.
+    otpRequired?:       boolean;
     magicLinkRequired?: boolean;
     expiresAt?:         string;
+  };
+}
+
+export interface AdminOtpResendApiResponse {
+  data: {
+    expiresAt?: string;
   };
 }
 

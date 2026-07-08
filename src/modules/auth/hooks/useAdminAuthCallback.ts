@@ -11,9 +11,9 @@ function safeRedirectPath(raw: string | null): string {
 }
 
 /**
- * The backend verifies the magic-link token itself and 302-redirects here with
- * the finished accessToken + redirect_path already in the query string — this
- * page never calls an API, it just consumes the redirect.
+ * The super-admin email link carries a one-time magic-login token. This page
+ * exchanges it for a real session (via the backend) and, on success, drops the
+ * admin straight into the dashboard.
  */
 export function useAdminAuthCallback() {
   const [params]  = useSearchParams();
@@ -35,9 +35,15 @@ export function useAdminAuthCallback() {
     }
 
     const redirectPath = safeRedirectPath(params.get('redirect_path'));
-    completeMagicLogin(token);
-    window.history.replaceState({}, '', window.location.pathname); // strip token from the URL
-    navigate(redirectPath, { replace: true });
+
+    completeMagicLogin(token)
+      .then(() => {
+        window.history.replaceState({}, '', window.location.pathname); // strip token from the URL
+        navigate(redirectPath, { replace: true });
+      })
+      .catch(() => {
+        setStatus('invalid');
+      });
   }, [params, completeMagicLogin, navigate]);
 
   return { status };

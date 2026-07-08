@@ -9,6 +9,7 @@ export const ROUTES = {
       `/v1/employee/auth/invitations/${token}/set-password`,
     FORGOT_PASSWORD: '/auth/forgot-password',
     ADMIN_CALLBACK: '/admin/auth/callback',
+    ADMIN_OTP:      '/admin/auth/otp',
   },
   DASHBOARD: '/dashboard',
   ADMIN: {

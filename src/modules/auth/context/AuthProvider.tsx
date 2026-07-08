@@ -101,8 +101,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const completeMagicLogin = useCallback((token: string) => {
-    const user = authService.completeMagicLogin(token);
+  const verifyOtp = useCallback(async (adminId: string, otp: string, rememberMe = false) => {
+    const { user } = await authService.verifyAdminOtp(adminId, otp, rememberMe);
+    flushSync(() => {
+      dispatch({ type: 'LOGIN', payload: user });
+    });
+    return user;
+  }, []);
+
+  const completeMagicLogin = useCallback(async (token: string) => {
+    const user = await authService.completeMagicLogin(token);
     flushSync(() => {
       dispatch({ type: 'LOGIN', payload: user });
     });
@@ -149,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: state.user !== null,
         isLoading:       state.isLoading,
         login,
+        verifyOtp,
         completeMagicLogin,
         completeInviteLogin,
         setPassword,

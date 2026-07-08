@@ -17,14 +17,17 @@ export function useLogin() {
   const { login } = useAuth();
   const navigate  = useNavigate();
   const [error, setError] = useState<string | null>(null);
-  const [magicLinkExpiresAt, setMagicLinkExpiresAt] = useState<string | null>(null);
 
   async function submit(values: LoginFormValues) {
     setError(null);
+    const rememberMe = values.rememberMe ?? false;
     try {
-      const result = await login({ ...values, rememberMe: values.rememberMe ?? false });
-      if (result.status === 'magic_link_required') {
-        setMagicLinkExpiresAt(result.expiresAt);
+      const result = await login({ ...values, rememberMe });
+      if (result.status === 'otp_required') {
+        navigate(ROUTES.AUTH.ADMIN_OTP, {
+          replace: true,
+          state: { adminId: result.adminId, expiresAt: result.expiresAt, rememberMe },
+        });
         return;
       }
       navigate(redirectForRole(result.user.role), { replace: true });
@@ -33,9 +36,5 @@ export function useLogin() {
     }
   }
 
-  function resetMagicLinkPending() {
-    setMagicLinkExpiresAt(null);
-  }
-
-  return { submit, error, magicLinkExpiresAt, resetMagicLinkPending };
+  return { submit, error };
 }
