@@ -7,7 +7,8 @@ export interface AuthContextValue {
   isAuthenticated:   boolean;
   isLoading:         boolean;
   login:             (credentials: LoginCredentials) => Promise<LoginResult>;
-  completeMagicLogin: (token: string) => AuthUser;
+  verifyOtp:         (adminId: string, otp: string, rememberMe?: boolean) => Promise<AuthUser>;
+  completeMagicLogin: (token: string) => Promise<AuthUser>;
   completeInviteLogin: (token: string, inviteType: 'admin' | 'employee') => AuthUser;
   setPassword:       (payload: SetPasswordPayload)   => Promise<void>;
   logout:            () => Promise<void>;

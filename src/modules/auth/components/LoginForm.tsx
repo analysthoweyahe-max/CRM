@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { User, Lock, Eye, EyeOff, MailCheck } from 'lucide-react';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '@/modules/auth/schemas/login.schema';
 import { useLogin } from '@/modules/auth/hooks/useLogin';
 import { useAuth } from '@/modules/auth/context/AuthContext';
@@ -19,24 +19,31 @@ export function LoginForm() {
   const [params] = useSearchParams();
   const justActivated = params.get('activated') === '1';
 
-  // The backend's magic-link email currently redirects here (/auth/login?token=...)
-  // instead of the dedicated /admin/auth/callback page — handle it here too so a
+  // The backend's magic-link email may point here (/auth/login?token=...) instead
+  // of the dedicated /admin/auth/callback page — handle it here too so a
   // super-admin login link works regardless of which page the backend points at.
   const magicToken = params.get('token');
   const { completeMagicLogin } = useAuth();
   const navigate = useNavigate();
+  const [magicFailed, setMagicFailed] = useState(false);
 
   useEffect(() => {
     if (!magicToken) return;
     const redirectPath = params.get('redirect_path');
-    completeMagicLogin(magicToken);
-    window.history.replaceState({}, '', window.location.pathname);
-    navigate(redirectPath && redirectPath.startsWith('/') ? redirectPath : ROUTES.ADMIN.DASHBOARD, { replace: true });
+    completeMagicLogin(magicToken)
+      .then(() => {
+        window.history.replaceState({}, '', window.location.pathname);
+        navigate(redirectPath && redirectPath.startsWith('/') ? redirectPath : ROUTES.ADMIN.DASHBOARD, { replace: true });
+      })
+      .catch(() => {
+        setMagicFailed(true);
+        window.history.replaceState({}, '', window.location.pathname);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [magicToken]);
 
   const [showPassword, setShowPassword] = useState(false);
-  const { submit, error: submitError, magicLinkExpiresAt, resetMagicLinkPending } = useLogin();
+  const { submit, error: submitError } = useLogin();
 
   const {
     register,
@@ -53,40 +60,11 @@ export function LoginForm() {
 
   const empIdDir = /[؀-ۿ]/.test(watch('employeeId') ?? '') ? 'rtl' : 'ltr';
 
-  if (magicToken) {
+  if (magicToken && !magicFailed) {
     return (
       <div className="flex flex-col items-center gap-3 py-8">
         <LoadingSpinner size={28} />
         <p className="text-sm text-gray-500">{t.magicLink.verifying}</p>
-      </div>
-    );
-  }
-
-  if (magicLinkExpiresAt !== null) {
-    const tm = t.magicLink;
-    const formattedExpiry = magicLinkExpiresAt
-      ? new Date(magicLinkExpiresAt).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')
-      : null;
-
-    return (
-      <div className="space-y-5 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50">
-          <MailCheck size={26} className="text-brand-600" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">{tm.checkEmailTitle}</h2>
-          <p className="text-base text-gray-500 mt-2">{tm.checkEmailDesc}</p>
-        </div>
-        {formattedExpiry && (
-          <p className="text-sm text-gray-400">{tm.expiresLabel}: {formattedExpiry}</p>
-        )}
-        <button
-          type="button"
-          onClick={resetMagicLinkPending}
-          className="inline-block text-brand-600 font-medium hover:text-brand-700 transition-colors"
-        >
-          {tm.backToLogin}
-        </button>
       </div>
     );
   }
@@ -104,6 +82,13 @@ export function LoginForm() {
       {justActivated && (
         <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
           {t.login.activatedSuccess}
+        </div>
+      )}
+
+      {/* Magic-link exchange failed */}
+      {magicFailed && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {t.magicLink.invalidDesc}
         </div>
       )}
 

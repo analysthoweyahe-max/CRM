@@ -130,10 +130,11 @@ async function loginAsAdmin(
   const { data } = await authApi.adminLogin({ admin_id: employeeId, password });
   const payload = data.data;
 
-  // Super-admin accounts don't get a token on this call — the backend emails
-  // a one-time login link instead. Surface that instead of treating it as an error.
-  if (payload?.magicLinkRequired) {
-    return { status: 'magic_link_required', expiresAt: payload.expiresAt ?? '' };
+  // Super-admin accounts require a second factor: the backend emails a one-time
+  // OTP code instead of returning a token. Surface that so the UI can collect it.
+  if (payload?.otpRequired || payload?.magicLinkRequired) {
+    setCachedAccountType(employeeId, 'admin');
+    return { status: 'otp_required', adminId: employeeId, expiresAt: payload.expiresAt ?? '' };
   }
 
   if (!payload?.accessToken || !payload?.admin) {
@@ -144,6 +145,22 @@ async function loginAsAdmin(
   storeAuth(accessToken, user, rememberMe);
   setCachedAccountType(employeeId, 'admin');
   return { status: 'success', token: accessToken, user };
+}
+
+// Verifies the OTP a super-admin received by email and establishes the session.
+async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false): Promise<AuthLoginResponse> {
+  const { data } = await authApi.adminVerifyOtp({ admin_id: adminId, code: otp });
+  const { accessToken, admin } = data.data;
+  const user = buildAdminUser(admin);
+  storeAuth(accessToken, user, rememberMe);
+  setCachedAccountType(adminId, 'admin');
+  return { token: accessToken, user };
+}
+
+// Requests a fresh OTP code; returns the new expiry timestamp when provided.
+async function resendAdminOtp(adminId: string): Promise<string> {
+  const { data } = await authApi.adminResendOtp({ admin_id: adminId });
+  return data.data?.expiresAt ?? '';
 }
 
 async function login(credentials: LoginCredentials): Promise<LoginResult> {
@@ -174,13 +191,14 @@ async function login(credentials: LoginCredentials): Promise<LoginResult> {
   }
 }
 
-// The backend verifies the magic-link token itself and redirects here with a
-// finished accessToken — there is no frontend API call. It doesn't hand us the
-// admin's name/id, so we store a minimal super-admin user; a real admin
-// profile endpoint would be needed to fill in fullName/id/avatar properly.
-function completeMagicLogin(token: string): AuthUser {
-  const user: AuthUser = { id: '', employeeId: '', fullName: '', role: 'admin' };
-  storeAuth(token, user, true);
+// The email link carries a one-time magic-login token (NOT a bearer token). We
+// exchange it here for a real access token + admin profile, then persist the
+// session so the super-admin lands logged in.
+async function completeMagicLogin(token: string, rememberMe = true): Promise<AuthUser> {
+  const { data } = await authApi.adminMagicLogin(token);
+  const { accessToken, admin } = data.data;
+  const user = buildAdminUser(admin);
+  storeAuth(accessToken, user, rememberMe);
   return user;
 }
 
@@ -314,6 +332,8 @@ async function logout(): Promise<void> {
 
 export const authService = {
   login,
+  verifyAdminOtp,
+  resendAdminOtp,
   completeMagicLogin,
   completeInviteLogin,
   setPassword,

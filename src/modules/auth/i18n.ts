@@ -62,6 +62,22 @@ export const authTranslations = {
       invalidDesc:      'انتهت صلاحية هذا الرابط أو تم استخدامه من قبل. حاول تسجيل الدخول مرة أخرى.',
     },
 
+    otp: {
+      title:        'رمز التحقق',
+      subtitle:     'أرسلنا رمز تحقق مكوّن من 6 أرقام إلى بريدك الإلكتروني. أدخله لإكمال تسجيل الدخول.',
+      codeLabel:    'رمز التحقق',
+      placeholder:  '______',
+      submit:       'تأكيد وتسجيل الدخول',
+      verifying:    'جارٍ التحقق...',
+      resendPrompt: 'لم يصلك الرمز؟',
+      resend:       'إعادة الإرسال',
+      resendIn:     'يمكنك إعادة الإرسال بعد {s} ثانية',
+      resent:       'تم إرسال رمز جديد إلى بريدك.',
+      expiresLabel: 'ينتهي الرمز في',
+      invalidCode:  'رمز التحقق غير صحيح أو منتهي الصلاحية.',
+      back:         'العودة لتسجيل الدخول',
+    },
+
     validation: {
       employeeIdRequired: 'معرّف الموظف مطلوب',
       employeeIdInvalid:  'أدخل بريدًا إلكترونيًا صحيحًا أو معرّف مدير صحيح',
@@ -135,6 +151,22 @@ export const authTranslations = {
       verifying:        'Verifying your sign-in link...',
       invalidTitle:     'Invalid sign-in link',
       invalidDesc:      'This link has expired or was already used. Please try signing in again.',
+    },
+
+    otp: {
+      title:        'Verification code',
+      subtitle:     'We sent a 6-digit verification code to your email. Enter it to finish signing in.',
+      codeLabel:    'Verification code',
+      placeholder:  '______',
+      submit:       'Verify & sign in',
+      verifying:    'Verifying...',
+      resendPrompt: "Didn't get the code?",
+      resend:       'Resend',
+      resendIn:     'You can resend in {s}s',
+      resent:       'A new code has been sent to your email.',
+      expiresLabel: 'Code expires at',
+      invalidCode:  'The verification code is incorrect or expired.',
+      back:         'Back to sign in',
     },
 
     validation: {
