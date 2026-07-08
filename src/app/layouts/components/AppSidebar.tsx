@@ -103,8 +103,8 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
             <div key={si} className="space-y-0.5">
 
               {(section.sectionAr || section.sectionEn) && (
-                <p className={`px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest
-                               text-gray-400 dark:text-gray-500 ${collapsed ? 'lg:hidden' : ''}`}>
+                <p className={`px-4 mb-2 text-sm font-bold tracking-wide
+                               text-brand-700 dark:text-brand-400 ${collapsed ? 'lg:hidden' : ''}`}>
                   {isAr ? section.sectionAr : section.sectionEn}
                 </p>
               )}

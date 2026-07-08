@@ -13,9 +13,9 @@ export function PageHeader({ title, subtitle, start, actions }: PageHeaderProps)
       <div className="flex items-center gap-3 min-w-0">
         {start}
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
           {subtitle && (
-            <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
+            <p className="mt-0.5 text-base text-gray-500 dark:text-gray-400">{subtitle}</p>
           )}
         </div>
       </div>

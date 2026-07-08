@@ -6,6 +6,7 @@ import { ROUTES }      from '@/app/router/routes';
 import type { PmProjectVM } from '../hooks/usePmDashboard';
 import type { PmProjectStatusKey } from '../types/dashboard.types';
 import { TeamAvatars } from '@/shared/components/ui/TeamAvatars';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 
 const STATUS_DOT: Record<PmProjectStatusKey, string> = {
   in_progress: 'bg-[#A0CD39]',
@@ -63,7 +64,7 @@ export function ProjectCard({ project, isAr }: Props) {
         <span className="shrink-0 text-xs px-2.5 py-1 rounded-full border
                          border-gray-200 dark:border-gray-600
                          text-gray-500 dark:text-gray-400 whitespace-nowrap">
-          {project.projectTypeLabel}
+          {translateProjectLookup('', project.projectTypeLabel, isAr)}
         </span>
       </div>
 
@@ -93,7 +94,9 @@ export function ProjectCard({ project, isAr }: Props) {
           <span>{isAr ? 'الحالة:' : 'Status:'}</span>
           <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_BADGE[project.status]}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[project.status]}`} />
-            {isAr ? project.statusLabel : STATUS_LABEL_EN[project.status]}
+            {isAr
+              ? translateProjectLookup(project.status, project.statusLabel, true)
+              : STATUS_LABEL_EN[project.status]}
           </span>
         </div>
         <TeamAvatars team={project.team} />

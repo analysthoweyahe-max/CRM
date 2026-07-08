@@ -1,15 +1,15 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/app/router/routes';
+import { useInviteToken } from '@/modules/auth/hooks/useInviteToken';
 
 export function InviteValidationPage() {
-  const [params]  = useSearchParams();
-  const navigate  = useNavigate();
-  const token     = params.get('token');
+  const token    = useInviteToken();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (token) {
-      navigate(`${ROUTES.AUTH.SET_PASSWORD}?token=${token}`, { replace: true });
+      navigate(ROUTES.AUTH.SET_PASSWORD_TOKEN(token), { replace: true });
     } else {
       navigate(ROUTES.AUTH.LOGIN, { replace: true });
     }

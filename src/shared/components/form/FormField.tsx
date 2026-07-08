@@ -18,13 +18,13 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300">
+      <label className="flex items-center gap-1.5 text-base font-semibold text-gray-700 dark:text-gray-300">
         {icon}
         {label}
         {required && <span className="text-red-500">*</span>}
       </label>
       {children}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 }
@@ -32,7 +32,7 @@ export function FormField({
 /* ─── Shared input class helper ───────────────────── */
 export function inputCls(hasError: boolean) {
   return [
-    'w-full h-11 rounded-lg border px-4 text-sm',
+    'w-full h-12 rounded-lg border px-4 text-base',
     'text-gray-800 dark:text-gray-200',
     'bg-white dark:bg-gray-700/50',
     'outline-none transition placeholder:text-gray-400 dark:placeholder:text-gray-500',

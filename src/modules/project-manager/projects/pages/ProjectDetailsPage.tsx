@@ -22,6 +22,7 @@ import { ProjectTeamTab }     from '../components/ProjectTeamTab';
 import { ProjectMessagesTab } from '../components/ProjectMessagesTab';
 import { ProjectClientUpdatesTab } from '../components/ProjectClientUpdatesTab';
 import { ProjectDetailsSkeleton } from '../components/ProjectDetailsSkeleton';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 
 type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings';
 
@@ -77,7 +78,10 @@ export function ProjectDetailsPage() {
     }
   }
 
-  const statusItems: ComboboxItem[] = statuses.map(s => ({ id: s.value, label: s.label }));
+  const statusItems: ComboboxItem[] = statuses.map(s => ({
+    id:    s.value,
+    label: translateProjectLookup(s.value, s.label, isAr),
+  }));
 
   // No progress/task-count fields on the project API yet — computed from the local Kanban tasks for now.
   const tasksTotal     = tasks.length;
@@ -117,7 +121,7 @@ export function ProjectDetailsPage() {
           </div>
           <span className="text-xs px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-600
                            text-gray-500 dark:text-gray-400">
-            {project.projectTypeLabel}
+            {translateProjectLookup(project.projectType, project.projectTypeLabel, isAr)}
           </span>
           {project.isDraft && (
             <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">

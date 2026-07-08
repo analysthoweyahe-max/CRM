@@ -30,6 +30,7 @@ export const authTranslations = {
       submit:                'تسجيل الدخول',
       activationPrompt:      'موظف جديد؟',
       activationAction:      'تفعيل الحساب',
+      activatedSuccess:      'تم تفعيل حسابك بنجاح. يمكنك الآن تسجيل الدخول.',
     },
 
     setPassword: {
@@ -47,6 +48,8 @@ export const authTranslations = {
       validating:   'جارٍ التحقق من الدعوة...',
       expiredTitle: 'رابط الدعوة منتهي الصلاحية',
       expiredDesc:  'انتهت صلاحية هذا الرابط أو تم استخدامه مسبقاً. تواصل مع مسؤول النظام للحصول على رابط جديد.',
+      greeting:     'مرحباً',
+      accountEmail: 'البريد الإلكتروني',
     },
 
     validation: {
@@ -92,6 +95,7 @@ export const authTranslations = {
       submit:                'Sign In',
       activationPrompt:      'New employee?',
       activationAction:      'Activate account',
+      activatedSuccess:      'Your account has been activated. You can now sign in.',
     },
 
     setPassword: {
@@ -109,6 +113,8 @@ export const authTranslations = {
       validating:   'Validating your invite link...',
       expiredTitle: 'Invite link expired',
       expiredDesc:  'This link has expired or has already been used. Contact your system administrator for a new link.',
+      greeting:     'Hello',
+      accountEmail: 'Email',
     },
 
     validation: {

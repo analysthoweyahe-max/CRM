@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '@/modules/auth/schemas/login.schema';
 import { useLogin } from '@/modules/auth/hooks/useLogin';
@@ -14,6 +14,8 @@ export function LoginForm() {
   const { lang } = useLang();
   const t = authTranslations[lang];
   const v = t.validation;
+  const [params] = useSearchParams();
+  const justActivated = params.get('activated') === '1';
 
   const [showPassword, setShowPassword] = useState(false);
   const { submit, error: submitError } = useLogin();
@@ -38,9 +40,16 @@ export function LoginForm() {
 
       {/* Title */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{t.login.title}</h2>
-        <p className="text-sm text-gray-500 mt-1">{t.login.subtitle}</p>
+        <h2 className="text-3xl font-bold text-gray-900">{t.login.title}</h2>
+        <p className="text-base text-gray-500 mt-1">{t.login.subtitle}</p>
       </div>
+
+      {/* Success banner after account activation */}
+      {justActivated && (
+        <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+          {t.login.activatedSuccess}
+        </div>
+      )}
 
       {/* Server error */}
       {submitError && (
@@ -53,7 +62,7 @@ export function LoginForm() {
 
       {/* Employee ID */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-base font-medium text-gray-700">
           {t.login.employeeId}
           <span className="text-red-500 ms-0.5">*</span>
         </label>
@@ -64,8 +73,8 @@ export function LoginForm() {
             placeholder={t.login.employeeIdPlaceholder}
             autoComplete="username"
             aria-invalid={!!errors.employeeId}
-            className={`w-full rounded-lg border bg-white py-2.5 ps-11 pe-4
-                       text-sm outline-none focus:border-brand-500 focus:ring-2
+            className={`w-full rounded-lg border bg-white py-3 ps-11 pe-4
+                       text-base outline-none focus:border-brand-500 focus:ring-2
                        focus:ring-brand-500/20 transition placeholder:text-gray-400 ${
                          errors.employeeId ? 'border-red-300' : 'border-gray-300'
                        }`}
@@ -81,7 +90,7 @@ export function LoginForm() {
 
       {/* Password */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-base font-medium text-gray-700">
           {t.login.password}
           <span className="text-red-500 ms-0.5">*</span>
         </label>
@@ -93,8 +102,8 @@ export function LoginForm() {
             autoComplete="current-password"
             dir="ltr"
             aria-invalid={!!errors.password}
-            className={`w-full rounded-lg border bg-white px-4 py-2.5 ps-11 pe-11
-                       text-sm outline-none focus:border-brand-500 focus:ring-2
+            className={`w-full rounded-lg border bg-white px-4 py-3 ps-11 pe-11
+                       text-base outline-none focus:border-brand-500 focus:ring-2
                        focus:ring-brand-500/20 transition placeholder:text-gray-400 ${
                          errors.password ? 'border-red-300' : 'border-gray-300'
                        }`}
@@ -122,12 +131,12 @@ export function LoginForm() {
       <div className="flex items-center justify-between">
         <Link
           to={ROUTES.AUTH.FORGOT_PASSWORD}
-          className="text-sm text-gray-500 hover:text-brand-600 transition-colors"
+          className="text-base text-gray-500 hover:text-brand-600 transition-colors"
         >
           {t.login.forgotPassword}
         </Link>
         <label className="flex items-center gap-2 cursor-pointer select-none">
-          <span className="text-sm text-gray-600">{t.login.rememberMe}</span>
+          <span className="text-base text-gray-600">{t.login.rememberMe}</span>
           <input
             {...register('rememberMe')}
             type="checkbox"
@@ -149,7 +158,7 @@ export function LoginForm() {
       </Button>
 
       {/* Activation link */}
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-base text-gray-500">
         {t.login.activationPrompt}{' '}
         <Link
           to={ROUTES.AUTH.SET_PASSWORD}

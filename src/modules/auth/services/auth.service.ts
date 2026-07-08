@@ -161,6 +161,17 @@ async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> 
   }
 }
 
+async function activateInvite(payload: SetPasswordPayload): Promise<void> {
+  const { token, password, confirmPassword, inviteType = 'employee' } = payload;
+  const apiPayload = { password, password_confirmation: confirmPassword };
+
+  if (inviteType === 'admin') {
+    await authApi.setAdminPassword(token, apiPayload);
+  } else {
+    await authApi.setEmployeePassword(token, apiPayload);
+  }
+}
+
 async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginResponse> {
   const { token, password, confirmPassword, rememberMe = false, inviteType = 'employee' } = payload;
   const apiPayload = { password, password_confirmation: confirmPassword };
@@ -265,6 +276,7 @@ async function logout(): Promise<void> {
 export const authService = {
   login,
   setPassword,
+  activateInvite,
   changePassword,
   validateInvite,
   loadProfile,

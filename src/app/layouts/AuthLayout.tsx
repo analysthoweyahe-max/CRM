@@ -33,7 +33,7 @@ export function AuthLayout() {
 
             <p
               dir="auto"
-              className="mt-1 text-sm font-semibold"
+              className="mt-1 text-base font-semibold"
             >
               {t.branding.systemName}
             </p>
@@ -52,8 +52,8 @@ export function AuthLayout() {
         <div
           className={`mt-[21vh] w-full max-w-[500px] ${isRTL ? 'ms-auto text-right' : 'me-auto text-left'
             }`}
-        >    <h2 className="text-[27px] font-bold leading-snug">{t.branding.headline}</h2>
-          <p className="mt-3 text-[19px] leading-8">{t.branding.description}</p>
+        >    <h2 className="text-3xl font-bold leading-snug">{t.branding.headline}</h2>
+          <p className="mt-3 text-xl leading-8">{t.branding.description}</p>
 
           <ul className="mt-8 space-y-4">
             {t.branding.features.map((feature, index) => {
@@ -62,11 +62,11 @@ export function AuthLayout() {
               return (
                 <li
                   key={feature}
-                  className={`flex items-center gap-4 text-[18px] ${isRTL ? 'text-right' : 'text-left'
+                  className={`flex items-center gap-4 text-lg ${isRTL ? 'text-right' : 'text-left'
                     }`}
                 >
-                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-white/35 text-[#537319]">
-                    <Icon size={16} />
+                  <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-white/35 text-[#537319]">
+                    <Icon size={18} />
                   </span>
 
                   <span dir="auto">{feature}</span>
@@ -78,7 +78,7 @@ export function AuthLayout() {
 
         {/* Copyright */}
         <p
-          className={`mt-auto w-full max-w-[500px] text-sm font-semibold ${isRTL ? 'ms-auto text-right' : 'me-auto text-left'
+          className={`mt-auto w-full max-w-[500px] text-base font-semibold ${isRTL ? 'ms-auto text-right' : 'me-auto text-left'
             }`}
         >    {t.branding.copyright}
         </p>

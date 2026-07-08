@@ -1,15 +1,13 @@
-﻿import { useSearchParams } from 'react-router-dom';
-import { SetPasswordForm }      from '@/modules/auth/components/SetPasswordForm';
+﻿import { SetPasswordForm }      from '@/modules/auth/components/SetPasswordForm';
 import { InviteExpiredBanner }  from '@/modules/auth/components/InviteExpiredBanner';
 import { useValidateInvite }    from '@/modules/auth/hooks/useValidateInvite';
+import { useInviteToken }       from '@/modules/auth/hooks/useInviteToken';
 import { useLang }              from '@/app/providers/LanguageProvider';
 import { authTranslations }     from '@/modules/auth/i18n';
 import { LoadingSpinner }       from '@/shared/components/feedback/LoadingSpinner';
 
 export function SetPasswordPage() {
-  const [params] = useSearchParams();
-  const token    = params.get('token') ?? '';
-
+  const token               = useInviteToken();
   const { status, payload } = useValidateInvite(token);
   const { lang }            = useLang();
   const t                   = authTranslations[lang].invite;
@@ -31,6 +29,8 @@ export function SetPasswordPage() {
     <SetPasswordForm
       inviteToken={token}
       inviteType={payload.inviteType}
+      inviteeName={payload.name}
+      inviteeEmail={payload.email}
     />
   );
 }

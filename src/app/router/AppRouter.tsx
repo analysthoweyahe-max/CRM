@@ -63,6 +63,7 @@ const PMProfilePage        = lazy(() => import('@/modules/project-manager/profil
 const SeoLeaderDashboardPage = lazy(() => import('@/modules/seo-leader/dashboard/pages/SeoLeaderDashboardPage')   .then(m => ({ default: m.SeoLeaderDashboardPage })));
 const NewCampaignPage        = lazy(() => import('@/modules/seo-leader/campaigns/pages/NewCampaignPage')           .then(m => ({ default: m.NewCampaignPage })));
 const CampaignDetailsPage    = lazy(() => import('@/modules/seo-leader/campaigns/pages/CampaignDetailsPage')       .then(m => ({ default: m.CampaignDetailsPage })));
+const AddSeoTaskPage         = lazy(() => import('@/modules/seo-leader/campaigns/pages/AddSeoTaskPage')            .then(m => ({ default: m.AddSeoTaskPage })));
 const SeoTeamPage            = lazy(() => import('@/modules/seo-leader/team/pages/SeoTeamPage')                 .then(m => ({ default: m.SeoTeamPage })));
 const SeoReportsPage         = lazy(() => import('@/modules/seo-leader/reports/pages/SeoReportsPage')           .then(m => ({ default: m.SeoReportsPage })));
 const SeoProfilePage         = lazy(() => import('@/modules/seo-leader/profile/pages/SeoProfilePage')           .then(m => ({ default: m.SeoProfilePage })));
@@ -101,7 +102,10 @@ export function AppRouter() {
               <Route element={<AuthLayout />}>
                 <Route path={ROUTES.AUTH.LOGIN}           element={<LoginPage />} />
                 <Route path={ROUTES.AUTH.SET_PASSWORD}    element={<SetPasswordPage />} />
+                <Route path={ROUTES.AUTH.SET_PASSWORD_TOKEN()} element={<SetPasswordPage />} />
                 <Route path={ROUTES.AUTH.INVITE}          element={<InviteValidationPage />} />
+                <Route path={ROUTES.AUTH.INVITE_TOKEN()}  element={<InviteValidationPage />} />
+                <Route path={ROUTES.AUTH.EMPLOYEE_INVITE_SET_PASSWORD()} element={<SetPasswordPage />} />
                 <Route path={ROUTES.AUTH.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
               </Route>
             </Route>
@@ -173,6 +177,7 @@ export function AppRouter() {
                 <Route element={<SeoLeaderLayout />}>
                   <Route path={ROUTES.SEO_LEADER.DASHBOARD} element={<SeoLeaderDashboardPage />} />
                   <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />
+                  <Route path={ROUTES.SEO_LEADER.ADD_TASK()}  element={<AddSeoTaskPage />} />
                   <Route path={ROUTES.SEO_LEADER.DETAILS()} element={<CampaignDetailsPage />} />
                   <Route path={ROUTES.SEO_LEADER.TEAM}      element={<SeoTeamPage />} />
                   <Route path={ROUTES.SEO_LEADER.REPORTS}   element={<SeoReportsPage />} />

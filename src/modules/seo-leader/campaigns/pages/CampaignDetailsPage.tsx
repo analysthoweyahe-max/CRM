@@ -8,9 +8,6 @@ import { Button }                 from '@/shared/components/ui/Button';
 import { ROUTES }                 from '@/app/router/routes';
 import { campaignApi }                       from '../api/campaign.api';
 import type { SeoTask }                      from '../api/campaign.api';
-import { seoTeamApi }                        from '../../team/api/seoTeam.api';
-import type { SeoProjectMember }             from '../../team/types/seoTeam.types';
-import { AddSeoTaskModal }        from '../components/AddSeoTaskModal';
 import { SeoTaskDrawer }          from '../components/SeoTaskDrawer';
 import { ProjectMessages }        from '../components/ProjectMessages';
 import { SeoProjectTeamTab }      from '../../projects/components/SeoProjectTeamTab';
@@ -18,6 +15,7 @@ import { SeoProjectSettingsTab }  from '../components/SeoProjectSettingsTab';
 import { SeoProgressTab }         from '../components/SeoProgressTab';
 import { SeoClientUpdatesTab }    from '../components/SeoClientUpdatesTab';
 import { KanbanColumn }           from '@/modules/project-manager/projects/components/KanbanColumn';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
 
 /* ── Status mapping: PM TaskStatus → backend status string ───────────── */
@@ -106,26 +104,12 @@ export function CampaignDetailsPage() {
 
   const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [showAddTask,    setShowAddTask]    = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, TaskStatus>>({});
 
   /* ── Campaign header ──────────────────────────────────────────────── */
   const { data: campaign, isLoading: campaignLoading } = useQuery({
     queryKey: ['campaign-detail', id],
     queryFn:  async () => (await campaignApi.getById(id)).data.data,
-    enabled:   !!id,
-    staleTime: 30_000,
-  });
-
-  /* ── Project team (assignee options for the Add Task modal) ────────── */
-  const { data: teamItems = [] } = useQuery({
-    queryKey: ['campaign-team', id],
-    queryFn:  async () => {
-      const teamRes = await seoTeamApi.getProjectTeam(id);
-      const env = teamRes.data as unknown as { data: { data: SeoProjectMember[] } };
-      const members = env.data?.data ?? [];
-      return members.map(m => ({ id: m.id, label: m.name }));
-    },
     enabled:   !!id,
     staleTime: 30_000,
   });
@@ -201,11 +185,11 @@ export function CampaignDetailsPage() {
               {campaign?.name ?? '—'}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {campaign?.campaignTypeLabel}
+              {translateProjectLookup(campaign?.campaignType ?? '', campaign?.campaignTypeLabel ?? '', isAr)}
             </p>
           </div>
           <span className={`shrink-0 text-xs font-medium px-3 py-1 rounded-full ${badgeCls}`}>
-            {campaign?.statusLabel}
+            {translateProjectLookup(campaign?.status ?? '', campaign?.statusLabel ?? '', isAr)}
           </span>
         </div>
 
@@ -249,7 +233,11 @@ export function CampaignDetailsPage() {
           })}
         </div>
         {activeTab === 'tasks' && (
-          <Button variant="primary" startIcon={<Plus size={16} />} onClick={() => setShowAddTask(true)}>
+          <Button
+            variant="primary"
+            startIcon={<Plus size={16} />}
+            onClick={() => navigate(ROUTES.SEO_LEADER.ADD_TASK(id))}
+          >
             {isAr ? 'مهمة جديدة' : 'New Task'}
           </Button>
         )}
@@ -264,7 +252,7 @@ export function CampaignDetailsPage() {
             ))}
           </div>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          <div className="flex gap-5 overflow-x-auto pb-4 px-1">
             {KANBAN_COLS.map(status => (
               <KanbanColumn
                 key={status}
@@ -306,15 +294,6 @@ export function CampaignDetailsPage() {
         isAr={isAr}
       />
 
-      {/* Add Task Modal */}
-      <AddSeoTaskModal
-        open={showAddTask}
-        onClose={() => setShowAddTask(false)}
-        campaignId={id}
-        prefillUrl={campaign?.targetDomain ?? ''}
-        teamItems={teamItems}
-        isAr={isAr}
-      />
     </div>
   );
 }

@@ -11,6 +11,8 @@ export interface SeoTaskFull {
   statusLabel?:     string;
   priority:         string;
   priorityLabel?:   string;
+  stage?:           string | null;
+  estimatedHours?:  number | null;
   startDate?:       string | null;
   dueDate?:         string | null;
   siteLinks:        string[];
@@ -18,8 +20,6 @@ export interface SeoTaskFull {
   notes?:           string | null;
   assignees:        SeoAssigneeDetail[];
   attachments:      SeoAttachmentDetail[];
-  stage?:           string | null;
-  estimatedHours?:  number | null;
   completedAt?:     string | null;
   createdAt:        string;
   updatedAt:        string;

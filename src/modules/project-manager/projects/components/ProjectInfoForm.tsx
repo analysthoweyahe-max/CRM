@@ -7,6 +7,7 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { useProjectSettings }      from '../hooks/useProjectSettings';
 import { usePmProjectLookups }     from '../hooks/usePmProjectLookups';
 import type { PmLookupItem } from '../types/project.types';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -18,8 +19,11 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
-function toComboboxItems(lookups: PmLookupItem[]): ComboboxItem[] {
-  return lookups.map(l => ({ id: l.value, label: l.label }));
+function toComboboxItems(lookups: PmLookupItem[], isAr: boolean): ComboboxItem[] {
+  return lookups.map(l => ({
+    id:    l.value,
+    label: translateProjectLookup(l.value, l.label, isAr),
+  }));
 }
 
 interface Props {
@@ -123,7 +127,7 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         <div>
           <label className={LABEL}>{isAr ? 'الحالة' : 'Status'}</label>
           <Combobox
-            items={toComboboxItems(statuses)}
+            items={toComboboxItems(statuses, isAr)}
             value={status}
             onChange={setStatus}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
@@ -133,7 +137,7 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         <div>
           <label className={LABEL}>{isAr ? 'النوع' : 'Type'}</label>
           <Combobox
-            items={toComboboxItems(types)}
+            items={toComboboxItems(types, isAr)}
             value={projectType}
             onChange={setType}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}

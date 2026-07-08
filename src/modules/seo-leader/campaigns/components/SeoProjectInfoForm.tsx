@@ -3,6 +3,7 @@ import { Button }      from '@/shared/components/ui/Button';
 import { Combobox }    from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import type { SelectOption } from '../api/campaign.api';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -14,8 +15,11 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 text-end';
 
-function toComboboxItems(opts: SelectOption[]): ComboboxItem[] {
-  return opts.map(o => ({ id: o.value, label: o.label }));
+function toComboboxItems(opts: SelectOption[], isAr: boolean): ComboboxItem[] {
+  return opts.map(o => ({
+    id:    o.value,
+    label: translateProjectLookup(o.value, o.label, isAr),
+  }));
 }
 
 interface Props {
@@ -108,7 +112,7 @@ export function SeoProjectInfoForm({
         <div>
           <label className={LABEL}>{isAr ? 'الحالة' : 'Status'}</label>
           <Combobox
-            items={toComboboxItems(statusOptions)}
+            items={toComboboxItems(statusOptions, isAr)}
             value={status}
             onChange={onChangeStatus}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
@@ -118,7 +122,7 @@ export function SeoProjectInfoForm({
         <div>
           <label className={LABEL}>{isAr ? 'النوع' : 'Type'}</label>
           <Combobox
-            items={toComboboxItems(typeOptions)}
+            items={toComboboxItems(typeOptions, isAr)}
             value={type}
             onChange={onChangeType}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}

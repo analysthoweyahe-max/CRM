@@ -2,7 +2,11 @@ export const ROUTES = {
   AUTH: {
     LOGIN:           '/auth/login',
     SET_PASSWORD:    '/auth/set-password',
+    SET_PASSWORD_TOKEN: (token = ':token') => `/auth/set-password/${token}`,
     INVITE:          '/auth/invite',
+    INVITE_TOKEN:    (token = ':token') => `/auth/invite/${token}`,
+    EMPLOYEE_INVITE_SET_PASSWORD: (token = ':token') =>
+      `/v1/employee/auth/invitations/${token}/set-password`,
     FORGOT_PASSWORD: '/auth/forgot-password',
   },
   DASHBOARD: '/dashboard',
@@ -54,6 +58,7 @@ export const ROUTES = {
     DASHBOARD: '/seo-leader',
     NEW:       '/seo-leader/new',
     DETAILS:   (id = ':id') => `/seo-leader/campaign/${id}`,
+    ADD_TASK:  (id = ':id') => `/seo-leader/campaign/${id}/tasks/new`,
     TEAM:      '/seo-leader/team',
     REPORTS:   '/seo-leader/reports',
     PROFILE:   '/seo-leader/profile',

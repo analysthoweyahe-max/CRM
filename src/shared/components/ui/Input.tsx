@@ -10,7 +10,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ hasError = false, startIcon, endIcon, className = '', ...props }, ref) => {
     const cls = [
-      'w-full h-11 rounded-lg border text-sm',
+      'w-full h-12 rounded-lg border text-base',
       'text-gray-800 dark:text-gray-200',
       'bg-white dark:bg-gray-700/50',
       'outline-none transition placeholder:text-gray-400 dark:placeholder:text-gray-500',

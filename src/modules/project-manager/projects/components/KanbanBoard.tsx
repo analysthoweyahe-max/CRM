@@ -35,7 +35,7 @@ export function KanbanBoard({ projectId, tasks, isAr }: Props) {
 
   return (
     <>
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-5 overflow-x-auto pb-4 px-1">
         {COLUMNS.map(status => (
           <KanbanColumn
             key={status}

@@ -1,6 +1,7 @@
 import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import type { PmLookupItem } from '../types/project.types';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -12,8 +13,11 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
-function toComboboxItems(lookups: PmLookupItem[]): ComboboxItem[] {
-  return lookups.map(l => ({ id: l.value, label: l.label }));
+function toComboboxItems(lookups: PmLookupItem[], isAr: boolean): ComboboxItem[] {
+  return lookups.map(l => ({
+    id:    l.value,
+    label: translateProjectLookup(l.value, l.label, isAr),
+  }));
 }
 
 export interface ProjectFormFieldsProps {
@@ -83,7 +87,7 @@ export function ProjectFormFields({
             <span className="text-red-500 ms-1">*</span>
           </label>
           <Combobox
-            items={toComboboxItems(typeItems)}
+            items={toComboboxItems(typeItems, isAr)}
             value={projectType}
             onChange={setType}
             placeholder={isAr ? '-- اختر النوع --' : '-- Select Type --'}
@@ -97,7 +101,7 @@ export function ProjectFormFields({
             <span className="text-red-500 ms-1">*</span>
           </label>
           <Combobox
-            items={toComboboxItems(statusItems)}
+            items={toComboboxItems(statusItems, isAr)}
             value={status}
             onChange={setStatus}
             searchPlaceholder={isAr ? 'ابحث عن حالة...' : 'Search status...'}

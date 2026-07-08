@@ -16,8 +16,8 @@ export default defineConfig({
 			"/api": {
 				target: "https://crm-hr.subcodeco.com",
 				changeOrigin: true,
-				secure: true,
-				rewrite: (path) => `/index.php${path}`,
+				secure: true
+				// rewrite: (path) => `/index.php${path}`,
 			},
 		},
 		watch: {

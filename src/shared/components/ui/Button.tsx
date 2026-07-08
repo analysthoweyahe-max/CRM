@@ -41,9 +41,9 @@ const VARIANT_CLS: Record<ButtonVariant, string> = {
 const SIZED_VARIANTS = new Set<ButtonVariant>(['primary', 'secondary', 'danger']);
 
 const SIZE_CLS: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2.5 text-sm',
-  lg: 'py-3 text-sm',
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2.5 text-base',
+  lg: 'py-3.5 text-base',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

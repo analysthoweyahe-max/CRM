@@ -3,21 +3,31 @@ import { useNavigate }                  from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { campaignApi }                  from '../api/campaign.api';
 import { ROUTES }                       from '@/app/router/routes';
+import { useLang }                      from '@/app/providers/LanguageProvider';
+import { translateProjectLookup }       from '@/shared/utils/projectLookup.i18n';
 import type { ComboboxItem }            from '@/shared/components/form/Combobox';
 
-function toItems(values: unknown[]): ComboboxItem[] {
+function toItems(values: unknown[], isAr: boolean): ComboboxItem[] {
   return values.map(v => {
-    if (typeof v === 'string') return { id: v, label: v };
-    const obj   = v as Record<string, unknown>;
-    const label = String(obj.label ?? obj.name  ?? obj.value ?? '');
-    const id    = String(obj.id    ?? obj.value ?? obj.name  ?? '');
-    return { id, label };
+    if (typeof v === 'string') {
+      return { id: v, label: translateProjectLookup(v, v, isAr) };
+    }
+    const obj      = v as Record<string, unknown>;
+    const id       = String(obj.id ?? obj.value ?? obj.name ?? '');
+    const enLabel  = String(obj.label ?? obj.name ?? obj.value ?? '');
+    const labelAr  = obj.label_ar ?? obj.labelAr;
+    return {
+      id,
+      label: translateProjectLookup(id, enLabel, isAr, labelAr != null ? String(labelAr) : undefined),
+    };
   });
 }
 
 export function useNewCampaign() {
   const navigate     = useNavigate();
   const queryClient  = useQueryClient();
+  const { lang }     = useLang();
+  const isAr         = lang === 'ar';
 
   const [name,         setName]        = useState('');
   const [domain,       setDomain]      = useState('');
@@ -85,8 +95,8 @@ export function useNewCampaign() {
     setName, setDomain, setDesc, setType, setStatus, setStartDate, setEndDate,
     addKeyword, updateKeyword, removeKeyword,
     addLink, updateLink, removeLink,
-    campaignTypeItems: toItems(typesQ.data ?? []),
-    statusItems:       toItems(statusesQ.data ?? []),
+    campaignTypeItems: toItems(typesQ.data ?? [], isAr),
+    statusItems:       toItems(statusesQ.data ?? [], isAr),
     lookupsLoading:    typesQ.isLoading || statusesQ.isLoading,
     saved,
     isValid,

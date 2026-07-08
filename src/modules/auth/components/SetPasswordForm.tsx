@@ -2,7 +2,6 @@
 import { useForm, type UseFormRegisterReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Lock } from 'lucide-react';
-import { ROUTES } from '@/app/router/routes';
 import {
   setPasswordSchema,
   type SetPasswordFormValues,
@@ -73,27 +72,27 @@ function PasswordField({
 }
 
 interface SetPasswordFormProps {
-  inviteToken?: string;
-  inviteType?:  'admin' | 'employee';
+  inviteToken?:  string;
+  inviteType?:   'admin' | 'employee';
+  inviteeName?:  string;
+  inviteeEmail?: string;
 }
 
 export function SetPasswordForm({
-  inviteToken = '',
-  inviteType  = 'employee',
+  inviteToken  = '',
+  inviteType   = 'employee',
+  inviteeName  = '',
+  inviteeEmail = '',
 }: SetPasswordFormProps) {
   const { lang } = useLang();
   const t = authTranslations[lang];
   const v = t.validation;
+  const ti = t.invite;
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
-  const { submit, error: submitError } = useSetPassword(
-    inviteToken,
-    rememberMe,
-    inviteType,
-  );
+  const { submit, error: submitError } = useSetPassword(inviteToken, inviteType);
 
   const {
     register,
@@ -120,14 +119,29 @@ export function SetPasswordForm({
         <p className="mt-1 text-sm text-gray-500">
           {t.setPassword.subtitle}
         </p>
+        {(inviteeName || inviteeEmail) && (
+          <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            {inviteeName && (
+              <p>
+                {ti.greeting} <span className="font-semibold text-gray-800">{inviteeName}</span>
+              </p>
+            )}
+            {inviteeEmail && (
+              <p className="mt-1">
+                {ti.accountEmail}:{' '}
+                <span className="font-medium text-gray-800" dir="ltr">{inviteeEmail}</span>
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Server error */}
       {submitError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {lang === 'ar'
-            ? 'حدث خطأ. حاول مرة أخرى.'
-            : 'Something went wrong. Please try again.'}
+          {submitError === 'setPasswordFailed'
+            ? (lang === 'ar' ? 'حدث خطأ. حاول مرة أخرى.' : 'Something went wrong. Please try again.')
+            : submitError}
         </div>
       )}
 
@@ -148,29 +162,6 @@ export function SetPasswordForm({
           isVisible={showConfirm}
           onToggle={() => setShowConfirm((prev) => !prev)}
         />
-      </div>
-
-      {/* Remember me + Forgot password */}
-      <div className="flex items-center justify-between">
-        <a
-          href={ROUTES.AUTH.FORGOT_PASSWORD}
-          className="text-sm text-gray-500 hover:text-brand-600 transition-colors"
-        >
-          {t.setPassword.forgotPassword}
-        </a>
-
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <span className="text-sm text-gray-600">
-            {t.setPassword.rememberMe}
-          </span>
-
-          <input
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="w-4 h-4 rounded accent-brand-500"
-          />
-        </label>
       </div>
 
       {/* Submit */}

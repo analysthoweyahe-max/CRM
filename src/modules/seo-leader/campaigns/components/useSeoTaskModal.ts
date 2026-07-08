@@ -35,7 +35,7 @@ export function useSeoTaskModal(
     setTitle(task.title);
     setDescription(task.description  ?? '');
     setPriority(task.priority        ?? 'medium');
-    setStage(task.stage              ?? '');
+    setStage(task.stage ?? task.phase ?? '');
     setStatus(task.status            ?? '');
     setDueDate(task.dueDate          ?? '');
     setEstimatedHours(task.estimatedHours ? String(task.estimatedHours) : '');

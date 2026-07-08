@@ -5,6 +5,7 @@ import { Button }          from '@/shared/components/ui/Button';
 import { formatDateShort } from '@/shared/utils/date.utils';
 import { ROUTES }          from '@/app/router/routes';
 import type { CampaignViewModel } from '../hooks/useSeoLeaderDashboard';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 
 const STATUS_BADGE: Record<string, { dot: string; badge: string }> = {
   in_progress: { dot: 'bg-[#A0CD39]',    badge: 'bg-[#D8EBAE] text-[#709028] dark:bg-[#A0CD39]/20 dark:text-[#A0CD39]'              },
@@ -41,7 +42,7 @@ export function CampaignCard({ campaign, isAr }: Props) {
         <span className="shrink-0 text-xs px-2.5 py-1 rounded-full border
                          border-gray-200 dark:border-gray-600
                          text-gray-500 dark:text-gray-400 whitespace-nowrap">
-          {campaign.campaignTypeLabel}
+          {translateProjectLookup(campaign.campaignType, campaign.campaignTypeLabel, isAr)}
         </span>
       </div>
 
@@ -78,7 +79,7 @@ export function CampaignCard({ campaign, isAr }: Props) {
           </span>
           <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${cfg.badge}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-            {campaign.statusLabel}
+            {translateProjectLookup(campaign.status, campaign.statusLabel, isAr)}
           </span>
         </div>
       </div>

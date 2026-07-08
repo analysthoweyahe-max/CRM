@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Users, Clock, Banknote, MessageSquare, Settings,
   UserPlus, FileText, CalendarDays, TrendingDown, Gift, ShieldCheck,
   FilePlus2, ClipboardList, CheckSquare, BarChart2, Building2, Briefcase, Tags,
-  UserCog, FolderKanban, Search,
+  UserCog,
 } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
 import type { NavSectionDef } from './appSidebar.types';
@@ -11,24 +11,68 @@ import type { NavSectionDef } from './appSidebar.types';
 
 export const ADMIN_NAV: NavSectionDef[] = [
   {
+    sectionAr: 'المشرف العام',
+    sectionEn: 'Super Admin',
     items: [
-      { key: 'admin-dash',      labelAr: 'الرئيسية',           labelEn: 'Dashboard',           icon: LayoutDashboard, path: ROUTES.ADMIN.DASHBOARD  },
-      { key: 'admin-employees', labelAr: 'إدارة الموظفين',     labelEn: 'Employees',           icon: Users,           path: ROUTES.ADMIN.EMPLOYEES    },
-      { key: 'admin-managers',  labelAr: 'المديرون',           labelEn: 'Managers',            icon: UserCog,         path: ROUTES.ADMIN.MANAGERS     },
-      { key: 'admin-departments', labelAr: 'الأقسام',         labelEn: 'Departments',         icon: Building2,       path: ROUTES.ADMIN.DEPARTMENTS  },
-      { key: 'admin-job-titles', labelAr: 'المسميات الوظيفية', labelEn: 'Job Titles',         icon: Briefcase,       path: ROUTES.ADMIN.JOB_TITLES   },
-      { key: 'admin-roles',     labelAr: 'الأدوار والصلاحيات', labelEn: 'Roles & Permissions', icon: ShieldCheck,     path: ROUTES.ADMIN.ROLES        },
-      { key: 'admin-seo-task-statuses', labelAr: 'حالات مهام SEO', labelEn: 'SEO Task Statuses', icon: Tags,        path: ROUTES.ADMIN.SEO_TASK_STATUSES },
-      { key: 'admin-settings',  labelAr: 'إعدادات المؤسسة',    labelEn: 'Org Settings',        icon: Settings,        path: ROUTES.ADMIN.SETTINGS   },
+      { key: 'admin-dash',     labelAr: 'الرئيسية',        labelEn: 'Dashboard',    icon: LayoutDashboard, path: ROUTES.ADMIN.DASHBOARD },
+      { key: 'admin-settings', labelAr: 'إعدادات المؤسسة', labelEn: 'Org Settings', icon: Settings,        path: ROUTES.ADMIN.SETTINGS  },
     ],
   },
   {
-    sectionAr: 'لوحات التحكم الرئيسية',
-    sectionEn: 'Main Dashboards',
+    sectionAr: 'لوحة الموارد البشرية',
+    sectionEn: 'HR Dashboard',
     items: [
-      { key: 'admin-hr-dash',       labelAr: 'لوحة الموارد البشرية', labelEn: 'HR Dashboard',         icon: Users,        path: ROUTES.DASHBOARD                 },
-      { key: 'admin-pm-dash',       labelAr: 'لوحة مدير المشاريع',   labelEn: 'PM Dashboard',         icon: FolderKanban, path: ROUTES.PROJECT_MANAGER.DASHBOARD },
-      { key: 'admin-seo-lead-dash', labelAr: 'لوحة مدير SEO',        labelEn: 'SEO Manager Dashboard', icon: Search,      path: ROUTES.SEO_LEADER.DASHBOARD      },
+      { key: 'hr-dash',           labelAr: 'الرئيسية',           labelEn: 'Dashboard',           icon: LayoutDashboard, path: ROUTES.DASHBOARD              },
+      { key: 'admin-employees',   labelAr: 'إدارة الموظفين',     labelEn: 'Employees',           icon: Users,           path: ROUTES.ADMIN.EMPLOYEES          },
+      { key: 'admin-managers',    labelAr: 'المديرون',           labelEn: 'Managers',            icon: UserCog,         path: ROUTES.ADMIN.MANAGERS           },
+      { key: 'admin-departments', labelAr: 'الأقسام',            labelEn: 'Departments',         icon: Building2,       path: ROUTES.ADMIN.DEPARTMENTS        },
+      { key: 'admin-job-titles',  labelAr: 'المسميات الوظيفية',  labelEn: 'Job Titles',          icon: Briefcase,       path: ROUTES.ADMIN.JOB_TITLES         },
+      { key: 'admin-roles',       labelAr: 'الأدوار والصلاحيات', labelEn: 'Roles & Permissions', icon: ShieldCheck,     path: ROUTES.ADMIN.ROLES              },
+      {
+        key: 'hr-employees', labelAr: 'الموظفين', labelEn: 'Employees', icon: Users,
+        children: [
+          { key: 'hr-emp-list', labelAr: 'قائمة الموظفين', labelEn: 'Employee List', path: ROUTES.EMPLOYEES.LIST, icon: Users    },
+          { key: 'hr-emp-new',  labelAr: 'إضافة موظف',     labelEn: 'Add Employee',  path: ROUTES.EMPLOYEES.NEW,  icon: UserPlus },
+        ],
+      },
+      {
+        key: 'hr-attendance', labelAr: 'الحضور والإجازات', labelEn: 'Attendance & Leaves', icon: Clock,
+        children: [
+          { key: 'hr-att-daily', labelAr: 'الحضور اليومي',  labelEn: 'Daily Attendance', path: ROUTES.ATTENDANCE.DAILY, icon: Clock        },
+          { key: 'hr-att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText     },
+          { key: 'hr-leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays },
+        ],
+      },
+      {
+        key: 'hr-payroll', labelAr: 'الرواتب', labelEn: 'Payroll', icon: Banknote,
+        children: [
+          { key: 'hr-deductions', labelAr: 'الخصومات',          labelEn: 'Deductions', path: ROUTES.PAYROLL.DEDUCTIONS, icon: TrendingDown },
+          { key: 'hr-bonuses',    labelAr: 'المكافآت والحوافز', labelEn: 'Bonuses',    path: ROUTES.PAYROLL.BONUSES,    icon: Gift         },
+        ],
+      },
+      { key: 'hr-messages', labelAr: 'الرسائل',    labelEn: 'Messages', icon: MessageSquare, path: ROUTES.MESSAGES },
+      { key: 'hr-settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: Settings,      path: ROUTES.SETTINGS },
+    ],
+  },
+  {
+    sectionAr: 'لوحة مدير المشاريع',
+    sectionEn: 'PM Dashboard',
+    items: [
+      { key: 'pm-dash',    labelAr: 'الرئيسية',                  labelEn: 'Dashboard',          icon: LayoutDashboard, path: ROUTES.PROJECT_MANAGER.DASHBOARD },
+      { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',         icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW      },
+      { key: 'pm-team',    labelAr: 'فريق العمل',                labelEn: 'Team',                 icon: Users,           path: ROUTES.PROJECT_MANAGER.TEAM     },
+      { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests',   icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS  },
+    ],
+  },
+  {
+    sectionAr: 'لوحة مدير SEO',
+    sectionEn: 'SEO Manager Dashboard',
+    items: [
+      { key: 'seo-dash',    labelAr: 'الرئيسية',                  labelEn: 'Dashboard',           icon: LayoutDashboard, path: ROUTES.SEO_LEADER.DASHBOARD      },
+      { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',          icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW           },
+      { key: 'seo-team',    labelAr: 'فريق العمل',                labelEn: 'Team',                  icon: Users,           path: ROUTES.SEO_LEADER.TEAM          },
+      { key: 'seo-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests',    icon: ClipboardList,   path: ROUTES.SEO_LEADER.REPORTS       },
+      { key: 'admin-seo-task-statuses', labelAr: 'حالات مهام SEO', labelEn: 'SEO Task Statuses', icon: Tags,            path: ROUTES.ADMIN.SEO_TASK_STATUSES },
     ],
   },
 ];
