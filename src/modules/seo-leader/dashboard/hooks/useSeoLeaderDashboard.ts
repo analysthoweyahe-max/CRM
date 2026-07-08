@@ -17,6 +17,7 @@ export interface CampaignViewModel {
   tasks_completed:   number;
   tasks_total:       number;
   team:              { name: string; initial: string; color: string }[];
+  githubLink:        string | null;
 }
 
 function toCampaignVM(c: SeoCampaign): CampaignViewModel {
@@ -34,6 +35,7 @@ function toCampaignVM(c: SeoCampaign): CampaignViewModel {
     tasks_completed:   0,
     tasks_total:       0,
     team:              [],
+    githubLink:        c.githubLink ?? null,
   };
 }
 

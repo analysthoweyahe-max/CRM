@@ -1,8 +1,9 @@
 import { useNavigate }     from 'react-router-dom';
-import { CalendarDays }    from 'lucide-react';
+import { CalendarDays, GitBranch } from 'lucide-react';
 import { Card }            from '@/shared/components/ui/Card';
 import { Button }          from '@/shared/components/ui/Button';
 import { formatDateShort } from '@/shared/utils/date.utils';
+import { ensureHttpUrl }   from '@/shared/utils';
 import { ROUTES }          from '@/app/router/routes';
 import type { CampaignViewModel } from '../hooks/useSeoLeaderDashboard';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
@@ -32,9 +33,23 @@ export function CampaignCard({ campaign, isAr }: Props) {
       {/* Title + type badge */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-snug truncate">
-            {campaign.name}
-          </h3>
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-snug truncate">
+              {campaign.name}
+            </h3>
+            {campaign.githubLink && (
+              <a
+                href={ensureHttpUrl(campaign.githubLink)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={isAr ? 'رابط GitHub' : 'GitHub link'}
+                className="shrink-0 text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              >
+                <GitBranch size={16} />
+              </a>
+            )}
+          </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
             {campaign.description}
           </p>

@@ -43,6 +43,8 @@ export interface PmProjectListItem {
   deadline:         string;
   teamAssignedAt:   string | null;
   workspaceUrl?:    string | null;
+  // Confirmed via a live GET /v1/pm/projects/{id} response.
+  githubLink?:      string | null;
   manager?:         PmProjectCreator | null;
   createdBy:        PmProjectCreator;
   createdAt:        string;
@@ -116,7 +118,9 @@ export interface PmProjectPayload {
   is_draft:        boolean;
   start_date:      string;
   deadline:        string;
-  workspace_url?:  string;
+  // The backend reads/writes this GitHub link under github_link (confirmed
+  // via the project card response) — not workspace_url.
+  github_link?:    string;
   // Super admin only — omit entirely for project-manager-initiated creates.
   manager_id?:     string;
 }

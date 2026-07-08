@@ -38,6 +38,7 @@ export function useNewCampaign() {
   const [endDate,      setEndDate]     = useState('');
   const [keywords,     setKeywords]    = useState<string[]>(['']);
   const [links,        setLinks]       = useState<string[]>(['']);
+  const [githubLink,   setGithubLink]  = useState('');
   const [saved,        setSaved]       = useState(false);
 
   /* ── Lookups ─────────────────────────────────────────────────────── */
@@ -75,6 +76,7 @@ export function useNewCampaign() {
       end_date:      endDate,
       keywords:      keywords.filter(Boolean),
       references:    links.filter(Boolean),
+      github_link:   githubLink.trim() || undefined,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
@@ -91,8 +93,8 @@ export function useNewCampaign() {
   const isValid = !!name.trim() && !!domain.trim() && !!campaignType && !!status && !!startDate && !!endDate;
 
   return {
-    name, domain, description, campaignType, status, startDate, endDate, keywords, links,
-    setName, setDomain, setDesc, setType, setStatus, setStartDate, setEndDate,
+    name, domain, description, campaignType, status, startDate, endDate, keywords, links, githubLink,
+    setName, setDomain, setDesc, setType, setStatus, setStartDate, setEndDate, setGithubLink,
     addKeyword, updateKeyword, removeKeyword,
     addLink, updateLink, removeLink,
     campaignTypeItems: toItems(typesQ.data ?? [], isAr),

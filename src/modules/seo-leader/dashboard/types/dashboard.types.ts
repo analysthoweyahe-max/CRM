@@ -12,6 +12,9 @@ export interface SeoCampaign {
   expectedEndDate:  string | null;
   targetKeywords:   string[];
   referenceLinks:   string[];
+  // Consistent with the rest of this response's camelCase convention
+  // (confirmed against the equivalent PM project response).
+  githubLink?:      string | null;
   createdBy:        { id: string; name: string };
   createdAt:        string;
   updatedAt:        string;

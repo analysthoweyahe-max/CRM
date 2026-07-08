@@ -8,6 +8,7 @@ export interface CreateCampaignPayload {
   end_date:      string;
   keywords:      string[];
   references:    string[];
+  github_link?:  string;
 }
 
 export interface CampaignLookupResponse {

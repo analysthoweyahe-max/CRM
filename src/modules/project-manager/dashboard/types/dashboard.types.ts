@@ -20,7 +20,10 @@ export interface PmDashboardProject {
   teamMembers:      PmDashboardTeamMember[];
   teamMembersCount: number;
   lastActivityAt:   string;
-  workspaceUrl:     string;
+  workspaceUrl?:    string | null;
+  // Confirmed via a live GET /v1/pm/projects/{id} response — this endpoint's
+  // JSON is camelCase throughout, including this field.
+  githubLink?:      string | null;
 }
 
 export interface PmDashboardProjectSection {

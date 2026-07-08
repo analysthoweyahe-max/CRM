@@ -37,6 +37,7 @@ export function NewCampaignPage() {
             status={form.status}           startDate={form.startDate}
             endDate={form.endDate}         keywords={form.keywords}
             links={form.links}             isAr={isAr}
+            githubLink={form.githubLink}   setGithubLink={form.setGithubLink}
             campaignTypeItems={form.campaignTypeItems}
             statusItems={form.statusItems}
             setName={form.setName}         setDomain={form.setDomain}

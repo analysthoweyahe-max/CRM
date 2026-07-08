@@ -22,6 +22,7 @@ export interface CampaignFormFieldsProps {
   endDate:      string;
   keywords:     string[];
   links:        string[];
+  githubLink:   string;
   isAr:         boolean;
   campaignTypeItems: ComboboxItem[];
   statusItems:       ComboboxItem[];
@@ -32,6 +33,7 @@ export interface CampaignFormFieldsProps {
   setStatus:    (v: string) => void;
   setStartDate: (v: string) => void;
   setEndDate:   (v: string) => void;
+  setGithubLink: (v: string) => void;
   addKeyword:    () => void;
   updateKeyword: (i: number, v: string) => void;
   removeKeyword: (i: number) => void;
@@ -41,9 +43,9 @@ export interface CampaignFormFieldsProps {
 }
 
 export function CampaignFormFields({
-  name, domain, description, campaignType, status, startDate, endDate, keywords, links, isAr,
+  name, domain, description, campaignType, status, startDate, endDate, keywords, links, githubLink, isAr,
   campaignTypeItems, statusItems,
-  setName, setDomain, setDesc, setType, setStatus, setStartDate, setEndDate,
+  setName, setDomain, setDesc, setType, setStatus, setStartDate, setEndDate, setGithubLink,
   addKeyword, updateKeyword, removeKeyword,
   addLink, updateLink, removeLink,
 }: CampaignFormFieldsProps) {
@@ -81,6 +83,19 @@ export function CampaignFormFields({
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
           {isAr ? 'أدخل النطاق دون https://' : 'Enter domain without https://'}
         </p>
+      </div>
+
+      {/* GitHub link */}
+      <div>
+        <label className={LABEL}>{isAr ? 'رابط GitHub' : 'GitHub Link'}</label>
+        <input
+          type="url"
+          value={githubLink}
+          onChange={e => setGithubLink(e.target.value)}
+          placeholder="https://github.com/org/repo"
+          dir="ltr"
+          className={INPUT}
+        />
       </div>
 
       {/* Description */}

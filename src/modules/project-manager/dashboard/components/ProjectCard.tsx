@@ -7,6 +7,7 @@ import type { PmProjectVM } from '../hooks/usePmDashboard';
 import type { PmProjectStatusKey } from '../types/dashboard.types';
 import { TeamAvatars } from '@/shared/components/ui/TeamAvatars';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { ensureHttpUrl } from '@/shared/utils';
 
 const STATUS_DOT: Record<PmProjectStatusKey, string> = {
   in_progress: 'bg-[#A0CD39]',
@@ -48,9 +49,9 @@ export function ProjectCard({ project, isAr }: Props) {
           <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-snug">
             {project.name}
           </h3>
-          {project.workspaceUrl && (
+          {project.githubLink && (
             <a
-              href={project.workspaceUrl}
+              href={ensureHttpUrl(project.githubLink)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}

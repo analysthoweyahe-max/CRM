@@ -53,7 +53,7 @@ export function NewProjectPage() {
         is_draft:        asDraft,
         start_date:      startDate,
         deadline,
-        workspace_url:   githubUrl.trim() || undefined,
+        github_link:     githubUrl.trim() || undefined,
         ...(isAdmin ? { manager_id: managerId } : {}),
       });
       setSaved(true);

@@ -25,7 +25,7 @@ export interface PmProjectVM {
   progressPercent:  number;
   team:             PmProjectMemberVM[];
   teamMembersCount: number;
-  workspaceUrl:     string;
+  githubLink:       string | null;
 }
 
 export interface PmProjectSectionVM {
@@ -54,7 +54,7 @@ function toProjectVM(p: PmDashboardProject): PmProjectVM {
     tasksTotal:       p.tasksTotal,
     progressPercent:  p.progressPercent,
     teamMembersCount: p.teamMembersCount,
-    workspaceUrl:     p.workspaceUrl,
+    githubLink:       p.githubLink ?? p.workspaceUrl ?? null,
     team: p.teamMembers.map(m => ({
       id:      m.id,
       name:    m.name,
