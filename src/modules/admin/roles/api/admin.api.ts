@@ -13,4 +13,8 @@ export const adminApi = {
   create(payload: CreateAdminPayload) {
     return http.post<CreateAdminResponse>('/v1/admins', payload);
   },
+
+  remove(id: string) {
+    return http.delete<{ status: string; message: string }>(`/v1/admins/${id}`);
+  },
 };

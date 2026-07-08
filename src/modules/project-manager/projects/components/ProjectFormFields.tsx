@@ -16,7 +16,7 @@ const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5
 function toComboboxItems(lookups: PmLookupItem[], isAr: boolean): ComboboxItem[] {
   return lookups.map(l => ({
     id:    l.value,
-    label: translateProjectLookup(l.value, l.label, isAr),
+    label: translateProjectLookup(l.value, l.label, isAr, l.labelAr),
   }));
 }
 

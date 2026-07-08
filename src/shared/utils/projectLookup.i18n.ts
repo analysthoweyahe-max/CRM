@@ -35,25 +35,26 @@ const LABEL_AR: Record<string, string> = Object.fromEntries(
   Object.values(LOOKUP_LABELS).map(({ en, ar }) => [en, ar]),
 );
 
-function normalizeKey(value: string): string {
-  return value.trim().toLowerCase().replace(/[\s-]+/g, '_');
+function normalizeKey(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
 }
 
 /** Translate PM/SEO lookup option labels when the API returns English only. */
 export function translateProjectLookup(
-  value: string,
-  label: string,
+  value: string | null | undefined,
+  label: string | null | undefined,
   isAr: boolean,
   labelAr?: string | null,
 ): string {
-  if (!isAr) return label;
+  const safeLabel = label ?? '';
+  if (!isAr) return safeLabel;
   if (labelAr?.trim()) return labelAr.trim();
 
   const byValue = LOOKUP_LABELS[normalizeKey(value)]?.ar;
   if (byValue) return byValue;
 
-  const byLabel = LABEL_AR[label.trim()];
+  const byLabel = LABEL_AR[safeLabel.trim()];
   if (byLabel) return byLabel;
 
-  return label;
+  return safeLabel;
 }

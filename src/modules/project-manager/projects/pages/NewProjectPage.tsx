@@ -19,7 +19,7 @@ export function NewProjectPage() {
   const { user } = useAuth();
   const isAdmin  = user?.role === 'admin';
 
-  const { statuses, types, managers } = usePmProjectLookups();
+  const { statuses, types, managers } = usePmProjectLookups({ includeManagers: isAdmin });
 
   const [name,        setName]        = useState('');
   const [description, setDesc]        = useState('');

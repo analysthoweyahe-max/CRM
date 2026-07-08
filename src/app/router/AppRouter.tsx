@@ -30,6 +30,9 @@ const AdminDepartmentsPage = lazy(() => import('@/modules/admin/departments/page
 const AdminJobTitlesPage = lazy(() => import('@/modules/admin/job-titles/pages/AdminJobTitlesPage').then(m => ({ default: m.AdminJobTitlesPage })));
 const AdminPermissionsPage = lazy(() => import('@/modules/admin/permissions/pages/AdminPermissionsPage').then(m => ({ default: m.AdminPermissionsPage })));
 const AdminSeoTaskStatusesPage = lazy(() => import('@/modules/admin/seo-task-statuses/pages/AdminSeoTaskStatusesPage').then(m => ({ default: m.AdminSeoTaskStatusesPage })));
+const AdminProjectTypesPage = lazy(() => import('@/modules/admin/project-types/pages/AdminProjectTypesPage').then(m => ({ default: m.AdminProjectTypesPage })));
+const AdminInstructionsPage = lazy(() => import('@/modules/admin/instructions/pages/AdminInstructionsPage').then(m => ({ default: m.AdminInstructionsPage })));
+const AdminMessagesMonitorPage = lazy(() => import('@/modules/admin/messages-monitor/pages/AdminMessagesMonitorPage').then(m => ({ default: m.AdminMessagesMonitorPage })));
 const OrgSettingsPage    = lazy(() => import('@/modules/admin/org-settings/pages/OrgSettingsPage')   .then(m => ({ default: m.OrgSettingsPage })));
 const AdminRolesPage     = lazy(() => import('@/modules/admin/roles/pages/AdminRolesPage')           .then(m => ({ default: m.AdminRolesPage })));
 const AdminRoleEditPage  = lazy(() => import('@/modules/admin/roles/pages/AdminRoleEditPage')         .then(m => ({ default: m.AdminRoleEditPage })));
@@ -90,6 +93,8 @@ const EmployeeTaskDetailPage   = lazy(() => import('@/modules/employee/tasks/pag
 const EmployeeDailyReportsPage = lazy(() => import('@/modules/employee/daily-reports/pages/EmployeeDailyReportsPage').then(m => ({ default: m.EmployeeDailyReportsPage })));
 const EmployeeProfilePage      = lazy(() => import('@/modules/employee/profile/pages/EmployeeProfilePage')           .then(m => ({ default: m.EmployeeProfilePage })));
 const EmployeeProjectMessagesPage = lazy(() => import('@/modules/employee/projects/pages/ProjectMessagesPage')        .then(m => ({ default: m.ProjectMessagesPage })));
+const EmployeeAlertsPage       = lazy(() => import('@/modules/employee/alerts/pages/EmployeeAlertsPage')              .then(m => ({ default: m.EmployeeAlertsPage })));
+const AlertDetailPage          = lazy(() => import('@/modules/employee/alerts/pages/AlertDetailPage')                 .then(m => ({ default: m.AlertDetailPage })));
 
 /* ── Router ───────────────────────────────────────────────────────── */
 export function AppRouter() {
@@ -129,7 +134,14 @@ export function AppRouter() {
                   <Route path={ROUTES.ADMIN.MANAGERS}         element={<AdminManagersPage />} />
                   <Route path={ROUTES.ADMIN.PERMISSIONS}      element={<AdminPermissionsPage />} />
                   <Route path={ROUTES.ADMIN.SEO_TASK_STATUSES} element={<AdminSeoTaskStatusesPage />} />
+                  <Route path={ROUTES.ADMIN.PROJECT_TYPES}    element={<AdminProjectTypesPage />} />
                   <Route path={ROUTES.ADMIN.SETTINGS}         element={<OrgSettingsPage />} />
+
+                  {/* Super-admin only (not shared with plain HR) */}
+                  <Route element={<RoleGuard allowedRoles={['admin']} />}>
+                    <Route path={ROUTES.ADMIN.INSTRUCTIONS}      element={<AdminInstructionsPage />} />
+                    <Route path={ROUTES.ADMIN.MESSAGES_MONITOR}  element={<AdminMessagesMonitorPage />} />
+                  </Route>
 
                   <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
                   <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />
@@ -174,6 +186,8 @@ export function AppRouter() {
                   <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
                   <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />} />
                   <Route path={ROUTES.EMPLOYEE.PROJECT_MESSAGES()} element={<EmployeeProjectMessagesPage />} />
+                  <Route path={ROUTES.EMPLOYEE.ALERTS}        element={<EmployeeAlertsPage />} />
+                  <Route path={ROUTES.EMPLOYEE.ALERT_DETAIL()} element={<AlertDetailPage />} />
                 </Route>
               </Route>
 

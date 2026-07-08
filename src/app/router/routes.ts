@@ -23,6 +23,9 @@ export const ROUTES = {
     MANAGERS:        '/admin-managers',
     PERMISSIONS:     '/admin-permissions',
     SEO_TASK_STATUSES: '/admin-seo-task-statuses',
+    PROJECT_TYPES:   '/admin-project-types',
+    INSTRUCTIONS:    '/admin-instructions',
+    MESSAGES_MONITOR: '/admin-messages-monitor',
     SETTINGS:        '/admin-org-settings',
   },
   EMPLOYEES: {
@@ -76,6 +79,8 @@ export const ROUTES = {
     DAILY_REPORTS: '/employee/daily-reports',
     PROFILE:       '/employee/profile',
     PROJECT_MESSAGES: (projectId: string | number = ':projectId') => `/employee/projects/${projectId}/messages`,
+    ALERTS:        '/employee/alerts',
+    ALERT_DETAIL:  (id: string | number = ':id') => `/employee/alerts/${id}`,
   },
   SEO_MEMBER: {
     DASHBOARD:     '/seo-member',

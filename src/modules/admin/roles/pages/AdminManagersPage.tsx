@@ -9,9 +9,12 @@ import { Button }     from '@/shared/components/ui/Button';
 import { SearchInput } from '@/shared/components/form/SearchInput';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { AdminEmployeeTable } from '@/modules/admin/employees/components/AdminEmployeeTable';
+import type { AdminEmployee } from '@/modules/admin/employees/types/adminEmployee.types';
 import { AddManagerModal }    from '../components/AddManagerModal';
+import { DeleteManagerModal } from '../components/DeleteManagerModal';
 import { useAdminManagers }   from '../hooks/useAdminManagers';
 import { useCreateAdmin }     from '../hooks/useCreateAdmin';
+import { useDeleteAdmin }     from '../hooks/useDeleteAdmin';
 import type { CreateAdminPayload } from '../types/adminManager.types';
 
 export function AdminManagersPage() {
@@ -25,13 +28,26 @@ export function AdminManagersPage() {
   } = useAdminManagers();
 
   const { mutate: createAdmin, isPending: creating } = useCreateAdmin();
+  const { mutate: deleteAdmin, isPending: deleting } = useDeleteAdmin();
   const [showAdd, setShowAdd] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<AdminEmployee | null>(null);
 
   function submitManager(payload: CreateAdminPayload) {
     createAdmin(payload, {
       onSuccess: () => {
         toast.success(isAr ? 'تم إنشاء المدير' : 'Manager created');
         setShowAdd(false);
+      },
+      onError: (err) => toast.error(extractApiError(err)),
+    });
+  }
+
+  function confirmDelete() {
+    if (!pendingDelete) return;
+    deleteAdmin(pendingDelete.id, {
+      onSuccess: () => {
+        toast.success(isAr ? 'تم حذف المدير' : 'Manager deleted');
+        setPendingDelete(null);
       },
       onError: (err) => toast.error(extractApiError(err)),
     });
@@ -71,6 +87,7 @@ export function AdminManagersPage() {
           page={page} pageCount={pageCount} total={total} pageSize={pageSize}
           onPage={setPage}
           onRowClick={id => navigate(ROUTES.ADMIN.EMPLOYEE_DETAIL(id))}
+          onDelete={setPendingDelete}
         />
       )}
 
@@ -79,6 +96,14 @@ export function AdminManagersPage() {
         onClose={() => setShowAdd(false)}
         onSubmit={submitManager}
         isLoading={creating}
+        isAr={isAr}
+      />
+
+      <DeleteManagerModal
+        manager={pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={deleting}
         isAr={isAr}
       />
 

@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Users, Clock, Banknote, MessageSquare, Settings,
   UserPlus, FileText, CalendarDays, TrendingDown, Gift, ShieldCheck,
   FilePlus2, ClipboardList, CheckSquare, BarChart2, Building2, Briefcase, Tags,
-  UserCog,
+  UserCog, FolderKanban, Megaphone, MessagesSquare,
 } from 'lucide-react';
 import { ROUTES } from '@/app/router/routes';
 import type { NavSectionDef } from './appSidebar.types';
@@ -15,6 +15,8 @@ export const ADMIN_NAV: NavSectionDef[] = [
     sectionEn: 'Super Admin',
     items: [
       { key: 'admin-dash',     labelAr: 'الرئيسية',        labelEn: 'Dashboard',    icon: LayoutDashboard, path: ROUTES.ADMIN.DASHBOARD },
+      { key: 'admin-instructions', labelAr: 'تعليمات فورية', labelEn: 'Realtime Instructions', icon: Megaphone, path: ROUTES.ADMIN.INSTRUCTIONS },
+      { key: 'admin-messages-monitor', labelAr: 'مراقبة الرسائل', labelEn: 'Messages Monitor', icon: MessagesSquare, path: ROUTES.ADMIN.MESSAGES_MONITOR },
       { key: 'admin-settings', labelAr: 'إعدادات المؤسسة', labelEn: 'Org Settings', icon: Settings,        path: ROUTES.ADMIN.SETTINGS  },
     ],
   },
@@ -62,6 +64,7 @@ export const ADMIN_NAV: NavSectionDef[] = [
       { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',         icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW      },
       { key: 'pm-team',    labelAr: 'فريق العمل',                labelEn: 'Team',                 icon: Users,           path: ROUTES.PROJECT_MANAGER.TEAM     },
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests',   icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS  },
+      { key: 'admin-project-types', labelAr: 'أنواع المشاريع', labelEn: 'Project Types', icon: FolderKanban, path: ROUTES.ADMIN.PROJECT_TYPES },
     ],
   },
   {
@@ -147,6 +150,7 @@ export const EMPLOYEE_NAV: NavSectionDef[] = [
       { key: 'emp-home',    labelAr: 'الرئيسية',          labelEn: 'Dashboard',      icon: LayoutDashboard, path: ROUTES.EMPLOYEE.DASHBOARD     },
       { key: 'emp-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.EMPLOYEE.TASKS         },
       { key: 'emp-msg',     labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.EMPLOYEE.MESSAGES      },
+      { key: 'emp-alerts',  labelAr: 'التنبيهات',          labelEn: 'Alerts',         icon: Megaphone,       path: ROUTES.EMPLOYEE.ALERTS        },
       { key: 'emp-req',     labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS      },
       { key: 'emp-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.EMPLOYEE.REPORTS       },
       { key: 'emp-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.EMPLOYEE.DAILY_REPORTS },
