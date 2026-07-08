@@ -32,18 +32,18 @@ export function usePmProjectLookups(options: { includeManagers?: boolean } = {})
 
   const statuses = useQuery({
     queryKey: ['pm-project-lookups', 'statuses'],
-    queryFn:  () => pmProjectLookupsApi.statuses().then(r => r.data.data),
+    queryFn:  () => pmProjectLookupsApi.statuses().then(r => (r.data.data ?? []).map(normalizeLookupItem)),
     staleTime: Infinity,
   });
 
   const types = useQuery({
     queryKey: ['pm-project-lookups', 'types'],
-    queryFn:  () => pmProjectLookupsApi.types().then(r => r.data.data.map(normalizeLookupItem)),
+    queryFn:  () => pmProjectLookupsApi.types().then(r => (r.data.data ?? []).map(normalizeLookupItem)),
   });
 
   const managers = useQuery({
     queryKey: ['pm-project-lookups', 'managers'],
-    queryFn:  () => pmProjectLookupsApi.managers().then(r => r.data.data),
+    queryFn:  () => pmProjectLookupsApi.managers().then(r => (r.data.data ?? []).map(normalizeLookupItem)),
     staleTime: 5 * 60 * 1000,
     enabled: includeManagers,
   });

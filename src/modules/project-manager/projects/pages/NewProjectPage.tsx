@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast }       from 'sonner';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { useAuth }     from '@/modules/auth/context/AuthContext';
@@ -11,11 +12,13 @@ import { pmProjectsApi } from '../api/project.api';
 import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
 import { SDLCPanel }        from '../components/SDLCPanel';
 import { ProjectFormFields } from '../components/ProjectFormFields';
+import { isSeoType, addMonths } from '../utils/seoProject';
 
 export function NewProjectPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const isAdmin  = user?.role === 'admin';
 
@@ -27,17 +30,22 @@ export function NewProjectPage() {
   const [status,      setStatus]      = useState('');
   const [startDate,   setDate]        = useState('');
   const [deadline,    setDeadline]    = useState('');
+  const [contractMonths, setContractMonths] = useState('');
   const [githubUrl,   setGithubUrl]   = useState('');
   const [managerId,   setManagerId]   = useState('');
   const [saved,       setSaved]       = useState(false);
+  const [savedAsDraft, setSavedAsDraft] = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
 
   useEffect(() => {
     if (!status && statuses.length > 0) setStatus(statuses[0].value);
   }, [statuses, status]);
 
+  const isSeo = isSeoType(types, projectType);
+
   const isValid = !!(
-    name.trim() && description.trim() && projectType && status && startDate && deadline &&
+    name.trim() && description.trim() && projectType && status && startDate &&
+    (isSeo ? Number(contractMonths) > 0 : deadline) &&
     (!isAdmin || managerId)
   );
 
@@ -45,19 +53,25 @@ export function NewProjectPage() {
     if (!isValid || submitting) return;
     setSubmitting(true);
     try {
-      await pmProjectsApi.create({
+      const res = await pmProjectsApi.create({
         name:            name.trim(),
         description:     description.trim(),
         project_type_id: Number(projectType),
         status,
         is_draft:        asDraft,
         start_date:      startDate,
-        deadline,
+        deadline:        isSeo ? addMonths(startDate, Number(contractMonths)) : deadline,
         github_link:     githubUrl.trim() || undefined,
         ...(isAdmin ? { manager_id: managerId } : {}),
       });
+      const newId = res.data.data.id;
+      // Refresh the dashboard + drafts lists so the new project shows up when we return.
+      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['pm-drafts'] });
+      setSavedAsDraft(asDraft);
       setSaved(true);
-      setTimeout(() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD), 1500);
+      // Open the newly created project from the inside with its full details.
+      setTimeout(() => navigate(ROUTES.PROJECT_MANAGER.DETAILS(String(newId))), 1200);
     } catch {
       toast.error(isAr ? 'حدث خطأ أثناء إنشاء المشروع' : 'Failed to create the project');
     } finally {
@@ -86,12 +100,14 @@ export function NewProjectPage() {
             name={name}        description={description}
             projectType={projectType} status={status}
             startDate={startDate}     deadline={deadline}
+            contractMonths={contractMonths}
             githubUrl={githubUrl}
             typeItems={types}  statusItems={statuses}
             isAr={isAr}
             setName={setName}  setDesc={setDesc}
             setType={setType}  setStatus={setStatus}
             setDate={setDate}  setDeadline={setDeadline}
+            setContractMonths={setContractMonths}
             setGithubUrl={setGithubUrl}
             showManagerField={isAdmin}
             managerId={managerId} setManagerId={setManagerId}
@@ -108,7 +124,9 @@ export function NewProjectPage() {
                           animate-[fadeInUp_0.3s_ease]">
             <CheckCircle size={18} className="shrink-0" />
             <span className="text-sm font-semibold">
-              {isAr ? 'تم إنشاء المشروع بنجاح!' : 'Project created successfully!'}
+              {savedAsDraft
+                ? (isAr ? 'تم حفظ المسودة بنجاح!' : 'Draft saved successfully!')
+                : (isAr ? 'تم إنشاء المشروع بنجاح!' : 'Project created successfully!')}
             </span>
           </div>
         </div>

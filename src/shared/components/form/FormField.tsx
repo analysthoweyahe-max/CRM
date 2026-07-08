@@ -6,6 +6,7 @@ interface FormFieldProps {
   required?: boolean;
   icon?:     ReactNode;
   error?:    string;
+  hint?:     string;
   children:  ReactNode;
 }
 
@@ -14,6 +15,7 @@ export function FormField({
   required = false,
   icon,
   error,
+  hint,
   children,
 }: FormFieldProps) {
   return (
@@ -24,7 +26,9 @@ export function FormField({
         {required && <span className="text-red-500">*</span>}
       </label>
       {children}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error
+        ? <p className="text-sm text-red-500">{error}</p>
+        : hint && <p className="text-xs text-gray-400 dark:text-gray-500">{hint}</p>}
     </div>
   );
 }

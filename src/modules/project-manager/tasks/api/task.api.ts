@@ -172,6 +172,10 @@ export const pmTaskApi = {
     return http.put<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}`, payload);
   },
 
+  remove(projectId: number | string, taskId: string) {
+    return http.delete<{ status: string; message: string }>(`/v1/pm/projects/${projectId}/tasks/${taskId}`);
+  },
+
   updateStatus(projectId: number | string, taskId: string, status: string) {
     return http.patch<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/status`, { status });
   },

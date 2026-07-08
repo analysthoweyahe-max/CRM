@@ -62,6 +62,7 @@ const NewProjectPage       = lazy(() => import('@/modules/project-manager/projec
 const ProjectDetailsPage   = lazy(() => import('@/modules/project-manager/projects/pages/ProjectDetailsPage')    .then(m => ({ default: m.ProjectDetailsPage })));
 const AddPmTaskPage        = lazy(() => import('@/modules/project-manager/projects/pages/AddPmTaskPage')         .then(m => ({ default: m.AddPmTaskPage })));
 const ProjectTeamPage      = lazy(() => import('@/modules/project-manager/team/pages/ProjectTeamPage')           .then(m => ({ default: m.ProjectTeamPage })));
+const ProjectTeamMemberPage = lazy(() => import('@/modules/project-manager/team/pages/ProjectTeamMemberPage')    .then(m => ({ default: m.ProjectTeamMemberPage })));
 const ProjectReportsPage   = lazy(() => import('@/modules/project-manager/reports/pages/ProjectReportsPage')     .then(m => ({ default: m.ProjectReportsPage })));
 const PMProfilePage        = lazy(() => import('@/modules/project-manager/profile/pages/PMProfilePage')          .then(m => ({ default: m.PMProfilePage })));
 
@@ -172,6 +173,7 @@ export function AppRouter() {
                   <Route path={ROUTES.PROJECT_MANAGER.ADD_TASK()} element={<AddPmTaskPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.DETAILS()} element={<ProjectDetailsPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.TEAM}      element={<ProjectTeamPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.TEAM_MEMBER()} element={<ProjectTeamMemberPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
                 </Route>

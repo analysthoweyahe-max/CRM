@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { FolderOpen }  from 'lucide-react';
 import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
 import { ROUTES }      from '@/app/router/routes';
@@ -7,6 +8,7 @@ import type { PmProjectStatusKey } from '../types/dashboard.types';
 import { TeamAvatars } from '@/shared/components/ui/TeamAvatars';
 import { GithubIcon }  from '@/shared/components/icons/GithubIcon';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { isSeoLabel } from '@/modules/project-manager/projects/utils/seoProject';
 import { ensureHttpUrl } from '@/shared/utils';
 
 const STATUS_DOT: Record<PmProjectStatusKey, string> = {
@@ -37,6 +39,7 @@ interface Props {
 
 export function ProjectCard({ project, isAr }: Props) {
   const navigate = useNavigate();
+  const isSeo = isSeoLabel(project.projectTypeLabel, project.projectTypeLabel);
 
   const goToDetails = () => navigate(ROUTES.PROJECT_MANAGER.DETAILS(String(project.id)));
 
@@ -63,18 +66,26 @@ export function ProjectCard({ project, isAr }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              aria-label={isAr ? 'رابط GitHub' : 'GitHub link'}
+              aria-label={isSeo ? (isAr ? 'رابط فولدر الدرايف' : 'Drive folder link') : (isAr ? 'رابط GitHub' : 'GitHub link')}
               className="shrink-0 text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
-              <GithubIcon size={16} />
+              {isSeo ? <FolderOpen size={16} /> : <GithubIcon size={16} />}
             </a>
           )}
         </div>
-        <span className="shrink-0 text-xs px-2.5 py-1 rounded-full border
-                         border-gray-200 dark:border-gray-600
-                         text-gray-500 dark:text-gray-400 whitespace-nowrap">
-          {translateProjectLookup('', project.projectTypeLabel, isAr)}
-        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {project.isDraft && (
+            <span className="text-xs px-2.5 py-1 rounded-full whitespace-nowrap font-medium
+                             bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              {isAr ? 'مسودة' : 'Draft'}
+            </span>
+          )}
+          <span className="text-xs px-2.5 py-1 rounded-full border
+                           border-gray-200 dark:border-gray-600
+                           text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {translateProjectLookup('', project.projectTypeLabel, isAr)}
+          </span>
+        </div>
       </div>
 
       {/* Progress bar */}

@@ -57,6 +57,7 @@ export const ROUTES = {
     DETAILS:   (id = ':id') => `/project-manager/project/${id}`,
     ADD_TASK:  (id = ':id') => `/project-manager/project/${id}/tasks/new`,
     TEAM:      '/project-manager/team',
+    TEAM_MEMBER: (id = ':id') => `/project-manager/team/${id}`,
     REPORTS:   '/project-manager/reports',
     PROFILE:   '/project-manager/profile',
   },

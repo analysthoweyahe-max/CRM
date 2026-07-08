@@ -1,93 +1,86 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
-import { useLang } from '@/app/providers/LanguageProvider';
-import { ROUTES } from '@/app/router/routes';
-import { Button } from '@/shared/components/ui/Button';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { KeyRound, ArrowRight, ArrowLeft } from 'lucide-react';
+import { SetPasswordForm }      from '@/modules/auth/components/SetPasswordForm';
+import { InviteExpiredBanner }  from '@/modules/auth/components/InviteExpiredBanner';
+import { useValidateInvite }    from '@/modules/auth/hooks/useValidateInvite';
+import { useInviteToken }       from '@/modules/auth/hooks/useInviteToken';
+import { useAuth }              from '@/modules/auth/context/AuthContext';
+import { useLang }              from '@/app/providers/LanguageProvider';
+import { authTranslations }     from '@/modules/auth/i18n';
+import { LoadingSpinner }       from '@/shared/components/feedback/LoadingSpinner';
+import { ROUTES }               from '@/app/router/routes';
 
+// Password reset is handled through the same invitation "set-password" flow:
+// the emailed link carries a token (path param or `?token=`), which we validate
+// and then let the user set a new password via /invitations/{token}/set-password.
 export function ForgotPasswordPage() {
-  const { lang, isRTL } = useLang();
-  const isAr = lang === 'ar';
+  const token               = useInviteToken();
+  const { status, payload } = useValidateInvite(token);
+  const { lang, isRTL }     = useLang();
+  const t                   = authTranslations[lang].invite;
+  const tr                  = authTranslations[lang].resetPassword;
+  const { completeInviteLogin } = useAuth();
+  const navigate             = useNavigate();
 
-  const [employeeId, setEmployeeId] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Already-activated token: the backend hands back a finished token instead of
+  // asking for a new password — log the user straight in.
+  const alreadyActivated = status === 'valid' && !!payload?.accessToken;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!employeeId.trim()) return;
+  useEffect(() => {
+    if (!alreadyActivated || !payload?.accessToken) return;
+    completeInviteLogin(payload.accessToken, payload.inviteType);
+    navigate(payload.redirectPath && payload.redirectPath.startsWith('/') ? payload.redirectPath : ROUTES.DASHBOARD, { replace: true });
+  }, [alreadyActivated, payload, completeInviteLogin, navigate]);
 
-    setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsSubmitting(false);
-    setEmployeeId('');
-
-    toast.success(
-      isAr
-        ? 'سيتم إرسال رابط الاستعادة إلى بريدك'
-        : 'A recovery link will be sent to your email',
-      { duration: 5000 },
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">
-          {isAr ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">
-          {isAr
-            ? 'أدخل معرف المستخدم وسنرسل لك رابط الاستعادة'
-            : "Enter your user ID and we'll send you a recovery link"}
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700">
-            {isAr ? 'معرف المستخدم' : 'User ID'}
-            <span className="text-red-500 ms-0.5">*</span>
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-              placeholder="EMP-1000"
-              required
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pe-11
-                         text-sm outline-none focus:border-brand-500 focus:ring-2
-                         focus:ring-brand-500/20 transition placeholder:text-gray-400"
-            />
-            <span className="pointer-events-none absolute inset-y-0 inset-e-0 flex items-center pe-3 text-gray-400">
-              <Mail size={17} />
-            </span>
+  // No token means the user opened this page directly (e.g. via the login
+  // "forgot password" link) rather than from an emailed reset link. There's no
+  // self-service reset endpoint, so guide them to request one instead of
+  // showing the misleading "link expired" error.
+  if (!token) {
+    const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-brand-50 border-2 border-brand-200 flex items-center justify-center mx-auto">
+            <KeyRound size={30} className="text-brand-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{tr.noTokenTitle}</h3>
+            <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">{tr.noTokenDesc}</p>
           </div>
         </div>
 
-        <Button
-          type="submit"
-          size="lg"
-          fullWidth
-          disabled={!employeeId.trim()}
-          isLoading={isSubmitting}
+        <Link
+          to={ROUTES.AUTH.LOGIN}
+          className="inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
         >
-          {isSubmitting
-            ? (isAr ? 'جاري الإرسال...' : 'Sending...')
-            : (isAr ? 'إرسال رابط الاستعادة' : 'Send Recovery Link')}
-        </Button>
-      </form>
+          <BackIcon size={16} />
+          {tr.backToLogin}
+        </Link>
+      </div>
+    );
+  }
 
-      <Link
-        to={ROUTES.AUTH.LOGIN}
-        className="inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
-      >
-        {isRTL ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-        {isAr ? 'العودة لتسجيل الدخول' : 'Back to Login'}
-      </Link>
+  if (status === 'loading' || alreadyActivated) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-8">
+        <LoadingSpinner size={28} />
+        <p className="text-sm text-gray-500">{t.validating}</p>
+      </div>
+    );
+  }
 
-    </div>
+  if (status === 'expired' || !payload) {
+    return <InviteExpiredBanner />;
+  }
+
+  return (
+    <SetPasswordForm
+      inviteToken={token}
+      inviteType={payload.inviteType}
+      inviteeName={payload.name}
+      inviteeEmail={payload.email}
+    />
   );
 }

@@ -1,4 +1,4 @@
-import { Pencil, RotateCcw } from 'lucide-react';
+import { Key, Pencil } from 'lucide-react';
 import { Card }   from '@/shared/components/ui/Card';
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge }  from '@/shared/components/ui/Badge';
@@ -12,22 +12,25 @@ const STATUS_VARIANT: Record<AdminEmployeeDetail['status'], 'success' | 'error' 
 };
 
 interface Props {
-  employee:      AdminEmployeeDetail;
-  isAr:          boolean;
-  onEdit:        () => void;
-  onResetPassword: () => void;
+  employee:            AdminEmployeeDetail;
+  isAr:                boolean;
+  isSuperAdmin?:       boolean;
+  onEdit:              () => void;
+  onUpdatePassword?:   () => void;
 }
 
-export function EmployeeDetailHeader({ employee, isAr, onEdit, onResetPassword }: Props) {
+export function EmployeeDetailHeader({ employee, isAr, isSuperAdmin, onEdit, onUpdatePassword }: Props) {
   return (
     <Card padding="lg" className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-2">
         <Button variant="primary" startIcon={<Pencil size={14} />} onClick={onEdit}>
           {isAr ? 'تعديل الموظف' : 'Edit Employee'}
         </Button>
-        <Button variant="ghost" startIcon={<RotateCcw size={14} />} onClick={onResetPassword}>
-          {isAr ? 'إرسال رابط تعيين كلمة المرور' : 'Send Password Setup Link'}
-        </Button>
+        {isSuperAdmin && onUpdatePassword && (
+          <Button variant="secondary" startIcon={<Key size={14} />} onClick={onUpdatePassword}>
+            {isAr ? 'تغيير كلمة المرور' : 'Update Password'}
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

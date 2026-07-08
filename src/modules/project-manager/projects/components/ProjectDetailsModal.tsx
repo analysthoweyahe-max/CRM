@@ -6,6 +6,7 @@ import {
 import { Modal } from '@/shared/components/ui/Modal';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { ensureHttpUrl } from '@/shared/utils';
+import { isSeoLabel, monthsBetween } from '../utils/seoProject';
 import type { PmProjectDetails } from '../types/project.types';
 
 interface Props {
@@ -34,6 +35,9 @@ function Row({ icon, label, children }: RowProps) {
 }
 
 export function ProjectDetailsModal({ open, onClose, project, isAr }: Props) {
+  const isSeo =
+    isSeoLabel(project.projectTypeLabel, project.projectTypeLabel) ||
+    isSeoLabel(project.projectType, project.projectType);
   return (
     <Modal
       open={open}
@@ -66,9 +70,19 @@ export function ProjectDetailsModal({ open, onClose, project, isAr }: Props) {
           {project.startDate || '—'}
         </Row>
 
-        <Row icon={<CalendarCheck size={16} />} label={isAr ? 'تاريخ التسليم' : 'Deadline'}>
-          {project.deadline || '—'}
-        </Row>
+        {isSeo ? (
+          <Row icon={<CalendarCheck size={16} />} label={isAr ? 'مدة العقد' : 'Contract Duration'}>
+            {(() => {
+              const months = monthsBetween(project.startDate, project.deadline);
+              if (!months) return '—';
+              return isAr ? `${months} شهر` : `${months} month${months === '1' ? '' : 's'}`;
+            })()}
+          </Row>
+        ) : (
+          <Row icon={<CalendarCheck size={16} />} label={isAr ? 'تاريخ التسليم' : 'Deadline'}>
+            {project.deadline || '—'}
+          </Row>
+        )}
 
         <Row icon={<Layers size={16} />} label={isAr ? 'عدد المراحل' : 'Phases'}>
           {project.phases?.length ?? 0}
@@ -90,7 +104,7 @@ export function ProjectDetailsModal({ open, onClose, project, isAr }: Props) {
           </Row>
         )}
 
-        <Row icon={<Link2 size={16} />} label={isAr ? 'رابط GitHub' : 'GitHub Link'}>
+        <Row icon={<Link2 size={16} />} label={isSeo ? (isAr ? 'رابط فولدر الدرايف' : 'Drive Folder Link') : (isAr ? 'رابط GitHub' : 'GitHub Link')}>
           {project.githubLink
             ? (
               <a

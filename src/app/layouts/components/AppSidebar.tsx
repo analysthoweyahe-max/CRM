@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, useRef, useLayoutEffect, type ReactNode } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavItem } from './NavItem';
@@ -15,6 +15,22 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
   const { lang, isRTL } = useLang();
   const isAr             = lang === 'ar';
   const location         = useLocation();
+
+  // The super-admin's nav links span several route groups that live under
+  // different layout components, so navigating between them remounts this
+  // sidebar and would otherwise reset its scroll to the top. Persist the scroll
+  // offset (per variant) so it's restored on remount.
+  const navRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const key   = `app-sidebar-scroll:${variant}`;
+    const saved = sessionStorage.getItem(key);
+    if (saved !== null) el.scrollTop = Number(saved) || 0;
+    const handleScroll = () => sessionStorage.setItem(key, String(el.scrollTop));
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [variant]);
 
   const sections = NAV_BY_VARIANT[variant];
   const allItems = sections.flatMap(s => s.items);
@@ -98,7 +114,9 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
         </div>
 
         {/* ── Navigation ── */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-4">
+        <nav ref={navRef}
+             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-4 space-y-4"
+             style={{ overflowAnchor: 'none' }}>
           {sections.map((section, si) => (
             <div key={si} className="space-y-0.5">
 

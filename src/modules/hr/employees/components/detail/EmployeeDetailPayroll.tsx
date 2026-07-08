@@ -1,5 +1,6 @@
 import { useEmployeeDeductions } from '@/modules/hr/payroll/hooks/useDeductions';
 import { useEmployeeBonuses } from '@/modules/hr/payroll/hooks/useBonuses';
+import { translateDeductionType } from '@/modules/hr/payroll/utils/deductionType.i18n';
 
 interface Props {
   employeeId: string;
@@ -42,7 +43,7 @@ export function EmployeeDetailPayroll({ employeeId, isAr }: Props) {
     ...(deductionsData?.data ?? []).map((d): Row => ({
       id:          `d-${d.id}`,
       date:        d.deductionDate,
-      type:        d.deductionTypeLabel,
+      type:        translateDeductionType(d.deductionType, d.deductionTypeLabel, isAr),
       reason:      d.reason,
       amount:      d.amount,
       sign:        -1,

@@ -60,7 +60,9 @@ export function NewCampaignPage() {
                           animate-[fadeInUp_0.3s_ease]">
             <CheckCircle size={18} className="shrink-0" />
             <span className="text-sm font-semibold">
-              {isAr ? 'تم إنشاء المشروع بنجاح!' : 'Project created successfully!'}
+              {form.savedAsDraft
+                ? (isAr ? 'تم حفظ المسودة بنجاح!' : 'Draft saved successfully!')
+                : (isAr ? 'تم إنشاء المشروع بنجاح!' : 'Project created successfully!')}
             </span>
           </div>
         </div>

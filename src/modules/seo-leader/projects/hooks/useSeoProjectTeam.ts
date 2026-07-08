@@ -16,7 +16,13 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-type ApiEnvelope<T> = { status: string; data: { data: T } };
+/** Extract a list whether the API returns a plain array or a { data: [...] } wrapper. */
+function extractList<T>(res: unknown): T[] {
+  const payload = (res as { data?: unknown })?.data;
+  if (Array.isArray(payload)) return payload as T[];
+  const nested = (payload as { data?: unknown })?.data;
+  return Array.isArray(nested) ? (nested as T[]) : [];
+}
 
 export function useSeoProjectTeam(projectId: string, isAr: boolean) {
   const [members,      setMembers]      = useState<SeoProjectMember[]>([]);
@@ -43,8 +49,7 @@ export function useSeoProjectTeam(projectId: string, isAr: boolean) {
     setIsLoading(true);
     try {
       const res = await seoTeamApi.getProjectTeam(projectId);
-      const env = res.data as unknown as ApiEnvelope<SeoProjectMember[]>;
-      setMembers(env.data?.data ?? []);
+      setMembers(extractList<SeoProjectMember>(res.data));
     } catch {
       /* keep previous state */
     } finally {
@@ -59,8 +64,7 @@ export function useSeoProjectTeam(projectId: string, isAr: boolean) {
     if (!showModal) return;
     seoTeamApi.getAvailableForProject(projectId)
       .then(res => {
-        const env = res.data as unknown as ApiEnvelope<SeoAvailableMember[]>;
-        const list = env.data?.data ?? [];
+        const list = extractList<SeoAvailableMember>(res.data);
         setAvailable(list.map(m => ({ id: m.id, label: m.name })));
       })
       .catch(() => setAvailable([]));

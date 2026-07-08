@@ -1,4 +1,4 @@
-import { Calendar } from 'lucide-react';
+import { Calendar, Trash2 } from 'lucide-react';
 import type { Task, TaskPriority } from '../../tasks/types/task.types';
 
 const PRIORITY_CONFIG: Record<TaskPriority, { ar: string; en: string; dot: string; badge: string }> = {
@@ -9,12 +9,13 @@ const PRIORITY_CONFIG: Record<TaskPriority, { ar: string; en: string; dot: strin
 };
 
 interface Props {
-  task:   Task;
-  isAr:   boolean;
-  onOpen: (task: Task) => void;
+  task:      Task;
+  isAr:      boolean;
+  onOpen:    (task: Task) => void;
+  onDelete?: (task: Task) => void;
 }
 
-export function KanbanTaskCard({ task, isAr, onOpen }: Props) {
+export function KanbanTaskCard({ task, isAr, onOpen, onDelete }: Props) {
   const prio = PRIORITY_CONFIG[task.priority];
 
   return (
@@ -25,15 +26,30 @@ export function KanbanTaskCard({ task, isAr, onOpen }: Props) {
         e.dataTransfer.setData('taskId', task.id);
         e.dataTransfer.effectAllowed = 'move';
       }}
-      className="bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm
+      className="group bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm
                  border border-gray-100 dark:border-gray-700/60
                  cursor-grab active:cursor-grabbing active:opacity-50
                  hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600
                  transition-all duration-150 select-none"
     >
-      {/* Top: task number + priority badge */}
+      {/* Top: task number + priority badge + delete */}
       <div className="flex items-center justify-between mb-2.5">
-        <span className="text-[11px] text-gray-400 font-mono">{task.taskNumber}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] text-gray-400 font-mono">{task.taskNumber}</span>
+          {onDelete && (
+            <button
+              type="button"
+              aria-label={isAr ? 'حذف المهمة' : 'Delete task'}
+              title={isAr ? 'حذف المهمة' : 'Delete task'}
+              onClick={e => { e.stopPropagation(); onDelete(task); }}
+              className="opacity-0 group-hover:opacity-100 focus:opacity-100
+                         text-gray-300 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400
+                         transition-all duration-150"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
         <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${prio.badge}`}>
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${prio.dot}`} />
           {isAr ? prio.ar : prio.en}

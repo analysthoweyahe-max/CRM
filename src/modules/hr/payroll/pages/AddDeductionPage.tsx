@@ -12,6 +12,7 @@ import { PageHeader }       from '@/shared/components/ui/PageHeader';
 import { employeeApi }      from '@/modules/hr/employees/api/employee.api';
 import { makeDeductionSchema } from '../schemas/addDeduction.schema';
 import { useDeductionTypes, useCreateDeduction } from '../hooks/useDeductions';
+import { translateDeductionType } from '../utils/deductionType.i18n';
 import { DeductionFormFields } from '../components/DeductionFormFields';
 import type { AddDeductionFormValues } from '../types/addDeduction.types';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
@@ -48,7 +49,7 @@ export function AddDeductionPage() {
 
   const typeItems = useMemo<ComboboxItem[]>(() => [
     { id: '', label: isAr ? 'اختر نوع الخصم...' : 'Select type...' },
-    ...(typesRaw ?? []).map((t) => ({ id: t.value, label: t.label })),
+    ...(typesRaw ?? []).map((t) => ({ id: t.value, label: translateDeductionType(t.value, t.label, isAr) })),
   ], [typesRaw, isAr]);
 
   const empItems = useMemo<ComboboxItem[]>(() => [

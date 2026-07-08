@@ -37,8 +37,8 @@ export function Combobox({
   const filtered = items.filter((item) => {
     const q = query.toLowerCase();
     return (
-      item.label.toLowerCase().includes(q) ||
-      item.id.toLowerCase().includes(q) ||
+      (item.label ?? '').toLowerCase().includes(q) ||
+      String(item.id ?? '').toLowerCase().includes(q) ||
       (item.detail ?? '').toLowerCase().includes(q)
     );
   });

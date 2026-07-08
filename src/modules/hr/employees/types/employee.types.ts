@@ -105,6 +105,11 @@ export type UpdateWorkSchedulePayload =
   | { shift_start: string; shift_end: string }
   | { working_hours: number };
 
+export interface UpdateEmployeePasswordPayload {
+  password:              string;
+  password_confirmation: string;
+}
+
 // ── Avatar helpers ────────────────────────────────────────────────────────────
 const AVATAR_COLORS = [
   'bg-red-400',    'bg-blue-400',   'bg-purple-400', 'bg-orange-400',

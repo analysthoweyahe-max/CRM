@@ -40,6 +40,7 @@ export function useNewCampaign() {
   const [links,        setLinks]       = useState<string[]>(['']);
   const [githubLink,   setGithubLink]  = useState('');
   const [saved,        setSaved]       = useState(false);
+  const [savedAsDraft, setSavedAsDraft] = useState(false);
 
   /* ── Lookups ─────────────────────────────────────────────────────── */
   const typesQ = useQuery({
@@ -66,28 +67,31 @@ export function useNewCampaign() {
 
   /* ── Mutation ────────────────────────────────────────────────────── */
   const mutation = useMutation({
-    mutationFn: () => campaignApi.create({
+    mutationFn: (asDraft: boolean) => campaignApi.create({
       name:          name.trim(),
       domain:        domain.trim(),
       description:   description.trim(),
       campaign_type: campaignType,
-      status,
+      // Send the draft status synchronously — relying on setStatus() here would
+      // read the previous value from the closure and never actually save a draft.
+      status:        asDraft ? 'draft' : status,
+      is_draft:      asDraft,
       start_date:    startDate,
       end_date:      endDate,
       keywords:      keywords.filter(Boolean),
       references:    links.filter(Boolean),
       github_link:   githubLink.trim() || undefined,
     }),
-    onSuccess: () => {
+    onSuccess: (_data, asDraft) => {
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      setSavedAsDraft(asDraft);
       setSaved(true);
       setTimeout(() => navigate(ROUTES.SEO_LEADER.DASHBOARD), 1500);
     },
   });
 
   function handleSave(asDraft = false) {
-    if (asDraft) setStatus('draft');
-    mutation.mutate();
+    mutation.mutate(asDraft);
   }
 
   const isValid = !!name.trim() && !!domain.trim() && !!campaignType && !!status && !!startDate && !!endDate;
@@ -101,6 +105,7 @@ export function useNewCampaign() {
     statusItems:       toItems(statusesQ.data ?? [], isAr),
     lookupsLoading:    typesQ.isLoading || statusesQ.isLoading,
     saved,
+    savedAsDraft,
     isValid,
     isSaving: mutation.isPending,
     handleSave,

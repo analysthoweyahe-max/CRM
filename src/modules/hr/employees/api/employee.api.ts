@@ -7,6 +7,7 @@ import type {
   CreateEmployeePayload,
   UpdateEmployeePayload,
   UpdateWorkSchedulePayload,
+  UpdateEmployeePasswordPayload,
   EmploymentType,
 } from '../types/employee.types';
 
@@ -41,6 +42,10 @@ export const employeeApi = {
 
   submit(id: string) {
     return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/submit`, {});
+  },
+
+  updatePassword(id: string, payload: UpdateEmployeePasswordPayload) {
+    return http.post<{ status: string; message: string }>(`/v1/employees/${id}/password`, payload);
   },
 
   remove(id: string) {

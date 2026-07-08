@@ -9,7 +9,7 @@ import type {
   InviteTokenPayload,
   LoginResult,
 } from '@/modules/auth/types/auth.types';
-import type { Role } from '@/shared/types/role.types';
+import { mapRolesToAppRole } from '@/shared/types/role.types';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,26 +41,13 @@ function isWrongAccountTypeError(err: unknown, idField: string): boolean {
   return Array.isArray(fieldErrors) && fieldErrors.some((msg) => /is invalid/i.test(msg));
 }
 
-function mapAdminRole(roles: string[]): Role {
-  if (roles.includes('super-admin'))      return 'admin';
-  if (roles.includes('hr-manager'))       return 'hr';
-  if (roles.includes('manager'))          return 'manager';
-  if (roles.includes('project-manager'))  return 'manager';
-  if (roles.includes('seo-manager'))      return 'seo-leader';
-  return 'admin';
-}
-
-function mapEmployeeRole(roles: string[]): Role {
-  if (roles?.includes('seo-employee') || roles?.includes('seo-member')) return 'seo-member';
-  return 'employee';
-}
-
 function buildEmployeeUser(employee: ApiEmployee): AuthUser {
   return {
     id:         employee.id,
     employeeId: employee.id,
     fullName:   employee.name,
-    role:       mapEmployeeRole(employee.roles ?? []),
+    // Fall back to the plain employee portal when no elevated role is assigned.
+    role:       mapRolesToAppRole(employee.roles, 'employee'),
     avatarUrl:  employee.avatar_url,
   };
 }
@@ -70,7 +57,8 @@ function buildAdminUser(admin: ApiAdmin): AuthUser {
     id:         admin.id,
     employeeId: admin.id,
     fullName:   admin.name,
-    role:       mapAdminRole(admin.roles ?? []),
+    // Admin-endpoint accounts default to full admin access when unmapped.
+    role:       mapRolesToAppRole(admin.roles, 'admin'),
     avatarUrl:  admin.avatar_url,
   };
 }

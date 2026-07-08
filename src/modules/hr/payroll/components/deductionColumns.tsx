@@ -3,6 +3,7 @@ import { Zap, PenLine } from 'lucide-react';
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge }  from '@/shared/components/ui/Badge';
 import { getInitial, getAvatarColor } from '@/modules/hr/employees/types/employee.types';
+import { translateDeductionType } from '../utils/deductionType.i18n';
 import type { ApiDeduction } from '../types/payroll.types';
 
 const col = createColumnHelper<ApiDeduction>();
@@ -31,7 +32,11 @@ export function getDeductionColumns(isAr: boolean) {
     col.accessor('deductionTypeLabel', {
       id:     'deductionTypeLabel',
       header: isAr ? 'نوع الخصم' : 'Type',
-      cell:   (i) => <span className="text-sm text-gray-700 dark:text-gray-300">{i.getValue()}</span>,
+      cell:   ({ row }) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {translateDeductionType(row.original.deductionType, row.original.deductionTypeLabel, isAr)}
+        </span>
+      ),
     }),
     col.accessor('amount', {
       id:     'amount',

@@ -52,6 +52,12 @@ export const authTranslations = {
       accountEmail: 'البريد الإلكتروني',
     },
 
+    resetPassword: {
+      noTokenTitle: 'إعادة تعيين كلمة المرور',
+      noTokenDesc:  'لإعادة تعيين كلمة المرور، تواصل مع مسؤول النظام ليرسل لك رابطاً جديداً. افتح الرابط من بريدك لتعيين كلمة مرور جديدة.',
+      backToLogin:  'العودة لتسجيل الدخول',
+    },
+
     magicLink: {
       checkEmailTitle:  'افحص بريدك الإلكتروني',
       checkEmailDesc:   'أرسلنا رابط تسجيل دخول آمن إلى بريدك الإلكتروني. اضغط عليه لإكمال تسجيل الدخول.',
@@ -141,6 +147,12 @@ export const authTranslations = {
       expiredDesc:  'This link has expired or has already been used. Contact your system administrator for a new link.',
       greeting:     'Hello',
       accountEmail: 'Email',
+    },
+
+    resetPassword: {
+      noTokenTitle: 'Reset your password',
+      noTokenDesc:  'To reset your password, ask your system administrator to send you a new link. Open that link from your email to set a new password.',
+      backToLogin:  'Back to Login',
     },
 
     magicLink: {

@@ -1,6 +1,9 @@
-import { AtSign, Paperclip, Search, Send } from 'lucide-react';
+import { AtSign, Paperclip, Search, Send, UserPlus } from 'lucide-react';
 import { Avatar }               from '@/shared/components/ui/Avatar';
+import { Button }               from '@/shared/components/ui/Button';
 import { useProjectMessages }   from '../hooks/useProjectMessages';
+import { useProjectTeamTab }    from '../hooks/useProjectTeamTab';
+import { AddTeamMemberModal }   from './AddTeamMemberModal';
 
 interface Props {
   projectId: string;
@@ -13,12 +16,19 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
     showMentions, setShowMentions, mentionables, insertMention,
   } = useProjectMessages(projectId);
 
+  const {
+    showModal, openModal, closeModal,
+    available, selectedIds, toggleSelected,
+    projectRole, setProjectRole,
+    canAdd, handleAddExisting,
+  } = useProjectTeamTab(projectId, isAr);
+
   return (
     <div className="flex flex-col rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
 
-      {/* Search */}
-      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-        <div className="relative">
+      {/* Search + add members */}
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2.5">
+        <div className="relative flex-1">
           <Search size={14} className="absolute top-1/2 -translate-y-1/2 end-3 text-gray-400 pointer-events-none" />
           <input
             type="text"
@@ -34,6 +44,14 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
                        focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50"
           />
         </div>
+        <Button
+          variant="primary"
+          startIcon={<UserPlus size={15} />}
+          onClick={openModal}
+          className="shrink-0 whitespace-nowrap"
+        >
+          {isAr ? 'إضافة موظفين' : 'Add Members'}
+        </Button>
       </div>
 
       {/* Messages area */}
@@ -157,6 +175,20 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Add members to project */}
+      <AddTeamMemberModal
+        open={showModal}
+        onClose={closeModal}
+        isAr={isAr}
+        available={available}
+        selectedIds={selectedIds}
+        projectRole={projectRole}
+        onToggle={toggleSelected}
+        onSetRole={setProjectRole}
+        canAdd={canAdd}
+        onConfirm={handleAddExisting}
+      />
 
     </div>
   );

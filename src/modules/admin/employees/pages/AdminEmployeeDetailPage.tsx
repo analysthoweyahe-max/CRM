@@ -6,13 +6,24 @@ import { ActivityLogCard }       from '../components/ActivityLogCard';
 import { PersonalInfoCard }      from '../components/PersonalInfoCard';
 import { EmploymentInfoCard }    from '../components/EmploymentInfoCard';
 import { CustomPermissionsCard } from '../components/CustomPermissionsCard';
+import { UpdateEmployeePasswordModal } from '../components/UpdateEmployeePasswordModal';
 import { useAdminEmployeeDetail } from '../hooks/useAdminEmployeeDetail';
 
 export function AdminEmployeeDetailPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
 
-  const { employee, isLoading, editEmployee, resetPassword } = useAdminEmployeeDetail(isAr);
+  const {
+    employee,
+    isLoading,
+    isSuperAdmin,
+    editEmployee,
+    passwordModalOpen,
+    openPasswordModal,
+    closePasswordModal,
+    updatePassword,
+    isUpdatingPassword,
+  } = useAdminEmployeeDetail(isAr);
 
   if (isLoading) {
     return (
@@ -33,7 +44,22 @@ export function AdminEmployeeDetailPage() {
   return (
     <div className="space-y-5">
 
-      <EmployeeDetailHeader employee={employee} isAr={isAr} onEdit={editEmployee} onResetPassword={resetPassword} />
+      <EmployeeDetailHeader
+        employee={employee}
+        isAr={isAr}
+        isSuperAdmin={isSuperAdmin}
+        onEdit={editEmployee}
+        onUpdatePassword={openPasswordModal}
+      />
+
+      <UpdateEmployeePasswordModal
+        open={passwordModalOpen}
+        employee={employee ? { name: employee.name, email: employee.email } : undefined}
+        isAr={isAr}
+        isLoading={isUpdatingPassword}
+        onClose={closePasswordModal}
+        onSubmit={updatePassword}
+      />
 
       <EmployeeStatCards stats={employee.stats} isAr={isAr} />
 

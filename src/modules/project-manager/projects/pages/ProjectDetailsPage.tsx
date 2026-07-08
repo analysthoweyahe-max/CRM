@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Plus, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Plus, Info, FolderOpen } from 'lucide-react';
 import { GithubIcon } from '@/shared/components/icons/GithubIcon';
 import { ensureHttpUrl } from '@/shared/utils';
+import { isSeoLabel } from '../utils/seoProject';
 import { toast } from 'sonner';
 import { useLang }         from '@/app/providers/LanguageProvider';
 import { Card }            from '@/shared/components/ui/Card';
@@ -81,6 +82,8 @@ export function ProjectDetailsPage() {
   const progress       = tasksTotal ? Math.round((tasksCompleted / tasksTotal) * 100) : 0;
 
   const BackIcon = isAr ? ArrowRight : ArrowLeft;
+  const isSeo = isSeoLabel(project.projectTypeLabel, project.projectTypeLabel) ||
+                isSeoLabel(project.projectType, project.projectType);
 
   return (
     <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
@@ -123,13 +126,15 @@ export function ProjectDetailsPage() {
               href={ensureHttpUrl(project.githubLink)}
               target="_blank"
               rel="noopener noreferrer"
-              title={isAr ? 'فتح مستودع GitHub' : 'Open GitHub repository'}
-              aria-label="GitHub"
-              className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200
-                         dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-white
-                         hover:bg-[#24292f] hover:border-[#24292f] transition-colors"
+              title={isSeo
+                ? (isAr ? 'فتح فولدر الدرايف' : 'Open Drive folder')
+                : (isAr ? 'فتح مستودع GitHub' : 'Open GitHub repository')}
+              aria-label={isSeo ? (isAr ? 'رابط فولدر الدرايف' : 'Drive Folder Link') : 'GitHub'}
+              className={`inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200
+                         dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-white transition-colors
+                         ${isSeo ? 'hover:bg-[#A0CD39] hover:border-[#A0CD39]' : 'hover:bg-[#24292f] hover:border-[#24292f]'}`}
             >
-              <GithubIcon size={18} />
+              {isSeo ? <FolderOpen size={18} /> : <GithubIcon size={18} />}
             </a>
           )}
           <div className="w-40">

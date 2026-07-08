@@ -2,6 +2,7 @@ import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import type { PmLookupItem } from '../types/project.types';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { isSeoType } from '../utils/seoProject';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -27,6 +28,7 @@ export interface ProjectFormFieldsProps {
   status:       string;
   startDate:    string;
   deadline:     string;
+  contractMonths: string;
   githubUrl:    string;
   typeItems:    PmLookupItem[];
   statusItems:  PmLookupItem[];
@@ -37,6 +39,7 @@ export interface ProjectFormFieldsProps {
   setStatus:    (v: string) => void;
   setDate:      (v: string) => void;
   setDeadline:  (v: string) => void;
+  setContractMonths: (v: string) => void;
   setGithubUrl: (v: string) => void;
   // Super admin only — picks who the project is assigned to.
   showManagerField?: boolean;
@@ -46,10 +49,11 @@ export interface ProjectFormFieldsProps {
 }
 
 export function ProjectFormFields({
-  name, description, projectType, status, startDate, deadline, githubUrl, typeItems, statusItems, isAr,
-  setName, setDesc, setType, setStatus, setDate, setDeadline, setGithubUrl,
+  name, description, projectType, status, startDate, deadline, contractMonths, githubUrl, typeItems, statusItems, isAr,
+  setName, setDesc, setType, setStatus, setDate, setDeadline, setContractMonths, setGithubUrl,
   showManagerField, managerId, setManagerId, managerItems = [],
 }: ProjectFormFieldsProps) {
+  const isSeo = isSeoType(typeItems, projectType);
   return (
     <div className="space-y-5">
 
@@ -134,22 +138,24 @@ export function ProjectFormFields({
         </div>
       )}
 
-      {/* GitHub link */}
+      {/* Drive folder link (SEO) / GitHub link (everything else) */}
       <div>
         <label className={LABEL}>
-          {isAr ? 'رابط GitHub' : 'GitHub Link'}
+          {isSeo
+            ? (isAr ? 'رابط فولدر الدرايف' : 'Drive Folder Link')
+            : (isAr ? 'رابط GitHub' : 'GitHub Link')}
         </label>
         <input
           type="url"
           value={githubUrl}
           onChange={e => setGithubUrl(e.target.value)}
-          placeholder="https://github.com/org/repo"
+          placeholder={isSeo ? 'https://drive.google.com/drive/folders/...' : 'https://github.com/org/repo'}
           dir="ltr"
           className={INPUT}
         />
       </div>
 
-      {/* Start date + Deadline */}
+      {/* Start date + Deadline (or Contract Duration for SEO) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>
@@ -164,19 +170,37 @@ export function ProjectFormFields({
             className={INPUT}
           />
         </div>
-        <div>
-          <label className={LABEL}>
-            {isAr ? 'الموعد النهائي' : 'Deadline'}
-            <span className="text-red-500 ms-1">*</span>
-          </label>
-          <input
-            required
-            type="date"
-            value={deadline}
-            onChange={e => setDeadline(e.target.value)}
-            className={INPUT}
-          />
-        </div>
+        {isSeo ? (
+          <div>
+            <label className={LABEL}>
+              {isAr ? 'مدة العقد (بالأشهر)' : 'Contract Duration (months)'}
+              <span className="text-red-500 ms-1">*</span>
+            </label>
+            <input
+              required
+              type="number"
+              min={1}
+              value={contractMonths}
+              onChange={e => setContractMonths(e.target.value)}
+              placeholder={isAr ? 'مثال: 6' : 'e.g. 6'}
+              className={INPUT}
+            />
+          </div>
+        ) : (
+          <div>
+            <label className={LABEL}>
+              {isAr ? 'الموعد النهائي' : 'Deadline'}
+              <span className="text-red-500 ms-1">*</span>
+            </label>
+            <input
+              required
+              type="date"
+              value={deadline}
+              onChange={e => setDeadline(e.target.value)}
+              className={INPUT}
+            />
+          </div>
+        )}
       </div>
 
     </div>

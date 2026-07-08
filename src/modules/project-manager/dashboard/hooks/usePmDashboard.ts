@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAvatarColor } from '@/shared/utils';
 import { pmDashboardApi } from '../api/dashboard.api';
+import { pmProjectsApi } from '../../projects/api/project.api';
+import type { PmProjectListItem } from '../../projects/types/project.types';
 import type {
   PmDashboardProject,
   PmDashboardSummary,
@@ -26,10 +28,13 @@ export interface PmProjectVM {
   team:             PmProjectMemberVM[];
   teamMembersCount: number;
   githubLink:       string | null;
+  isDraft:          boolean;
 }
 
+export type PmProjectSectionKey = PmProjectStatusKey | 'draft';
+
 export interface PmProjectSectionVM {
-  key:      PmProjectStatusKey;
+  key:      PmProjectSectionKey;
   labelAr:  string;
   labelEn:  string;
   total:    number;
@@ -55,12 +60,32 @@ function toProjectVM(p: PmDashboardProject): PmProjectVM {
     progressPercent:  p.progressPercent,
     teamMembersCount: p.teamMembersCount,
     githubLink:       p.githubLink ?? null,
+    isDraft:          false,
     team: p.teamMembers.map(m => ({
       id:      m.id,
       name:    m.name,
       initial: m.avatarInitial,
       color:   getAvatarColor(m.id),
     })),
+  };
+}
+
+// Drafts come from the list endpoint (the dashboard endpoint omits them), so
+// they lack task/progress/team detail — surface the essentials + a draft flag.
+function draftToProjectVM(p: PmProjectListItem): PmProjectVM {
+  return {
+    id:               p.id,
+    name:             p.name,
+    status:           (p.status as PmProjectStatusKey) || 'not_started',
+    statusLabel:      p.statusLabel,
+    projectTypeLabel: p.projectTypeLabel,
+    tasksCompleted:   0,
+    tasksTotal:       0,
+    progressPercent:  0,
+    teamMembersCount: 0,
+    githubLink:       p.githubLink ?? null,
+    isDraft:          true,
+    team:             [],
   };
 }
 
@@ -73,7 +98,7 @@ export interface PmDashboardStats {
 }
 
 function computeStats(sections: PmProjectSectionVM[]): PmDashboardStats {
-  const allProjects = sections.flatMap(s => s.projects);
+  const allProjects = sections.flatMap(s => s.projects).filter(p => !p.isDraft);
 
   const activeTasks = allProjects
     .filter(p => p.status === 'in_progress')
@@ -94,13 +119,26 @@ export function usePmDashboard() {
     staleTime: 60_000,
   });
 
-  const sections: PmProjectSectionVM[] = (data?.projects.sections ?? []).map(s => ({
+  const { data: drafts } = useQuery({
+    queryKey: ['pm-drafts'],
+    queryFn:  () => pmProjectsApi.myProjects({ is_draft: true, per_page: 100 }).then(r => r.data.data.data),
+    staleTime: 60_000,
+  });
+
+  const statusSections: PmProjectSectionVM[] = (data?.projects.sections ?? []).map(s => ({
     key:      s.key,
     labelAr:  SECTION_LABELS[s.key]?.ar ?? s.label,
     labelEn:  SECTION_LABELS[s.key]?.en ?? s.label,
     total:    s.total,
     projects: s.projects.map(toProjectVM),
   }));
+
+  const draftProjects = (drafts ?? []).map(draftToProjectVM);
+  const draftSection: PmProjectSectionVM[] = draftProjects.length > 0
+    ? [{ key: 'draft', labelAr: 'المسودات', labelEn: 'Drafts', total: draftProjects.length, projects: draftProjects }]
+    : [];
+
+  const sections = [...statusSections, ...draftSection];
 
   return {
     isLoading,

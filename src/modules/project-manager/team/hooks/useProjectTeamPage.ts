@@ -12,7 +12,7 @@ export type { PmTeamMemberApi };
 
 // Backend `search` matching isn't reliable for Arabic name variants (e.g. "احمد" vs "أحمد"),
 // so the full roster is fetched once and searched client-side with normalization instead.
-async function fetchAllMembers(): Promise<PmTeamMemberApi[]> {
+export async function fetchAllMembers(): Promise<PmTeamMemberApi[]> {
   const first = await pmTeamApi.list({ per_page: FETCH_PAGE_SIZE, page: 1 });
   const { data: firstBatch, last_page } = first.data.data;
   if (last_page <= 1) return firstBatch;
@@ -30,7 +30,6 @@ export function useProjectTeamPage(isAr = true) {
   const [page,          setPage]          = useState(1);
   const [search,        setSearch]        = useState('');
   const [selected,      setSelected]      = useState<Set<string>>(new Set());
-  const [profileMember, setProfileMember] = useState<PmTeamMemberApi | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,11 +73,6 @@ export function useProjectTeamPage(isAr = true) {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  }
-
-  function openProfile(id: string) {
-    const m = allMembers.find(m => m.id === id);
-    if (m) setProfileMember(m);
   }
 
   function toggleActive(id: string) {
@@ -136,9 +130,6 @@ export function useProjectTeamPage(isAr = true) {
     clearSelection: () => setSelected(new Set()),
     toggleActive,
     exportSelected,
-    profileMember,
-    openProfile,
-    closeProfile: () => setProfileMember(null),
     isLoading,
     getColor,
   };

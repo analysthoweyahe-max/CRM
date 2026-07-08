@@ -26,8 +26,14 @@ export function MemberCard({ member, selected, onToggle, onView, onToggleActive,
   const isActive = member.isActive !== false;
 
   return (
-    <div className={[
-      'relative bg-white dark:bg-gray-800 rounded-2xl border p-4 space-y-3 transition-all duration-200 hover:-translate-y-0.5',
+    <div
+      onClick={() => onView(member.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onView(member.id); } }}
+      className={[
+      'relative bg-white dark:bg-gray-800 rounded-2xl border p-4 space-y-3 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A0CD39]',
       selected
         ? 'border-[#A0CD39] shadow-[0_0_0_1px_rgba(160,205,57,0.5)]'
         : 'border-gray-100 dark:border-gray-700 hover:border-[#A0CD39]/60 hover:shadow-[0_0_0_1px_rgba(160,205,57,0.25)]',
@@ -37,6 +43,7 @@ export function MemberCard({ member, selected, onToggle, onView, onToggleActive,
         type="checkbox"
         checked={selected}
         onChange={() => onToggle(member.id)}
+        onClick={(e) => e.stopPropagation()}
         className="absolute top-3.5 start-3.5 w-4 h-4 rounded accent-[#A0CD39] cursor-pointer"
       />
 
@@ -79,10 +86,12 @@ export function MemberCard({ member, selected, onToggle, onView, onToggleActive,
         </div>
 
         <div className="flex items-center justify-between">
-          <Button variant="icon" title={isAr ? 'تبديل الحالة' : 'Toggle status'} onClick={() => onToggleActive(member.id)}>
+          <Button variant="icon" title={isAr ? 'تبديل الحالة' : 'Toggle status'}
+            onClick={(e) => { e.stopPropagation(); onToggleActive(member.id); }}>
             <Power size={14} />
           </Button>
-          <Button variant="secondary" size="sm" startIcon={<Eye size={13} />} onClick={() => onView(member.id)}>
+          <Button variant="secondary" size="sm" startIcon={<Eye size={13} />}
+            onClick={(e) => { e.stopPropagation(); onView(member.id); }}>
             {isAr ? 'عرض الملف' : 'View Profile'}
           </Button>
         </div>

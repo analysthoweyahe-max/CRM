@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Check }    from 'lucide-react';
 import { toast }    from 'sonner';
+import { useAuth }  from '@/modules/auth/context/AuthContext';
 import { Button }   from '@/shared/components/ui/Button';
 import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
@@ -8,6 +9,7 @@ import { useProjectSettings }      from '../hooks/useProjectSettings';
 import { usePmProjectLookups }     from '../hooks/usePmProjectLookups';
 import type { PmLookupItem } from '../types/project.types';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { isSeoType, addMonths, monthsBetween } from '../utils/seoProject';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -32,15 +34,22 @@ interface Props {
 }
 
 export function ProjectInfoForm({ projectId, isAr }: Props) {
+  const { user }  = useAuth();
+  // Reassigning a project's manager is a super-admin-only action (maps to the
+  // `admin` app role); regular project-managers must not see/send manager_id.
+  const isAdmin   = user?.role === 'admin';
   const { settings, isLoading, save } = useProjectSettings(projectId);
-  const { statuses, types }           = usePmProjectLookups();
+  const { statuses, types, managers } = usePmProjectLookups({ includeManagers: isAdmin });
 
   const [name,        setName]        = useState('');
   const [description, setDesc]        = useState('');
   const [startDate,   setStartDate]   = useState('');
   const [deadline,    setDeadline]    = useState('');
+  const [contractMonths, setContractMonths] = useState('');
+  const [githubUrl,   setGithubUrl]   = useState('');
   const [status,      setStatus]      = useState('');
   const [projectType, setType]        = useState('');
+  const [managerId,   setManagerId]   = useState('');
   const [saving,      setSaving]      = useState(false);
 
   useEffect(() => {
@@ -49,9 +58,14 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
     setDesc(settings.description ?? '');
     setStartDate(settings.startDate ?? '');
     setDeadline(settings.deadline ?? '');
+    setContractMonths(monthsBetween(settings.startDate ?? '', settings.deadline ?? ''));
+    setGithubUrl(settings.githubLink ?? '');
     setStatus(settings.status);
     setType(settings.projectType);
+    setManagerId(settings.manager?.id ?? '');
   }, [settings]);
+
+  const isSeo = isSeoType(types, projectType);
 
   async function handleSave() {
     if (!name.trim() || saving) return;
@@ -64,7 +78,9 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         status,
         is_draft:        settings?.isDraft ?? false,
         start_date:      startDate,
-        deadline,
+        deadline:        isSeo ? addMonths(startDate, Number(contractMonths)) : deadline,
+        github_link:     githubUrl.trim() || undefined,
+        ...(isAdmin && managerId ? { manager_id: managerId } : {}),
       });
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
     } catch {
@@ -146,16 +162,62 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         </div>
       </div>
 
-      {/* Deadline */}
+      {/* Project manager — super admin only (change assignment after creation) */}
+      {isAdmin && (
+        <div>
+          <label className={LABEL}>{isAr ? 'مدير المشروع' : 'Project Manager'}</label>
+          <Combobox
+            items={toComboboxItems(managers, isAr)}
+            value={managerId}
+            onChange={setManagerId}
+            placeholder={isAr ? '-- اختر المدير --' : '-- Select Manager --'}
+            searchPlaceholder={isAr ? 'ابحث عن مدير...' : 'Search manager...'}
+            noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+          />
+        </div>
+      )}
+
+      {/* Drive folder link (SEO) / GitHub link (everything else) */}
       <div>
-        <label className={LABEL}>{isAr ? 'الموعد النهائي' : 'Deadline'}</label>
+        <label className={LABEL}>
+          {isSeo
+            ? (isAr ? 'رابط فولدر الدرايف' : 'Drive Folder Link')
+            : (isAr ? 'رابط GitHub' : 'GitHub Link')}
+        </label>
         <input
-          type="date"
-          value={deadline}
-          onChange={e => setDeadline(e.target.value)}
+          type="url"
+          value={githubUrl}
+          onChange={e => setGithubUrl(e.target.value)}
+          placeholder={isSeo ? 'https://drive.google.com/drive/folders/...' : 'https://github.com/org/repo'}
+          dir="ltr"
           className={INPUT}
         />
       </div>
+
+      {/* Deadline (or Contract Duration for SEO) */}
+      {isSeo ? (
+        <div>
+          <label className={LABEL}>{isAr ? 'مدة العقد (بالأشهر)' : 'Contract Duration (months)'}</label>
+          <input
+            type="number"
+            min={1}
+            value={contractMonths}
+            onChange={e => setContractMonths(e.target.value)}
+            placeholder={isAr ? 'مثال: 6' : 'e.g. 6'}
+            className={INPUT}
+          />
+        </div>
+      ) : (
+        <div>
+          <label className={LABEL}>{isAr ? 'الموعد النهائي' : 'Deadline'}</label>
+          <input
+            type="date"
+            value={deadline}
+            onChange={e => setDeadline(e.target.value)}
+            className={INPUT}
+          />
+        </div>
+      )}
 
       <Button
         variant="primary"
