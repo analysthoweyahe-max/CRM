@@ -52,6 +52,16 @@ export const authTranslations = {
       accountEmail: 'البريد الإلكتروني',
     },
 
+    magicLink: {
+      checkEmailTitle:  'افحص بريدك الإلكتروني',
+      checkEmailDesc:   'أرسلنا رابط تسجيل دخول آمن إلى بريدك الإلكتروني. اضغط عليه لإكمال تسجيل الدخول.',
+      expiresLabel:     'ينتهي الرابط في',
+      backToLogin:      'العودة لتسجيل الدخول',
+      verifying:        'جارٍ التحقق من الرابط...',
+      invalidTitle:     'رابط الدخول غير صالح',
+      invalidDesc:      'انتهت صلاحية هذا الرابط أو تم استخدامه من قبل. حاول تسجيل الدخول مرة أخرى.',
+    },
+
     validation: {
       employeeIdRequired: 'معرّف الموظف مطلوب',
       employeeIdInvalid:  'أدخل بريدًا إلكترونيًا صحيحًا أو معرّف مدير صحيح',
@@ -115,6 +125,16 @@ export const authTranslations = {
       expiredDesc:  'This link has expired or has already been used. Contact your system administrator for a new link.',
       greeting:     'Hello',
       accountEmail: 'Email',
+    },
+
+    magicLink: {
+      checkEmailTitle:  'Check your email',
+      checkEmailDesc:   'We sent a secure sign-in link to your email. Click it to finish signing in.',
+      expiresLabel:     'Link expires at',
+      backToLogin:      'Back to sign in',
+      verifying:        'Verifying your sign-in link...',
+      invalidTitle:     'Invalid sign-in link',
+      invalidDesc:      'This link has expired or was already used. Please try signing in again.',
     },
 
     validation: {

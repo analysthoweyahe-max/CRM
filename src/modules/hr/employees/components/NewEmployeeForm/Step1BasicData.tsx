@@ -32,7 +32,6 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
   });
 
   const selectedDept = watch('department');
-  const jobType      = watch('jobType');
 
   // Reset job title when department changes
   useEffect(() => {
@@ -55,11 +54,7 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
     label: isAr ? (t.nameAr || t.name) : t.name,
   }));
 
-  const salaryLabel = jobType === 'part_time'
-    ? (isAr ? 'الراتب بالساعة (ج.م)'     : 'Hourly Rate (EGP)')
-    : jobType === 'contract'
-    ? (isAr ? 'الأتعاب لكل مشروع (ج.م)' : 'Project Fee (EGP)')
-    : (isAr ? 'الراتب الشهري (ج.م)'      : 'Monthly Salary (EGP)');
+  const salaryLabel = isAr ? 'الراتب الشهري (ج.م)' : 'Monthly Salary (EGP)';
 
   const jobTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
 

@@ -1,7 +1,7 @@
 import { useReducer, useEffect, useCallback, type ReactNode } from 'react';
 import { AuthContext } from '@/modules/auth/context/AuthContext';
 import { authService } from '@/modules/auth/services/auth.service';
-import type { AuthUser, LoginCredentials, SetPasswordPayload } from '@/modules/auth/types/auth.types';
+import type { AuthUser, LoginCredentials, SetPasswordPayload, LoginResult } from '@/modules/auth/types/auth.types';
 import { Permission, type Role } from '@/shared/types/role.types';
 
 interface State {
@@ -77,17 +77,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials): Promise<AuthUser> => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     dispatch({ type: 'LOADING' });
     try {
-      const data = await authService.login(credentials);
-      dispatch({ type: 'LOGIN', payload: data.user });
-      return data.user;
+      const result = await authService.login(credentials);
+      if (result.status === 'success') {
+        dispatch({ type: 'LOGIN', payload: result.user });
+      } else {
+        dispatch({ type: 'INIT', payload: state.user });
+      }
+      return result;
     } catch (error) {
       dispatch({ type: 'INIT', payload: state.user });
       throw error;
     }
   }, [state.user]);
+
+  const completeMagicLogin = useCallback((token: string) => {
+    const user = authService.completeMagicLogin(token);
+    dispatch({ type: 'LOGIN', payload: user });
+    return user;
+  }, []);
+
+  const completeInviteLogin = useCallback((token: string, inviteType: 'admin' | 'employee') => {
+    const user = authService.completeInviteLogin(token, inviteType);
+    dispatch({ type: 'LOGIN', payload: user });
+    return user;
+  }, []);
 
   const setPassword = useCallback(async (payload: SetPasswordPayload) => {
     dispatch({ type: 'LOADING' });
@@ -120,6 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: state.user !== null,
         isLoading:       state.isLoading,
         login,
+        completeMagicLogin,
+        completeInviteLogin,
         setPassword,
         logout,
         hasPermission,

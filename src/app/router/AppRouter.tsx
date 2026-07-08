@@ -19,6 +19,7 @@ const LoginPage            = lazy(() => import('@/modules/auth/pages/LoginPage')
 const SetPasswordPage      = lazy(() => import('@/modules/auth/pages/SetPasswordPage')      .then(m => ({ default: m.SetPasswordPage })));
 const InviteValidationPage = lazy(() => import('@/modules/auth/pages/InviteValidationPage') .then(m => ({ default: m.InviteValidationPage })));
 const ForgotPasswordPage   = lazy(() => import('@/modules/auth/pages/ForgotPasswordPage')   .then(m => ({ default: m.ForgotPasswordPage })));
+const AdminAuthCallbackPage = lazy(() => import('@/modules/auth/pages/AdminAuthCallbackPage').then(m => ({ default: m.AdminAuthCallbackPage })));
 
 /* ── Admin ────────────────────────────────────────────────────────── */
 const AdminDashboardPage = lazy(() => import('@/modules/admin/dashboard/pages/AdminDashboardPage')   .then(m => ({ default: m.AdminDashboardPage })));
@@ -107,6 +108,7 @@ export function AppRouter() {
                 <Route path={ROUTES.AUTH.INVITE_TOKEN()}  element={<InviteValidationPage />} />
                 <Route path={ROUTES.AUTH.EMPLOYEE_INVITE_SET_PASSWORD()} element={<SetPasswordPage />} />
                 <Route path={ROUTES.AUTH.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+                <Route path={ROUTES.AUTH.ADMIN_CALLBACK}  element={<AdminAuthCallbackPage />} />
               </Route>
             </Route>
 

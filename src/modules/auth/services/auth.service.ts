@@ -5,7 +5,9 @@ import type {
   AuthLoginResponse,
   AuthUser,
   ApiEmployee,
+  ApiAdmin,
   InviteTokenPayload,
+  LoginResult,
 } from '@/modules/auth/types/auth.types';
 import type { Role } from '@/shared/types/role.types';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
@@ -63,6 +65,16 @@ function buildEmployeeUser(employee: ApiEmployee): AuthUser {
   };
 }
 
+function buildAdminUser(admin: ApiAdmin): AuthUser {
+  return {
+    id:         admin.id,
+    employeeId: admin.id,
+    fullName:   admin.name,
+    role:       mapAdminRole(admin.roles ?? []),
+    avatarUrl:  admin.avatar_url,
+  };
+}
+
 // ── Storage ──────────────────────────────────────────────────────────────────
 
 function storeAuth(token: string, user: AuthUser, rememberMe: boolean): void {
@@ -98,7 +110,7 @@ async function loginAsEmployee(
   employeeId: string,
   password: string,
   rememberMe: boolean,
-): Promise<AuthLoginResponse> {
+): Promise<LoginResult> {
   const employeePayload = isEmail(employeeId)
     ? { email: employeeId, password }
     : { employee_id: employeeId, password };
@@ -107,33 +119,34 @@ async function loginAsEmployee(
   const user = buildEmployeeUser(employee);
   storeAuth(accessToken, user, rememberMe);
   setCachedAccountType(employeeId, 'employee');
-  return { token: accessToken, user };
+  return { status: 'success', token: accessToken, user };
 }
 
 async function loginAsAdmin(
   employeeId: string,
   password: string,
   rememberMe: boolean,
-): Promise<AuthLoginResponse> {
+): Promise<LoginResult> {
   const { data } = await authApi.adminLogin({ admin_id: employeeId, password });
   const payload = data.data;
+
+  // Super-admin accounts don't get a token on this call — the backend emails
+  // a one-time login link instead. Surface that instead of treating it as an error.
+  if (payload?.magicLinkRequired) {
+    return { status: 'magic_link_required', expiresAt: payload.expiresAt ?? '' };
+  }
+
   if (!payload?.accessToken || !payload?.admin) {
     throw new Error('Invalid admin login response');
   }
   const { accessToken, admin } = payload;
-  const user: AuthUser = {
-    id:         admin.id,
-    employeeId: admin.id,
-    fullName:   admin.name,
-    role:       mapAdminRole(admin.roles ?? []),
-    avatarUrl:  admin.avatar_url,
-  };
+  const user = buildAdminUser(admin);
   storeAuth(accessToken, user, rememberMe);
   setCachedAccountType(employeeId, 'admin');
-  return { token: accessToken, user };
+  return { status: 'success', token: accessToken, user };
 }
 
-async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> {
+async function login(credentials: LoginCredentials): Promise<LoginResult> {
   const { password, rememberMe = false } = credentials;
   const employeeId = credentials.employeeId.trim();
   const cachedType = getCachedAccountType(employeeId);
@@ -161,6 +174,16 @@ async function login(credentials: LoginCredentials): Promise<AuthLoginResponse> 
   }
 }
 
+// The backend verifies the magic-link token itself and redirects here with a
+// finished accessToken — there is no frontend API call. It doesn't hand us the
+// admin's name/id, so we store a minimal super-admin user; a real admin
+// profile endpoint would be needed to fill in fullName/id/avatar properly.
+function completeMagicLogin(token: string): AuthUser {
+  const user: AuthUser = { id: '', employeeId: '', fullName: '', role: 'admin' };
+  storeAuth(token, user, true);
+  return user;
+}
+
 async function activateInvite(payload: SetPasswordPayload): Promise<void> {
   const { token, password, confirmPassword, inviteType = 'employee' } = payload;
   const apiPayload = { password, password_confirmation: confirmPassword };
@@ -179,13 +202,7 @@ async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginRespon
   if (inviteType === 'admin') {
     const { data } = await authApi.setAdminPassword(token, apiPayload);
     const { accessToken, admin } = data.data;
-    const user: AuthUser = {
-      id:         admin.id,
-      employeeId: admin.id,
-      fullName:   admin.name,
-      role:       mapAdminRole(admin.roles ?? []),
-      avatarUrl:  admin.avatar_url,
-    };
+    const user = buildAdminUser(admin);
     storeAuth(accessToken, user, rememberMe);
     return { token: accessToken, user };
   } else {
@@ -197,25 +214,47 @@ async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginRespon
   }
 }
 
+// A 404 means "this token doesn't belong to this invite type" — safe to retry
+// against the other endpoint. Any other status (410 expired, 500, network, etc.)
+// is a real failure and must propagate instead of being silently masked.
+function isInviteNotFoundError(err: unknown): boolean {
+  const status = (err as { response?: { status?: number } })?.response?.status;
+  return status === 404;
+}
+
 async function validateInvite(token: string): Promise<InviteTokenPayload> {
-  // Try employee invite first; fall back to admin invite
+  // Try employee invite first; fall back to admin invite only when the
+  // employee endpoint confirms this token simply isn't an employee invite.
   try {
     const { data } = await authApi.verifyEmployeeInvite(token);
     return {
-      name:       data.data.name,
-      email:      data.data.email,
-      exp:        data.data.exp ?? 0,
-      inviteType: 'employee',
+      name:         data.data.name,
+      email:        data.data.email,
+      exp:          data.data.exp ?? 0,
+      inviteType:   'employee',
+      accessToken:  data.data.accessToken,
+      redirectPath: data.data.redirect_path,
     };
-  } catch {
+  } catch (err) {
+    if (!isInviteNotFoundError(err)) throw err;
     const { data } = await authApi.verifyAdminInvite(token);
     return {
-      name:       data.data.name,
-      email:      data.data.email,
-      exp:        data.data.exp ?? 0,
-      inviteType: 'admin',
+      name:         data.data.name,
+      email:        data.data.email,
+      exp:          data.data.exp ?? 0,
+      inviteType:   'admin',
+      accessToken:  data.data.accessToken,
+      redirectPath: data.data.redirect_path,
     };
   }
+}
+
+// An invite that's already activated hands back a finished token instead of
+// requiring a new password — store it and sign the user straight in.
+function completeInviteLogin(token: string, inviteType: 'admin' | 'employee'): AuthUser {
+  const user: AuthUser = { id: '', employeeId: '', fullName: '', role: inviteType === 'admin' ? 'admin' : 'employee' };
+  storeAuth(token, user, true);
+  return user;
 }
 
 async function loadProfile(): Promise<AuthUser | null> {
@@ -275,6 +314,8 @@ async function logout(): Promise<void> {
 
 export const authService = {
   login,
+  completeMagicLogin,
+  completeInviteLogin,
   setPassword,
   activateInvite,
   changePassword,

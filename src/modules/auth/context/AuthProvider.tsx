@@ -2,7 +2,7 @@
 import { flushSync } from 'react-dom';
 import { AuthContext } from './AuthContext';
 import { authService } from '@/modules/auth/services/auth.service';
-import type { AuthUser, LoginCredentials, SetPasswordPayload } from '@/modules/auth/types/auth.types';
+import type { AuthUser, LoginCredentials, SetPasswordPayload, LoginResult } from '@/modules/auth/types/auth.types';
 import { Permission, type Role } from '@/shared/types/role.types';
 
 interface State {
@@ -84,17 +84,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'INIT', payload: authService.getStoredUser() });
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials): Promise<AuthUser> => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
-      const data = await authService.login(credentials);
-      flushSync(() => {
-        dispatch({ type: 'LOGIN', payload: data.user });
-      });
-      return data.user;
+      const result = await authService.login(credentials);
+      if (result.status === 'success') {
+        flushSync(() => {
+          dispatch({ type: 'LOGIN', payload: result.user });
+        });
+      } else {
+        dispatch({ type: 'AUTH_FAIL' });
+      }
+      return result;
     } catch (error) {
       dispatch({ type: 'AUTH_FAIL' });
       throw error;
     }
+  }, []);
+
+  const completeMagicLogin = useCallback((token: string) => {
+    const user = authService.completeMagicLogin(token);
+    flushSync(() => {
+      dispatch({ type: 'LOGIN', payload: user });
+    });
+    return user;
+  }, []);
+
+  const completeInviteLogin = useCallback((token: string, inviteType: 'admin' | 'employee') => {
+    const user = authService.completeInviteLogin(token, inviteType);
+    flushSync(() => {
+      dispatch({ type: 'LOGIN', payload: user });
+    });
+    return user;
   }, []);
 
   const setPassword = useCallback(async (payload: SetPasswordPayload) => {
@@ -129,6 +149,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: state.user !== null,
         isLoading:       state.isLoading,
         login,
+        completeMagicLogin,
+        completeInviteLogin,
         setPassword,
         logout,
         hasPermission,

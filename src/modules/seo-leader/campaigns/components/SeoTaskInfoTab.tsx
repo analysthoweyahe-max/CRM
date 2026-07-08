@@ -2,6 +2,7 @@ import { Pencil, Trash2, Plus, X as XIcon } from 'lucide-react';
 import { Button }        from '@/shared/components/ui/Button';
 import { Combobox }      from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import type { SeoTaskFull } from './SeoTaskModal.types';
 
 /* ── Style tokens ─────────────────────────────────────────────────────── */
@@ -221,12 +222,11 @@ export function SeoTaskInfoTab({
       {/* ── Description ── */}
       <div className="space-y-1">
         <p className={LABEL}>{isAr ? 'الوصف التفصيلي' : 'Description'}</p>
-        <textarea
-          rows={3}
+        <RichTextEditor
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={setDescription}
+          dir={isAr ? 'rtl' : 'ltr'}
           placeholder={isAr ? 'وصف تفصيلي للمهمة...' : 'Task description...'}
-          className={`${INPUT} resize-none`}
         />
       </div>
 

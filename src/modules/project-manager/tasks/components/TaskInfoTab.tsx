@@ -2,6 +2,7 @@ import { Pencil, Trash2 }   from 'lucide-react';
 import { Button }            from '@/shared/components/ui/Button';
 import { Combobox }          from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { RichTextView }      from '@/shared/components/form/RichTextView';
 import type { Task, TaskStatus } from '../types/task.types';
 import { usePmTaskLookups } from '../../projects/hooks/usePmTaskLookups';
 
@@ -43,9 +44,12 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, onStatusChange, 
       <div className="space-y-1.5">
         <p className="text-xs text-gray-400 text-right">{isAr ? 'الوصف التفصيلي' : 'Description'}</p>
         <div className="rounded-xl bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700 px-4 py-3">
-          <p className="text-sm text-gray-600 dark:text-gray-300 text-right leading-relaxed">
-            {task.description ?? (isAr ? 'وصف تفصيلي للمهمة وما هو مطلوب إنجازه ضمن هذه المرحلة من المشروع.' : 'Detailed description of the task and what is required.')}
-          </p>
+          {task.description
+            ? <RichTextView html={task.description} className="text-sm text-gray-600 dark:text-gray-300 text-right" />
+            : <p className="text-sm text-gray-600 dark:text-gray-300 text-right leading-relaxed">
+                {isAr ? 'وصف تفصيلي للمهمة وما هو مطلوب إنجازه ضمن هذه المرحلة من المشروع.' : 'Detailed description of the task and what is required.'}
+              </p>
+          }
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import { Combobox }     from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import type { AddSeoTaskForm } from './AddSeoTaskModal.types';
 
 /* ── Shared style tokens ─────────────────────────────────────────────── */
@@ -63,12 +64,11 @@ export function AddSeoTaskForm({ form, set, teamItems, isAr }: Props) {
       {/* Description */}
       <div>
         <label className={LABEL}>{isAr ? 'الوصف' : 'Description'}</label>
-        <textarea
-          rows={3}
+        <RichTextEditor
           value={form.description}
-          onChange={e => set('description', e.target.value)}
+          onChange={v => set('description', v)}
+          dir={isAr ? 'rtl' : 'ltr'}
           placeholder={isAr ? 'وصف المهمة...' : 'Task description…'}
-          className={`${INPUT} resize-none`}
         />
       </div>
 

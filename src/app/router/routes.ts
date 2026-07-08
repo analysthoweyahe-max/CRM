@@ -8,6 +8,7 @@ export const ROUTES = {
     EMPLOYEE_INVITE_SET_PASSWORD: (token = ':token') =>
       `/v1/employee/auth/invitations/${token}/set-password`,
     FORGOT_PASSWORD: '/auth/forgot-password',
+    ADMIN_CALLBACK: '/admin/auth/callback',
   },
   DASHBOARD: '/dashboard',
   ADMIN: {

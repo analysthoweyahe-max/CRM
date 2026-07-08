@@ -1,6 +1,7 @@
 import { http } from '@/shared/services/http.service';
 import type {
   AdminLoginApiResponse,
+  AdminAuthSuccessApiResponse,
   EmployeeLoginApiResponse,
   EmployeeProfileApiResponse,
   AdminInviteApiResponse,
@@ -25,7 +26,7 @@ export const authApi = {
   },
 
   setAdminPassword(token: string, payload: { password: string; password_confirmation: string }) {
-    return http.post<AdminLoginApiResponse>(
+    return http.post<AdminAuthSuccessApiResponse>(
       `/v1/admin/auth/invitations/${token}/set-password`,
       payload,
     );

@@ -1,5 +1,6 @@
 import { ExternalLink, Link2, Plus, X, Search } from 'lucide-react';
 import { Badge }    from '@/shared/components/ui/Badge';
+import { RichTextView } from '@/shared/components/form/RichTextView';
 import { fmtDeadline } from '@/modules/employee/tasks/components/useTasksTable';
 import { useSeoTaskDetailInfo } from './useSeoTaskDetailInfo';
 import type { SeoTaskDetail } from '../types/seoTaskDetail.types';
@@ -125,7 +126,7 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr, onStatusChange }: Pro
 
       {task.description && (
         <InfoRow label={isAr ? 'الوصف التفصيلي' : 'Description'}>
-          <p className="leading-relaxed text-gray-700 dark:text-gray-300">{task.description}</p>
+          <RichTextView html={task.description} className="text-gray-700 dark:text-gray-300" />
         </InfoRow>
       )}
 

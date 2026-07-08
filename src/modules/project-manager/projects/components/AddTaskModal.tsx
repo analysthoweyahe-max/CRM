@@ -4,6 +4,7 @@ import { Modal }       from '@/shared/components/ui/Modal';
 import { Button }      from '@/shared/components/ui/Button';
 import { Combobox }    from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import type { PmProjectTeamMember, PmProjectPhase } from '../types/project.types';
 import { pmTaskApi } from '../../tasks/api/task.api';
 import { useInvalidateProjectTasks } from '../../tasks/store/taskStore';
@@ -126,12 +127,11 @@ export function AddTaskModal({ open, onClose, projectId, team, phases, isAr }: P
         {/* Description */}
         <div>
           <label className={LABEL}>{isAr ? 'الوصف' : 'Description'}</label>
-          <textarea
-            rows={3}
+          <RichTextEditor
             value={description}
-            onChange={e => setDescription(e.target.value)}
+            onChange={setDescription}
+            dir={isAr ? 'rtl' : 'ltr'}
             placeholder={isAr ? 'وصف المهمة...' : 'Task description…'}
-            className={`${INPUT} resize-none`}
           />
         </div>
 

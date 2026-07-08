@@ -17,16 +17,25 @@ export function useLogin() {
   const { login } = useAuth();
   const navigate  = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [magicLinkExpiresAt, setMagicLinkExpiresAt] = useState<string | null>(null);
 
   async function submit(values: LoginFormValues) {
     setError(null);
     try {
-      const user = await login({ ...values, rememberMe: values.rememberMe ?? false });
-      navigate(redirectForRole(user.role), { replace: true });
+      const result = await login({ ...values, rememberMe: values.rememberMe ?? false });
+      if (result.status === 'magic_link_required') {
+        setMagicLinkExpiresAt(result.expiresAt);
+        return;
+      }
+      navigate(redirectForRole(result.user.role), { replace: true });
     } catch {
       setError('invalidCredentials');
     }
   }
 
-  return { submit, error };
+  function resetMagicLinkPending() {
+    setMagicLinkExpiresAt(null);
+  }
+
+  return { submit, error, magicLinkExpiresAt, resetMagicLinkPending };
 }

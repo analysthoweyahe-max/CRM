@@ -36,11 +36,19 @@ export interface AuthLoginResponse {
   user:  AuthUser;
 }
 
+export type LoginResult =
+  | { status: 'success'; token: string; user: AuthUser }
+  | { status: 'magic_link_required'; expiresAt: string };
+
 export interface InviteTokenPayload {
-  name:       string;
-  email:      string;
-  exp:        number;
-  inviteType: 'admin' | 'employee';
+  name:          string;
+  email:         string;
+  exp:           number;
+  inviteType:    'admin' | 'employee';
+  // Present when the token is already activated — the backend logs the user
+  // straight in instead of requiring a new password.
+  accessToken?:  string;
+  redirectPath?: string;
 }
 
 // ─── Raw API response shapes ─────────────────────────────────────────────────
@@ -73,6 +81,15 @@ export interface ApiEmployee {
 
 export interface AdminLoginApiResponse {
   data: {
+    accessToken?:       string;
+    admin?:             ApiAdmin;
+    magicLinkRequired?: boolean;
+    expiresAt?:         string;
+  };
+}
+
+export interface AdminAuthSuccessApiResponse {
+  data: {
     accessToken: string;
     admin:       ApiAdmin;
   };
@@ -91,17 +108,23 @@ export interface EmployeeLoginApiResponse {
 
 export interface AdminInviteApiResponse {
   data: {
-    name:  string;
-    email: string;
-    exp?:  number;
+    name:          string;
+    email:         string;
+    exp?:          number;
+    accessToken?:  string;
+    admin?:        ApiAdmin;
+    redirect_path?: string;
   };
 }
 
 export interface EmployeeInviteApiResponse {
   data: {
-    name:  string;
-    email: string;
-    exp?:  number;
+    name:          string;
+    email:         string;
+    exp?:          number;
+    accessToken?:  string;
+    employee?:     ApiEmployee;
+    redirect_path?: string;
   };
 }
 

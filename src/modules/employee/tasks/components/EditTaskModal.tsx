@@ -6,6 +6,7 @@ import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { useUpdateTask } from '../hooks/useTaskDetail';
 import type { TaskDetail } from '../types/taskDetail.types';
 import type { EmpTaskPriority } from '../types/employeeTask.types';
@@ -91,15 +92,17 @@ export function EditTaskModal({ open, onClose, task, isAr }: Props) {
         </FormField>
 
         <FormField label={isAr ? 'الوصف' : 'Description'}>
-          <textarea
-            {...register('description')}
-            rows={3}
-            dir={isAr ? 'rtl' : 'ltr'}
-            placeholder={isAr ? 'وصف المهمة...' : 'Task description...'}
-            className="w-full rounded-lg border text-sm text-gray-800 dark:text-gray-200
-                       bg-white dark:bg-gray-700/50 border-gray-200 dark:border-gray-600
-                       outline-none transition placeholder:text-gray-400 dark:placeholder:text-gray-500
-                       focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 p-3 resize-none"
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <RichTextEditor
+                value={field.value}
+                onChange={field.onChange}
+                dir={isAr ? 'rtl' : 'ltr'}
+                placeholder={isAr ? 'وصف المهمة...' : 'Task description...'}
+              />
+            )}
           />
         </FormField>
 

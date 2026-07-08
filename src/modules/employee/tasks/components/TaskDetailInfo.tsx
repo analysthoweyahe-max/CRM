@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Badge }    from '@/shared/components/ui/Badge';
 import { Combobox } from '@/shared/components/form/Combobox';
+import { RichTextView } from '@/shared/components/form/RichTextView';
 import { useAuth }  from '@/modules/auth/context/AuthContext';
 import { useUpdateTaskStatus } from '../hooks/useTaskDetail';
 import { fmtDeadline, PRIORITY_MAP } from './useTasksTable';
@@ -70,9 +71,9 @@ export function TaskDetailInfo({ task, isLoading, isAr, projectId, taskId }: Pro
       <InfoRow
         label={isAr ? 'الوصف التفصيلي' : 'Description'}
         value={
-          <span className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
-            {task.description || (isAr ? 'لا يوجد وصف' : 'No description')}
-          </span>
+          task.description
+            ? <RichTextView html={task.description} className="text-gray-500 dark:text-gray-400 text-xs" />
+            : <span className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">{isAr ? 'لا يوجد وصف' : 'No description'}</span>
         }
       />
       {task.stage && (

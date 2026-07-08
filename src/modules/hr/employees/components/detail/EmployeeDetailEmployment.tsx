@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Briefcase, Clock, Wallet, CalendarDays, SquarePen } from 'lucide-react';
+import { Briefcase, Clock, Wallet, CalendarDays, Building2, SquarePen } from 'lucide-react';
 import type { ApiEmployee } from '../../types/employee.types';
 import { mapEmploymentType } from '../../types/employee.types';
 import { EditEmploymentTypeModal } from '../edit-modals/EditEmploymentTypeModal';
 import { EditSalaryModal }         from '../edit-modals/EditSalaryModal';
 import { EditWorkScheduleModal }   from '../edit-modals/EditWorkScheduleModal';
+import { EditDepartmentModal }     from '../edit-modals/EditDepartmentModal';
 
-type ModalKey = 'employmentType' | 'salary' | 'workSchedule' | null;
+type ModalKey = 'employmentType' | 'salary' | 'workSchedule' | 'department' | null;
 
 interface Props { emp: ApiEmployee; isAr: boolean }
 
@@ -42,7 +43,7 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
         </Section>
       </div>
 
-      {/* ── Row 2: Work Schedule + Hire Date ─────────── */}
+      {/* ── Row 2: Work Schedule + Department ────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Section
           title={isAr ? 'جدول الدوام' : 'Work Schedule'}
@@ -61,15 +62,24 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
           </div>
         </Section>
 
-        {/* ── Hire date (read-only) ──────────────────── */}
-        <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm p-6">
-          <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
-            {isAr ? 'تاريخ الانضمام' : 'Hire Date'}
-          </h3>
-          <Field icon={<CalendarDays size={15} />} label={isAr ? 'تاريخ الانضمام' : 'Joining Date'}>
-            {emp.joiningDate ?? '–'}
+        <Section
+          title={isAr ? 'القسم' : 'Department'}
+          onEdit={() => setOpenModal('department')}
+        >
+          <Field icon={<Building2 size={15} />} label={isAr ? 'القسم الحالي' : 'Current Department'}>
+            {emp.department?.name ?? '–'}
           </Field>
-        </div>
+        </Section>
+      </div>
+
+      {/* ── Row 3: Hire Date ──────────────────────────── */}
+      <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+        <h3 className="text-sm font-bold mb-5 text-gray-800 dark:text-gray-100">
+          {isAr ? 'تاريخ الانضمام' : 'Hire Date'}
+        </h3>
+        <Field icon={<CalendarDays size={15} />} label={isAr ? 'تاريخ الانضمام' : 'Joining Date'}>
+          {emp.joiningDate ?? '–'}
+        </Field>
       </div>
 
       {/* ── Modals ───────────────────────────────────── */}
@@ -93,6 +103,13 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
         employeeId={emp.id}
         currentStart={emp.shiftStart}
         currentEnd={emp.shiftEnd}
+        isAr={isAr}
+      />
+      <EditDepartmentModal
+        open={openModal === 'department'}
+        onClose={() => setOpenModal(null)}
+        employeeId={emp.id}
+        current={emp.department}
         isAr={isAr}
       />
     </>

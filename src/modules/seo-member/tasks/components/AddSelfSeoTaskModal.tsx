@@ -3,6 +3,7 @@ import { Button }              from '@/shared/components/ui/Button';
 import { Modal }               from '@/shared/components/ui/Modal';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox }            from '@/shared/components/form/Combobox';
+import { RichTextEditor }      from '@/shared/components/form/RichTextEditor';
 import { useAddSelfSeoTask }   from './useAddSelfSeoTask';
 
 interface Props {
@@ -74,12 +75,11 @@ export function AddSelfSeoTaskModal({ open, onClose, isAr }: Props) {
         </FormField>
 
         <FormField label={isAr ? 'الوصف' : 'Description'}>
-          <textarea
+          <RichTextEditor
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
+            onChange={setDescription}
+            dir={isAr ? 'rtl' : 'ltr'}
             placeholder={isAr ? 'وصف المهمة (اختياري)' : 'Task description (optional)'}
-            className={`${inputCls(false)} h-auto! py-3 resize-none`}
           />
         </FormField>
 
