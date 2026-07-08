@@ -14,8 +14,9 @@ interface Props { emp: ApiEmployee; isAr: boolean }
 export function EmployeeDetailEmployment({ emp, isAr }: Props) {
   const [openModal, setOpenModal] = useState<ModalKey>(null);
 
-  const startTime = emp.shiftStart ?? emp.shift_start ?? null;
-  const endTime   = emp.shiftEnd   ?? emp.shift_end   ?? null;
+  const isPartTime = emp.employmentType === 'part_time';
+  const startTime  = emp.shiftStart ?? emp.shift_start ?? null;
+  const endTime    = emp.shiftEnd   ?? emp.shift_end   ?? null;
   const requiredHours = startTime && endTime ? calcHours(startTime, endTime) : null;
 
   return (
@@ -49,17 +50,25 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
           title={isAr ? 'جدول الدوام' : 'Work Schedule'}
           onEdit={() => setOpenModal('workSchedule')}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <Field icon={<Clock size={15} />} label={isAr ? 'بداية الدوام' : 'Start Time'}>
-              {startTime ?? '–'}
-            </Field>
-            <Field icon={<Clock size={15} />} label={isAr ? 'نهاية الدوام' : 'End Time'}>
-              {endTime ?? '–'}
-            </Field>
-            <Field icon={<Clock size={15} />} label={isAr ? 'ساعات العمل' : 'Hours / Day'}>
-              {requiredHours != null ? `${requiredHours} ${isAr ? 'ساعات' : 'hrs'}` : '–'}
-            </Field>
-          </div>
+          {isPartTime ? (
+            <div className="grid grid-cols-1 gap-5">
+              <Field icon={<Clock size={15} />} label={isAr ? 'عدد ساعات العمل' : 'Working Hours'}>
+                {emp.workingHours != null ? `${emp.workingHours} ${isAr ? 'ساعات' : 'hrs'}` : '–'}
+              </Field>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <Field icon={<Clock size={15} />} label={isAr ? 'بداية الدوام' : 'Start Time'}>
+                {startTime ?? '–'}
+              </Field>
+              <Field icon={<Clock size={15} />} label={isAr ? 'نهاية الدوام' : 'End Time'}>
+                {endTime ?? '–'}
+              </Field>
+              <Field icon={<Clock size={15} />} label={isAr ? 'ساعات العمل' : 'Hours / Day'}>
+                {requiredHours != null ? `${requiredHours} ${isAr ? 'ساعات' : 'hrs'}` : '–'}
+              </Field>
+            </div>
+          )}
         </Section>
 
         <Section
@@ -101,8 +110,10 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
         open={openModal === 'workSchedule'}
         onClose={() => setOpenModal(null)}
         employeeId={emp.id}
+        employmentType={emp.employmentType}
         currentStart={emp.shiftStart}
         currentEnd={emp.shiftEnd}
+        currentHours={emp.workingHours}
         isAr={isAr}
       />
       <EditDepartmentModal

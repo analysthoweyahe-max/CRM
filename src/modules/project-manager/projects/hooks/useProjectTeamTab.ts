@@ -27,7 +27,7 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
   const [viewTarget,   setViewTarget]   = useState<PmProjectTeamListMember | null>(null);
   const [showModal,    setShowModal]    = useState(false);
   const [available,    setAvailable]    = useState<ComboboxItem[]>([]);
-  const [selectedId,   setSelectedId]   = useState('');
+  const [selectedIds,  setSelectedIds]  = useState<string[]>([]);
   const [projectRole,  setProjectRole]  = useState('');
 
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -84,18 +84,21 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
     if (!id) setJobTitles([]);
   }
 
+  function toggleSelected(id: string) {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
+
   async function handleAddExisting() {
-    if (!selectedId || !projectRole.trim()) return;
+    if (selectedIds.length === 0 || !projectRole.trim()) return;
     try {
-      await pmProjectTeamApi.addMember(projectId, {
-        employee_id:  selectedId,
-        project_role: projectRole.trim(),
-      });
-      toast.success(isAr ? 'تمت إضافة العضو للمشروع' : 'Member added to project');
+      await pmProjectTeamApi.addMember(projectId, selectedIds.length === 1
+        ? { employee_id: selectedIds[0], project_role: projectRole.trim() }
+        : { employee_ids: selectedIds, project_role: projectRole.trim() });
+      toast.success(isAr ? 'تمت إضافة الأعضاء للمشروع' : 'Members added to project');
       handleCloseModal();
       fetchTeam();
     } catch {
-      toast.error(isAr ? 'فشل إضافة العضو' : 'Failed to add member');
+      toast.error(isAr ? 'فشل إضافة الأعضاء' : 'Failed to add members');
     }
   }
 
@@ -113,7 +116,7 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
 
   function handleCloseModal() {
     setShowModal(false);
-    setSelectedId('');
+    setSelectedIds([]);
     setProjectRole('');
   }
 
@@ -154,9 +157,9 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
     openModal:  () => setShowModal(true),
     closeModal: handleCloseModal,
     available,
-    selectedId,  setSelectedId,
+    selectedIds, toggleSelected,
     projectRole, setProjectRole,
-    canAdd: !!selectedId && !!projectRole.trim(),
+    canAdd: selectedIds.length > 0 && !!projectRole.trim(),
     handleAddExisting,
     showInviteModal,
     openInviteModal:  () => setShowInviteModal(true),

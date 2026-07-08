@@ -35,7 +35,7 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
   const { open, onClose, emp, isAr } = props;
 
   const {
-    register, control, handleSubmit, mutation, onboardingLocked,
+    register, control, handleSubmit, mutation, onboardingLocked, isPartTime,
     deptItems, jTitleItems, empTypeItems, managerItems, cbProps,
   } = useEditEmployeeModal(props);
 
@@ -130,13 +130,21 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
             <StepDivider step={4}
               labelAr="تحديث جدول الدوام" labelEn="Update Work Schedule" isAr={isAr} />
 
-            <FormField label={isAr ? 'وقت بداية الدوام' : 'Shift Start'} icon={<Clock size={15} className="text-gray-400" />}>
-              <Input {...register('shiftStart')} type="time" endIcon={<Clock size={15} />} />
-            </FormField>
+            {isPartTime ? (
+              <FormField label={isAr ? 'عدد ساعات العمل' : 'Working Hours'} icon={<Clock size={15} className="text-gray-400" />}>
+                <Input {...register('workingHours')} type="number" min={1} endIcon={<Clock size={15} />} placeholder="4" />
+              </FormField>
+            ) : (
+              <>
+                <FormField label={isAr ? 'وقت بداية الدوام' : 'Shift Start'} icon={<Clock size={15} className="text-gray-400" />}>
+                  <Input {...register('shiftStart')} type="time" endIcon={<Clock size={15} />} />
+                </FormField>
 
-            <FormField label={isAr ? 'وقت نهاية الدوام' : 'Shift End'} icon={<Clock size={15} className="text-gray-400" />}>
-              <Input {...register('shiftEnd')} type="time" endIcon={<Clock size={15} />} />
-            </FormField>
+                <FormField label={isAr ? 'وقت نهاية الدوام' : 'Shift End'} icon={<Clock size={15} className="text-gray-400" />}>
+                  <Input {...register('shiftEnd')} type="time" endIcon={<Clock size={15} />} />
+                </FormField>
+              </>
+            )}
           </>
         )}
 

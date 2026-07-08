@@ -20,8 +20,9 @@ export interface MemberProfile extends TeamMember {
 /* ── Real API shapes (GET/POST/PUT/PATCH /v1/pm/projects) ──────────────── */
 
 export interface PmLookupItem {
-  value: string;
-  label: string;
+  value:    string;
+  label:    string;
+  labelAr?: string | null;
 }
 
 export interface PmProjectCreator {
@@ -42,6 +43,7 @@ export interface PmProjectListItem {
   deadline:         string;
   teamAssignedAt:   string | null;
   workspaceUrl?:    string | null;
+  manager?:         PmProjectCreator | null;
   createdBy:        PmProjectCreator;
   createdAt:        string;
   updatedAt:        string;
@@ -107,14 +109,45 @@ export interface PmLookupApiResponse {
 }
 
 export interface PmProjectPayload {
-  name:          string;
-  description:   string;
-  project_type:  string;
-  status:        string;
-  is_draft:      boolean;
-  start_date:    string;
-  deadline:      string;
-  workspace_url?: string;
+  name:            string;
+  description:     string;
+  project_type_id: number;
+  status:          string;
+  is_draft:        boolean;
+  start_date:      string;
+  deadline:        string;
+  workspace_url?:  string;
+  // Super admin only — omit entirely for project-manager-initiated creates.
+  manager_id?:     string;
+}
+
+/* ── Project types CRUD (admin-managed lookup) ──────────────────────────── */
+
+export interface PmProjectTypeItem {
+  id:         number;
+  name:       string;
+  nameAr:     string | null;
+  isActive:   boolean;
+  sortOrder:  number;
+}
+
+export interface PmProjectTypeListApiResponse {
+  status:  string;
+  message: string;
+  data:    PmProjectTypeItem[];
+}
+
+export interface PmProjectTypeApiResponse {
+  status:  string;
+  message: string;
+  data:    PmProjectTypeItem;
+}
+
+export interface PmProjectTypePayload {
+  name:        string;
+  name_ar:     string;
+  is_active:   boolean;
+  sort_order:  number;
 }
 
 /* ── Per-project team management (available / members / add / remove) ──── */
@@ -157,6 +190,12 @@ export interface PmProjectTeamListApiResponse {
 
 export interface PmAddProjectMemberPayload {
   employee_id:  string;
+  project_role: string;
+}
+
+/** POST /v1/pm/projects/{id}/team/members — bulk variant (never send alongside employee_id) */
+export interface PmAddProjectMembersBulkPayload {
+  employee_ids: string[];
   project_role: string;
 }
 

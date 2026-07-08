@@ -8,30 +8,44 @@ import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { employeeApi } from '../../api/employee.api';
+import type { EmploymentType, UpdateWorkSchedulePayload } from '../../types/employee.types';
 
 interface Props {
-  open:         boolean;
-  onClose:      () => void;
-  employeeId:   string;
-  currentStart: string | null | undefined;
-  currentEnd:   string | null | undefined;
-  isAr:         boolean;
+  open:            boolean;
+  onClose:         () => void;
+  employeeId:      string;
+  employmentType:  EmploymentType | null | undefined;
+  currentStart:    string | null | undefined;
+  currentEnd:      string | null | undefined;
+  currentHours:    number | null | undefined;
+  isAr:            boolean;
 }
 
-export function EditWorkScheduleModal({ open, onClose, employeeId, currentStart, currentEnd, isAr }: Props) {
+export function EditWorkScheduleModal({
+  open, onClose, employeeId, employmentType, currentStart, currentEnd, currentHours, isAr,
+}: Props) {
   const queryClient = useQueryClient();
+  const isPartTime = employmentType === 'part_time';
 
   const { register, handleSubmit, reset } = useForm({
-    defaultValues: { shiftStart: currentStart ?? '', shiftEnd: currentEnd ?? '' },
+    defaultValues: {
+      shiftStart:   currentStart ?? '',
+      shiftEnd:     currentEnd   ?? '',
+      workingHours: currentHours != null ? String(currentHours) : '',
+    },
   });
 
   useEffect(() => {
-    if (open) reset({ shiftStart: currentStart ?? '', shiftEnd: currentEnd ?? '' });
+    if (open) reset({
+      shiftStart:   currentStart ?? '',
+      shiftEnd:     currentEnd   ?? '',
+      workingHours: currentHours != null ? String(currentHours) : '',
+    });
   }, [open]);
 
   const mutation = useMutation({
-    mutationFn: (data: { shift_start: string; shift_end: string }) =>
-      employeeApi.updateWorkSchedule(employeeId, data),
+    mutationFn: (payload: UpdateWorkSchedulePayload) =>
+      employeeApi.updateWorkSchedule(employeeId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee', employeeId] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -41,9 +55,15 @@ export function EditWorkScheduleModal({ open, onClose, employeeId, currentStart,
     onError: () => toast.error(isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save'),
   });
 
-  function onSubmit(data: { shiftStart: string; shiftEnd: string }) {
-    if (!data.shiftStart || !data.shiftEnd) return;
-    mutation.mutate({ shift_start: data.shiftStart, shift_end: data.shiftEnd });
+  function onSubmit(data: { shiftStart: string; shiftEnd: string; workingHours: string }) {
+    if (isPartTime) {
+      const hours = Number(data.workingHours);
+      if (!hours || hours <= 0) return;
+      mutation.mutate({ working_hours: hours });
+    } else {
+      if (!data.shiftStart || !data.shiftEnd) return;
+      mutation.mutate({ shift_start: data.shiftStart, shift_end: data.shiftEnd });
+    }
   }
 
   return (
@@ -64,12 +84,20 @@ export function EditWorkScheduleModal({ open, onClose, employeeId, currentStart,
       }
     >
       <div className="space-y-4">
-        <FormField label={isAr ? 'وقت بداية الدوام' : 'Shift Start'}>
-          <Input {...register('shiftStart')} type="time" endIcon={<Clock size={15} />} />
-        </FormField>
-        <FormField label={isAr ? 'وقت نهاية الدوام' : 'Shift End'}>
-          <Input {...register('shiftEnd')} type="time" endIcon={<Clock size={15} />} />
-        </FormField>
+        {isPartTime ? (
+          <FormField label={isAr ? 'عدد ساعات العمل' : 'Working Hours'}>
+            <Input {...register('workingHours')} type="number" min={1} endIcon={<Clock size={15} />} />
+          </FormField>
+        ) : (
+          <>
+            <FormField label={isAr ? 'وقت بداية الدوام' : 'Shift Start'}>
+              <Input {...register('shiftStart')} type="time" endIcon={<Clock size={15} />} />
+            </FormField>
+            <FormField label={isAr ? 'وقت نهاية الدوام' : 'Shift End'}>
+              <Input {...register('shiftEnd')} type="time" endIcon={<Clock size={15} />} />
+            </FormField>
+          </>
+        )}
       </div>
     </Modal>
   );

@@ -3,6 +3,7 @@ import { CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast }       from 'sonner';
 import { useLang }     from '@/app/providers/LanguageProvider';
+import { useAuth }     from '@/modules/auth/context/AuthContext';
 import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
 import { ROUTES }      from '@/app/router/routes';
@@ -15,8 +16,10 @@ export function NewProjectPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin  = user?.role === 'admin';
 
-  const { statuses, types } = usePmProjectLookups();
+  const { statuses, types, managers } = usePmProjectLookups();
 
   const [name,        setName]        = useState('');
   const [description, setDesc]        = useState('');
@@ -25,6 +28,7 @@ export function NewProjectPage() {
   const [startDate,   setDate]        = useState('');
   const [deadline,    setDeadline]    = useState('');
   const [githubUrl,   setGithubUrl]   = useState('');
+  const [managerId,   setManagerId]   = useState('');
   const [saved,       setSaved]       = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
 
@@ -32,21 +36,25 @@ export function NewProjectPage() {
     if (!status && statuses.length > 0) setStatus(statuses[0].value);
   }, [statuses, status]);
 
-  const isValid = !!(name.trim() && description.trim() && projectType && status && startDate && deadline);
+  const isValid = !!(
+    name.trim() && description.trim() && projectType && status && startDate && deadline &&
+    (!isAdmin || managerId)
+  );
 
   async function handleSave(asDraft = false) {
     if (!isValid || submitting) return;
     setSubmitting(true);
     try {
       await pmProjectsApi.create({
-        name:          name.trim(),
-        description:   description.trim(),
-        project_type:  projectType,
+        name:            name.trim(),
+        description:     description.trim(),
+        project_type_id: Number(projectType),
         status,
-        is_draft:      asDraft,
-        start_date:    startDate,
+        is_draft:        asDraft,
+        start_date:      startDate,
         deadline,
-        workspace_url: githubUrl.trim() || undefined,
+        workspace_url:   githubUrl.trim() || undefined,
+        ...(isAdmin ? { manager_id: managerId } : {}),
       });
       setSaved(true);
       setTimeout(() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD), 1500);
@@ -85,6 +93,9 @@ export function NewProjectPage() {
             setType={setType}  setStatus={setStatus}
             setDate={setDate}  setDeadline={setDeadline}
             setGithubUrl={setGithubUrl}
+            showManagerField={isAdmin}
+            managerId={managerId} setManagerId={setManagerId}
+            managerItems={managers}
           />
         </Card>
       </div>

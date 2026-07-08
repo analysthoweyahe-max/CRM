@@ -37,11 +37,14 @@ export function useCreateEmployee() {
       }
 
       // 4. Work schedule — skip if already done
+      const isPartTime = d.jobType === 'part_time';
       if (step < 4) {
-        await employeeApi.updateWorkSchedule(id, {
-          shift_start: d.startTime,
-          shift_end:   d.endTime,
-        });
+        await employeeApi.updateWorkSchedule(
+          id,
+          isPartTime
+            ? { working_hours: d.workingHours! }
+            : { shift_start: d.startTime!, shift_end: d.endTime! },
+        );
       }
 
       // Cache the completed employee so the detail page works immediately
@@ -50,8 +53,9 @@ export function useCreateEmployee() {
         ...emp,
         employmentType: d.jobType as EmploymentType,
         salary:         d.salary,
-        shiftStart:     d.startTime,
-        shiftEnd:       d.endTime,
+        shiftStart:     isPartTime ? null : d.startTime,
+        shiftEnd:       isPartTime ? null : d.endTime,
+        workingHours:   isPartTime ? d.workingHours : null,
         onboardingStep: 4,
       };
       queryClient.setQueryData(['employee', id], finalEmp);

@@ -32,6 +32,7 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
   });
 
   const selectedDept = watch('department');
+  const jobType      = watch('jobType');
 
   // Reset job title when department changes
   useEffect(() => {
@@ -179,15 +180,27 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               </div>
             </FormField>
 
-            <FormField label={isAr ? 'وقت بدء الدوام' : 'Start Time'} required error={errors.startTime?.message}>
-              <Input {...register('startTime')} type="time"
-                hasError={!!errors.startTime} endIcon={<Clock size={15} />} />
-            </FormField>
+            {jobType === 'part_time' ? (
+              <FormField label={isAr ? 'عدد ساعات العمل' : 'Working Hours'} required error={errors.workingHours?.message}>
+                <Input {...register('workingHours', {
+                    setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+                  })}
+                  type="number" min="1" placeholder="4"
+                  hasError={!!errors.workingHours} endIcon={<Clock size={15} />} />
+              </FormField>
+            ) : (
+              <>
+                <FormField label={isAr ? 'وقت بدء الدوام' : 'Start Time'} required error={errors.startTime?.message}>
+                  <Input {...register('startTime')} type="time"
+                    hasError={!!errors.startTime} endIcon={<Clock size={15} />} />
+                </FormField>
 
-            <FormField label={isAr ? 'وقت انتهاء الدوام' : 'End Time'} required error={errors.endTime?.message}>
-              <Input {...register('endTime')} type="time"
-                hasError={!!errors.endTime} endIcon={<Clock size={15} />} />
-            </FormField>
+                <FormField label={isAr ? 'وقت انتهاء الدوام' : 'End Time'} required error={errors.endTime?.message}>
+                  <Input {...register('endTime')} type="time"
+                    hasError={!!errors.endTime} endIcon={<Clock size={15} />} />
+                </FormField>
+              </>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

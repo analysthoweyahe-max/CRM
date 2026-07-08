@@ -8,12 +8,21 @@ import type {
   PmAvailableMembersApiResponse,
   PmProjectTeamListApiResponse,
   PmAddProjectMemberPayload,
+  PmAddProjectMembersBulkPayload,
   PmProjectInvitePayload,
+  PmProjectTypeListApiResponse,
+  PmProjectTypeApiResponse,
+  PmProjectTypePayload,
 } from '../types/project.types';
 
 export const pmProjectsApi = {
   list(params: { search?: string; status?: string; is_draft?: boolean; per_page?: number; page?: number }) {
     return http.get<PmProjectListApiResponse>('/v1/pm/projects', { params });
+  },
+
+  /** Project-manager-scoped list — returns only projects assigned to the caller. */
+  myProjects(params: { search?: string; status?: string; is_draft?: boolean; per_page?: number; page?: number }) {
+    return http.get<PmProjectListApiResponse>('/v1/pm/my-projects', { params });
   },
 
   create(payload: PmProjectPayload) {
@@ -52,7 +61,7 @@ export const pmProjectTeamApi = {
     });
   },
 
-  addMember(projectId: number | string, payload: PmAddProjectMemberPayload) {
+  addMember(projectId: number | string, payload: PmAddProjectMemberPayload | PmAddProjectMembersBulkPayload) {
     return http.post<{ status: string; message: string }>(`/v1/pm/projects/${projectId}/team/members`, payload);
   },
 
@@ -77,5 +86,27 @@ export const pmProjectLookupsApi = {
   },
   taskPriorities() {
     return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/task-priorities');
+  },
+  managers() {
+    return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/managers');
+  },
+};
+
+/* ── Project types CRUD (super-admin managed) ───────────────────────────── */
+export const pmProjectTypesApi = {
+  list() {
+    return http.get<PmProjectTypeListApiResponse>('/v1/pm/project-types');
+  },
+  get(id: number) {
+    return http.get<PmProjectTypeApiResponse>(`/v1/pm/project-types/${id}`);
+  },
+  create(payload: PmProjectTypePayload) {
+    return http.post<PmProjectTypeApiResponse>('/v1/pm/project-types', payload);
+  },
+  update(id: number, payload: PmProjectTypePayload) {
+    return http.post<PmProjectTypeApiResponse>(`/v1/pm/project-types/${id}`, payload);
+  },
+  remove(id: number) {
+    return http.delete<{ status: string; message: string }>(`/v1/pm/project-types/${id}`);
   },
 };

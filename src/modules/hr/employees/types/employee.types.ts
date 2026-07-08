@@ -28,6 +28,7 @@ export interface ApiEmployee {
   shiftEnd?:           string | null;
   shift_start?:        string | null;
   shift_end?:          string | null;
+  workingHours?:       number | null;
   onboardingStep?:     number;
   manager?:            ApiLookup | null;
   roles?:              string[];
@@ -97,7 +98,12 @@ export interface UpdateEmployeePayload {
   salary?:          number;
   shift_start?:     string;
   shift_end?:       string;
+  working_hours?:   number;
 }
+
+export type UpdateWorkSchedulePayload =
+  | { shift_start: string; shift_end: string }
+  | { working_hours: number };
 
 // ── Avatar helpers ────────────────────────────────────────────────────────────
 const AVATAR_COLORS = [

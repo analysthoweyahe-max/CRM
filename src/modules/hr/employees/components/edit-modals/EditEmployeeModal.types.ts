@@ -10,6 +10,7 @@ export interface FormValues {
   salary:         string;
   shiftStart:     string;
   shiftEnd:       string;
+  workingHours:   string;
   managerId:      string;
 }
 

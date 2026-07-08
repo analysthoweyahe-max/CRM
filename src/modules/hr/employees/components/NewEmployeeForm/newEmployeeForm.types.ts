@@ -91,9 +91,28 @@ export function makeAllDataSchema(ar: boolean) {
     salary:     z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
                   .min(1, ar ? 'الراتب يجب أن يكون أكبر من صفر' : 'Salary must be > 0')
                   .optional(),
-    currency:   z.string().min(1),
-    startTime:  z.string().min(1),
-    endTime:    z.string().min(1),
+    currency:     z.string().min(1),
+    startTime:    z.string().optional(),
+    endTime:      z.string().optional(),
+    workingHours: z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
+                    .min(1, ar ? 'عدد الساعات يجب أن يكون أكبر من صفر' : 'Working hours must be > 0')
+                    .optional(),
+  }).superRefine((data, ctx) => {
+    if (data.jobType === 'part_time') {
+      if (!data.workingHours || data.workingHours <= 0) {
+        ctx.addIssue({
+          code: 'custom', path: ['workingHours'],
+          message: ar ? 'عدد ساعات العمل مطلوب' : 'Working hours is required',
+        });
+      }
+    } else {
+      if (!data.startTime) {
+        ctx.addIssue({ code: 'custom', path: ['startTime'], message: ar ? 'وقت بدء الدوام مطلوب' : 'Start time is required' });
+      }
+      if (!data.endTime) {
+        ctx.addIssue({ code: 'custom', path: ['endTime'], message: ar ? 'وقت انتهاء الدوام مطلوب' : 'End time is required' });
+      }
+    }
   });
 }
 

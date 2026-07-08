@@ -58,12 +58,12 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
     setSaving(true);
     try {
       await save({
-        name:         name.trim(),
-        description:  description.trim(),
-        project_type: projectType,
+        name:            name.trim(),
+        description:     description.trim(),
+        project_type_id: Number(projectType),
         status,
-        is_draft:     settings?.isDraft ?? false,
-        start_date:   startDate,
+        is_draft:        settings?.isDraft ?? false,
+        start_date:      startDate,
         deadline,
       });
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');

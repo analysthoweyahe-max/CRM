@@ -38,11 +38,17 @@ export interface ProjectFormFieldsProps {
   setDate:      (v: string) => void;
   setDeadline:  (v: string) => void;
   setGithubUrl: (v: string) => void;
+  // Super admin only — picks who the project is assigned to.
+  showManagerField?: boolean;
+  managerId?:        string;
+  setManagerId?:     (v: string) => void;
+  managerItems?:     PmLookupItem[];
 }
 
 export function ProjectFormFields({
   name, description, projectType, status, startDate, deadline, githubUrl, typeItems, statusItems, isAr,
   setName, setDesc, setType, setStatus, setDate, setDeadline, setGithubUrl,
+  showManagerField, managerId, setManagerId, managerItems = [],
 }: ProjectFormFieldsProps) {
   return (
     <div className="space-y-5">
@@ -109,6 +115,24 @@ export function ProjectFormFields({
           />
         </div>
       </div>
+
+      {/* Manager assignment — super admin only */}
+      {showManagerField && (
+        <div>
+          <label className={LABEL}>
+            {isAr ? 'مدير المشروع' : 'Project Manager'}
+            <span className="text-red-500 ms-1">*</span>
+          </label>
+          <Combobox
+            items={toComboboxItems(managerItems, isAr)}
+            value={managerId ?? ''}
+            onChange={setManagerId ?? (() => {})}
+            placeholder={isAr ? '-- اختر المدير --' : '-- Select Manager --'}
+            searchPlaceholder={isAr ? 'ابحث عن مدير...' : 'Search manager...'}
+            noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+          />
+        </div>
+      )}
 
       {/* GitHub link */}
       <div>

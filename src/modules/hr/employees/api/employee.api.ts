@@ -6,6 +6,7 @@ import type {
   EmploymentTypeLookupResponse,
   CreateEmployeePayload,
   UpdateEmployeePayload,
+  UpdateWorkSchedulePayload,
   EmploymentType,
 } from '../types/employee.types';
 
@@ -23,7 +24,7 @@ export const employeeApi = {
   },
 
   update(id: string, payload: UpdateEmployeePayload) {
-    return http.post<EmployeeSingleResponse>(`/v1/employees/${id}`, payload);
+    return http.put<EmployeeSingleResponse>(`/v1/employees/${id}`, payload);
   },
 
   updateEmploymentType(id: string, payload: { employment_type: EmploymentType }) {
@@ -31,11 +32,11 @@ export const employeeApi = {
   },
 
   updateSalary(id: string, payload: { salary: number }) {
-    return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/salary`, payload);
+    return http.put<EmployeeSingleResponse>(`/v1/employees/${id}/salary`, payload);
   },
 
-  updateWorkSchedule(id: string, payload: { shift_start: string; shift_end: string }) {
-    return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/work-schedule`, payload);
+  updateWorkSchedule(id: string, payload: UpdateWorkSchedulePayload) {
+    return http.put<EmployeeSingleResponse>(`/v1/employees/${id}/work-schedule`, payload);
   },
 
   submit(id: string) {

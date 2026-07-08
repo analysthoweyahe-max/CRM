@@ -22,6 +22,7 @@ function formDefaults(emp: EditEmployeeModalProps['emp']): FormValues {
     salary:         String(emp.salary ?? ''),
     shiftStart:     (emp.shiftStart ?? emp.shift_start ?? '').slice(0, 5),
     shiftEnd:       (emp.shiftEnd   ?? emp.shift_end   ?? '').slice(0, 5),
+    workingHours:   String(emp.workingHours ?? ''),
     managerId:      String(emp.manager?.id ?? 'none'),
   };
 }
@@ -42,6 +43,8 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
 
   const { data: departments = [] }      = useDepartments();
   const selectedDept                    = useWatch({ control, name: 'department' });
+  const selectedEmploymentType          = useWatch({ control, name: 'employmentType' });
+  const isPartTime                      = selectedEmploymentType === 'part_time';
   const { data: jobTitles = [] }        = useJobTitles(selectedDept || undefined);
   const { data: employmentTypes = [] }  = useEmploymentTypes();
 
@@ -67,8 +70,9 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
         ...(onboardingLocked ? {} : {
           employment_type: data.employmentType as EmploymentType || undefined,
           salary:          parseFloat(data.salary) || undefined,
-          shift_start:     data.shiftStart || undefined,
-          shift_end:       data.shiftEnd   || undefined,
+          ...(data.employmentType === 'part_time'
+            ? { working_hours: Number(data.workingHours) || undefined }
+            : { shift_start: data.shiftStart || undefined, shift_end: data.shiftEnd || undefined }),
         }),
       }),
 
@@ -91,6 +95,7 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
     handleSubmit,
     mutation,
     onboardingLocked,
+    isPartTime,
     deptItems,
     jTitleItems,
     empTypeItems,

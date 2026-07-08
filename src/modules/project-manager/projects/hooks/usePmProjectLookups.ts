@@ -11,12 +11,18 @@ export function usePmProjectLookups() {
   const types = useQuery({
     queryKey: ['pm-project-lookups', 'types'],
     queryFn:  () => pmProjectLookupsApi.types().then(r => r.data.data),
-    staleTime: Infinity,
+  });
+
+  const managers = useQuery({
+    queryKey: ['pm-project-lookups', 'managers'],
+    queryFn:  () => pmProjectLookupsApi.managers().then(r => r.data.data),
+    staleTime: 5 * 60 * 1000,
   });
 
   return {
     statuses: statuses.data ?? [],
     types:    types.data ?? [],
+    managers: managers.data ?? [],
     isLoading: statuses.isLoading || types.isLoading,
   };
 }

@@ -37,8 +37,9 @@ export function useUpdateEmployee(employeeId: string, original?: ApiEmployee) {
       }
 
       if (
-        data.shiftStart !== (original?.shiftStart ?? '') ||
-        data.shiftEnd   !== (original?.shiftEnd   ?? '')
+        data.employmentType !== 'part_time' &&
+        (data.shiftStart !== (original?.shiftStart ?? '') ||
+         data.shiftEnd   !== (original?.shiftEnd   ?? ''))
       ) {
         calls.push(
           employeeApi.updateWorkSchedule(employeeId, {
