@@ -1,40 +1,34 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ROUTES } from '@/app/router/routes';
-import { normalizePmDashboardSections } from '@/shared/modules/my-projects/api/myProjects.api';
-import { pmDashboardApi } from '@/modules/project-manager/dashboard/api/dashboard.api';
+import { myProjectsApi } from '@/shared/modules/my-projects/api/myProjects.api';
 import { useEmployeeTasks } from '@/modules/employee/tasks/hooks/useEmployeeTasks';
 import type { EmpTasksOverview, EmpProject } from '../types/dashboard.types';
-
-const EMPTY_OVERVIEW: EmpTasksOverview = { totalAssigned: 0, inProgress: 0, completed: 0 };
 
 export function useEmpDashboard() {
   const { data: tasks = [], isLoading: tasksLoading } = useEmployeeTasks();
 
-  const { data: dashboardPayload, isLoading: projectsLoading } = useQuery({
-    queryKey: ['emp-dashboard', 'pm-dashboard'],
-    queryFn:  () => pmDashboardApi.get().then(r => r.data.data),
+  // `/v1/employee/projects` — confirmed reliable source of the employee's
+  // own projects (unlike `/v1/pm/dashboard`, which returns empty sections
+  // for accounts confirmed to have real project assignments).
+  const { data: employeeProjects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ['emp-dashboard', 'employee-projects'],
+    queryFn:  () => myProjectsApi.listEmployeeProjects(),
     staleTime: 60_000,
   });
 
-  const projects: EmpProject[] = useMemo(() => {
-    const sections = normalizePmDashboardSections(dashboardPayload);
-    return sections.flatMap((section) =>
-      section.projects.map((project) => ({
-        id:               project.id,
-        name:             project.name,
-        status:           project.status,
-        statusLabel:      project.statusLabel,
-        tasksTotal:       project.tasksAssigned,
-        tasksCompleted:   project.tasksCompleted,
-        progressPercent:  project.progressPercent,
-        tasksUrl:         project.tasksUrl ?? ROUTES.EMPLOYEE.TASKS,
-      })),
-    );
-  }, [dashboardPayload]);
+  const projects: EmpProject[] = useMemo(() => employeeProjects.map((project) => ({
+    id:              project.id,
+    name:            project.name,
+    status:          project.status,
+    statusLabel:     project.statusLabel,
+    tasksTotal:      project.tasksTotal,
+    tasksCompleted:  project.tasksCompleted,
+    progressPercent: project.progressPercent,
+    tasksUrl:        project.tasksUrl ?? ROUTES.EMPLOYEE.PROJECT_TASKS(project.id),
+  })), [employeeProjects]);
 
-  const dashboardOverview = dashboardPayload?.tasksOverview;
-  const overview: EmpTasksOverview = dashboardOverview ?? {
+  const overview: EmpTasksOverview = {
     totalAssigned: tasks.length,
     inProgress:    tasks.filter(t => t.status === 'inProgress').length,
     completed:     tasks.filter(t => t.status === 'completed').length,
@@ -43,7 +37,7 @@ export function useEmpDashboard() {
 
   return {
     isLoading: tasksLoading || projectsLoading,
-    overview:  (dashboardOverview || tasks.length) ? overview : EMPTY_OVERVIEW,
+    overview,
     pending,
     projects,
   };

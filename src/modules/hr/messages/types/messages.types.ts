@@ -1,14 +1,4 @@
-// Stream SDK type re-export (used by ChatWindow & ConversationList)
-export type { Channel as StreamChannel } from 'stream-chat';
-
 /* ── REST API types ─────────────────────────────────────────── */
-
-// GET /chat/token
-export interface ChatTokenResponse {
-  token:   string;
-  api_key: string;
-  user_id: string;
-}
 
 export interface ApiParticipant {
   id:               string;
@@ -58,3 +48,8 @@ export interface ConversationListResponse {
 }
 export interface ConversationSingleResponse { status: string; data: ApiConversation; }
 export interface EmployeeLookupResponse     { status: string; data: ApiEmployeeLookup[]; }
+export interface MessagesListResponse {
+  status: string;
+  data: { data: ApiMessage[]; current_page: number; last_page: number; total: number; per_page: number; };
+}
+export interface SendMessageResponse { status: string; data: ApiMessage; }

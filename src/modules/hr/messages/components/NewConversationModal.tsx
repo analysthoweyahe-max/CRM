@@ -6,7 +6,7 @@ import { useSearchEmployees } from '../hooks/useMessages';
 interface Props {
   isAr:     boolean;
   loading?: boolean;
-  onSelect: (empId: string, empName: string) => void;
+  onSelect: (empId: string) => void;
   onClose:  () => void;
 }
 
@@ -69,7 +69,7 @@ export function NewConversationModal({ isAr, loading, onSelect, onClose }: Props
               key={emp.id}
               type="button"
               disabled={loading}
-              onClick={() => onSelect(emp.id, emp.name)}
+              onClick={() => onSelect(emp.id)}
               className="w-full flex items-center gap-3 px-5 py-3 text-start
                          hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors
                          disabled:opacity-50 disabled:cursor-wait"

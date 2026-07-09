@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ROUTES } from '@/app/router/routes';
 import type {
   GroupedTasksData,
@@ -79,6 +80,7 @@ export function getTasksEndpoint(tasksRole: TasksApiRole, projectId?: number | s
   if (projectId) {
     switch (tasksRole) {
       case 'pm-employee':
+        return `/v1/pm/employee/projects/${projectId}/tasks`;
       case 'project-manager':
         return `/v1/pm/projects/${projectId}/tasks`;
       case 'seo-employee':
@@ -116,6 +118,9 @@ export function getTasksQueryParams(
   const endpoint = getTasksEndpoint(tasksRole, projectId);
   if (projectId && !endpoint.includes(`/${projectId}/`)) {
     params.project_id = projectId;
+  }
+  if (tasksRole === 'pm-employee') {
+    params.mine = 1;
   }
   return params;
 }
@@ -328,6 +333,37 @@ function groupTasksByStatus(tasks: MyTask[]): MyTaskColumn[] {
     }
   }
   return [...map.values()];
+}
+
+/**
+ * Merge per-project task fetches into one combined view — used for PM
+ * employees, whose backend "all my tasks across projects" endpoint doesn't
+ * reliably aggregate (confirmed empty even when per-project data exists).
+ * Each project's tasks are stamped with that project's id/name, since a
+ * project-scoped task response doesn't repeat the project on every task.
+ */
+export function mergeGroupedTasksAcrossProjects(
+  perProject: Array<{ project: { id: number; name: string }; data: GroupedTasksData }>,
+): GroupedTasksData {
+  const columnMap = new Map<string, MyTaskColumn>();
+
+  for (const { project, data } of perProject) {
+    for (const col of data.columns) {
+      const existing = columnMap.get(col.status);
+      const stampedTasks = col.tasks.map((task) => ({
+        ...task,
+        project: task.project ?? project,
+      }));
+      if (existing) {
+        existing.tasks.push(...stampedTasks);
+      } else {
+        columnMap.set(col.status, { status: col.status, statusLabel: col.statusLabel, tasks: [...stampedTasks] });
+      }
+    }
+  }
+
+  const columns = [...columnMap.values()];
+  return { columns, total: countTasks(columns) };
 }
 
 export function extractProjectsFromColumns(columns: MyTaskColumn[]): { id: number; name: string }[] {

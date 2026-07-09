@@ -5,6 +5,7 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { myProjectsApi } from '../api/myProjects.api';
 import {
   PER_PAGE,
+  groupProjectsIntoSections,
   resolveMyProjectsConfig,
 } from '../utils/myProjects.utils';
 import type {
@@ -91,8 +92,8 @@ export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageRe
     queryKey: ['my-projects', 'sections', module, role],
     queryFn: async () => {
       if (module === 'pm') {
-        const res = await myProjectsApi.getPmEmployeeDashboard();
-        return res.data.data.sections;
+        const projects = await myProjectsApi.listEmployeeProjects();
+        return groupProjectsIntoSections(projects, isAr);
       }
       const res = await myProjectsApi.getSeoEmployeeDashboard();
       return res.data.data.myProjects?.sections ?? [];

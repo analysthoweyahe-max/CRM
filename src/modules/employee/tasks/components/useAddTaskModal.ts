@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
+import { toApiArray } from '@/shared/utils/apiList.utils';
 import { useEmpDashboard } from '@/modules/employee/dashboard/hooks/useEmpDashboard';
 import { pmProjectsApi } from '@/modules/project-manager/projects/api/project.api';
+import type { PmProjectPhase } from '@/modules/project-manager/projects/types/project.types';
 import { useCreateSelfTask } from '../hooks/useEmployeeTasks';
 import type { CreateSelfTaskPayload } from '../types/employeeTask.types';
 
@@ -37,7 +39,7 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
     queryKey: ['pm-project', projectId, 'phases'],
     queryFn:  async () => {
       const res = await pmProjectsApi.phases(projectId);
-      return res.data.data ?? [];
+      return toApiArray<PmProjectPhase>(res.data.data);
     },
     enabled: !!projectId,
   });

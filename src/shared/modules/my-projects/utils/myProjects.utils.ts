@@ -1,6 +1,13 @@
 import { ROUTES } from '@/app/router/routes';
 import type { Role } from '@/shared/types/role.types';
-import type { MyProjectsModule, MyProjectsPageConfig } from '../types/myProjects.types';
+import type {
+  DashboardProjectCard,
+  MyProjectsModule,
+  MyProjectsPageConfig,
+  PmProject,
+  ProjectSection,
+  ProjectStatus,
+} from '../types/myProjects.types';
 
 export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): MyProjectsPageConfig {
   const isPmEmployee   = module === 'pm' && role === 'employee';
@@ -96,3 +103,42 @@ export const STATUS_BADGE_FALLBACK = {
 };
 
 export const PER_PAGE = 15;
+
+const SECTION_ORDER: ProjectStatus[] = ['in_progress', 'completed', 'on_hold', 'not_started'];
+
+const SECTION_LABEL_FALLBACK: Record<ProjectStatus, { ar: string; en: string }> = {
+  in_progress: { ar: 'قيد التنفيذ', en: 'In Progress' },
+  completed:   { ar: 'مكتمل',        en: 'Completed' },
+  on_hold:     { ar: 'معلق',         en: 'On Hold' },
+  not_started: { ar: 'لم يبدأ',      en: 'Not Started' },
+};
+
+/** Group a flat project list (e.g. from `/v1/employee/projects`) into the
+ * same fixed status sections `/v1/pm/dashboard` used to provide — that
+ * endpoint's aggregation is unreliable, so this rebuilds the same shape
+ * client-side from a source confirmed to actually list the employee's projects. */
+export function groupProjectsIntoSections(projects: PmProject[], isAr: boolean): ProjectSection[] {
+  return SECTION_ORDER.map((key) => {
+    const inSection = projects.filter(p => p.status === key);
+    const label = inSection[0]?.statusLabel || SECTION_LABEL_FALLBACK[key][isAr ? 'ar' : 'en'];
+
+    return {
+      key,
+      label,
+      defaultExpanded: key === 'in_progress',
+      total: inSection.length,
+      projects: inSection.map((p): DashboardProjectCard => ({
+        id:              p.id,
+        name:            p.name,
+        clientName:      p.projectTypeLabel,
+        status:          p.status,
+        statusLabel:     p.statusLabel,
+        workspaceUrl:    p.workspaceUrl ?? '',
+        tasksUrl:        p.tasksUrl,
+        progressPercent: p.progressPercent,
+        tasksAssigned:   p.tasksTotal,
+        tasksCompleted:  p.tasksCompleted,
+      })),
+    };
+  });
+}

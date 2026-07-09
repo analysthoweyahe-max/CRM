@@ -67,43 +67,6 @@ function unwrapLookupItems(body: unknown): StatusLookupItem[] {
   return [];
 }
 
-/** PM dashboard returns `projects.sections` for managers and `myProjects.sections` for employees. */
-export function normalizePmDashboardSections(payload: unknown): ProjectSection[] {
-  const root = payload as {
-    myProjects?: { sections?: unknown[] };
-    projects?:   { sections?: unknown[] };
-  } | null | undefined;
-
-  const rawSections = root?.myProjects?.sections ?? root?.projects?.sections ?? [];
-
-  return rawSections.map((section) => {
-    const s = section as Record<string, unknown>;
-    const projects = (s.projects as Record<string, unknown>[] | undefined) ?? [];
-
-    return {
-      key:             String(s.key ?? ''),
-      label:           String(s.label ?? ''),
-      defaultExpanded: Boolean(s.defaultExpanded ?? s.key === 'in_progress'),
-      total:           Number(s.total ?? projects.length),
-      projects:        projects.map((p) => ({
-        id:               Number(p.id),
-        name:             String(p.name ?? ''),
-        clientName:       (p.projectTypeLabel ?? p.clientName) as string | undefined,
-        status:           (p.status ?? 'not_started') as ProjectSection['projects'][0]['status'],
-        statusLabel:      String(p.statusLabel ?? ''),
-        workspaceUrl:     String(p.workspaceUrl ?? ''),
-        tasksUrl:         p.tasksUrl as string | undefined,
-        tasksApiUrl:      (p.tasksApiUrl ?? p.tasks_api_url) as string | undefined,
-        progressPercent:  p.progressPercent as number | undefined,
-        tasksAssigned:    (p.tasksAssigned ?? p.tasksTotal) as number | undefined,
-        tasksCompleted:   p.tasksCompleted as number | undefined,
-        tasksInProgress:  p.tasksInProgress as number | undefined,
-        lastUpdatedAt:    (p.lastUpdatedAt ?? p.lastActivityAt) as string | undefined,
-      })),
-    };
-  });
-}
-
 export const myProjectsApi = {
   async listPm(params: MyProjectsListParams, asEmployee: boolean) {
     const path = asEmployee ? '/v1/pm/my-projects' : '/v1/pm/projects';
@@ -112,6 +75,16 @@ export const myProjectsApi = {
       { params: buildListQueryParams(params) },
     );
     return { ...res, data: { ...res.data, data: unwrapPaginatedPayload<PmProject>(res.data) } };
+  },
+
+  /** PM employee's own project list — confirmed reliable source of which
+   * projects the employee belongs to (unlike `/v1/pm/dashboard`, which
+   * returns empty sections for accounts confirmed to have real projects). */
+  async listEmployeeProjects(): Promise<PmProject[]> {
+    const res = await http.get<{ status: string; message: string; data: PaginatedProjectsResponse<PmProject> }>(
+      '/v1/employee/projects',
+    );
+    return unwrapPaginatedPayload<PmProject>(res.data).data;
   },
 
   async listSeo(params: MyProjectsListParams) {
@@ -132,13 +105,6 @@ export const myProjectsApi = {
         ? payload
         : (payload as { data?: SeoMemberDashboardPayload })?.data ?? { myProjects: { sections: [] } };
     return { ...res, data: { ...res.data, data: normalized } };
-  },
-
-  /** PM employee dashboard — grouped projects with task counts. */
-  async getPmEmployeeDashboard() {
-    const res = await http.get<ApiResponse<unknown>>('/v1/pm/dashboard');
-    const sections = normalizePmDashboardSections(res.data?.data);
-    return { ...res, data: { ...res.data, data: { sections } } };
   },
 
   getPmStatuses() {

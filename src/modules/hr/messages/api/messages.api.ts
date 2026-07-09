@@ -1,29 +1,52 @@
 import { http } from '@/shared/services/http.service';
 import type {
-  ChatTokenResponse,
   ConversationListResponse,
   ConversationSingleResponse,
   EmployeeLookupResponse,
+  MessagesListResponse,
+  SendMessageResponse,
 } from '../types/messages.types';
 
 export const messagesApi = {
-  // Stream credentials — backend returns { token, api_key, user_id }
-  getChatToken() {
-    return http.get<ChatTokenResponse>('/chat/token');
-  },
-
   // Employee search for NewConversationModal
   searchEmployees(params?: { search?: string; limit?: number }) {
     return http.get<EmployeeLookupResponse>('/v1/hr/messages/lookups/employees', { params });
   },
 
-  // Persist conversation in Laravel; response may include stream_channel_id
+  // Conversation list (sidebar, status filter)
+  listConversations(params?: { status?: string; search?: string; per_page?: number; page?: number }) {
+    return http.get<ConversationListResponse>('/v1/hr/messages/conversations', { params });
+  },
+
   createConversation(payload: { participant_id: string }) {
     return http.post<ConversationSingleResponse>('/v1/hr/messages/conversations', payload);
   },
 
-  // Conversation list (sidebar, status filter)
-  listConversations(params?: { status?: string; search?: string; per_page?: number; page?: number }) {
-    return http.get<ConversationListResponse>('/v1/hr/messages/conversations', { params });
+  getConversation(uuid: string) {
+    return http.get<ConversationSingleResponse>(`/v1/hr/messages/conversations/${uuid}`);
+  },
+
+  getMessages(uuid: string, params?: { per_page?: number; page?: number }) {
+    return http.get<MessagesListResponse>(`/v1/hr/messages/conversations/${uuid}/messages`, { params });
+  },
+
+  sendMessage(uuid: string, body: string) {
+    return http.post<SendMessageResponse>(`/v1/hr/messages/conversations/${uuid}/messages`, { body });
+  },
+
+  sendMedia(uuid: string, file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    return http.post<SendMessageResponse>(`/v1/hr/messages/conversations/${uuid}/media`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  markRead(uuid: string) {
+    return http.post<{ status: string }>(`/v1/hr/messages/conversations/${uuid}/read`);
+  },
+
+  updateStatus(uuid: string, status: string) {
+    return http.patch<{ status: string }>(`/v1/hr/messages/conversations/${uuid}/status`, { status });
   },
 };

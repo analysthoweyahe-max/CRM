@@ -18,6 +18,17 @@ export interface ListMyTasksOptions {
   tasksApiUrl?:  string;
 }
 
+export interface EmployeeProjectSummary {
+  id:   number;
+  name: string;
+}
+
+interface EmployeeProjectsEnvelope {
+  status:  string;
+  message: string;
+  data: { data: EmployeeProjectSummary[]; current_page: number; last_page: number; total: number };
+}
+
 export const myTasksApi = {
   async list(
     tasksRole: TasksApiRole,
@@ -30,6 +41,17 @@ export const myTasksApi = {
     const params = tasksApiUrl ? {} : getTasksQueryParams(tasksRole, projectId);
     const { data } = await http.get<TasksApiEnvelope>(endpoint, { params });
     return normalizeGroupedTasks(data);
+  },
+
+  /**
+   * PM employee's own project list — confirmed source of truth for which
+   * projects an employee belongs to. Used instead of the (currently broken)
+   * `/v1/pm/dashboard`/`/v1/pm/employee/tasks` aggregation so the "My Tasks"
+   * page can fetch tasks per project and merge them client-side.
+   */
+  async listEmployeeProjects(): Promise<EmployeeProjectSummary[]> {
+    const { data } = await http.get<EmployeeProjectsEnvelope>('/v1/employee/projects');
+    return data?.data?.data ?? [];
   },
 
   updateStatus(
