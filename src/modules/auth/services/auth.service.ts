@@ -16,29 +16,10 @@ import type {
 import { mapRolesToAppRole } from '@/shared/types/role.types';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function isEmail(value: string): boolean {
-  return EMAIL_RE.test(value);
-}
-
 type AccountType = 'employee' | 'admin';
-
-function getCachedAccountType(identifier: string): AccountType | null {
-  const value = localStorage.getItem(ACCOUNT_TYPE_KEY + identifier);
-  return value === 'employee' || value === 'admin' ? value : null;
-}
 
 function setCachedAccountType(identifier: string, type: AccountType): void {
   localStorage.setItem(ACCOUNT_TYPE_KEY + identifier, type);
-}
-
-/** 422 with `errors.<id_field>: ["The selected <id_field> is invalid."]` — wrong guard, not wrong password. */
-function isWrongAccountTypeError(err: unknown, idField: string): boolean {
-  const resp = (err as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } })?.response;
-  if (resp?.status !== 422) return false;
-  const fieldErrors = resp.data?.errors?.[idField];
-  return Array.isArray(fieldErrors) && fieldErrors.some((msg) => /is invalid/i.test(msg));
 }
 
 /** Backend may return permission slugs as strings or `{ name: string }` objects. */
@@ -143,6 +124,8 @@ function normalizeApiEmployee(raw: ApiEmployee): ApiEmployee {
     roles:        slugs.length > 0 ? slugs : (raw.roles ?? []),
     permissions,
     roleDetails,
+    employeeNumber: raw.employeeNumber
+      ?? (typeof extra.employee_number === 'string' ? extra.employee_number : undefined),
     sectionLabel: raw.sectionLabel ?? (typeof extra.section_label === 'string' ? extra.section_label : undefined),
   };
 }
@@ -151,7 +134,7 @@ function buildEmployeeUser(raw: ApiEmployee): AuthUser {
   const employee = normalizeApiEmployee(raw);
   return {
     id:           employee.id,
-    employeeId:   employee.id,
+    employeeId:   employee.employeeNumber ?? employee.id,
     fullName:     employee.name,
     email:        employee.email,
     role:         mapRolesToAppRole(employee.roles, 'employee'),
@@ -252,11 +235,120 @@ function readOtpChallenge(payload: Record<string, unknown>, fallbackAdminId: str
   return { otpRequired, magicLinkRequired, adminId, expiresAt };
 }
 
+function unwrapLoginPayload(response: unknown): Record<string, unknown> {
+  const root = response as Record<string, unknown>;
+  const inner = root.data;
+  if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+    return inner as Record<string, unknown>;
+  }
+  return root;
+}
+
+const EMPLOYEE_ROLE_SLUGS = new Set([
+  'employee', 'pm-employee', 'seo-employee', 'seo-member',
+  'project-manager', 'seo-leader', 'seo-manager',
+]);
+
+const ADMIN_ROLE_SLUGS = new Set(['super-admin', 'admin', 'hr-manager', 'hr']);
+
+function readActorHint(payload: Record<string, unknown>): AuthActor | null {
+  const raw = payload.actorType ?? payload.actor_type ?? payload.guard_name ?? payload.guard;
+  if (raw === 'employee' || raw === 'web') return 'employee';
+  if (raw === 'admin') return 'admin';
+  return null;
+}
+
+function inferActorFromRoles(roles: string[]): AuthActor | null {
+  const hasAdmin = roles.some((r) => ADMIN_ROLE_SLUGS.has(r));
+  const hasEmployee = roles.some((r) => EMPLOYEE_ROLE_SLUGS.has(r));
+  if (hasAdmin && !hasEmployee) return 'admin';
+  if (hasEmployee && !hasAdmin) return 'employee';
+  return null;
+}
+
+function isProfileRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function asApiEmployee(raw: Record<string, unknown>): ApiEmployee {
+  return raw as unknown as ApiEmployee;
+}
+
+function asApiAdmin(raw: Record<string, unknown>): ApiAdmin {
+  return raw as unknown as ApiAdmin;
+}
+
+function parseLoginProfile(payload: Record<string, unknown>): { admin?: ApiAdmin; employee?: ApiEmployee } {
+  const nestedEmployee = payload.employee;
+  if (isProfileRecord(nestedEmployee)) {
+    return { employee: asApiEmployee(nestedEmployee) };
+  }
+
+  const nestedAdmin = payload.admin;
+  if (isProfileRecord(nestedAdmin)) {
+    const roles = normalizeRolesField(nestedAdmin.roles).slugs;
+    const actor = readActorHint(nestedAdmin) ?? inferActorFromRoles(roles);
+    if (actor === 'employee') return { employee: asApiEmployee(nestedAdmin) };
+    return { admin: asApiAdmin(nestedAdmin) };
+  }
+
+  const nestedUser = payload.user;
+  if (isProfileRecord(nestedUser)) {
+    const roles = normalizeRolesField(nestedUser.roles).slugs;
+    const actor = readActorHint(nestedUser) ?? inferActorFromRoles(roles);
+    if (actor === 'employee') return { employee: asApiEmployee(nestedUser) };
+    if (actor === 'admin') return { admin: asApiAdmin(nestedUser) };
+  }
+
+  if (payload.id && (payload.name || payload.email)) {
+    const roles = normalizeRolesField(payload.roles).slugs;
+    const actor = readActorHint(payload) ?? inferActorFromRoles(roles);
+    if (actor === 'employee') return { employee: asApiEmployee(payload) };
+    if (actor === 'admin') return { admin: asApiAdmin(payload) };
+  }
+
+  return {};
+}
+
+function profileFetchOrder(payload: Record<string, unknown>): AuthActor[] {
+  const actor = readActorHint(payload);
+  const redirect = typeof payload.redirect_path === 'string' ? payload.redirect_path : '';
+  if (actor === 'employee' || /\/employee(?:\/|$)/i.test(redirect)) return ['employee', 'admin'];
+  if (actor === 'admin' || /\/admin(?:\/|$)/i.test(redirect)) return ['admin', 'employee'];
+  return ['employee', 'admin'];
+}
+
+async function resolveLoginUser(
+  accessToken: string,
+  payload: Record<string, unknown>,
+  rememberMe: boolean,
+): Promise<AuthUser> {
+  const { admin, employee } = parseLoginProfile(payload);
+  if (employee) return buildEmployeeUser(employee);
+  if (admin) return buildAdminUser(admin);
+
+  const [first, second] = profileFetchOrder(payload);
+  storeAuth(accessToken, normalizeStoredUser({
+    id: '', employeeId: '', fullName: '', role: first === 'employee' ? 'employee' : 'admin',
+    roles: [], permissions: [], actor: first,
+  }), rememberMe);
+
+  for (const actor of [first, second]) {
+    try {
+      return await fetchProfile(actor);
+    } catch {
+      // try the other guard
+    }
+  }
+
+  throw new Error('Invalid login response');
+}
+
 function readAdminAuthSuccess(data: Record<string, unknown>) {
   const accessToken = readAccessToken(data);
-  const admin = data.admin as ApiAdmin | undefined;
+  const { admin, employee } = parseLoginProfile(data);
   const redirect_path = typeof data.redirect_path === 'string' ? data.redirect_path : undefined;
-  return { accessToken, admin, redirect_path };
+  return { accessToken, admin, employee, redirect_path };
 }
 
 function isRememberMe(): boolean {
@@ -308,34 +400,12 @@ async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
 
 // ── Auth operations ───────────────────────────────────────────────────────────
 
-async function loginAsEmployee(
-  identifier: string,
-  password: string,
-  rememberMe: boolean,
-): Promise<LoginResult> {
-  const employeePayload = isEmail(identifier)
-    ? { email: identifier, password }
-    : { employee_id: identifier, password };
-  const { data } = await authApi.employeeLogin(employeePayload);
-  const { accessToken, employee, redirect_path } = data.data;
-  const user = buildEmployeeUser(employee);
-  storeAuth(accessToken, user, rememberMe);
-  setCachedAccountType(identifier, 'employee');
-  return {
-    status:       'success',
-    token:        accessToken,
-    user,
-    redirectPath: redirect_path,
-  };
-}
+async function login(credentials: LoginCredentials): Promise<LoginResult> {
+  const { password, rememberMe = false } = credentials;
+  const identifier = credentials.adminId.trim();
 
-async function loginAsAdmin(
-  identifier: string,
-  password: string,
-  rememberMe: boolean,
-): Promise<LoginResult> {
   const { data } = await authApi.adminLogin({ admin_id: identifier, password });
-  const payload = data.data as Record<string, unknown>;
+  const payload = unwrapLoginPayload(data);
 
   const challenge = readOtpChallenge(payload, identifier);
   if (challenge.otpRequired || challenge.magicLinkRequired) {
@@ -348,14 +418,15 @@ async function loginAsAdmin(
     };
   }
 
-  const { accessToken, admin, redirect_path } = readAdminAuthSuccess(payload);
-  if (!accessToken || !admin) {
-    throw new Error('Invalid admin login response');
+  const accessToken = readAccessToken(payload);
+  if (!accessToken) {
+    throw new Error('Invalid login response');
   }
 
-  const user = buildAdminUser(admin);
+  const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
+  const user = await resolveLoginUser(accessToken, payload, rememberMe);
   storeAuth(accessToken, user, rememberMe);
-  setCachedAccountType(identifier, 'admin');
+  setCachedAccountType(identifier, user.actor);
   return {
     status:       'success',
     token:        accessToken,
@@ -364,32 +435,10 @@ async function loginAsAdmin(
   };
 }
 
-async function login(credentials: LoginCredentials): Promise<LoginResult> {
-  const { password, rememberMe = false } = credentials;
-  const identifier = credentials.adminId.trim();
-  const cachedType = getCachedAccountType(identifier);
-  const employeeIdField = isEmail(identifier) ? 'email' : 'employee_id';
-
-  if (cachedType === 'admin') {
-    try {
-      return await loginAsAdmin(identifier, password, rememberMe);
-    } catch (err) {
-      if (!isWrongAccountTypeError(err, 'admin_id')) throw err;
-      return await loginAsEmployee(identifier, password, rememberMe);
-    }
-  }
-
-  try {
-    return await loginAsEmployee(identifier, password, rememberMe);
-  } catch (err) {
-    if (!isWrongAccountTypeError(err, employeeIdField)) throw err;
-    return await loginAsAdmin(identifier, password, rememberMe);
-  }
-}
-
 async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false): Promise<AuthLoginResponse> {
   const { data } = await authApi.adminVerifyOtp({ admin_id: adminId, code: otp });
-  const { accessToken, admin, redirect_path } = readAdminAuthSuccess(data.data as Record<string, unknown>);
+  const payload = unwrapLoginPayload(data);
+  const { accessToken, admin, redirect_path } = readAdminAuthSuccess(payload);
   if (!accessToken || !admin) {
     throw new Error('Invalid OTP verification response');
   }
@@ -401,13 +450,14 @@ async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false):
 
 async function resendAdminOtp(adminId: string): Promise<string> {
   const { data } = await authApi.adminResendOtp({ admin_id: adminId });
-  const payload = data.data as Record<string, unknown>;
+  const payload = unwrapLoginPayload(data);
   return String(payload.expiresAt ?? payload.expires_at ?? '');
 }
 
 async function completeMagicLogin(token: string, rememberMe = true): Promise<AuthUser> {
   const { data } = await authApi.adminMagicLogin(token);
-  const { accessToken, admin } = readAdminAuthSuccess(data.data as Record<string, unknown>);
+  const payload = unwrapLoginPayload(data);
+  const { accessToken, admin } = readAdminAuthSuccess(payload);
   if (!accessToken || !admin) {
     throw new Error('Invalid magic login response');
   }
@@ -433,7 +483,8 @@ async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginRespon
 
   if (inviteType === 'admin') {
     const { data } = await authApi.setAdminPassword(token, apiPayload);
-    const { accessToken, admin, redirect_path } = readAdminAuthSuccess(data.data as Record<string, unknown>);
+    const payload = unwrapLoginPayload(data);
+    const { accessToken, admin, redirect_path } = readAdminAuthSuccess(payload);
     if (!accessToken || !admin) {
       throw new Error('Invalid set-password response');
     }

@@ -16,7 +16,7 @@ export const loginSchema = z.object({
       return emailSchema.safeParse(normalized).success
         || userIdSchema.safeParse(normalized).success;
     }, 'adminIdInvalid'),
-  password:   z.string().trim().min(1, 'passwordRequired').min(6, 'loginPasswordMin'),
+  password:   z.string().min(1, 'passwordRequired').min(6, 'loginPasswordMin'),
   rememberMe: z.boolean().optional(),
 });
 

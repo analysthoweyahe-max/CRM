@@ -141,6 +141,7 @@ export interface AdminLoginApiResponse {
     accessToken?:        string;
     access_token?:       string;
     admin?:              AdminUser;
+    employee?:           ApiEmployee;
     redirect_path?:      string;
     otpRequired?:        boolean;
     otp_required?:       boolean;
