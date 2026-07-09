@@ -12,6 +12,8 @@ import { useFirebaseMessaging }       from '@/shared/hooks/useFirebaseMessaging'
 import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
 import { resolveNotificationPath }    from '@/shared/utils/notificationNavigation.utils';
+import { playNotificationSound }      from '@/shared/utils/sound.utils';
+import { useEmployeeAlertList }       from '@/modules/employee/alerts/hooks/useEmployeeAlerts';
 import type { AppNotification }     from '@/shared/types/notification.types';
 
 interface TopbarProps {
@@ -41,17 +43,64 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
     return () => clearTimeout(t);
   }, [justArrived]);
 
+  // "Alerts" (management instructions) are a separate feed from regular
+  // notifications, but a new one should still chime + shake the same bell.
+  const isEmployee = user?.role === 'employee';
+  const { data: alertsData } = useEmployeeAlertList(isEmployee);
+  const unreadAlertsCount = (alertsData?.data ?? []).filter(a => !a.readAt).length;
+  const prevUnreadAlertsCount = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!isEmployee) return;
+    const prev = prevUnreadAlertsCount.current;
+    prevUnreadAlertsCount.current = unreadAlertsCount;
+    if (prev === null || unreadAlertsCount <= prev) return;
+
+    playNotificationSound();
+    setRinging(true);
+    const t = setTimeout(() => setRinging(false), 700);
+    return () => clearTimeout(t);
+  }, [unreadAlertsCount, isEmployee]);
+
   function handlePushRefresh() {
     refetch();
     qc.invalidateQueries({ queryKey: ['my-tasks'] });
   }
 
+  // Alerts have no `type`/`data` shape of their own — recast them as
+  // notifications (prefixed id) so they render in the same dropdown/badge.
+  const alertNotifications: AppNotification[] = (alertsData?.data ?? []).map(a => ({
+    id:        `alert-${a.id}`,
+    type:      'alert',
+    title:     a.title,
+    body:      a.body,
+    readAt:    a.readAt,
+    createdAt: a.createdAt,
+  }));
+
+  const mergedNotifications = [...notifications, ...alertNotifications]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const mergedUnreadCount = unreadCount + unreadAlertsCount;
+
   function handleNotificationClick(notification: AppNotification) {
-    const path = resolveNotificationPath(notification, user);
-    if (path) {
-      navigate(path);
+    if (notification.type === 'alert') {
+      const alertId = notification.id.replace(/^alert-/, '');
+      navigate(ROUTES.EMPLOYEE.ALERT_DETAIL(alertId));
+      // Backend marks the alert read when its detail is fetched — refresh
+      // shortly after so the badge/list catch up without waiting for the poll.
+      setTimeout(() => qc.invalidateQueries({ queryKey: ['employee', 'alerts'] }), 500);
       setNotifOpen(false);
+      return;
     }
+    const path = resolveNotificationPath(notification, user);
+    if (path) navigate(path);
+    setNotifOpen(false);
+  }
+
+  function handleMarkRead(id: string) {
+    if (id.startsWith('alert-')) return; // alerts are marked read by opening their detail page
+    markRead(id);
   }
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -124,21 +173,21 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
                           : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
           >
             <Bell size={18} className={ringing ? 'animate-bell-ring' : ''} />
-            {unreadCount > 0 && (
+            {mergedUnreadCount > 0 && (
               <span className="absolute top-1 inset-e-1 min-w-4 h-4 px-0.5 rounded-full
                                bg-red-500 text-white text-[10px] font-bold
                                flex items-center justify-center leading-none">
-                {unreadCount}
+                {mergedUnreadCount}
               </span>
             )}
           </button>
 
           {notifOpen && (
             <NotificationDropdown
-              notifications={notifications}
+              notifications={mergedNotifications}
               isAr={isAr}
               onMarkAllRead={markAllRead}
-              onMarkRead={markRead}
+              onMarkRead={handleMarkRead}
               onNavigate={handleNotificationClick}
             />
           )}

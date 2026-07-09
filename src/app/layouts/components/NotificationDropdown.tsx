@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarCheck, MessageSquare, Wallet, AtSign, Bell } from 'lucide-react';
+import { CalendarCheck, MessageSquare, Wallet, AtSign, Megaphone, Bell } from 'lucide-react';
 import type { AppNotification } from '@/shared/types/notification.types';
 import { formatTimeAgo } from '@/shared/utils/date.utils';
 
@@ -19,6 +19,7 @@ const TYPE_ICON: Record<string, React.ReactNode> = {
   deduction_applied: <Wallet size={14} />,
   bonus_applied:     <Wallet size={14} />,
   PmMentionNotification: <AtSign size={14} />,
+  alert:             <Megaphone size={14} />,
 };
 
 const TYPE_ICON_BG: Record<string, string> = {
@@ -27,6 +28,7 @@ const TYPE_ICON_BG: Record<string, string> = {
   deduction_applied: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
   bonus_applied:     'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
   PmMentionNotification: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+  alert:             'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]',
 };
 
 const DEFAULT_ICON = <Bell size={14} />;

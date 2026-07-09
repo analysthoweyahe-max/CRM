@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { employeeAlertsApi } from '../api/alert.api';
 
-export function useEmployeeAlertList() {
+export function useEmployeeAlertList(enabled = true) {
   return useQuery({
     queryKey: ['employee', 'alerts'],
     queryFn:  () => employeeAlertsApi.list({ per_page: 50 }).then((r) => r.data.data),
@@ -10,6 +10,7 @@ export function useEmployeeAlertList() {
     // manual reload, and refresh whenever the tab regains focus.
     refetchInterval: 15_000,
     refetchOnWindowFocus: true,
+    enabled,
   });
 }
 

@@ -27,6 +27,34 @@ function isTaskNotification(notification: AppNotification): boolean {
   return /task|مهمة|pm task|seo task/.test(haystack);
 }
 
+function isLeaveNotification(notification: AppNotification): boolean {
+  const haystack = `${notification.type} ${notification.title} ${notification.body}`.toLowerCase();
+  return /leave|إجاز/.test(haystack);
+}
+
+function isMessageNotification(notification: AppNotification): boolean {
+  if (notification.type === 'PmMentionNotification') return true;
+  const haystack = `${notification.type} ${notification.title} ${notification.body}`.toLowerCase();
+  return /message|mention|رسال|منشن/.test(haystack);
+}
+
+/** Only roles with a confirmed dedicated leave-requests page get routed;
+ * everything else falls back to `null` (dropdown still closes on click). */
+function leavePath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
+  if (user?.role === 'employee')   return ROUTES.EMPLOYEE.REQUESTS;
+  if (user?.role === 'seo-member') return ROUTES.SEO_MEMBER.REQUESTS;
+  if (user?.role === 'hr')         return ROUTES.LEAVES.LIST;
+  return null;
+}
+
+/** Only roles with a confirmed dedicated messages page get routed. */
+function messagesPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
+  if (user?.role === 'employee')   return ROUTES.EMPLOYEE.MESSAGES;
+  if (user?.role === 'seo-member') return ROUTES.SEO_MEMBER.MESSAGES;
+  if (user?.role === 'hr')         return ROUTES.MESSAGES;
+  return null;
+}
+
 /** Resolve in-app path when a notification is clicked. */
 export function resolveNotificationPath(
   notification: AppNotification,
@@ -77,6 +105,14 @@ export function resolveNotificationPath(
 
   if (isTaskNotification(notification)) {
     return seo ? ROUTES.SEO_MEMBER.TASKS : ROUTES.EMPLOYEE.TASKS;
+  }
+
+  if (isLeaveNotification(notification)) {
+    return leavePath(user);
+  }
+
+  if (isMessageNotification(notification)) {
+    return messagesPath(user);
   }
 
   return null;
