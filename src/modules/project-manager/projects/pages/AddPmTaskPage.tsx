@@ -12,7 +12,7 @@ import { ROUTES }     from '@/app/router/routes';
 import { useProjectDetails }   from '../hooks/useProjectDetails';
 import { usePmTaskLookups }    from '../hooks/usePmTaskLookups';
 import { pmProjectLookupsApi, pmProjectTeamApi, pmProjectsApi } from '../api/project.api';
-import type { PmAvailableMember, PmProjectTeamMember } from '../types/project.types';
+import type { PmAvailableMember, PmProjectTeamMember, PmProjectPhase } from '../types/project.types';
 import { pmTaskApi, normalizePmTaskPriority } from '../../tasks/api/task.api';
 import { useInvalidateProjectTasks } from '../../tasks/store/taskStore';
 import { PmTaskFormFields, type PmTaskFormState } from '../components/PmTaskFormFields';
@@ -55,14 +55,21 @@ export function AddPmTaskPage() {
     enabled: !!id,
   });
 
-  const { data: projectPhases = [] } = useQuery({
+  const { data: projectPhases = [], isError: phasesError } = useQuery({
     queryKey: ['pm-project', id, 'phases'],
     queryFn:  async () => {
       const res = await pmProjectsApi.phases(id);
-      return res.data.data ?? [];
+      return toApiArray<PmProjectPhase>(res.data.data);
     },
     enabled: !!id,
   });
+
+  useEffect(() => {
+    if (phasesError) {
+      toast.error(isAr ? 'فشل تحميل مراحل المشروع' : 'Failed to load project phases');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phasesError]);
 
   const teamMemberIds = useMemo(() => {
     const ids = new Set<string>();

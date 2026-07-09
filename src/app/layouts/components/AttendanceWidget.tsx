@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Clock, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { Button }  from '@/shared/components/ui/Button';
+import { Modal }   from '@/shared/components/ui/Modal';
+import { extractApiError } from '@/shared/utils/error.utils';
 import type { AttendanceWidgetProps } from './useAttendanceWidget';
 
 function formatElapsed(seconds: number): string {
@@ -29,17 +32,21 @@ export function AttendanceWidget(props: AttendanceWidgetProps) {
   const { lang } = useLang();
   const isAr = lang === 'ar';
 
+  const [confirmAction, setConfirmAction] = useState<'check-in' | 'check-out' | null>(null);
+
   function handleCheckIn() {
+    setConfirmAction(null);
     checkIn(
       () => toast.success(isAr ? 'تم تسجيل الحضور' : 'Checked in successfully'),
-      () => toast.error(isAr ? 'فشل تسجيل الحضور' : 'Check-in failed'),
+      (err) => toast.error(extractApiError(err) || (isAr ? 'فشل تسجيل الحضور' : 'Check-in failed')),
     );
   }
 
   function handleCheckOut() {
+    setConfirmAction(null);
     checkOut(
       () => toast.success(isAr ? 'تم تسجيل الانصراف، طاب يومك 👋' : 'Checked out, have a great day!'),
-      () => toast.error(isAr ? 'فشل تسجيل الانصراف' : 'Check-out failed'),
+      (err) => toast.error(extractApiError(err) || (isAr ? 'فشل تسجيل الانصراف' : 'Check-out failed')),
     );
   }
 
@@ -95,7 +102,7 @@ export function AttendanceWidget(props: AttendanceWidgetProps) {
           fullWidth
           variant="danger"
           startIcon={<LogOut size={13} />}
-          onClick={handleCheckOut}
+          onClick={() => setConfirmAction('check-out')}
           isLoading={isCheckingOut}
         >
           {isAr ? 'تسجيل الانصراف' : 'Check Out'}
@@ -104,12 +111,45 @@ export function AttendanceWidget(props: AttendanceWidgetProps) {
         <Button
           size="sm"
           fullWidth
-          onClick={handleCheckIn}
+          onClick={() => setConfirmAction('check-in')}
           isLoading={isCheckingIn}
         >
           {isAr ? 'تسجيل الحضور' : 'Check In'}
         </Button>
       )}
+
+      {/* Confirmation modal — guards against an accidental click */}
+      <Modal
+        open={confirmAction !== null}
+        onClose={() => setConfirmAction(null)}
+        size="sm"
+        title={
+          confirmAction === 'check-in'
+            ? (isAr ? 'تسجيل الحضور' : 'Check In')
+            : (isAr ? 'تسجيل الانصراف' : 'Check Out')
+        }
+        description={
+          confirmAction === 'check-in'
+            ? (isAr ? 'هل تريد بدء تسجيل الحضور الآن؟' : 'Do you want to start your check-in now?')
+            : (isAr ? 'هل تريد تسجيل الانصراف الآن؟' : 'Do you want to check out now?')
+        }
+        footer={
+          <div className="flex items-center gap-3 justify-start flex-row-reverse">
+            {confirmAction === 'check-in' ? (
+              <Button isLoading={isCheckingIn} onClick={handleCheckIn}>
+                {isAr ? 'بدأ' : 'Start'}
+              </Button>
+            ) : (
+              <Button variant="danger" isLoading={isCheckingOut} onClick={handleCheckOut}>
+                {isAr ? 'تسجيل الانصراف' : 'Check Out'}
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setConfirmAction(null)}>
+              {isAr ? 'إلغاء' : 'Cancel'}
+            </Button>
+          </div>
+        }
+      />
     </div>
   );
 }

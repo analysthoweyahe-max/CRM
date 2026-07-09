@@ -17,8 +17,8 @@ export interface AttendanceWidgetProps {
   elapsed:       number;
   isCheckingIn:  boolean;
   isCheckingOut: boolean;
-  checkIn:  (onSuccess?: () => void, onError?: () => void) => void;
-  checkOut: (onSuccess?: () => void, onError?: () => void) => void;
+  checkIn:  (onSuccess?: () => void, onError?: (err: unknown) => void) => void;
+  checkOut: (onSuccess?: () => void, onError?: (err: unknown) => void) => void;
 }
 
 export function useAttendanceWidget(): AttendanceWidgetProps {
@@ -104,9 +104,9 @@ export function useAttendanceWidget(): AttendanceWidgetProps {
           invalidate();
           onSuccess?.();
         },
-        onError: () => {
+        onError: (err) => {
           setLocalCheckIn(null); // revert
-          onError?.();
+          onError?.(err);
         },
       });
     },
@@ -121,9 +121,9 @@ export function useAttendanceWidget(): AttendanceWidgetProps {
           invalidate();
           onSuccess?.();
         },
-        onError: () => {
+        onError: (err) => {
           setLocalCheckIn(prev); // revert
-          onError?.();
+          onError?.(err);
         },
       });
     },
