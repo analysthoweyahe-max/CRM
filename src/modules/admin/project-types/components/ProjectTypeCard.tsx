@@ -12,13 +12,18 @@ interface Props {
 }
 
 export function ProjectTypeCard({ type, isAr, onEdit, onDelete }: Props) {
+  const linkedProjects = type.projectsCount ?? 0;
+  const canDelete = linkedProjects === 0;
+
   return (
     <Card padding="lg" className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
-          <Button variant="icon-danger" aria-label={isAr ? 'حذف' : 'Delete'} onClick={onDelete}>
-            <Trash2 size={15} />
-          </Button>
+          {canDelete && (
+            <Button variant="icon-danger" aria-label={isAr ? 'حذف' : 'Delete'} onClick={onDelete}>
+              <Trash2 size={15} />
+            </Button>
+          )}
           <Button variant="icon" aria-label={isAr ? 'تعديل' : 'Edit'} onClick={onEdit}>
             <Pencil size={15} />
           </Button>
@@ -32,13 +37,25 @@ export function ProjectTypeCard({ type, isAr, onEdit, onDelete }: Props) {
         <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 break-words">
           {isAr ? (type.nameAr || type.name) : type.name}
         </h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5" dir="ltr">
+          {type.slug}
+        </p>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-          {isAr ? `الترتيب: ${type.sortOrder}` : `Sort order: ${type.sortOrder}`}
+          {isAr
+            ? `الترتيب: ${type.sortOrder} · المشاريع: ${linkedProjects}`
+            : `Sort: ${type.sortOrder} · Projects: ${linkedProjects}`}
         </p>
         {!type.isActive && (
           <div className="flex justify-end mt-2">
             <Badge label={isAr ? 'معطل' : 'Inactive'} variant="error" />
           </div>
+        )}
+        {!canDelete && (
+          <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+            {isAr
+              ? 'لا يمكن الحذف — عطّل النوع بدلاً من ذلك'
+              : 'Cannot delete — deactivate instead'}
+          </p>
         )}
       </div>
     </Card>

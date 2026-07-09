@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast }             from 'sonner';
+import { useAuth }             from '@/modules/auth/context/AuthContext';
 import { seoTeamApi }                    from '../api/seoTeam.api';
 import { getAvatarColor, matchesSearch } from '@/shared/utils';
 import { downloadTeamExcel }             from '@/shared/modules/team/utils/exportTeam';
+import { filterSeoTeamMembers }            from '@/shared/modules/team/utils/teamScope.utils';
 import type { SeoTeamApiMember, SeoTeamInvitePayload } from '../types/seoTeam.types';
 
 const PAGE_SIZE       = 4;
@@ -25,6 +27,7 @@ async function fetchAllMembers(): Promise<SeoTeamApiMember[]> {
 }
 
 export function useSeoTeamPage(isAr = true) {
+  const { user } = useAuth();
   const [allMembers,    setAllMembers]    = useState<SeoTeamApiMember[]>([]);
   const [isLoading,     setIsLoading]     = useState(true);
   const [page,          setPage]          = useState(1);
@@ -44,13 +47,21 @@ export function useSeoTeamPage(isAr = true) {
     return () => { cancelled = true; };
   }, [refreshTick]);
 
+  const scopedMembers = useMemo(
+    () => filterSeoTeamMembers(allMembers, {
+      viewerId: user?.employeeId,
+      isAdmin:  user?.role === 'admin',
+    }),
+    [allMembers, user?.employeeId, user?.role],
+  );
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return allMembers;
-    return allMembers.filter(m => matchesSearch(
+    if (!search.trim()) return scopedMembers;
+    return scopedMembers.filter(m => matchesSearch(
       [m.name, m.email, m.phone, m.jobTitle?.name, m.team?.name, m.team?.nameAr],
       search,
     ));
-  }, [allMembers, search]);
+  }, [scopedMembers, search]);
 
   const total     = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -82,12 +93,12 @@ export function useSeoTeamPage(isAr = true) {
   }
 
   function openProfile(id: string) {
-    const m = allMembers.find(m => m.id === id);
+    const m = scopedMembers.find(m => m.id === id);
     if (m) setProfileMember(m);
   }
 
   function toggleActive(id: string) {
-    const member   = allMembers.find(m => m.id === id);
+    const member   = scopedMembers.find(m => m.id === id);
     const newState = !(member?.isActive ?? true);
     setAllMembers(prev =>
       prev.map(m => m.id === id ? { ...m, isActive: newState, statusLabel: newState ? 'نشط' : 'غير نشط' } : m)
@@ -102,7 +113,7 @@ export function useSeoTeamPage(isAr = true) {
   }
 
   function exportSelected() {
-    const toExport = allMembers.filter(m => selected.has(m.id));
+    const toExport = scopedMembers.filter(m => selected.has(m.id));
     if (toExport.length === 0) return;
 
     const headers = isAr

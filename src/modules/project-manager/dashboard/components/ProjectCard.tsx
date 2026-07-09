@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { FolderOpen }  from 'lucide-react';
 import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
 import { ROUTES }      from '@/app/router/routes';
@@ -51,7 +52,6 @@ export function ProjectCard({ project, isAr }: Props) {
                  hover:border-[#A0CD39]! hover:shadow-lg
                  focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A0CD39]">
 
-      {/* Title + category */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-snug">
@@ -69,15 +69,34 @@ export function ProjectCard({ project, isAr }: Props) {
               <GithubIcon size={16} />
             </a>
           )}
+          {project.driveLink && (
+            <a
+              href={ensureHttpUrl(project.driveLink)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={isAr ? 'رابط Google Drive' : 'Google Drive link'}
+              className="shrink-0 text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
+            >
+              <FolderOpen size={16} />
+            </a>
+          )}
         </div>
-        <span className="shrink-0 text-xs px-2.5 py-1 rounded-full border
-                         border-gray-200 dark:border-gray-600
-                         text-gray-500 dark:text-gray-400 whitespace-nowrap">
-          {translateProjectLookup('', project.projectTypeLabel, isAr)}
-        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {project.isDraft && (
+            <span className="text-xs px-2.5 py-1 rounded-full whitespace-nowrap font-medium
+                             bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              {isAr ? 'مسودة' : 'Draft'}
+            </span>
+          )}
+          <span className="text-xs px-2.5 py-1 rounded-full border
+                           border-gray-200 dark:border-gray-600
+                           text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {translateProjectLookup('', project.projectTypeLabel, isAr)}
+          </span>
+        </div>
       </div>
 
-      {/* Progress bar */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <span>{isAr ? 'نسبة الإنجاز' : 'Progress'}</span>
@@ -91,7 +110,6 @@ export function ProjectCard({ project, isAr }: Props) {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
           <span>
@@ -111,7 +129,6 @@ export function ProjectCard({ project, isAr }: Props) {
         <TeamAvatars team={project.team} />
       </div>
 
-      {/* Details button */}
       <Button
         variant="secondary"
         fullWidth

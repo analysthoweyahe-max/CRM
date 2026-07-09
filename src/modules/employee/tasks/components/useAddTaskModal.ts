@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { extractApiError } from '@/shared/utils/error.utils';
 import { useEmpDashboard } from '@/modules/employee/dashboard/hooks/useEmpDashboard';
-import { useEmployeeTasks, useCreateSelfTask } from '../hooks/useEmployeeTasks';
+import { pmProjectsApi } from '@/modules/project-manager/projects/api/project.api';
+import { useCreateSelfTask } from '../hooks/useEmployeeTasks';
 import type { CreateSelfTaskPayload } from '../types/employeeTask.types';
 
-type Priority = CreateSelfTaskPayload['priority'];
+type Priority = 'low' | 'normal' | 'high';
 
 export function useAddTaskModal(onClose: () => void, isAr: boolean) {
   const { projects } = useEmpDashboard();
-  const { data: allTasks = [] } = useEmployeeTasks();
   const { mutate: create, isPending: creating } = useCreateSelfTask();
 
   const [projectId,      setProjectId]      = useState('');
@@ -31,13 +33,19 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
     [projects],
   );
 
-  const phaseItems = useMemo(() => {
-    const phases = new Map<string, string>();
-    allTasks
-      .filter(t => t.projectId === projectId && t.phaseId)
-      .forEach(t => phases.set(t.phaseId!, t.phaseName ?? t.phaseId!));
-    return [...phases.entries()].map(([id, label]) => ({ id, label }));
-  }, [allTasks, projectId]);
+  const { data: projectPhases = [] } = useQuery({
+    queryKey: ['pm-project', projectId, 'phases'],
+    queryFn:  async () => {
+      const res = await pmProjectsApi.phases(projectId);
+      return res.data.data ?? [];
+    },
+    enabled: !!projectId,
+  });
+
+  const phaseItems = useMemo(
+    () => projectPhases.map(p => ({ id: String(p.id), label: p.name })),
+    [projectPhases],
+  );
 
   const priorityItems = [
     { id: 'low',    label: isAr ? 'منخفضة' : 'Low'    },
@@ -53,10 +61,10 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
     const payload: CreateSelfTaskPayload = {
       title: title.trim(),
       priority,
-      ...(description.trim()   ? { description: description.trim() } : {}),
-      ...(dueDate               ? { due_date: dueDate } : {}),
-      ...(estimatedHours        ? { estimated_hours: Number(estimatedHours) } : {}),
-      ...(phaseId               ? { phase_id: Number(phaseId) } : {}),
+      ...(description.trim() ? { description: description.trim() } : {}),
+      ...(dueDate            ? { dueDate } : {}),
+      ...(estimatedHours     ? { estimatedHours: Number(estimatedHours) } : {}),
+      ...(phaseId            ? { phaseId: Number(phaseId) } : {}),
     };
 
     create(
@@ -66,7 +74,7 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
           toast.success(isAr ? 'تم إضافة المهمة بنجاح' : 'Task added successfully');
           handleClose();
         },
-        onError: () => toast.error(isAr ? 'حدث خطأ، حاول مرة أخرى' : 'An error occurred'),
+        onError: (err) => toast.error(extractApiError(err) || (isAr ? 'حدث خطأ، حاول مرة أخرى' : 'An error occurred')),
       },
     );
   }

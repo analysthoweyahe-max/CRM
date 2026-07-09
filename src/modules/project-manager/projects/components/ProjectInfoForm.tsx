@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Check }    from 'lucide-react';
-import { toast }    from 'sonner';
-import { Button }   from '@/shared/components/ui/Button';
+import { Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuth } from '@/modules/auth/context/AuthContext';
+import { Button } from '@/shared/components/ui/Button';
 import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
-import { useProjectSettings }      from '../hooks/useProjectSettings';
-import { usePmProjectLookups }     from '../hooks/usePmProjectLookups';
+import { ProjectOptionalFields } from '@/shared/components/form/ProjectOptionalFields';
+import { useProjectSettings } from '../hooks/useProjectSettings';
+import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
 import type { PmLookupItem } from '../types/project.types';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
+import {
+  optionalLink,
+  optionalContractDurationMonths,
+  validateProjectOptionalFields,
+} from '@/shared/utils/projectOptionalFields.utils';
+import type { ProjectOptionalFieldErrors } from '@/shared/utils/projectOptionalFields.utils';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -19,10 +28,15 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
+function lookupLabel(l: PmLookupItem, isAr: boolean): string {
+  if (isAr && l.labelAr) return l.labelAr;
+  return translateProjectLookup(l.value, l.label, isAr, l.labelAr);
+}
+
 function toComboboxItems(lookups: PmLookupItem[], isAr: boolean): ComboboxItem[] {
   return lookups.map(l => ({
     id:    l.value,
-    label: translateProjectLookup(l.value, l.label, isAr, l.labelAr),
+    label: lookupLabel(l, isAr),
   }));
 }
 
@@ -32,16 +46,23 @@ interface Props {
 }
 
 export function ProjectInfoForm({ projectId, isAr }: Props) {
+  const { user } = useAuth();
+  const isAdmin  = user?.role === 'admin';
   const { settings, isLoading, save } = useProjectSettings(projectId);
-  const { statuses, types }           = usePmProjectLookups();
+  const { statuses, types, managers } = usePmProjectLookups({ includeManagers: isAdmin });
 
-  const [name,        setName]        = useState('');
-  const [description, setDesc]        = useState('');
-  const [startDate,   setStartDate]   = useState('');
-  const [deadline,    setDeadline]    = useState('');
-  const [status,      setStatus]      = useState('');
-  const [projectType, setType]        = useState('');
-  const [saving,      setSaving]      = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDesc] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [githubLink, setGithubLink] = useState('');
+  const [driveLink, setDriveLink] = useState('');
+  const [contractDurationMonths, setContractDurationMonths] = useState('');
+  const [optionalFieldErrors, setOptionalFieldErrors] = useState<ProjectOptionalFieldErrors>({});
+  const [status, setStatus] = useState('');
+  const [projectType, setType] = useState('');
+  const [managerId, setManagerId] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!settings) return;
@@ -49,12 +70,26 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
     setDesc(settings.description ?? '');
     setStartDate(settings.startDate ?? '');
     setDeadline(settings.deadline ?? '');
+    setGithubLink(settings.githubLink ?? '');
+    setDriveLink(settings.driveLink ?? '');
+    setContractDurationMonths(
+      settings.contractDurationMonths != null ? String(settings.contractDurationMonths) : '',
+    );
     setStatus(settings.status);
-    setType(settings.projectType);
+    setType(String(settings.projectTypeId ?? settings.projectType));
+    setManagerId(settings.manager?.id ?? '');
   }, [settings]);
+
+  function validateOptionalFields() {
+    const errors = validateProjectOptionalFields(githubLink, driveLink, contractDurationMonths, isAr);
+    setOptionalFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
 
   async function handleSave() {
     if (!name.trim() || saving) return;
+    if (!validateOptionalFields()) return;
+
     setSaving(true);
     try {
       await save({
@@ -65,10 +100,21 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         is_draft:        settings?.isDraft ?? false,
         start_date:      startDate,
         deadline,
+        githubLink:      optionalLink(githubLink),
+        driveLink:       optionalLink(driveLink),
+        contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
+        ...(isAdmin && managerId ? { manager_id: managerId } : {}),
       });
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
-    } catch {
-      toast.error(isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes');
+    } catch (err) {
+      const apiFieldErrors = extractApiFieldErrors(err);
+      if (Object.keys(apiFieldErrors).length > 0) {
+        setOptionalFieldErrors((prev) => ({ ...prev, ...apiFieldErrors }));
+      } else {
+        const fallback = isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes';
+        const message  = extractApiError(err);
+        toast.error(message && message !== 'An unexpected error occurred.' ? message : fallback);
+      }
     } finally {
       setSaving(false);
     }
@@ -82,35 +128,25 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
     );
   }
 
+  const hasOptionalErrors = Object.keys(optionalFieldErrors).length > 0;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 space-y-5">
       <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 text-end">
         {isAr ? 'معلومات المشروع' : 'Project Information'}
       </h2>
 
-      {/* Name + Start Date */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>{isAr ? 'اسم المشروع' : 'Project Name'}</label>
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className={INPUT}
-          />
+          <input type="text" value={name} onChange={e => setName(e.target.value)} className={INPUT} />
         </div>
         <div>
           <label className={LABEL}>{isAr ? 'تاريخ البدء' : 'Start Date'}</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            className={INPUT}
-          />
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={INPUT} />
         </div>
       </div>
 
-      {/* Description */}
       <div>
         <label className={LABEL}>{isAr ? 'الوصف' : 'Description'}</label>
         <textarea
@@ -122,7 +158,6 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         />
       </div>
 
-      {/* Status + Type */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>{isAr ? 'الحالة' : 'Status'}</label>
@@ -146,21 +181,49 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         </div>
       </div>
 
-      {/* Deadline */}
+      {isAdmin && (
+        <div>
+          <label className={LABEL}>{isAr ? 'مدير المشروع' : 'Project Manager'}</label>
+          <Combobox
+            items={toComboboxItems(managers, isAr)}
+            value={managerId}
+            onChange={setManagerId}
+            placeholder={isAr ? '-- اختر المدير --' : '-- Select Manager --'}
+            searchPlaceholder={isAr ? 'ابحث عن مدير...' : 'Search manager...'}
+            noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+          />
+        </div>
+      )}
+
+      <ProjectOptionalFields
+        githubLink={githubLink}
+        driveLink={driveLink}
+        contractDurationMonths={contractDurationMonths}
+        errors={optionalFieldErrors}
+        isAr={isAr}
+        onGithubLinkChange={(v) => {
+          setGithubLink(v);
+          if (optionalFieldErrors.githubLink) validateOptionalFields();
+        }}
+        onDriveLinkChange={(v) => {
+          setDriveLink(v);
+          if (optionalFieldErrors.driveLink) validateOptionalFields();
+        }}
+        onContractMonthsChange={(v) => {
+          setContractDurationMonths(v);
+          if (optionalFieldErrors.contractDurationMonths) validateOptionalFields();
+        }}
+      />
+
       <div>
         <label className={LABEL}>{isAr ? 'الموعد النهائي' : 'Deadline'}</label>
-        <input
-          type="date"
-          value={deadline}
-          onChange={e => setDeadline(e.target.value)}
-          className={INPUT}
-        />
+        <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className={INPUT} />
       </div>
 
       <Button
         variant="primary"
         startIcon={<Check size={15} />}
-        disabled={!name.trim() || saving}
+        disabled={!name.trim() || saving || hasOptionalErrors}
         onClick={handleSave}
       >
         {isAr ? 'حفظ' : 'Save'}

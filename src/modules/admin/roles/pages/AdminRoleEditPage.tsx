@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { useLang }     from '@/app/providers/LanguageProvider';
+import { useAuth }     from '@/modules/auth/context/AuthContext';
 import { ROUTES }      from '@/app/router/routes';
 import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
@@ -11,11 +12,14 @@ import { FormField }   from '@/shared/components/form/FormField';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { PermissionGroupList } from '../components/PermissionGroupList';
 import { useRoleList, useUpdateRole } from '../hooks/useRoles';
+import { usePermissionList } from '@/modules/admin/permissions/hooks/usePermissions';
+import { filterRegisteredPermissions, toPermissionNameSet } from '@/shared/permissions/permissionValidation.utils';
 
 export function AdminRoleEditPage() {
   const { id }           = useParams<{ id: string }>();
   const { lang, isRTL }  = useLang();
   const navigate         = useNavigate();
+  const { refreshUser }  = useAuth();
   const isAr             = lang === 'ar';
   const BackIcon         = isRTL ? ArrowRight : ArrowLeft;
 
@@ -23,15 +27,27 @@ export function AdminRoleEditPage() {
   const role = roles?.find((r) => String(r.id) === id);
 
   const { mutate: update, isPending: updating } = useUpdateRole();
+  const { data: allPermissions } = usePermissionList();
+  const registered = useMemo(() => toPermissionNameSet(allPermissions), [allPermissions]);
 
   const [name,        setName]        = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [formReady,   setFormReady]   = useState(false);
 
+  // Re-init when navigating to a different role.
   useEffect(() => {
-    if (!role) return;
+    setFormReady(false);
+  }, [id]);
+
+  // Load role data once per role — do not reset when the permission catalogue refetches.
+  useEffect(() => {
+    if (!role || formReady) return;
+    if (allPermissions === undefined) return;
+
     setName(role.name);
-    setPermissions(role.permissions);
-  }, [role]);
+    setPermissions(filterRegisteredPermissions(role.permissions, registered));
+    setFormReady(true);
+  }, [role, registered, allPermissions, formReady]);
 
   function toggle(slug: string) {
     setPermissions((prev) => prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]);
@@ -41,9 +57,10 @@ export function AdminRoleEditPage() {
 
   function handleSave() {
     if (!isValid || !role) return;
-    update({ id: role.id, payload: { name: name.trim(), permissions } }, {
-      onSuccess: () => {
+    update({ id: role.id, payload: { name: name.trim(), permissions: filterRegisteredPermissions(permissions, registered), guard_name: role.guardName } }, {
+      onSuccess: async () => {
         toast.success(isAr ? 'تم تحديث الدور' : 'Role updated');
+        await refreshUser();
         navigate(ROUTES.ADMIN.ROLES);
       },
       onError: (err) => toast.error(extractApiError(err)),
@@ -102,7 +119,7 @@ export function AdminRoleEditPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="sticky bottom-0 z-10 flex items-center gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
           <Button
             type="button"
             disabled={!isValid}

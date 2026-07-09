@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Outlet }   from 'react-router-dom';
 import { useAuth }    from '@/modules/auth/context/AuthContext';
 import { AppSidebar } from './components/AppSidebar';
 import { Topbar }     from './components/Topbar';
+import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
 
 export function DashboardLayout() {
   const { user } = useAuth();
@@ -26,7 +27,9 @@ export function DashboardLayout() {
       ].join(' ')}>
         <Topbar onMenuToggle={() => setSidebarOpen(p => !p)} />
         <main className="flex-1 p-4 md:p-6">
-          <Outlet />
+          <Suspense fallback={<LoadingSpinner />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

@@ -142,17 +142,23 @@ export interface SeoProjectSettings {
   statusLabel:         string;
   campaignType:        string;
   campaignTypeLabel:   string;
+  githubLink?:              string | null;
+  driveLink?:               string | null;
+  contractDurationMonths?:  number | null;
   labels:              Record<string, string>;
   statusOptions:       SelectOption[];
   campaignTypeOptions: SelectOption[];
 }
 
 export interface SeoProjectUpdatePayload {
-  name?:         string;
-  description?:  string;
-  targetDomain?: string | null;
-  campaignType?: string;
-  startDate?:    string;
+  name?:                    string;
+  description?:             string;
+  targetDomain?:            string | null;
+  campaignType?:            string;
+  startDate?:               string;
+  githubLink?:              string | null;
+  driveLink?:               string | null;
+  contractDurationMonths?:  number | null;
 }
 
 export interface SeoActivityActor {

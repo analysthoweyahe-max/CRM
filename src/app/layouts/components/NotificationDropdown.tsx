@@ -59,7 +59,8 @@ export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMar
         .notif-dot-pulse { animation: notif-dot-pulse 2s ease-in-out infinite; }
       `}</style>
 
-      <div className={`notif-dropdown absolute inset-e-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)]
+      <div className={`notif-dropdown fixed inset-x-4 top-[4.5rem]
+                      sm:absolute sm:inset-x-auto sm:inset-e-0 sm:top-full sm:mt-2 sm:w-80
                       rounded-2xl bg-white dark:bg-gray-800
                       shadow-xl border border-gray-100 dark:border-gray-700
                       z-50 overflow-hidden transition-opacity duration-200

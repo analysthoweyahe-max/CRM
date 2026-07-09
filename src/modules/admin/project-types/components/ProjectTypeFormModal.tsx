@@ -34,11 +34,16 @@ export function ProjectTypeFormModal({ open, onClose, onSubmit, initial, isLoadi
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  const isValid = !!(form.name.trim() && form.name_ar.trim());
+  const isValid = !!form.name.trim();
 
   function handleSubmit() {
     if (!isValid) return;
-    onSubmit({ ...form, name: form.name.trim(), name_ar: form.name_ar.trim() });
+    onSubmit({
+      name:       form.name.trim(),
+      name_ar:    form.name_ar?.trim() || null,
+      is_active:  form.is_active,
+      sort_order: form.sort_order,
+    });
   }
 
   return (
@@ -61,13 +66,13 @@ export function ProjectTypeFormModal({ open, onClose, onSubmit, initial, isLoadi
     >
       <div className="space-y-5 py-1">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label={isAr ? 'الاسم بالعربي' : 'Arabic Name'} required>
-            <Input value={form.name_ar} onChange={(e) => set('name_ar', e.target.value)}
-              placeholder="مثال: تطوير ويب" />
-          </FormField>
           <FormField label={isAr ? 'الاسم بالإنجليزي' : 'English Name'} required>
             <Input value={form.name} onChange={(e) => set('name', e.target.value)}
               placeholder="e.g. Web Development" dir="ltr" />
+          </FormField>
+          <FormField label={isAr ? 'الاسم بالعربي' : 'Arabic Name'}>
+            <Input value={form.name_ar ?? ''} onChange={(e) => set('name_ar', e.target.value)}
+              placeholder="مثال: تطوير ويب" />
           </FormField>
         </div>
 
@@ -76,7 +81,7 @@ export function ProjectTypeFormModal({ open, onClose, onSubmit, initial, isLoadi
         </FormField>
 
         <div className="flex items-center justify-between gap-4 pt-1">
-          <Switch checked={form.is_active} onChange={() => set('is_active', !form.is_active)}
+          <Switch checked={form.is_active ?? true} onChange={() => set('is_active', !form.is_active)}
             ariaLabel={isAr ? 'مفعّل' : 'Active'} />
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             {isAr ? 'مفعّل' : 'Active'}

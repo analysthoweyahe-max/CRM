@@ -2,6 +2,7 @@ import { useLang }                from '@/app/providers/LanguageProvider';
 import { PageHeader }             from '@/shared/components/ui/PageHeader';
 import { EmployeeProfileInfo }    from '../components/EmployeeProfileInfo';
 import { EmployeeProfileSummary } from '../components/EmployeeProfileSummary';
+import { MyPermissionsCard } from '@/shared/components/auth';
 
 export function EmployeeProfilePage() {
   const { lang } = useLang();
@@ -15,8 +16,9 @@ export function EmployeeProfilePage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-5">
           <EmployeeProfileInfo isAr={isAr} />
+          <MyPermissionsCard />
         </div>
         <div>
           <EmployeeProfileSummary isAr={isAr} />

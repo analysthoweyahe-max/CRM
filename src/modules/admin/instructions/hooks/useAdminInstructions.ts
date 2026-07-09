@@ -8,6 +8,11 @@ export function useInstructionsList() {
   return useQuery({
     queryKey: KEY,
     queryFn:  () => adminInstructionsApi.list({ per_page: 50 }).then((r) => r.data.data),
+    staleTime: 10_000,
+    // Keep the sent-history list near real-time so instructions sent from other
+    // sessions/tabs appear automatically, and refresh on tab focus.
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
   });
 }
 

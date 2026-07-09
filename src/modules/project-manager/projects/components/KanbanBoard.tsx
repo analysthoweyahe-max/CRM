@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Modal }  from '@/shared/components/ui/Modal';
+import { Button } from '@/shared/components/ui/Button';
 import type { Task, TaskStatus } from '../../tasks/types/task.types';
 import { useInvalidateProjectTasks } from '../../tasks/store/taskStore';
 import { pmTaskApi } from '../../tasks/api/task.api';
@@ -16,6 +18,8 @@ interface Props {
 
 export function KanbanBoard({ projectId, tasks, isAr }: Props) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [deleteTarget,   setDeleteTarget]   = useState<Task | null>(null);
+  const [deleting,       setDeleting]       = useState(false);
   const invalidateTasks = useInvalidateProjectTasks(projectId);
   // Derived (not stored) so it always reflects the latest data after an edit —
   // storing the Task object itself would freeze the modal on a stale snapshot.
@@ -33,6 +37,21 @@ export function KanbanBoard({ projectId, tasks, isAr }: Props) {
     }
   }
 
+  async function confirmDelete() {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    try {
+      await pmTaskApi.remove(projectId, deleteTarget.id);
+      invalidateTasks();
+      toast.success(isAr ? 'تم حذف المهمة' : 'Task deleted');
+      setDeleteTarget(null);
+    } catch {
+      toast.error(isAr ? 'تعذر حذف المهمة' : 'Failed to delete task');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <>
       <div className="flex gap-5 overflow-x-auto pb-4 px-1">
@@ -44,6 +63,7 @@ export function KanbanBoard({ projectId, tasks, isAr }: Props) {
             isAr={isAr}
             onDrop={handleDrop}
             onOpen={task => setSelectedTaskId(task.id)}
+            onDelete={task => setDeleteTarget(task)}
           />
         ))}
       </div>
@@ -54,6 +74,30 @@ export function KanbanBoard({ projectId, tasks, isAr }: Props) {
         projectId={projectId}
         isAr={isAr}
       />
+
+      {/* Delete confirmation */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title={isAr ? 'حذف المهمة' : 'Delete Task'}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              {isAr ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+              {isAr ? 'حذف' : 'Delete'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-400 text-end leading-relaxed">
+          {isAr
+            ? `هل أنت متأكد من حذف المهمة "${deleteTarget?.title}"؟ لا يمكن التراجع عن هذا الإجراء.`
+            : `Are you sure you want to delete the task "${deleteTarget?.title}"? This action cannot be undone.`}
+        </p>
+      </Modal>
     </>
   );
 }

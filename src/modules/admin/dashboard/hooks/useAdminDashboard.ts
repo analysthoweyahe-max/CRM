@@ -5,30 +5,67 @@ import { pmProjectsApi } from '@/modules/project-manager/projects/api/project.ap
 import { seoLeaderDashboardApi } from '@/modules/seo-leader/dashboard/api/seoLeaderDashboard.api';
 import { getRoleLabel } from '@/modules/admin/employees/types/adminEmployee.types';
 import type { AdminDashboardData, RoleDistributionItem, DepartmentDistributionItem } from '../types/adminDashboard.types';
+import type { EmployeeListResponse } from '@/modules/hr/employees/types/employee.types';
+import type { PmProjectListApiResponse } from '@/modules/project-manager/projects/types/project.types';
+import type { PaginatedProjects } from '@/modules/seo-leader/dashboard/types/dashboard.types';
+import type { ApiResponse } from '@/shared/types/api.types';
 
 const ROLE_COLORS = ['#A0CD39', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
 
+const EMPTY_EMPLOYEES: EmployeeListResponse['data'] = { data: [], total: 0, current_page: 1, last_page: 1 };
+const EMPTY_PM: PmProjectListApiResponse['data'] = { data: [], total: 0, current_page: 1, last_page: 1 };
+const EMPTY_SEO: PaginatedProjects = { data: [], total: 0, current_page: 1, last_page: 1 };
+
+async function fetchEmployees() {
+  try {
+    const { data } = await employeeApi.list({ per_page: 200 });
+    return data.data;
+  } catch {
+    return EMPTY_EMPLOYEES;
+  }
+}
+
+async function fetchPmProjects() {
+  try {
+    const { data } = await pmProjectsApi.list({ per_page: 100 });
+    return data.data;
+  } catch {
+    return EMPTY_PM;
+  }
+}
+
+async function fetchSeoProjects() {
+  try {
+    const { data } = await seoLeaderDashboardApi.getProjects();
+    const payload = data.data as PaginatedProjects | ApiResponse<PaginatedProjects>['data'];
+    if (Array.isArray(payload)) return { ...EMPTY_SEO, data: payload, total: payload.length };
+    return payload ?? EMPTY_SEO;
+  } catch {
+    return EMPTY_SEO;
+  }
+}
+
 export function useAdminDashboard(): AdminDashboardData & { isLoading: boolean } {
-  const { data: employeesData, isLoading: loadingEmployees } = useQuery({
+  const { data: employeesData, isPending: loadingEmployees } = useQuery({
     queryKey: ['admin', 'dashboard', 'employees'],
-    queryFn:  () => employeeApi.list({ per_page: 200 }).then((r) => r.data.data),
+    queryFn:  fetchEmployees,
   });
 
-  const { data: pmData, isLoading: loadingPm } = useQuery({
+  const { data: pmData, isPending: loadingPm } = useQuery({
     queryKey: ['admin', 'dashboard', 'pm-projects'],
-    queryFn:  () => pmProjectsApi.list({ per_page: 100 }).then((r) => r.data.data),
+    queryFn:  fetchPmProjects,
   });
 
-  const { data: seoData, isLoading: loadingSeo } = useQuery({
+  const { data: seoData, isPending: loadingSeo } = useQuery({
     queryKey: ['admin', 'dashboard', 'seo-projects'],
-    queryFn:  () => seoLeaderDashboardApi.getProjects().then((r) => r.data.data),
+    queryFn:  fetchSeoProjects,
   });
 
   const employees   = employeesData?.data ?? [];
   const pmProjects  = pmData?.data ?? [];
-  const seoProjects = Array.isArray(seoData) ? seoData : (seoData?.data ?? []);
+  const seoProjects = seoData?.data ?? [];
   const pmTotal     = pmData?.total ?? pmProjects.length;
-  const seoTotal    = Array.isArray(seoData) ? seoProjects.length : (seoData?.total ?? seoProjects.length);
+  const seoTotal    = seoData?.total ?? seoProjects.length;
 
   const stats = useMemo(() => ({
     totalEmployees:   employeesData?.total ?? employees.length,
@@ -71,6 +108,6 @@ export function useAdminDashboard(): AdminDashboardData & { isLoading: boolean }
     stats,
     roleDistribution,
     departmentDistribution,
-    activity: [], // No audit-log endpoint exists yet.
+    activity: [],
   };
 }

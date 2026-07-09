@@ -5,7 +5,11 @@ export function useEmployeeAlertList() {
   return useQuery({
     queryKey: ['employee', 'alerts'],
     queryFn:  () => employeeAlertsApi.list({ per_page: 50 }).then((r) => r.data.data),
-    staleTime: 30_000,
+    staleTime: 10_000,
+    // Near real-time delivery: poll so newly sent instructions surface without a
+    // manual reload, and refresh whenever the tab regains focus.
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
   });
 }
 

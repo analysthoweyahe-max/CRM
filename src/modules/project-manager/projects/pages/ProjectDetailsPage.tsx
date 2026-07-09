@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Plus, Info } from 'lucide-react';
-import { GithubIcon } from '@/shared/components/icons/GithubIcon';
+import { ArrowLeft, ArrowRight, Plus, Info, FolderOpen } from 'lucide-react';import { GithubIcon } from '@/shared/components/icons/GithubIcon';
 import { ensureHttpUrl } from '@/shared/utils';
 import { toast } from 'sonner';
 import { useLang }         from '@/app/providers/LanguageProvider';
@@ -15,9 +14,7 @@ import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
 import { pmProjectsApi } from '../api/project.api';
 import { useProjectTasks } from '../../tasks/store/taskStore';
 import { KanbanBoard }     from '../components/KanbanBoard';
-import { ProjectDetailsModal } from '../components/ProjectDetailsModal';
-import { ProgressLogTab }     from '../components/ProgressLogTab';
-import { ProjectSettingsTab } from '../components/ProjectSettingsTab';
+import { ProgressLogTab }     from '../components/ProgressLogTab';import { ProjectSettingsTab } from '../components/ProjectSettingsTab';
 import { ProjectTeamTab }     from '../components/ProjectTeamTab';
 import { ProjectMessagesTab } from '../components/ProjectMessagesTab';
 import { ProjectClientUpdatesTab } from '../components/ProjectClientUpdatesTab';
@@ -46,9 +43,7 @@ export function ProjectDetailsPage() {
   const tasks = useProjectTasks(id ?? '');
 
   const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');
-  const [showDetails,    setShowDetails]    = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
-
   if (isLoading) return <ProjectDetailsSkeleton />;
 
   if (isError || !project) {
@@ -90,8 +85,7 @@ export function ProjectDetailsPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            onClick={() => setShowDetails(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600
+            onClick={() => navigate(ROUTES.PROJECT_MANAGER.INFO(String(project.id)))}            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600
                        bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200
                        hover:border-[#A0CD39] hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
           >
@@ -124,12 +118,26 @@ export function ProjectDetailsPage() {
               target="_blank"
               rel="noopener noreferrer"
               title={isAr ? 'فتح مستودع GitHub' : 'Open GitHub repository'}
-              aria-label="GitHub"
+              aria-label={isAr ? 'رابط GitHub' : 'GitHub Link'}
               className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200
-                         dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-white
-                         hover:bg-[#24292f] hover:border-[#24292f] transition-colors"
+                         dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-white transition-colors
+                         hover:bg-[#24292f] hover:border-[#24292f]"
             >
               <GithubIcon size={18} />
+            </a>
+          )}
+          {project.driveLink && (
+            <a
+              href={ensureHttpUrl(project.driveLink)}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={isAr ? 'فتح Google Drive' : 'Open Google Drive'}
+              aria-label={isAr ? 'رابط Google Drive' : 'Google Drive Link'}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200
+                         dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-white transition-colors
+                         hover:bg-[#A0CD39] hover:border-[#A0CD39]"
+            >
+              <FolderOpen size={18} />
             </a>
           )}
           <div className="w-40">
@@ -227,14 +235,5 @@ export function ProjectDetailsPage() {
       {activeTab === 'progress' && <ProgressLogTab tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
       {activeTab === 'messages' && <ProjectMessagesTab projectId={String(project.id)} isAr={isAr} />}
-
-      {/* Project Details Modal */}
-      <ProjectDetailsModal
-        open={showDetails}
-        onClose={() => setShowDetails(false)}
-        project={project}
-        isAr={isAr}
-      />
-    </div>
-  );
+    </div>  );
 }

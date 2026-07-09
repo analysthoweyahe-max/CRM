@@ -6,6 +6,8 @@ import { QuickActions }      from '@/modules/hr/dashboard/components/QuickAction
 import { RecentData }        from '@/modules/hr/dashboard/components/RecentData';
 import { DashboardSkeleton } from '@/modules/hr/dashboard/components/DashboardSkeleton';
 import { useDashboard }      from '@/modules/hr/dashboard/hooks/useDashboard';
+import { MyPermissionsWidget } from '@/shared/components/auth';
+import { ROUTES } from '@/app/router/routes';
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -35,6 +37,8 @@ export function DashboardPage() {
       </div>
 
       <StatCards isAr={isAr} stats={stats} />
+
+      <MyPermissionsWidget profileRoute={ROUTES.PROFILE} />
 
       <ChartsSection
         isAr={isAr}

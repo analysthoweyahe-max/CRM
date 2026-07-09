@@ -21,10 +21,11 @@ export interface EmpTaskListResponse {
 }
 
 export interface CreateSelfTaskPayload {
-  title:           string;
-  description?:    string;
-  priority:        'low' | 'normal' | 'high';
-  due_date?:       string;
-  estimated_hours?: number;
-  phase_id?:       number;
+  title:            string;
+  description?:     string;
+  priority?:        'low' | 'normal' | 'high';
+  dueDate?:         string;
+  estimatedHours?:  number;
+  phaseId?:         number;
+  file?:            File;
 }

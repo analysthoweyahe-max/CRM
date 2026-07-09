@@ -4,11 +4,14 @@ export interface CreateCampaignPayload {
   description:   string;
   campaign_type: string;
   status:        string;
+  is_draft?:     boolean;
   start_date:    string;
   end_date:      string;
   keywords:      string[];
   references:    string[];
-  github_link?:  string;
+  githubLink?:        string | null;
+  driveLink?:         string | null;
+  contractDurationMonths?: number | null;
 }
 
 export interface CampaignLookupResponse {

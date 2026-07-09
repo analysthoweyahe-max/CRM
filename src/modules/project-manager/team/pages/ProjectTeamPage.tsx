@@ -1,24 +1,30 @@
 import { Download } from 'lucide-react';
+import { useNavigate }        from 'react-router-dom';
 import { useLang }            from '@/app/providers/LanguageProvider';
+import { ROUTES }             from '@/app/router/routes';
 import { Button }             from '@/shared/components/ui/Button';
 import { SearchInput }        from '@/shared/components/ui/SearchInput';
 import { GlobalMemberCard }   from '../components/GlobalMemberCard';
-import { PmMemberProfileModal } from '../components/PmMemberProfileModal';
 import { useProjectTeamPage } from '../hooks/useProjectTeamPage';
 import { ProjectTeamSkeleton } from '../components/ProjectTeamSkeleton';
 
 export function ProjectTeamPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
+  const navigate = useNavigate();
 
   const {
     members, total, page, setPage, pageCount,
     selected, selectedCount, isAllSelected,
     search, handleSearch,
     toggleAll, toggleOne, clearSelection, toggleActive, exportSelected,
-    profileMember, openProfile, closeProfile,
     isLoading,
   } = useProjectTeamPage(isAr);
+
+  function handleViewMember(id: string) {
+    const member = members.find(m => m.id === id) ?? null;
+    navigate(ROUTES.PROJECT_MANAGER.TEAM_MEMBER(id), { state: { member } });
+  }
 
   if (isLoading && members.length === 0) return <ProjectTeamSkeleton />;
 
@@ -31,7 +37,7 @@ export function ProjectTeamPage() {
           {isAr ? 'فريق العمل' : 'Work Team'}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {isAr ? 'جميع أعضاء الفريق عبر مشاريعك' : 'All team members across your projects'}
+          {isAr ? 'المبرمجون وأعضاء فريقك في مشاريعك' : 'Developers and your team members across your projects'}
         </p>
       </div>
 
@@ -103,7 +109,7 @@ export function ProjectTeamPage() {
               member={member}
               selected={selected.has(member.id)}
               onToggle={toggleOne}
-              onView={openProfile}
+              onView={handleViewMember}
               onToggleActive={toggleActive}
               isAr={isAr}
             />
@@ -130,7 +136,6 @@ export function ProjectTeamPage() {
         </div>
       )}
 
-      <PmMemberProfileModal member={profileMember} onClose={closeProfile} isAr={isAr} />
     </div>
   );
 }

@@ -14,6 +14,12 @@ function useOrgSettingsQuery() {
   });
 }
 
+/** Read-only access to the company/org settings (e.g. work hours) for use
+    outside the settings page, such as constraining the new-employee form. */
+export function useOrgSettingsData() {
+  return useOrgSettingsQuery();
+}
+
 function useUpdateOrgSettings() {
   const qc = useQueryClient();
   return useMutation({

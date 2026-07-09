@@ -1,9 +1,17 @@
 ﻿import { useReducer, useEffect, useCallback, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { AuthContext } from './AuthContext';
+import { AuthContext } from '@/modules/auth/context/AuthContext';
 import { authService } from '@/modules/auth/services/auth.service';
 import type { AuthUser, LoginCredentials, SetPasswordPayload, LoginResult } from '@/modules/auth/types/auth.types';
-import { Permission, type Role } from '@/shared/types/role.types';
+import type { ApiAdmin, ApiEmployee } from '@/modules/auth/types/auth.types';
+import {
+  canAccess,
+  canAccessRole,
+  hasAnyPermission as checkAnyPermission,
+  hasAnyRole as checkAnyRole,
+  hasPermission as checkHasPermission,
+  isSuperAdminUser,
+} from '@/shared/utils/authPermissions.utils';
 
 interface State {
   user:      AuthUser | null;
@@ -33,55 +41,21 @@ function getInitialState(): State {
   };
 }
 
-const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  admin: Object.values(Permission),
-  hr: [
-    Permission.ViewEmployees,
-    Permission.ManageEmployees,
-    Permission.ViewAttendance,
-    Permission.ManageAttendance,
-    Permission.ViewLeaves,
-    Permission.ManageLeaves,
-    Permission.ViewPayroll,
-    Permission.ManagePayroll,
-    Permission.ViewMessages,
-    Permission.SendMessages,
-  ],
-  manager: [
-    Permission.ViewEmployees,
-    Permission.ViewAttendance,
-    Permission.ViewLeaves,
-    Permission.ManageLeaves,
-    Permission.ViewMessages,
-    Permission.SendMessages,
-  ],
-  'seo-leader': [
-    Permission.ViewEmployees,
-    Permission.ViewAttendance,
-    Permission.ViewLeaves,
-    Permission.ManageLeaves,
-    Permission.ViewMessages,
-    Permission.SendMessages,
-  ],
-  employee: [
-    Permission.ViewAttendance,
-    Permission.ViewLeaves,
-    Permission.ViewMessages,
-    Permission.SendMessages,
-  ],
-  'seo-member': [
-    Permission.ViewAttendance,
-    Permission.ViewLeaves,
-    Permission.ViewMessages,
-    Permission.SendMessages,
-  ],
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, getInitialState);
 
   useEffect(() => {
-    dispatch({ type: 'INIT', payload: authService.getStoredUser() });
+    let cancelled = false;
+
+    authService.loadProfile()
+      .then((user) => {
+        if (!cancelled) dispatch({ type: 'INIT', payload: user });
+      })
+      .catch(() => {
+        if (!cancelled) dispatch({ type: 'INIT', payload: authService.getStoredUser() });
+      });
+
+    return () => { cancelled = true; };
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
@@ -102,11 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const verifyOtp = useCallback(async (adminId: string, otp: string, rememberMe = false) => {
-    const { user } = await authService.verifyAdminOtp(adminId, otp, rememberMe);
+    const { user, redirectPath } = await authService.verifyAdminOtp(adminId, otp, rememberMe);
     flushSync(() => {
       dispatch({ type: 'LOGIN', payload: user });
     });
-    return user;
+    return { user, redirectPath };
   }, []);
 
   const completeMagicLogin = useCallback(async (token: string) => {
@@ -117,8 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user;
   }, []);
 
-  const completeInviteLogin = useCallback((token: string, inviteType: 'admin' | 'employee') => {
-    const user = authService.completeInviteLogin(token, inviteType);
+  const completeInviteLogin = useCallback(async (
+    token: string,
+    inviteType: 'admin' | 'employee',
+    profile?: ApiAdmin | ApiEmployee,
+  ) => {
+    const user = await authService.completeInviteLogin(token, inviteType, profile);
     flushSync(() => {
       dispatch({ type: 'LOGIN', payload: user });
     });
@@ -145,15 +123,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const hasPermission = useCallback((permission: Permission) => {
+  const refreshUser = useCallback(async () => {
+    const fresh = await authService.loadProfile();
+    if (fresh) {
+      dispatch({ type: 'LOGIN', payload: fresh });
+    }
+    return fresh;
+  }, []);
+
+  const can = useCallback((permission: string | string[], match: 'any' | 'all' = 'any') => {
     if (!state.user) return false;
-    return ROLE_PERMISSIONS[state.user.role]?.includes(permission) ?? false;
+    const superAdmin = isSuperAdminUser(state.user);
+    return canAccess(state.user.permissions, state.user.roles, permission, match, superAdmin);
   }, [state.user]);
+
+  const hasRole = useCallback((role: string | string[]) => {
+    if (!state.user) return false;
+    const superAdmin = isSuperAdminUser(state.user);
+    return canAccessRole(state.user.roles, role, superAdmin);
+  }, [state.user]);
+
+  const hasAnyRole = useCallback((roles: string[]) => {
+    if (!state.user) return false;
+    if (isSuperAdminUser(state.user)) return true;
+    return checkAnyRole(state.user.roles, roles);
+  }, [state.user]);
+
+  const hasAnyPermission = useCallback((permissions: string[]) => {
+    if (!state.user) return false;
+    if (isSuperAdminUser(state.user)) return true;
+    return checkAnyPermission(state.user.permissions, permissions);
+  }, [state.user]);
+
+  const isSuperAdmin = isSuperAdminUser(state.user);
+  const token = authService.getStoredToken();
+  const userType = state.user?.actor ?? null;
+
+  const hasPermission = useCallback(
+    (permission: string) => checkHasPermission(state.user, permission),
+    [state.user],
+  );
 
   return (
     <AuthContext.Provider
       value={{
         user:            state.user,
+        userType,
+        token,
         isAuthenticated: state.user !== null,
         isLoading:       state.isLoading,
         login,
@@ -162,7 +178,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         completeInviteLogin,
         setPassword,
         logout,
+        can,
+        hasRole,
+        hasAnyRole,
+        hasAnyPermission,
         hasPermission,
+        isSuperAdmin,
+        refreshUser,
       }}
     >
       {children}

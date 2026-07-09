@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@/shared/components/tables/DataTable';
 import { Avatar }    from '@/shared/components/ui/Avatar';
@@ -104,8 +104,8 @@ export function AdminEmployeeTable({
         header: isAr ? 'إجراءات' : 'Actions',
         cell:   ({ row }) => (
           <div className="flex items-center gap-1">
-            <Button variant="icon" aria-label={isAr ? 'إجراءات' : 'Actions'} onClick={() => onRowClick(row.original.id)}>
-              <MoreHorizontal size={16} />
+            <Button variant="icon" aria-label={isAr ? 'عرض' : 'View'} onClick={() => onRowClick(row.original.id)}>
+              <Eye size={16} />
             </Button>
             {onDelete && (
               <Button

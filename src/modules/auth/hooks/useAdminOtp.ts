@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { authService } from '@/modules/auth/services/auth.service';
 import { ROUTES } from '@/app/router/routes';
+import type { Role } from '@/shared/types/role.types';
 
 interface OtpLocationState {
   adminId?:    string;
@@ -11,6 +12,21 @@ interface OtpLocationState {
 }
 
 const RESEND_COOLDOWN = 30; // seconds
+
+function redirectForRole(role: Role): string {
+  if (role === 'admin')       return ROUTES.ADMIN.DASHBOARD;
+  if (role === 'hr')          return ROUTES.DASHBOARD;
+  if (role === 'employee')    return ROUTES.EMPLOYEE.DASHBOARD;
+  if (role === 'seo-member')  return ROUTES.SEO_MEMBER.DASHBOARD;
+  if (role === 'manager')     return ROUTES.PROJECT_MANAGER.DASHBOARD;
+  if (role === 'seo-leader')  return ROUTES.SEO_LEADER.DASHBOARD;
+  return ROUTES.ADMIN.DASHBOARD;
+}
+
+function resolveRedirect(redirectPath: string | undefined, role: Role): string {
+  if (redirectPath?.startsWith('/')) return redirectPath;
+  return redirectForRole(role);
+}
 
 export function useAdminOtp() {
   const navigate = useNavigate();
@@ -46,8 +62,8 @@ export function useAdminOtp() {
     setInfo(null);
     setVerifying(true);
     try {
-      const user = await verifyOtp(adminId, otp.trim(), rememberMe);
-      navigate(user.role === 'hr' ? ROUTES.DASHBOARD : ROUTES.ADMIN.DASHBOARD, { replace: true });
+      const { user, redirectPath } = await verifyOtp(adminId, otp.trim(), rememberMe);
+      navigate(resolveRedirect(redirectPath, user.role), { replace: true });
     } catch {
       setError('invalidCode');
       setVerifying(false);

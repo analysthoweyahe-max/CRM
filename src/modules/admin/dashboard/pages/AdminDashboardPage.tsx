@@ -5,6 +5,8 @@ import { RoleDistributionCard }      from '../components/RoleDistributionCard';
 import { DepartmentDistributionCard } from '../components/DepartmentDistributionCard';
 import { RecentActivityCard }        from '../components/RecentActivityCard';
 import { useAdminDashboard }         from '../hooks/useAdminDashboard';
+import { MyPermissionsWidget } from '@/shared/components/auth';
+import { ROUTES } from '@/app/router/routes';
 
 export function AdminDashboardPage() {
   const { user } = useAuth();
@@ -34,6 +36,8 @@ export function AdminDashboardPage() {
       ) : (
         <>
           <AdminStatCards stats={stats} isAr={isAr} />
+
+          <MyPermissionsWidget profileRoute={ROUTES.PROFILE} />
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <RoleDistributionCard roles={roleDistribution} isAr={isAr} />

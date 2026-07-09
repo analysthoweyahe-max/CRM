@@ -14,8 +14,10 @@ export interface SeoCampaign {
   referenceLinks:   string[];
   // Consistent with the rest of this response's camelCase convention
   // (confirmed against the equivalent PM project response).
-  githubLink?:      string | null;
-  createdBy:        { id: string; name: string };
+  githubLink?:              string | null;
+  driveLink?:               string | null;
+  contractDurationMonths?:  number | null;
+  createdBy:                { id: string; name: string };
   createdAt:        string;
   updatedAt:        string;
 }

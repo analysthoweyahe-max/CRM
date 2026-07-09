@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast }               from 'sonner';
+import { useAuth }               from '@/modules/auth/context/AuthContext';
 import { getAvatarColor, matchesSearch } from '@/shared/utils';
 import { downloadTeamExcel }   from '@/shared/modules/team/utils/exportTeam';
+import { filterPmTeamMembers } from '@/shared/modules/team/utils/teamScope.utils';
 import { pmTeamApi }           from '../api/team.api';
 import type { PmTeamMemberApi } from '../types/team.types';
 
@@ -12,7 +14,7 @@ export type { PmTeamMemberApi };
 
 // Backend `search` matching isn't reliable for Arabic name variants (e.g. "احمد" vs "أحمد"),
 // so the full roster is fetched once and searched client-side with normalization instead.
-async function fetchAllMembers(): Promise<PmTeamMemberApi[]> {
+export async function fetchAllMembers(): Promise<PmTeamMemberApi[]> {
   const first = await pmTeamApi.list({ per_page: FETCH_PAGE_SIZE, page: 1 });
   const { data: firstBatch, last_page } = first.data.data;
   if (last_page <= 1) return firstBatch;
@@ -25,12 +27,12 @@ async function fetchAllMembers(): Promise<PmTeamMemberApi[]> {
 }
 
 export function useProjectTeamPage(isAr = true) {
+  const { user } = useAuth();
   const [allMembers,    setAllMembers]    = useState<PmTeamMemberApi[]>([]);
   const [isLoading,     setIsLoading]     = useState(true);
   const [page,          setPage]          = useState(1);
   const [search,        setSearch]        = useState('');
   const [selected,      setSelected]      = useState<Set<string>>(new Set());
-  const [profileMember, setProfileMember] = useState<PmTeamMemberApi | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,10 +44,18 @@ export function useProjectTeamPage(isAr = true) {
     return () => { cancelled = true; };
   }, []);
 
+  const scopedMembers = useMemo(
+    () => filterPmTeamMembers(allMembers, {
+      viewerId: user?.employeeId,
+      isAdmin:  user?.role === 'admin',
+    }),
+    [allMembers, user?.employeeId, user?.role],
+  );
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return allMembers;
-    return allMembers.filter(m => matchesSearch([m.name, m.email, m.jobTitle, m.department], search));
-  }, [allMembers, search]);
+    if (!search.trim()) return scopedMembers;
+    return scopedMembers.filter(m => matchesSearch([m.name, m.email, m.jobTitle, m.department], search));
+  }, [scopedMembers, search]);
 
   const total     = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -76,13 +86,8 @@ export function useProjectTeamPage(isAr = true) {
     });
   }
 
-  function openProfile(id: string) {
-    const m = allMembers.find(m => m.id === id);
-    if (m) setProfileMember(m);
-  }
-
   function toggleActive(id: string) {
-    const member   = allMembers.find(m => m.id === id);
+    const member   = scopedMembers.find(m => m.id === id);
     const newState = !(member?.isActive ?? true);
     setAllMembers(prev =>
       prev.map(m => m.id === id
@@ -101,7 +106,7 @@ export function useProjectTeamPage(isAr = true) {
   }
 
   function exportSelected() {
-    const toExport = allMembers.filter(m => selected.has(m.id));
+    const toExport = scopedMembers.filter(m => selected.has(m.id));
     if (toExport.length === 0) return;
 
     const headers = isAr
@@ -136,9 +141,6 @@ export function useProjectTeamPage(isAr = true) {
     clearSelection: () => setSelected(new Set()),
     toggleActive,
     exportSelected,
-    profileMember,
-    openProfile,
-    closeProfile: () => setProfileMember(null),
     isLoading,
     getColor,
   };

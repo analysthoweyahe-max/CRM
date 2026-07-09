@@ -13,6 +13,7 @@ import type {
   PmProjectTypeListApiResponse,
   PmProjectTypeApiResponse,
   PmProjectTypePayload,
+  PmProjectPhase,
 } from '../types/project.types';
 
 export const pmProjectsApi = {
@@ -31,6 +32,12 @@ export const pmProjectsApi = {
 
   get(id: number | string) {
     return http.get<PmProjectDetailsApiResponse>(`/v1/pm/projects/${id}`);
+  },
+
+  phases(id: number | string) {
+    return http.get<{ status: string; message: string; data: PmProjectPhase[] }>(
+      `/v1/pm/projects/${id}/phases`,
+    );
   },
 
   getSettings(id: number | string) {
@@ -78,8 +85,11 @@ export const pmProjectLookupsApi = {
   statuses() {
     return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/statuses');
   },
-  types() {
-    return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/types');
+  types(params?: { department_id?: number }) {
+    return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/types', { params });
+  },
+  employees(params: { project_type_id: number; search?: string }) {
+    return http.get<PmAvailableMembersApiResponse>('/v1/pm/projects/lookups/employees', { params });
   },
   taskStatuses() {
     return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/task-statuses');
@@ -87,15 +97,15 @@ export const pmProjectLookupsApi = {
   taskPriorities() {
     return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/task-priorities');
   },
-  managers() {
-    return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/managers');
+  managers(params?: { project_type_id?: number }) {
+    return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/managers', { params });
   },
 };
 
 /* ── Project types CRUD (super-admin managed) ───────────────────────────── */
 export const pmProjectTypesApi = {
-  list() {
-    return http.get<PmProjectTypeListApiResponse>('/v1/pm/project-types');
+  list(params?: { department_id?: number }) {
+    return http.get<PmProjectTypeListApiResponse>('/v1/pm/project-types', { params });
   },
   get(id: number) {
     return http.get<PmProjectTypeApiResponse>(`/v1/pm/project-types/${id}`);

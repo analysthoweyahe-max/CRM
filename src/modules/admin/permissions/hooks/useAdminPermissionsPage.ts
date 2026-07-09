@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
-import { PERMISSION_GROUPS } from '@/modules/admin/roles/types/adminRole.types';
+import { PANEL_PERMISSION_SLUGS } from '@/shared/permissions/panelPermissionCatalog';
 import {
   usePermissionList, useCreatePermission, useUpdatePermission, useDeletePermission,
 } from './usePermissions';
 import type { ApiPermission } from '../types/adminPermission.types';
 
-const CORE_SLUGS = new Set(PERMISSION_GROUPS.flatMap((g) => g.slugs.map((s) => s.slug)));
+const CORE_SLUGS = PANEL_PERMISSION_SLUGS;
 
 export function useAdminPermissionsPage(isAr: boolean) {
   const { data: permissions, isLoading } = usePermissionList();
@@ -20,7 +20,7 @@ export function useAdminPermissionsPage(isAr: boolean) {
   const [pendingDelete,     setPendingDelete]     = useState<ApiPermission | null>(null);
 
   function submitAdd(name: string) {
-    create({ name }, {
+    create({ name, guard_name: 'admin' }, {
       onSuccess: () => {
         toast.success(isAr ? 'تم إنشاء الصلاحية' : 'Permission created');
         setShowAdd(false);

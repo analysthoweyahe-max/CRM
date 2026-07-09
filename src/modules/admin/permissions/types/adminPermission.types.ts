@@ -1,7 +1,7 @@
 export interface ApiPermission {
   id:        number;
   name:      string;
-  guardName: string;
+  guardName: 'admin' | 'web';
   createdAt: string;
   updatedAt: string;
 }
@@ -19,10 +19,11 @@ export interface PermissionSingleResponse {
 }
 
 export interface CreatePermissionPayload {
-  name: string;
+  name:       string;
+  guard_name: 'admin' | 'web';
 }
 
-export type UpdatePermissionPayload = CreatePermissionPayload;
+export type UpdatePermissionPayload = Partial<CreatePermissionPayload>;
 
 // The backend returns the full refreshed permissions list on update/delete instead of a bare ack.
 export type UpdatePermissionResponse = PermissionListResponse;

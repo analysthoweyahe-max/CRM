@@ -3,14 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import type { LoginFormValues } from '@/modules/auth/schemas/login.schema';
 import { ROUTES } from '@/app/router/routes';
+import type { Role } from '@/shared/types/role.types';
 
-function redirectForRole(role: string): string {
+function redirectForRole(role: Role): string {
   if (role === 'admin')       return ROUTES.ADMIN.DASHBOARD;
   if (role === 'employee')    return ROUTES.EMPLOYEE.DASHBOARD;
   if (role === 'seo-member')  return ROUTES.SEO_MEMBER.DASHBOARD;
   if (role === 'manager')     return ROUTES.PROJECT_MANAGER.DASHBOARD;
   if (role === 'seo-leader')  return ROUTES.SEO_LEADER.DASHBOARD;
   return ROUTES.DASHBOARD;
+}
+
+function resolveRedirect(redirectPath: string | undefined, role: Role): string {
+  if (redirectPath?.startsWith('/')) return redirectPath;
+  return redirectForRole(role);
 }
 
 export function useLogin() {
@@ -30,7 +36,7 @@ export function useLogin() {
         });
         return;
       }
-      navigate(redirectForRole(result.user.role), { replace: true });
+      navigate(resolveRedirect(result.redirectPath, result.user.role), { replace: true });
     } catch {
       setError('invalidCredentials');
     }

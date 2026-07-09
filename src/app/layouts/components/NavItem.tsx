@@ -40,7 +40,7 @@ export function NavItem({ label, icon: Icon, path, children, isOpen, onToggle }:
         className={({ isActive }) => `${base} ${isActive ? active : inactive}`}
       >
         <Icon size={18} className="shrink-0" />
-        <span>{label}</span>
+        <span className="min-w-0 whitespace-nowrap">{label}</span>
       </NavLink>
     );
   }
@@ -54,7 +54,7 @@ export function NavItem({ label, icon: Icon, path, children, isOpen, onToggle }:
         className={`w-full ${base} ${isChildActive ? active : inactive}`}
       >
         <Icon size={18} className="shrink-0" />
-        <span className="flex-1 text-start">{label}</span>
+        <span className="flex-1 min-w-0 text-start whitespace-nowrap">{label}</span>
         <ChevronDown
           size={14}
           className={`shrink-0 transition-transform duration-200 ${
@@ -83,7 +83,7 @@ export function NavItem({ label, icon: Icon, path, children, isOpen, onToggle }:
                   ? <ChildIcon size={16} className="shrink-0" />
                   : <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
                 }
-                {child.label}
+                <span className="min-w-0 whitespace-nowrap">{child.label}</span>
               </NavLink>
             );
           })}

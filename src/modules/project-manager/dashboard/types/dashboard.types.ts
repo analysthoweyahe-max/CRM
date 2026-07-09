@@ -24,6 +24,7 @@ export interface PmDashboardProject {
   // Confirmed via a live GET /v1/pm/projects/{id} response — this endpoint's
   // JSON is camelCase throughout, including this field.
   githubLink?:      string | null;
+  driveLink?:       string | null;
 }
 
 export interface PmDashboardProjectSection {
@@ -41,9 +42,19 @@ export interface PmDashboardSummary {
   notStarted: number;
 }
 
+export interface PmDashboardTasksOverview {
+  totalAssigned: number;
+  inProgress:    number;
+  completed:     number;
+}
+
 export interface PmDashboardData {
-  summary:  PmDashboardSummary;
-  projects: {
+  summary?:       PmDashboardSummary;
+  tasksOverview?: PmDashboardTasksOverview;
+  projects?: {
+    sections: PmDashboardProjectSection[];
+  };
+  myProjects?: {
     sections: PmDashboardProjectSection[];
   };
 }

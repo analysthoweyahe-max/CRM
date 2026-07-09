@@ -24,8 +24,12 @@ export function useAddSeoTaskPage() {
     queryKey: ['campaign-team', id],
     queryFn:  async () => {
       const teamRes = await seoTeamApi.getProjectTeam(id);
-      const env = teamRes.data as unknown as { data: { data: SeoProjectMember[] } };
-      const members = env.data?.data ?? [];
+      // The endpoint may return either a plain array or a { data: [...] } wrapper —
+      // handle both so the assignee list is not silently empty.
+      const payload = teamRes.data?.data as unknown;
+      const members: SeoProjectMember[] = Array.isArray(payload)
+        ? (payload as SeoProjectMember[])
+        : ((payload as { data?: SeoProjectMember[] })?.data ?? []);
       return members.map(m => ({ id: m.id, label: m.name }));
     },
     enabled:   !!id,

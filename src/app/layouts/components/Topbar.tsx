@@ -6,16 +6,10 @@ import { useAuth }                    from '@/modules/auth/context/AuthContext';
 import { useLang }                    from '@/app/providers/LanguageProvider';
 import { useTheme }                   from '@/app/providers/ThemeProvider';
 import { ROUTES }                     from '@/app/router/routes';
+import { UserRoleBadges }             from '@/shared/components/auth';
 import { useFirebaseMessaging }       from '@/shared/hooks/useFirebaseMessaging';
 import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
-
-const ROLE_LABELS: Record<string, { ar: string; en: string }> = {
-  admin:    { ar: 'مدير النظام',      en: 'System Admin' },
-  hr:       { ar: 'مدير موارد بشرية', en: 'HR Manager' },
-  manager:  { ar: 'مدير',             en: 'Manager' },
-  employee: { ar: 'موظف',             en: 'Employee' },
-};
 
 interface TopbarProps {
   onMenuToggle:  () => void;
@@ -56,7 +50,6 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
   }, []);
 
   const initial   = user?.fullName?.slice(0, 1).toUpperCase() ?? '?';
-  const roleLabel = user?.role ? (ROLE_LABELS[user.role]?.[lang] ?? user.role) : '';
 
   return (
     <>
@@ -85,6 +78,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
           <span style={{ fontSize: '14px', fontWeight: 700, color: '#1E293B' }}>
             {user?.fullName ?? ''}
           </span>
+          <UserRoleBadges className="mt-0.5" />
         </div>
       </div>
 
@@ -169,7 +163,9 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                     {user?.fullName}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{roleLabel}</p>
+                  <div className="mt-1">
+                    <UserRoleBadges size="md" />
+                  </div>
                 </div>
               </div>
 

@@ -13,6 +13,12 @@ import {
   type AllDataValues,
 } from './newEmployeeForm.types';
 import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../../hooks/useLookups';
+import { useOrgSettingsData } from '@/modules/admin/org-settings/hooks/useOrgSettings';
+
+/** Normalize a time value ("HH:MM" or "HH:MM:SS") to "HH:MM". */
+function toHHMM(v?: string) {
+  return v ? v.slice(0, 5) : '';
+}
 
 interface Step1Props {
   isAr:           boolean;
@@ -23,16 +29,28 @@ interface Step1Props {
 }
 
 export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: Step1Props) {
+  const { data: orgSettings } = useOrgSettingsData();
+  const workStart = toHHMM(orgSettings?.workStartTime);
+  const workEnd   = toHHMM(orgSettings?.workEndTime);
+
   const {
     register, control, handleSubmit, watch, setValue,
     formState: { errors, isSubmitting },
   } = useForm<AllDataValues>({
-    resolver: (v, c, o) => zodResolver(makeAllDataSchema(isAr))(v, c, o),
+    resolver: (v, c, o) => zodResolver(makeAllDataSchema(isAr, { workStart, workEnd }))(v, c, o),
     defaultValues: { managerId: 'none', startTime: '09:00', endTime: '17:00', currency: 'EGP', ...defaultValues },
   });
 
   const selectedDept = watch('department');
   const jobType      = watch('jobType');
+
+  /* Prefill start/end from the company's configured work hours once loaded,
+     unless the caller already supplied explicit values (e.g. when editing). */
+  useEffect(() => {
+    if (!orgSettings) return;
+    if (defaultValues?.startTime == null && workStart) setValue('startTime', workStart);
+    if (defaultValues?.endTime   == null && workEnd)   setValue('endTime',   workEnd);
+  }, [orgSettings]);
 
   // Reset job title when department changes
   useEffect(() => {
@@ -190,13 +208,29 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               </FormField>
             ) : (
               <>
-                <FormField label={isAr ? 'وقت بدء الدوام' : 'Start Time'} required error={errors.startTime?.message}>
+                <FormField
+                  label={isAr ? 'وقت بدء الدوام' : 'Start Time'}
+                  required
+                  error={errors.startTime?.message}
+                  hint={workStart && workEnd
+                    ? (isAr ? `ضمن مواعيد الشركة: ${workStart} - ${workEnd}` : `Within company hours: ${workStart} - ${workEnd}`)
+                    : undefined}
+                >
                   <Input {...register('startTime')} type="time"
+                    min={workStart || undefined} max={workEnd || undefined}
                     hasError={!!errors.startTime} endIcon={<Clock size={15} />} />
                 </FormField>
 
-                <FormField label={isAr ? 'وقت انتهاء الدوام' : 'End Time'} required error={errors.endTime?.message}>
+                <FormField
+                  label={isAr ? 'وقت انتهاء الدوام' : 'End Time'}
+                  required
+                  error={errors.endTime?.message}
+                  hint={workStart && workEnd
+                    ? (isAr ? `ضمن مواعيد الشركة: ${workStart} - ${workEnd}` : `Within company hours: ${workStart} - ${workEnd}`)
+                    : undefined}
+                >
                   <Input {...register('endTime')} type="time"
+                    min={workStart || undefined} max={workEnd || undefined}
                     hasError={!!errors.endTime} endIcon={<Clock size={15} />} />
                 </FormField>
               </>

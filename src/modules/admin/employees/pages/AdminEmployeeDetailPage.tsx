@@ -5,14 +5,32 @@ import { SystemAccessCard }      from '../components/SystemAccessCard';
 import { ActivityLogCard }       from '../components/ActivityLogCard';
 import { PersonalInfoCard }      from '../components/PersonalInfoCard';
 import { EmploymentInfoCard }    from '../components/EmploymentInfoCard';
-import { CustomPermissionsCard } from '../components/CustomPermissionsCard';
+import { EmployeeRolesCard }     from '../components/EmployeeRolesCard';
+import { UpdateEmployeePasswordModal } from '../components/UpdateEmployeePasswordModal';
 import { useAdminEmployeeDetail } from '../hooks/useAdminEmployeeDetail';
 
 export function AdminEmployeeDetailPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
 
-  const { employee, isLoading, editEmployee, resetPassword } = useAdminEmployeeDetail(isAr);
+  const {
+    employee,
+    isLoading,
+    isSuperAdmin,
+    editEmployee,
+    passwordModalOpen,
+    openPasswordModal,
+    closePasswordModal,
+    updatePassword,
+    isUpdatingPassword,
+    canAssignRole,
+    availableRoles,
+    roleModalOpen,
+    openRoleModal,
+    closeRoleModal,
+    assignEmployeeRole,
+    assigningRole,
+  } = useAdminEmployeeDetail(isAr);
 
   if (isLoading) {
     return (
@@ -33,7 +51,22 @@ export function AdminEmployeeDetailPage() {
   return (
     <div className="space-y-5">
 
-      <EmployeeDetailHeader employee={employee} isAr={isAr} onEdit={editEmployee} onResetPassword={resetPassword} />
+      <EmployeeDetailHeader
+        employee={employee}
+        isAr={isAr}
+        isSuperAdmin={isSuperAdmin}
+        onEdit={editEmployee}
+        onUpdatePassword={openPasswordModal}
+      />
+
+      <UpdateEmployeePasswordModal
+        open={passwordModalOpen}
+        employee={employee ? { name: employee.name, email: employee.email } : undefined}
+        isAr={isAr}
+        isLoading={isUpdatingPassword}
+        onClose={closePasswordModal}
+        onSubmit={updatePassword}
+      />
 
       <EmployeeStatCards stats={employee.stats} isAr={isAr} />
 
@@ -45,7 +78,17 @@ export function AdminEmployeeDetailPage() {
         <div className="space-y-5 lg:col-span-2">
           <PersonalInfoCard employee={employee} isAr={isAr} />
           <EmploymentInfoCard employee={employee} isAr={isAr} />
-          <CustomPermissionsCard permissions={employee.customPermissions} isAr={isAr} />
+          <EmployeeRolesCard
+            roles={employee.roles}
+            isAr={isAr}
+            canAssign={canAssignRole}
+            availableRoles={availableRoles}
+            modalOpen={roleModalOpen}
+            isAssigning={assigningRole}
+            onOpenAssign={openRoleModal}
+            onCloseAssign={closeRoleModal}
+            onAssign={assignEmployeeRole}
+          />
         </div>
       </div>
 

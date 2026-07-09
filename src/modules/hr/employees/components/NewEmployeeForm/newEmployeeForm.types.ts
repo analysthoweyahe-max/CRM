@@ -76,7 +76,19 @@ export type Step3Values = z.infer<ReturnType<typeof makeStep3Schema>>;
 export type Step4Values = z.infer<typeof step4Schema>;
 
 /* ─── Combined 2-step schema ─────────────────────── */
-export function makeAllDataSchema(ar: boolean) {
+export interface WorkHoursBounds {
+  /** Company work-day start, "HH:MM" (from org settings). */
+  workStart?: string;
+  /** Company work-day end, "HH:MM" (from org settings). */
+  workEnd?:   string;
+}
+
+/** Normalize a time value ("HH:MM" or "HH:MM:SS") to "HH:MM" for comparison. */
+function toHHMM(v?: string) {
+  return v ? v.slice(0, 5) : '';
+}
+
+export function makeAllDataSchema(ar: boolean, bounds?: WorkHoursBounds) {
   return z.object({
     fullName:   z.string().min(1, ar ? 'الاسم الكامل مطلوب'          : 'Full name is required'),
     email:      z.string()
@@ -111,6 +123,45 @@ export function makeAllDataSchema(ar: boolean) {
       }
       if (!data.endTime) {
         ctx.addIssue({ code: 'custom', path: ['endTime'], message: ar ? 'وقت انتهاء الدوام مطلوب' : 'End time is required' });
+      }
+
+      /* Employee work hours must fall within the company's configured window. */
+      const workStart = toHHMM(bounds?.workStart);
+      const workEnd   = toHHMM(bounds?.workEnd);
+      const start     = toHHMM(data.startTime);
+      const end       = toHHMM(data.endTime);
+
+      if (workStart && start && start < workStart) {
+        ctx.addIssue({
+          code: 'custom', path: ['startTime'],
+          message: ar
+            ? `لا يمكن أن يبدأ الدوام قبل ${workStart} (مواعيد الشركة)`
+            : `Start time cannot be before ${workStart} (company hours)`,
+        });
+      }
+      if (workEnd && start && start > workEnd) {
+        ctx.addIssue({
+          code: 'custom', path: ['startTime'],
+          message: ar
+            ? `لا يمكن أن يبدأ الدوام بعد ${workEnd} (مواعيد الشركة)`
+            : `Start time cannot be after ${workEnd} (company hours)`,
+        });
+      }
+      if (workEnd && end && end > workEnd) {
+        ctx.addIssue({
+          code: 'custom', path: ['endTime'],
+          message: ar
+            ? `لا يمكن أن ينتهي الدوام بعد ${workEnd} (مواعيد الشركة)`
+            : `End time cannot be after ${workEnd} (company hours)`,
+        });
+      }
+      if (workStart && end && end < workStart) {
+        ctx.addIssue({
+          code: 'custom', path: ['endTime'],
+          message: ar
+            ? `لا يمكن أن ينتهي الدوام قبل ${workStart} (مواعيد الشركة)`
+            : `End time cannot be before ${workStart} (company hours)`,
+        });
       }
     }
   });
