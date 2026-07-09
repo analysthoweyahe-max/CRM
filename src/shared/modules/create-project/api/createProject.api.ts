@@ -30,6 +30,25 @@ interface AdminManagerRecord {
   roles?: string[];
 }
 
+
+/** Build multipart form data for project creation when an attachment is
+ * included — arrays are sent Laravel-style as repeated `key[]` fields. */
+function toFormData(payload: object, file: File, fileField = 'attachment'): FormData {
+  const fd = new FormData();
+  for (const [key, value] of Object.entries(payload)) {
+    if (value === undefined || value === null) continue;
+    if (Array.isArray(value)) {
+      value.forEach(v => fd.append(`${key}[]`, String(v)));
+    } else if (typeof value === 'boolean') {
+      fd.append(key, value ? '1' : '0');
+    } else {
+      fd.append(key, String(value));
+    }
+  }
+  fd.append(fileField, file);
+  return fd;
+}
+
 function unwrapArray<T>(body: unknown): T[] {
   if (Array.isArray(body)) return body as T[];
   const data = (body as { data?: unknown })?.data;
@@ -120,14 +139,28 @@ export const createProjectApi = {
       .map(a => ({ id: a.id, name: a.name, email: a.email }));
   },
 
-  createPm(payload: CreatePmProjectPayload) {
+  createPm(payload: CreatePmProjectPayload, attachment?: File | null) {
+    if (attachment) {
+      return http.post<{ status: string; message: string; data: { id: number } }>(
+        '/v1/pm/projects',
+        toFormData(payload, attachment),
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+    }
     return http.post<{ status: string; message: string; data: { id: number } }>(
       '/v1/pm/projects',
       payload,
     );
   },
 
-  createSeo(payload: CreateSeoProjectPayload) {
+  createSeo(payload: CreateSeoProjectPayload, attachment?: File | null) {
+    if (attachment) {
+      return http.post<{ status: string; message: string; data: { id: number } }>(
+        '/v1/seo/projects',
+        toFormData(payload, attachment),
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+    }
     return http.post<{ status: string; message: string; data: { id: number } }>(
       '/v1/seo/projects',
       payload,

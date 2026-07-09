@@ -84,6 +84,7 @@ export function getTasksEndpoint(tasksRole: TasksApiRole, projectId?: number | s
       case 'project-manager':
         return `/v1/pm/projects/${projectId}/tasks`;
       case 'seo-employee':
+        return `/v1/seo/employee/projects/${projectId}/tasks`;
       case 'seo-manager':
         return `/v1/seo/projects/${projectId}/tasks`;
     }

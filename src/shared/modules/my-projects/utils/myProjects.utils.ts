@@ -134,7 +134,7 @@ export function groupProjectsIntoSections(projects: PmProject[], isAr: boolean):
         status:          p.status,
         statusLabel:     p.statusLabel,
         workspaceUrl:    p.workspaceUrl ?? '',
-        tasksUrl:        p.tasksUrl,
+        tasksUrl:        p.tasksUrl ?? undefined,
         progressPercent: p.progressPercent,
         tasksAssigned:   p.tasksTotal,
         tasksCompleted:  p.tasksCompleted,

@@ -1,4 +1,5 @@
-import { Plus } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Plus, Paperclip, X, FileText } from 'lucide-react';
 import { Combobox } from '@/shared/components/form/Combobox';
 import { ProjectOptionalFields } from '@/shared/components/form/ProjectOptionalFields';
 import { Button } from '@/shared/components/ui/Button';
@@ -39,6 +40,7 @@ export function CreateProjectForm({ form }: Props) {
     managerSearch, setManagerSearch,
     employeeIds, setEmployeeIds,
     employeeSearch, setEmployeeSearch,
+    attachment, setAttachment,
     fieldErrors,
     departmentItems, projectTypeItems, employeeItems, managerItems,
     typesLoading, employeesLoading, managersLoading,
@@ -51,6 +53,20 @@ export function CreateProjectForm({ form }: Props) {
   const endLabel = module === 'pm'
     ? (isAr ? 'الموعد النهائي' : 'Deadline')
     : (isAr ? 'تاريخ الانتهاء المتوقع' : 'Expected End Date');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  function handleFile(files: FileList | null) {
+    const file = files?.[0];
+    if (file) setAttachment(file);
+  }
+
+  function fmtSize(bytes: number) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
 
   return (
     <div className="space-y-6">
@@ -157,6 +173,52 @@ export function CreateProjectForm({ form }: Props) {
         onDriveLinkChange={v => { setDriveLink(v); clearFieldError('driveLink'); }}
         onContractMonthsChange={v => { setContractDurationMonths(v); clearFieldError('contractDurationMonths'); }}
       />
+
+      <div>
+        <label className={LABEL}>{isAr ? 'مرفق' : 'Attachment'}</label>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={e => { handleFile(e.target.files); e.target.value = ''; }}
+        />
+
+        {attachment ? (
+          <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-2.5">
+            <FileText size={18} className="text-gray-400 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-gray-700 dark:text-gray-200 truncate">{attachment.name}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{fmtSize(attachment.size)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAttachment(null)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
+            className={[
+              'border-2 border-dashed rounded-xl px-4 py-5 flex flex-col items-center gap-1.5 cursor-pointer transition-colors',
+              dragOver
+                ? 'border-[#A0CD39] bg-[#D8EBAE]/20 dark:bg-[#A0CD39]/10'
+                : 'border-gray-200 dark:border-gray-600 hover:border-[#A0CD39]/50 hover:bg-[#D8EBAE]/10',
+            ].join(' ')}
+          >
+            <Paperclip size={20} className={dragOver ? 'text-[#A0CD39]' : 'text-gray-300 dark:text-gray-600'} />
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              {isAr ? 'اسحب ملف هنا أو انقر للتصفح' : 'Drag a file here or click to browse'}
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>

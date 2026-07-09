@@ -44,13 +44,14 @@ export const myTasksApi = {
   },
 
   /**
-   * PM employee's own project list — confirmed source of truth for which
-   * projects an employee belongs to. Used instead of the (currently broken)
-   * `/v1/pm/dashboard`/`/v1/pm/employee/tasks` aggregation so the "My Tasks"
-   * page can fetch tasks per project and merge them client-side.
+   * Employee's own project list (PM or SEO) — confirmed source of truth for
+   * which projects an employee belongs to. Used instead of the unreliable
+   * cross-project aggregate task endpoints so the "My Tasks" page can fetch
+   * tasks per project and merge them client-side.
    */
-  async listEmployeeProjects(): Promise<EmployeeProjectSummary[]> {
-    const { data } = await http.get<EmployeeProjectsEnvelope>('/v1/employee/projects');
+  async listEmployeeProjects(tasksRole: TasksApiRole): Promise<EmployeeProjectSummary[]> {
+    const endpoint = tasksRole === 'seo-employee' ? '/v1/seo/employee/projects' : '/v1/employee/projects';
+    const { data } = await http.get<EmployeeProjectsEnvelope>(endpoint);
     return data?.data?.data ?? [];
   },
 

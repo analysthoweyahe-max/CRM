@@ -45,7 +45,7 @@ export const employeeTaskApi = {
    * working, so this fetches per project and merges here instead.
    */
   async list(): Promise<{ data: EmpTaskListResponse }> {
-    const projects = await myTasksApi.listEmployeeProjects();
+    const projects = await myTasksApi.listEmployeeProjects('pm-employee');
     const results = await Promise.all(
       projects.map(async (project) => {
         try {

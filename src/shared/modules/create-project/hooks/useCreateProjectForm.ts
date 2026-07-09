@@ -46,6 +46,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
   const [managerSearch, setManagerSearch] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [fieldErrors, setFieldErrors] = useState<CreateProjectFieldErrors>({});
   const [saved, setSaved] = useState(false);
   const [savedAsDraft, setSavedAsDraft] = useState(false);
@@ -169,7 +170,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
           status:      'not_started',
           templateId:  templateId || null,
           managerIds:  isAdmin ? managerIds : undefined,
-        });
+        }, attachment);
       }
 
       return createProjectApi.createSeo({
@@ -177,7 +178,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
         targetDomain:      targetDomain.trim() || null,
         expected_end_date: endDate || null,
         managerIds:        isAdmin ? managerIds : undefined,
-      });
+      }, attachment);
     },
     onSuccess: (res, asDraft) => {
       const newId = res.data.data.id;
@@ -276,6 +277,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     managerSearch, setManagerSearch,
     employeeIds, setEmployeeIds,
     employeeSearch, setEmployeeSearch,
+    attachment, setAttachment,
     fieldErrors,
     // lookups
     departmentItems,

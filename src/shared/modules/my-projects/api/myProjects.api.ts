@@ -6,7 +6,6 @@ import type {
   MyProjectsModule,
   PaginatedProjectsResponse,
   PmProject,
-  ProjectSection,
   SeoProject,
   SeoMemberDashboardPayload,
   StatusLookupItem,

@@ -60,16 +60,17 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
 
   const scopedProjectId = projectId || undefined;
 
-  // PM employee's cross-project "all my tasks" aggregate endpoint doesn't
-  // reliably return data (confirmed empty even with real assigned tasks),
-  // so for this role we source the project list from a separately-confirmed
-  // endpoint and fetch/merge tasks per project instead.
-  const isPmEmployeeAggregate = tasksRole === 'pm-employee' && !scopedProjectId && !tasksApiUrl;
+  // Both PM and SEO employees' cross-project "all my tasks" aggregate
+  // endpoints are unreliable (confirmed empty for PM even with real assigned
+  // tasks), so for these roles we source the project list from a
+  // separately-confirmed endpoint and fetch/merge tasks per project instead.
+  const isEmployeeRole = tasksRole === 'pm-employee' || tasksRole === 'seo-employee';
+  const needsClientAggregate = isEmployeeRole && !scopedProjectId && !tasksApiUrl;
 
   const employeeProjectsQuery = useQuery({
     queryKey: ['my-tasks', tasksRole, 'employee-projects'],
-    queryFn:  () => myTasksApi.listEmployeeProjects(),
-    enabled:  tasksRole === 'pm-employee',
+    queryFn:  () => myTasksApi.listEmployeeProjects(tasksRole!),
+    enabled:  isEmployeeRole,
     staleTime: 60_000,
   });
 
@@ -79,13 +80,13 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
       projectId: scopedProjectId,
       tasksApiUrl: tasksApiUrl ?? undefined,
     }),
-    enabled: !!tasksRole && !isPmEmployeeAggregate,
+    enabled: !!tasksRole && !needsClientAggregate,
   });
 
   const employeeProjects = employeeProjectsQuery.data ?? [];
 
   const aggregateQuery = useQuery({
-    queryKey: ['my-tasks', tasksRole, 'pm-aggregate', employeeProjects.map(p => p.id)],
+    queryKey: ['my-tasks', tasksRole, 'employee-aggregate', employeeProjects.map(p => p.id)],
     queryFn: async () => {
       const results = await Promise.all(
         employeeProjects.map(async (project) => {
@@ -99,25 +100,25 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
       );
       return mergeGroupedTasksAcrossProjects(results.filter((r): r is NonNullable<typeof r> => r !== null));
     },
-    enabled: isPmEmployeeAggregate && !!employeeProjectsQuery.data,
+    enabled: needsClientAggregate && !!employeeProjectsQuery.data,
   });
 
   const allProjectsQuery = useQuery({
     queryKey: ['my-tasks', 'all', tasksRole],
     queryFn:  () => myTasksApi.list(tasksRole!),
-    enabled:  !!tasksRole && !scopedProjectId && !tasksApiUrl && tasksRole !== 'pm-employee',
+    enabled:  !!tasksRole && !scopedProjectId && !tasksApiUrl && !isEmployeeRole,
     staleTime: 60_000,
   });
 
   const projectOptions = useMemo(() => {
-    if (tasksRole === 'pm-employee') return employeeProjects;
+    if (isEmployeeRole) return employeeProjects;
     const source = allProjectsQuery.data ?? query.data;
     return source ? extractProjectsFromColumns(source.columns) : [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasksRole, employeeProjects, allProjectsQuery.data, query.data]);
+  }, [isEmployeeRole, employeeProjects, allProjectsQuery.data, query.data]);
 
-  const activeQuery = isPmEmployeeAggregate ? aggregateQuery : query;
-  const isLoading = isPmEmployeeAggregate
+  const activeQuery = needsClientAggregate ? aggregateQuery : query;
+  const isLoading = needsClientAggregate
     ? (employeeProjectsQuery.isLoading || aggregateQuery.isLoading)
     : activeQuery.isLoading;
 
