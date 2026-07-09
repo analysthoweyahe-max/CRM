@@ -230,7 +230,7 @@ export const campaignApi = {
   /* ── Tasks (manager) ──────────────────────────────────────────────────
      Confirmed prefix: /v1/seo/manager/... — distinct from the /v1/seo/projects/...
      prefix used by the project-level (non-task) endpoints above. */
-  listAllTasks(params?: { project_id?: string | number; status?: string; search?: string }) {
+  listAllTasks(params?: { project_id?: string | number; status?: string; search?: string; per_page?: number }) {
     return http.get<ApiResponse<PhasedTasksResponse>>('/v1/seo/manager/tasks', { params });
   },
 

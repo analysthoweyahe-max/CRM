@@ -14,27 +14,24 @@ import { SeoProjectTeamTab }      from '../../projects/components/SeoProjectTeam
 import { SeoProjectSettingsTab }  from '../components/SeoProjectSettingsTab';
 import { SeoProgressTab }         from '../components/SeoProgressTab';
 import { SeoClientUpdatesTab }    from '../components/SeoClientUpdatesTab';
-import { KanbanColumn }           from '@/modules/project-manager/projects/components/KanbanColumn';
+import { SeoStatusColumn }        from '../components/SeoStatusColumn';
+import { useSeoTaskStatusList }   from '@/modules/admin/seo-task-statuses/hooks/useSeoTaskStatuses';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
 
-/* ── Status mapping: PM TaskStatus → backend status string ───────────── */
-const STATUS_TO_BACKEND: Record<TaskStatus, string> = {
-  pending:      'pending',
-  in_progress:  'in_progress',
-  needs_review: 'in_review',
-  completed:    'completed',
-};
-
-/* ── Status mapping: backend → PM TaskStatus ─────────────────────────── */
-const STATUS_FROM_BACKEND: Record<string, TaskStatus> = {
-  pending:     'pending',
-  in_progress: 'in_progress',
-  in_review:   'needs_review',
-  review:      'needs_review',
-  completed:   'completed',
-  done:        'completed',
-};
+/* Task.status is typed as the PM's fixed 4-value union, but the real set of
+   SEO task statuses is whatever's configured in "SEO Task Statuses" (admin
+   module) — including custom keys like "blocked" or "custom_status" that
+   don't fit that union. We keep the real backend key on `rawStatus` (used
+   for the Kanban columns + the status-update API call) and only use this
+   coarse mapping for the other tabs (SeoProgressTab) that still expect the
+   narrow union for their stats. */
+function coarseStatus(rawKey: string, marksCompleted: boolean): TaskStatus {
+  if (marksCompleted) return 'completed';
+  if (rawKey === 'in_progress') return 'in_progress';
+  if (rawKey === 'in_review' || rawKey === 'review') return 'needs_review';
+  return 'pending';
+}
 
 const AVATAR_COLORS = [
   'bg-violet-500', 'bg-sky-500', 'bg-amber-500',
@@ -55,7 +52,13 @@ const PRIORITY_MAP: Record<string, Task['priority']> = {
   low:    'low',
 };
 
-function toLocalTask(t: SeoTask, projectId: string): Task {
+export interface SeoTaskVM extends Task {
+  /** The real backend status key (e.g. "blocked", "custom_status") — the
+   *  Kanban board groups/drags by this, not by the coarse `status` union. */
+  rawStatus: string;
+}
+
+function toLocalTask(t: SeoTask, projectId: string, marksCompletedByKey: Record<string, boolean>): SeoTaskVM {
   const assignee = t.assignees?.[0]?.name ?? '';
   return {
     id:              String(t.id),
@@ -69,13 +72,11 @@ function toLocalTask(t: SeoTask, projectId: string): Task {
     assigneeColor:   avatarColor(assignee),
     dueDate:         t.dueDate ?? '',
     estimatedHours:  undefined,
-    status:          STATUS_FROM_BACKEND[t.status] ?? 'pending',
+    status:          coarseStatus(t.status, marksCompletedByKey[t.status] ?? false),
+    rawStatus:       t.status,
     taskNumber:      `#${t.taskNumber ?? t.id}`,
   };
 }
-
-/* ── Constants ───────────────────────────────────────────────────────── */
-const KANBAN_COLS: TaskStatus[] = ['pending', 'in_progress', 'needs_review', 'completed'];
 
 type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings';
 
@@ -104,7 +105,8 @@ export function CampaignDetailsPage() {
 
   const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [statusOverrides, setStatusOverrides] = useState<Record<string, TaskStatus>>({});
+  // Keyed by task id → the real backend status key (not the coarse union).
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
 
   /* ── Campaign header ──────────────────────────────────────────────── */
   const { data: campaign, isLoading: campaignLoading } = useQuery({
@@ -114,11 +116,25 @@ export function CampaignDetailsPage() {
     staleTime: 30_000,
   });
 
-  /* ── Tasks from backend ───────────────────────────────────────────── */
+  /* ── Task statuses — admin-configured, drives the Kanban columns ───── */
+  const { data: statusesRaw, isLoading: statusesLoading } = useSeoTaskStatusList();
+  const statuses = useMemo(
+    () => (statusesRaw ?? []).filter(s => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder),
+    [statusesRaw],
+  );
+  const marksCompletedByKey = useMemo(
+    () => Object.fromEntries(statuses.map(s => [s.key, s.marksCompleted])),
+    [statuses],
+  );
+
+  /* ── Tasks from backend ───────────────────────────────────────────────
+     Uses the flat /v1/seo/manager/tasks?project_id= listing rather than the
+     nested /v1/seo/manager/projects/{id}/tasks one — confirmed the nested
+     endpoint doesn't reliably reflect newly created tasks, the flat one does. */
   const { data: rawTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['campaign-tasks', id],
     queryFn:  async () => {
-      const r = await campaignApi.getTasks(id);
+      const r = await campaignApi.listAllTasks({ project_id: id, per_page: 100 });
       return (r.data.data.phases ?? []).flatMap(p => p.tasks);
     },
     enabled:   !!id,
@@ -127,22 +143,24 @@ export function CampaignDetailsPage() {
 
   /* ── Derive tasks — no setState inside effect ─────────────────────── */
   const baseTasks = useMemo(
-    () => (rawTasks ?? []).map(t => toLocalTask(t, id)),
-    [rawTasks, id],
+    () => (rawTasks ?? []).map(t => toLocalTask(t, id, marksCompletedByKey)),
+    [rawTasks, id, marksCompletedByKey],
   );
 
   const tasks = useMemo(
     () => baseTasks.map(t =>
-      statusOverrides[t.id] ? { ...t, status: statusOverrides[t.id] } : t,
+      statusOverrides[t.id]
+        ? { ...t, rawStatus: statusOverrides[t.id], status: coarseStatus(statusOverrides[t.id], marksCompletedByKey[statusOverrides[t.id]] ?? false) }
+        : t,
     ),
-    [baseTasks, statusOverrides],
+    [baseTasks, statusOverrides, marksCompletedByKey],
   );
 
   /* ── Drag-drop: optimistic status override + API call ─────────────── */
-  function handleDrop(taskId: string, toStatus: TaskStatus) {
-    setStatusOverrides(prev => ({ ...prev, [taskId]: toStatus }));
+  function handleDrop(taskId: string, toStatusKey: string) {
+    setStatusOverrides(prev => ({ ...prev, [taskId]: toStatusKey }));
     campaignApi
-      .updateTaskStatus(id, taskId, STATUS_TO_BACKEND[toStatus])
+      .updateTaskStatus(id, taskId, toStatusKey)
       .catch(console.error);
   }
 
@@ -160,7 +178,7 @@ export function CampaignDetailsPage() {
 
   const badgeCls   = STATUS_BADGE[campaign?.status ?? ''] ?? 'bg-gray-100 text-gray-500';
   const tasksTotal = tasks.length;
-  const tasksDone  = tasks.filter(t => t.status === 'completed').length;
+  const tasksDone  = tasks.filter(t => marksCompletedByKey[t.rawStatus]).length;
   const progress   = tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0;
 
   return (
@@ -245,19 +263,19 @@ export function CampaignDetailsPage() {
 
       {/* Tab content */}
       {activeTab === 'tasks' ? (
-        tasksLoading ? (
+        tasksLoading || statusesLoading ? (
           <div className="flex gap-4">
-            {KANBAN_COLS.map(s => (
-              <div key={s} className="flex-1 min-w-62.5 h-64 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="flex-1 min-w-62.5 h-64 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
             ))}
           </div>
         ) : (
           <div className="flex gap-5 overflow-x-auto pb-4 px-1">
-            {KANBAN_COLS.map(status => (
-              <KanbanColumn
-                key={status}
+            {statuses.map(status => (
+              <SeoStatusColumn
+                key={status.key}
                 status={status}
-                tasks={tasks.filter(t => t.status === status)}
+                tasks={tasks.filter(t => t.rawStatus === status.key)}
                 isAr={isAr}
                 onDrop={handleDrop}
                 onOpen={t => setSelectedTaskId(t.id)}
