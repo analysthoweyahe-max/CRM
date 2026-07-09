@@ -32,7 +32,6 @@ export function TaskDetailHeader({ task, isLoading, isAr, onBack, onEdit }: Task
   const status  = STATUS_MAP[task.status];
   const title   = task.title;
   const project = task.project;
-  const taskNum = `#${task.id.padStart(3, '0')}`;
 
   return (
     <div className="space-y-3">
@@ -59,7 +58,6 @@ export function TaskDetailHeader({ task, isLoading, isAr, onBack, onEdit }: Task
             <SquarePen size={16} />
           </button>
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
-          <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums">{taskNum}</span>
         </div>
       </div>
 

@@ -1,6 +1,8 @@
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { notificationsApi } from '@/shared/services/notifications.service';
+import { playNotificationSound } from '@/shared/utils/sound.utils';
 
 export function useNotifications() {
   const qc   = useQueryClient();
@@ -19,6 +21,22 @@ export function useNotifications() {
     refetchInterval: 15_000,
   });
 
+  const unreadCount     = data?.unreadCount ?? 0;
+  const prevUnreadCount = useRef<number | null>(null);
+
+  // Bumped only when unread count goes UP from a known baseline — not on
+  // first mount (would fire for pre-existing unread) and not on mark-read.
+  // Topbar watches this to trigger the bell chime + shake animation.
+  const [justArrived, setJustArrived] = useState(0);
+
+  useEffect(() => {
+    if (prevUnreadCount.current !== null && unreadCount > prevUnreadCount.current) {
+      playNotificationSound();
+      setJustArrived(n => n + 1);
+    }
+    prevUnreadCount.current = unreadCount;
+  }, [unreadCount]);
+
   const markReadMutation = useMutation({
     mutationFn: (id: string) => notificationsApi.markRead(role, id),
     onSuccess:  () => qc.invalidateQueries({ queryKey }),
@@ -31,7 +49,8 @@ export function useNotifications() {
 
   return {
     notifications: data?.data ?? [],
-    unreadCount:   data?.unreadCount ?? 0,
+    unreadCount,
+    justArrived,
     isLoading,
     markRead:      (id: string) => markReadMutation.mutate(id),
     markAllRead:   () => markAllReadMutation.mutate(),

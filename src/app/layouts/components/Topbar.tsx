@@ -31,7 +31,15 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
   const [notifOpen,     setNotifOpen]     = useState(false);
   const [showChangePwd, setShowChangePwd] = useState(false);
 
-  const { notifications, unreadCount, markRead, markAllRead, refetch } = useNotifications();
+  const { notifications, unreadCount, justArrived, markRead, markAllRead, refetch } = useNotifications();
+  const [ringing, setRinging] = useState(false);
+
+  useEffect(() => {
+    if (justArrived === 0) return; // initial value, not a real arrival
+    setRinging(true);
+    const t = setTimeout(() => setRinging(false), 700);
+    return () => clearTimeout(t);
+  }, [justArrived]);
 
   function handlePushRefresh() {
     refetch();
@@ -115,7 +123,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
                           ? 'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]'
                           : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
           >
-            <Bell size={18} />
+            <Bell size={18} className={ringing ? 'animate-bell-ring' : ''} />
             {unreadCount > 0 && (
               <span className="absolute top-1 inset-e-1 min-w-4 h-4 px-0.5 rounded-full
                                bg-red-500 text-white text-[10px] font-bold
