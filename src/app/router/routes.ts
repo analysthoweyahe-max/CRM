@@ -87,9 +87,10 @@ export const ROUTES = {
     MESSAGES:      '/employee/messages',
     REQUESTS:      '/employee/requests',
     REPORTS:       '/employee/reports',
-    TASKS:         '/employee/tasks',
+    TASKS:         '/pm/tasks',
+    PROJECT_TASKS: (projectId: string | number = ':projectId') => `/pm/projects/${projectId}/tasks`,
     TASK_DETAIL:   (projectId: string | number = ':projectId', taskId: string | number = ':taskId') =>
-      `/employee/tasks/${projectId}/${taskId}`,
+      `/pm/projects/${projectId}/tasks/${taskId}`,
     DAILY_REPORTS: '/employee/daily-reports',
     PROFILE:       '/employee/profile',
     PROJECT_MESSAGES: (projectId: string | number = ':projectId') => `/employee/projects/${projectId}/messages`,
@@ -99,9 +100,10 @@ export const ROUTES = {
   SEO_MEMBER: {
     DASHBOARD:     '/seo-member',
     MY_PROJECTS:   '/seo-member/projects',
-    TASKS:         '/seo-member/tasks',
+    TASKS:         '/seo/tasks',
+    PROJECT_TASKS: (projectId: string | number = ':projectId') => `/seo/projects/${projectId}/tasks`,
     TASK_DETAIL:   (projectId: string | number = ':projectId', taskId: string | number = ':taskId') =>
-      `/seo-member/tasks/${projectId}/${taskId}`,
+      `/seo/projects/${projectId}/tasks/${taskId}`,
     MESSAGES:      '/seo-member/messages',
     REQUESTS:      '/seo-member/requests',
     REPORTS:       '/seo-member/reports',

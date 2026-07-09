@@ -8,7 +8,12 @@ import { TaskDetailAttachments }  from '@/modules/employee/tasks/components/Task
 import { TaskDetailComments }     from '@/modules/employee/tasks/components/TaskDetailComments';
 import type { TabId }             from '@/modules/employee/tasks/components/TaskDetailTabs';
 import type { TaskDetail }        from '@/modules/employee/tasks/types/taskDetail.types';
-import { useSeoTaskDetail, useUpdateSeoTaskStatus } from '../hooks/useSeoTaskDetail';
+import {
+  useSeoTaskDetail,
+  useUpdateSeoTaskStatus,
+  useSeoTaskComments,
+  useSeoTaskSessions,
+} from '../hooks/useSeoTaskDetail';
 import { SeoTaskDetailHeader }    from '../components/SeoTaskDetailHeader';
 import { SeoTaskDetailInfo }      from '../components/SeoTaskDetailInfo';
 
@@ -21,16 +26,13 @@ export function SeoTaskDetailPage() {
   const [activeTab, setActiveTab] = useState<TabId>('time');
 
   const { data: detail, isLoading } = useSeoTaskDetail(projectId, taskId);
+  const { data: comments = [], isLoading: commentsLoading } = useSeoTaskComments(projectId, taskId);
+  const { data: sessions = [], isLoading: sessionsLoading } = useSeoTaskSessions(projectId, taskId);
   const { mutate: changeStatus } = useUpdateSeoTaskStatus(projectId, taskId, isAr);
-  // No real time-log/comment endpoints confirmed yet for the SEO employee side —
-  // these stay empty until the backend exposes them.
-  const sessions: never[] = [];
-  const comments: never[] = [];
 
-  // Adapt SeoTaskDetail → TaskDetail shape for the reused TaskDetailTimeTracker
   const taskDetailAdapter: TaskDetail | undefined = detail
     ? {
-        id:             String(detail.id),
+        id:             detail.uuid ?? String(detail.id),
         projectId:      projectId ?? '',
         title:          detail.title,
         description:    detail.description ?? '',
@@ -64,7 +66,7 @@ export function SeoTaskDetailPage() {
             <TaskDetailTimeTracker
               task={taskDetailAdapter}
               sessions={sessions}
-              isLoading={isLoading}
+              isLoading={isLoading || sessionsLoading}
               isAr={isAr}
             />
           )}
@@ -75,11 +77,14 @@ export function SeoTaskDetailPage() {
             <TaskDetailAttachments isLoading={isLoading} isAr={isAr} />
           )}
           {activeTab === 'comments' && (
-            <TaskDetailComments comments={comments} isLoading={isLoading} isAr={isAr} />
+            <TaskDetailComments
+              comments={comments}
+              isLoading={isLoading || commentsLoading}
+              isAr={isAr}
+            />
           )}
         </div>
       </div>
-
     </div>
   );
 }

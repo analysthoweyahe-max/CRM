@@ -93,6 +93,7 @@ export function normalizePmDashboardSections(payload: unknown): ProjectSection[]
         statusLabel:      String(p.statusLabel ?? ''),
         workspaceUrl:     String(p.workspaceUrl ?? ''),
         tasksUrl:         p.tasksUrl as string | undefined,
+        tasksApiUrl:      (p.tasksApiUrl ?? p.tasks_api_url) as string | undefined,
         progressPercent:  p.progressPercent as number | undefined,
         tasksAssigned:    (p.tasksAssigned ?? p.tasksTotal) as number | undefined,
         tasksCompleted:   p.tasksCompleted as number | undefined,

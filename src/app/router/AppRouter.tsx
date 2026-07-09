@@ -254,7 +254,10 @@ export function AppRouter() {
                   <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
                   <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
                   <Route path={ROUTES.EMPLOYEE.TASKS}         element={<MyTasksPage />} />
+                  <Route path={ROUTES.EMPLOYEE.PROJECT_TASKS()} element={<MyTasksPage />} />
                   <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
+                  <Route path="/employee/tasks" element={<MyTasksPage />} />
+                  <Route path="/employee/tasks/:projectId/:taskId" element={<EmployeeTaskDetailPage />} />
                   <Route path={ROUTES.EMPLOYEE.DAILY_REPORTS} element={<EmployeeDailyReportsPage />} />
                   <Route path={ROUTES.EMPLOYEE.PROFILE}       element={<EmployeeProfilePage />} />
                   <Route path={ROUTES.EMPLOYEE.PROJECT_MESSAGES()} element={<EmployeeProjectMessagesPage />} />
@@ -313,7 +316,10 @@ export function AppRouter() {
                   <Route path={ROUTES.SEO_MEMBER.DASHBOARD}        element={<SeoMemberDashboardPage />} />
                   <Route path={ROUTES.SEO_MEMBER.MY_PROJECTS}      element={<MyProjectsPage module="seo" />} />
                   <Route path={ROUTES.SEO_MEMBER.TASKS}            element={<MyTasksPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.PROJECT_TASKS()} element={<MyTasksPage />} />
                   <Route path={ROUTES.SEO_MEMBER.TASK_DETAIL()}    element={<SeoTaskDetailPage />} />
+                  <Route path="/seo-member/tasks" element={<MyTasksPage />} />
+                  <Route path="/seo-member/tasks/:projectId/:taskId" element={<SeoTaskDetailPage />} />
                   <Route path={ROUTES.SEO_MEMBER.MESSAGES}      element={<SeoMemberMessagesPage />} />
                   <Route path={ROUTES.SEO_MEMBER.REQUESTS}      element={<SeoMemberRequestsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.REPORTS}       element={<SeoMemberReportsPage />} />

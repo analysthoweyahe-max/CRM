@@ -64,6 +64,7 @@ export interface DashboardProjectCard {
   statusLabel:      string;
   workspaceUrl:     string;
   tasksUrl?:        string;
+  tasksApiUrl?:     string;
   progressPercent?: number;
   tasksAssigned?:   number;
   tasksCompleted?:  number;

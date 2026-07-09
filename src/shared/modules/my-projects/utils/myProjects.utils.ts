@@ -18,8 +18,8 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
       showManager:     false,
       showTasksButton: true,
       createPath:      ROUTES.SEO_LEADER.NEW,
-      workspacePath:   (_id) => ROUTES.SEO_MEMBER.TASKS,
-      tasksPath:       (_id) => ROUTES.SEO_MEMBER.TASKS,
+      workspacePath:   (id) => ROUTES.SEO_MEMBER.PROJECT_TASKS(id),
+      tasksPath:       (id) => ROUTES.SEO_MEMBER.PROJECT_TASKS(id),
     };
   }
 
@@ -34,8 +34,8 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
       showManager:     false,
       showTasksButton: true,
       createPath:      ROUTES.PROJECT_MANAGER.NEW,
-      workspacePath:   (_id) => ROUTES.EMPLOYEE.TASKS,
-      tasksPath:       (_id) => ROUTES.EMPLOYEE.TASKS,
+      workspacePath:   (id) => ROUTES.EMPLOYEE.PROJECT_TASKS(id),
+      tasksPath:       (id) => ROUTES.EMPLOYEE.PROJECT_TASKS(id),
     };
   }
 

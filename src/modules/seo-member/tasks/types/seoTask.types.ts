@@ -8,6 +8,7 @@ export interface SeoTaskProjectRef {
 
 export interface SeoTask {
   id:            number;
+  uuid:          string;
   taskNumber:    number;
   title:         string;
   phase:         string | null;

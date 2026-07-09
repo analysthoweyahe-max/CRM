@@ -12,6 +12,7 @@ export interface RawSeoTaskRef {
 
 export interface RawSeoTask {
   id:             number;
+  uuid?:          string;
   taskNumber:     number;
   title:          string;
   description?:   string | null;
@@ -66,6 +67,7 @@ const PRIORITY_FROM_WIRE: Record<string, SeoTaskPriority> = {
 export function toSeoTask(raw: RawSeoTask): SeoTask {
   return {
     id:            raw.id,
+    uuid:          raw.uuid ?? String(raw.id),
     taskNumber:    raw.taskNumber,
     title:         raw.title,
     phase:         raw.phase ?? null,
@@ -90,16 +92,15 @@ export const seoTaskApi = {
   // Cross-project "my tasks" list — GET /v1/seo/employee/tasks?mine=1
   async list(params?: { status?: string; search?: string }) {
     const res = await http.get<RawSeoTaskListResponse>('/v1/seo/employee/tasks', {
-      params: { mine: 1, ...params },
+      params,
     });
     return flattenPhases(res.data);
   },
 
-  // "My tasks" scoped to one project — GET /v1/seo/employee/projects/{project}/tasks?mine=1
   async listByProject(projectId: string, params?: { status?: string; search?: string }) {
     const res = await http.get<RawSeoTaskListResponse>(
-      `/v1/seo/employee/projects/${projectId}/tasks`,
-      { params: { mine: 1, ...params } },
+      `/v1/seo/projects/${projectId}/tasks`,
+      { params },
     );
     return flattenPhases(res.data);
   },

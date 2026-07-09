@@ -63,7 +63,7 @@ function toEmployeeTask(raw: RawPmTask): EmployeeTask {
 
 export const employeeTaskApi = {
   async list(): Promise<{ data: EmpTaskListResponse }> {
-    const res = await http.get<RawPmTaskListResponse>('/v1/pm/employee/tasks', { params: { mine: 1 } });
+    const res = await http.get<RawPmTaskListResponse>('/v1/pm/employee/tasks');
     const tasks = res.data.data.columns.flatMap(c => c.tasks);
     return {
       data: {

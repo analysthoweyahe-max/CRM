@@ -1,5 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Menu, Bell, Globe, LogOut, User, ChevronDown, Moon, Sun, KeyRound } from 'lucide-react';
 import { ChangePasswordModal }        from '@/modules/auth/components/ChangePasswordModal';
 import { useAuth }                    from '@/modules/auth/context/AuthContext';
@@ -10,6 +11,8 @@ import { UserRoleBadges }             from '@/shared/components/auth';
 import { useFirebaseMessaging }       from '@/shared/hooks/useFirebaseMessaging';
 import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
+import { resolveNotificationPath }    from '@/shared/utils/notificationNavigation.utils';
+import type { AppNotification }     from '@/shared/types/notification.types';
 
 interface TopbarProps {
   onMenuToggle:  () => void;
@@ -21,6 +24,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
   const { lang, toggleLang }    = useLang();
   const { isDark, toggleTheme } = useTheme();
   const navigate                = useNavigate();
+  const qc                      = useQueryClient();
   const isAr = lang === 'ar';
 
   const [open,          setOpen]          = useState(false);
@@ -29,11 +33,24 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
 
   const { notifications, unreadCount, markRead, markAllRead, refetch } = useNotifications();
 
+  function handlePushRefresh() {
+    refetch();
+    qc.invalidateQueries({ queryKey: ['my-tasks'] });
+  }
+
+  function handleNotificationClick(notification: AppNotification) {
+    const path = resolveNotificationPath(notification, user);
+    if (path) {
+      navigate(path);
+      setNotifOpen(false);
+    }
+  }
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef    = useRef<HTMLDivElement>(null);
 
   // Foreground FCM push arrived — refetch the real list instead of trusting the payload
-  useFirebaseMessaging(refetch);
+  useFirebaseMessaging(handlePushRefresh);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -114,6 +131,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
               isAr={isAr}
               onMarkAllRead={markAllRead}
               onMarkRead={markRead}
+              onNavigate={handleNotificationClick}
             />
           )}
         </div>
