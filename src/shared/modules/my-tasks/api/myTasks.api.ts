@@ -1,10 +1,10 @@
 import { http } from '@/shared/services/http.service';
 import type { GroupedTasksData, TasksApiRole } from '../types/myTasks.types';
 import {
-  filterTasksForAssignee,
   getTasksEndpoint,
   getTasksQueryParams,
   normalizeGroupedTasks,
+  resolveTasksApiPath,
 } from '../utils/myTasks.utils';
 
 interface TasksApiEnvelope {
@@ -13,17 +13,23 @@ interface TasksApiEnvelope {
   data:    unknown;
 }
 
+export interface ListMyTasksOptions {
+  projectId?:    number | string;
+  tasksApiUrl?:  string;
+}
+
 export const myTasksApi = {
   async list(
     tasksRole: TasksApiRole,
-    projectId?: number | string,
-    currentUserId?: string,
+    options: ListMyTasksOptions = {},
   ): Promise<GroupedTasksData> {
-    const endpoint = getTasksEndpoint(tasksRole, projectId);
-    const params   = getTasksQueryParams(tasksRole, projectId);
+    const { projectId, tasksApiUrl } = options;
+    const endpoint = tasksApiUrl
+      ? resolveTasksApiPath(tasksApiUrl)
+      : getTasksEndpoint(tasksRole, projectId);
+    const params = tasksApiUrl ? {} : getTasksQueryParams(tasksRole, projectId);
     const { data } = await http.get<TasksApiEnvelope>(endpoint, { params });
-    const normalized = normalizeGroupedTasks(data.data);
-    return filterTasksForAssignee(normalized, currentUserId);
+    return normalizeGroupedTasks(data);
   },
 
   updateStatus(

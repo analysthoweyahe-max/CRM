@@ -112,7 +112,11 @@ export function SeoMemberDashboardPage() {
                 key={task.id}
                 task={task}
                 isAr={isAr}
-                onDetails={id => navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(id))}
+                onDetails={task => {
+                  const projectId = task.project?.id;
+                  if (!projectId) return;
+                  navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(projectId, task.uuid));
+                }}
               />
             ))}
           </div>

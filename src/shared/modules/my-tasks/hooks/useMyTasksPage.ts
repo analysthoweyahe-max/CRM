@@ -1,14 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { extractApiStatus } from '@/shared/utils/error.utils';
 import { myTasksApi } from '../api/myTasks.api';
 import {
   extractProjectsFromColumns,
+  getTaskRouteId,
   resolveMyTasksConfig,
   resolveTasksRole,
 } from '../utils/myTasks.utils';
 import type { GroupedTasksData, MyTasksPageConfig, TasksApiRole } from '../types/myTasks.types';
+
+export interface UseMyTasksPageOptions {
+  routeProjectId?: string;
+  tasksApiUrl?:   string;
+}
 
 export interface UseMyTasksPageResult {
   config:          MyTasksPageConfig | null;
@@ -23,12 +30,22 @@ export interface UseMyTasksPageResult {
   errorStatus:     number | undefined;
   updateStatus:    (projectId: number | string, taskId: number | string, status: string) => Promise<void>;
   isUpdating:      boolean;
+  getTaskId:       (task: import('../types/myTasks.types').MyTask) => string | number;
 }
 
-export function useMyTasksPage(isAr: boolean): UseMyTasksPageResult {
+export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {}): UseMyTasksPageResult {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [projectId, setProjectId] = useState('');
+  const [searchParams] = useSearchParams();
+  const [projectId, setProjectId] = useState(options.routeProjectId ?? '');
+
+  useEffect(() => {
+    if (options.routeProjectId) {
+      setProjectId(options.routeProjectId);
+    }
+  }, [options.routeProjectId]);
+
+  const tasksApiUrl = options.tasksApiUrl ?? searchParams.get('tasksApiUrl') ?? undefined;
 
   const tasksRole = useMemo(
     () => (user ? resolveTasksRole(user) : null),
@@ -40,20 +57,21 @@ export function useMyTasksPage(isAr: boolean): UseMyTasksPageResult {
     [tasksRole],
   );
 
-  const currentUserId = user?.employeeId ?? user?.id;
-
   const scopedProjectId = projectId || undefined;
 
   const query = useQuery({
-    queryKey: ['my-tasks', tasksRole, scopedProjectId, currentUserId],
-    queryFn:  () => myTasksApi.list(tasksRole!, scopedProjectId, currentUserId),
-    enabled:  !!tasksRole && !!currentUserId,
+    queryKey: ['my-tasks', tasksRole, scopedProjectId, tasksApiUrl],
+    queryFn:  () => myTasksApi.list(tasksRole!, {
+      projectId: scopedProjectId,
+      tasksApiUrl: tasksApiUrl ?? undefined,
+    }),
+    enabled: !!tasksRole,
   });
 
   const allProjectsQuery = useQuery({
-    queryKey: ['my-tasks', 'all', tasksRole, currentUserId],
-    queryFn:  () => myTasksApi.list(tasksRole!, undefined, currentUserId),
-    enabled:  !!tasksRole && !!currentUserId,
+    queryKey: ['my-tasks', 'all', tasksRole],
+    queryFn:  () => myTasksApi.list(tasksRole!),
+    enabled:  !!tasksRole && !scopedProjectId && !tasksApiUrl,
     staleTime: 60_000,
   });
 
@@ -85,6 +103,9 @@ export function useMyTasksPage(isAr: boolean): UseMyTasksPageResult {
     await mutation.mutateAsync({ projectId: pid, taskId, status });
   }
 
+  const getTaskId = (task: import('../types/myTasks.types').MyTask) =>
+    tasksRole ? getTaskRouteId(task, tasksRole) : task.id;
+
   return {
     config,
     tasksRole,
@@ -98,5 +119,6 @@ export function useMyTasksPage(isAr: boolean): UseMyTasksPageResult {
     errorStatus: query.isError ? extractApiStatus(query.error) : undefined,
     updateStatus,
     isUpdating:  mutation.isPending,
+    getTaskId,
   };
 }

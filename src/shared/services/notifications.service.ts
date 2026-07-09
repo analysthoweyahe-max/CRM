@@ -32,13 +32,46 @@ const ROLE_NOTIFICATION_PREFIX: Record<Role, string> = {
   'seo-member': '/v1/seo/notifications',
 };
 
+function parseNotificationData(raw: unknown): Record<string, unknown> {
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return parseNotificationData(parsed);
+    } catch {
+      return {};
+    }
+  }
+  return typeof raw === 'object' && !Array.isArray(raw)
+    ? raw as Record<string, unknown>
+    : {};
+}
+
+function normalizeNotification(raw: AppNotification): AppNotification {
+  return {
+    ...raw,
+    data: parseNotificationData(raw.data),
+  };
+}
+
 function prefixFor(role: Role | undefined): string {
   return (role && ROLE_NOTIFICATION_PREFIX[role]) || '/v1/employee/notifications';
 }
 
 export const notificationsApi = {
-  list(role: Role | undefined, params?: { per_page?: number; page?: number }) {
-    return http.get<ApiEnvelope<NotificationsPage>>(prefixFor(role), { params });
+  async list(role: Role | undefined, params?: { per_page?: number; page?: number }) {
+    const res = await http.get<ApiEnvelope<NotificationsPage>>(prefixFor(role), { params });
+    const page = res.data.data;
+    return {
+      ...res,
+      data: {
+        ...res.data,
+        data: {
+          ...page,
+          data: (page.data ?? []).map(normalizeNotification),
+        },
+      },
+    };
   },
 
   markRead(role: Role | undefined, id: string) {

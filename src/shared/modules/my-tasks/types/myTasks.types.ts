@@ -54,6 +54,7 @@ export interface MyTaskColumn {
 
 export interface GroupedTasksData {
   columns: MyTaskColumn[];
+  phases?: MyTaskPhaseGroup[];
   total:   number;
 }
 
@@ -66,4 +67,9 @@ export interface MyTasksPageConfig {
   projectPath:     (projectId: number | string) => string;
 }
 
-export type ResolveTasksRoleInput = Pick<AuthUser, 'actor' | 'roles' | 'role'>;
+export type ResolveTasksRoleInput = Pick<AuthUser, 'actor' | 'roles' | 'role' | 'section'>;
+
+export interface MyTaskPhaseGroup {
+  phase: string;
+  tasks: MyTask[];
+}

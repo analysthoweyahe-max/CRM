@@ -3,6 +3,7 @@ import type {
   GroupedTasksData,
   MyTask,
   MyTaskColumn,
+  MyTaskPhaseGroup,
   MyTasksPageConfig,
   ResolveTasksRoleInput,
   TasksApiRole,
@@ -10,6 +11,8 @@ import type {
 
 export function resolveTasksRole(user: ResolveTasksRoleInput): TasksApiRole | null {
   if (user.actor === 'employee') {
+    if (user.section === 'seo') return 'seo-employee';
+    if (user.section === 'pm')  return 'pm-employee';
     if (user.roles.includes('pm-employee'))    return 'pm-employee';
     if (user.roles.includes('seo-employee'))   return 'seo-employee';
   }
@@ -76,13 +79,11 @@ export function getTasksEndpoint(tasksRole: TasksApiRole, projectId?: number | s
   if (projectId) {
     switch (tasksRole) {
       case 'pm-employee':
-        return `/v1/pm/employee/projects/${projectId}/tasks`;
-      case 'seo-employee':
-        return `/v1/seo/employee/projects/${projectId}/tasks`;
       case 'project-manager':
         return `/v1/pm/projects/${projectId}/tasks`;
+      case 'seo-employee':
       case 'seo-manager':
-        return `/v1/seo/manager/projects/${projectId}/tasks`;
+        return `/v1/seo/projects/${projectId}/tasks`;
     }
   }
 
@@ -98,17 +99,33 @@ export function getTasksEndpoint(tasksRole: TasksApiRole, projectId?: number | s
   }
 }
 
+/** Strip origin and `/api` prefix — http client baseURL already includes `/api`. */
+export function resolveTasksApiPath(tasksApiUrl: string): string {
+  let path = tasksApiUrl.trim();
+  path = path.replace(/^https?:\/\/[^/]+/i, '');
+  if (path.startsWith('/api/')) path = path.slice(4);
+  else if (path === '/api') path = '/';
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
 export function getTasksQueryParams(
   tasksRole: TasksApiRole,
   projectId?: number | string,
 ): Record<string, string | number> {
   const params: Record<string, string | number> = {};
-  // My Tasks is always assignee-scoped — not permission-scoped.
-  params.mine = 1;
-  if (projectId && !getTasksEndpoint(tasksRole, projectId).includes(`/${projectId}/`)) {
+  const endpoint = getTasksEndpoint(tasksRole, projectId);
+  if (projectId && !endpoint.includes(`/${projectId}/`)) {
     params.project_id = projectId;
   }
   return params;
+}
+
+/** PM uses integer id; SEO uses uuid in routes and API paths. */
+export function getTaskRouteId(task: MyTask, tasksRole: TasksApiRole): string | number {
+  if (tasksRole === 'seo-employee' || tasksRole === 'seo-manager') {
+    return task.uuid;
+  }
+  return task.id;
 }
 
 interface RawTaskWire {
@@ -140,6 +157,51 @@ interface RawTaskWire {
   updatedAt?:       string;
 }
 
+function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
+  const project = readRecord(raw.project);
+  const phase = raw.phase;
+  const phaseObj = readRecord(phase);
+
+  return {
+    id:               Number(raw.id),
+    uuid:             typeof raw.uuid === 'string' ? raw.uuid : undefined,
+    taskNumber:       Number(raw.taskNumber ?? raw.task_number ?? raw.id),
+    title:            String(raw.title ?? ''),
+    description:      (raw.description as string | null | undefined) ?? null,
+    status:           String(raw.status ?? 'pending'),
+    statusLabel:      String(raw.statusLabel ?? raw.status_label ?? raw.status ?? 'pending'),
+    priority:         String(raw.priority ?? 'normal'),
+    priorityLabel:    String(raw.priorityLabel ?? raw.priority_label ?? raw.priority ?? 'normal'),
+    dueDate:          (raw.dueDate ?? raw.due_date ?? null) as string | null,
+    estimatedHours:   raw.estimatedHours != null
+      ? Number(raw.estimatedHours)
+      : raw.estimated_hours != null
+        ? Number(raw.estimated_hours)
+        : null,
+    project:          project
+      ? { id: project.id as number | string, name: String(project.name ?? '') }
+      : null,
+    phase:            phaseObj
+      ? { id: phaseObj.id as number | string, name: String(phaseObj.name ?? '') }
+      : typeof phase === 'string'
+        ? phase
+        : null,
+    assignee:         readRecord(raw.assignee) as RawTaskWire['assignee'],
+    assignees:        Array.isArray(raw.assignees) ? raw.assignees as RawTaskWire['assignees'] : undefined,
+    completedAt:      (raw.completedAt ?? raw.completed_at ?? null) as string | null,
+    attachmentsCount: Number(raw.attachmentsCount ?? raw.attachments_count ?? 0) || undefined,
+    commentsCount:    Number(raw.commentsCount ?? raw.comments_count ?? 0) || undefined,
+    createdAt:        String(raw.createdAt ?? raw.created_at ?? ''),
+    updatedAt:        String(raw.updatedAt ?? raw.updated_at ?? ''),
+  };
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
 function normalizePhase(raw: RawTaskWire['phase']): MyTask['phase'] {
   if (!raw) return undefined;
   if (typeof raw === 'string') return { id: 0, name: raw };
@@ -161,54 +223,90 @@ function normalizeAssignee(raw: RawTaskWire): MyTask['assignee'] {
   };
 }
 
-function normalizeTask(raw: RawTaskWire): MyTask {
+function normalizeTask(raw: RawTaskWire | Record<string, unknown>): MyTask {
+  const wire = 'title' in raw && typeof raw.title === 'string'
+    ? raw as RawTaskWire
+    : wireFromRecord(raw as Record<string, unknown>);
   return {
-    id:               raw.id,
-    uuid:             raw.uuid ?? String(raw.id),
-    taskNumber:       raw.taskNumber ?? raw.id,
-    title:            raw.title,
-    description:      raw.description ?? null,
-    status:           raw.status,
-    statusLabel:      raw.statusLabel ?? raw.status,
-    priority:         raw.priority,
-    priorityLabel:    raw.priorityLabel ?? raw.priority,
-    dueDate:          raw.dueDate ?? null,
-    estimatedHours:   raw.estimatedHours ?? null,
-    project:          raw.project
-      ? { id: Number(raw.project.id), name: raw.project.name }
+    id:               wire.id,
+    uuid:             wire.uuid ?? String(wire.id),
+    taskNumber:       wire.taskNumber ?? wire.id,
+    title:            wire.title,
+    description:      wire.description ?? null,
+    status:           wire.status,
+    statusLabel:      wire.statusLabel ?? wire.status,
+    priority:         wire.priority,
+    priorityLabel:    wire.priorityLabel ?? wire.priority,
+    dueDate:          wire.dueDate ?? null,
+    estimatedHours:   wire.estimatedHours ?? null,
+    project:          wire.project
+      ? { id: Number(wire.project.id), name: wire.project.name }
       : undefined,
-    phase:            normalizePhase(raw.phase),
-    assignee:         normalizeAssignee(raw),
-    completedAt:      raw.completedAt ?? null,
-    attachmentsCount: raw.attachmentsCount,
-    commentsCount:    raw.commentsCount,
-    createdAt:        raw.createdAt ?? '',
-    updatedAt:        raw.updatedAt ?? '',
+    phase:            normalizePhase(wire.phase),
+    assignee:         normalizeAssignee(wire),
+    completedAt:      wire.completedAt ?? null,
+    attachmentsCount: wire.attachmentsCount,
+    commentsCount:    wire.commentsCount,
+    createdAt:        wire.createdAt ?? '',
+    updatedAt:        wire.updatedAt ?? '',
   };
 }
 
-/** Prefer API `columns`; fall back to legacy SEO `phases` grouped by status. */
+export function unwrapTasksPayload(envelope: unknown): Record<string, unknown> {
+  let current = envelope as Record<string, unknown>;
+  for (let depth = 0; depth < 4; depth++) {
+    if (!current || typeof current !== 'object') return {};
+    if (Array.isArray(current.columns) || Array.isArray(current.phases) || Array.isArray(current.tasks)) {
+      return current;
+    }
+    const inner = current.data;
+    if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+      current = inner as Record<string, unknown>;
+      continue;
+    }
+    break;
+  }
+  return current ?? {};
+}
+
+/** Prefer API `columns`; keep SEO `phases` when both are returned. */
 export function normalizeGroupedTasks(payload: unknown): GroupedTasksData {
-  const data = (payload ?? {}) as Record<string, unknown>;
+  const data = unwrapTasksPayload(payload);
+
+  let columns: MyTaskColumn[] = [];
+  let phases: MyTaskPhaseGroup[] | undefined;
 
   if (Array.isArray(data.columns)) {
-    const columns = (data.columns as Array<{ status: string; statusLabel: string; tasks: RawTaskWire[] }>)
+    columns = (data.columns as Array<Record<string, unknown>>)
       .map((col) => ({
-        status:      col.status,
-        statusLabel: col.statusLabel,
-        tasks:       (col.tasks ?? []).map(normalizeTask),
+        status:      String(col.status ?? 'pending'),
+        statusLabel: String(col.statusLabel ?? col.status_label ?? col.status ?? 'pending'),
+        tasks:       (Array.isArray(col.tasks) ? col.tasks : []).map((task) =>
+          normalizeTask(task as Record<string, unknown>),
+        ),
       }));
-    return { columns, total: Number(data.total ?? countTasks(columns)) };
   }
 
   if (Array.isArray(data.phases)) {
-    const flat = (data.phases as Array<{ tasks?: RawTaskWire[] }>)
-      .flatMap((p) => p.tasks ?? [])
-      .map(normalizeTask);
-    return { columns: groupTasksByStatus(flat), total: Number(data.total ?? flat.length) };
+    phases = (data.phases as Array<Record<string, unknown>>)
+      .map((group) => ({
+        phase: String(group.phase ?? ''),
+        tasks: (Array.isArray(group.tasks) ? group.tasks : []).map((task) =>
+          normalizeTask(task as Record<string, unknown>),
+        ),
+      }));
+    if (columns.length === 0) {
+      columns = groupTasksByStatus(phases.flatMap((p) => p.tasks));
+    }
   }
 
-  return { columns: [], total: 0 };
+  if (columns.length === 0 && Array.isArray(data.tasks)) {
+    const flat = (data.tasks as Array<Record<string, unknown>>).map(normalizeTask);
+    columns = groupTasksByStatus(flat);
+  }
+
+  const total = Number(data.total ?? countTasks(columns));
+  return { columns, phases, total };
 }
 
 function countTasks(columns: MyTaskColumn[]): number {

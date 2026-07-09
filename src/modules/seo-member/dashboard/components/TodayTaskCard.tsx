@@ -9,7 +9,7 @@ import type { SeoTask } from '@/modules/seo-member/tasks/types/seoTask.types';
 interface Props {
   task:       SeoTask;
   isAr:       boolean;
-  onDetails?: (id: number) => void;
+  onDetails?: (task: SeoTask) => void;
 }
 
 export function TodayTaskCard({ task, isAr, onDetails }: Props) {
@@ -48,7 +48,7 @@ export function TodayTaskCard({ task, isAr, onDetails }: Props) {
               {isAr ? 'بدء المؤقت' : 'Start Timer'}
             </Button>
           )}
-          <Button variant="secondary" size="sm" onClick={() => onDetails?.(task.id)}>
+          <Button variant="secondary" size="sm" onClick={() => onDetails?.(task)}>
             {isAr ? 'تفاصيل' : 'Details'}
           </Button>
         </div>

@@ -8,6 +8,7 @@ interface Props {
   isAr:          boolean;
   onMarkAllRead: () => void;
   onMarkRead:    (id: string) => void;
+  onNavigate?:   (notification: AppNotification) => void;
 }
 
 /* Backend notification `type` values seen so far — anything else falls back
@@ -31,7 +32,7 @@ const TYPE_ICON_BG: Record<string, string> = {
 const DEFAULT_ICON = <Bell size={14} />;
 const DEFAULT_ICON_BG = 'bg-gray-100 dark:bg-gray-700 text-gray-500';
 
-export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMarkRead }: Props) {
+export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMarkRead, onNavigate }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -104,7 +105,10 @@ export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMar
             <button
               key={n.id}
               type="button"
-              onClick={() => onMarkRead(n.id)}
+              onClick={() => {
+                onMarkRead(n.id);
+                onNavigate?.(n);
+              }}
               className={`w-full text-start px-4 py-3.5 flex items-start gap-3
                           transition-colors duration-150
                           ${n.readAt

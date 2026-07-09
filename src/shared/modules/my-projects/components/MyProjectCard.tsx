@@ -85,7 +85,13 @@ export function MyProjectCard({ item, config, isAr }: Props) {
 
   const goTasks = (e: MouseEvent) => {
     e.stopPropagation();
-    navigate(config.tasksPath(p.id));
+    const tasksApiUrl = 'tasksApiUrl' in p ? p.tasksApiUrl : undefined;
+    const path = config.tasksPath(p.id);
+    if (tasksApiUrl) {
+      navigate(`${path}?tasksApiUrl=${encodeURIComponent(tasksApiUrl)}`);
+      return;
+    }
+    navigate(path);
   };
 
   return (

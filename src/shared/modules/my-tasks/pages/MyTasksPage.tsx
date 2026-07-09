@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
@@ -16,6 +16,7 @@ import type { MyTask } from '../types/myTasks.types';
 
 export function MyTasksPage() {
   const navigate = useNavigate();
+  const { projectId: routeProjectId } = useParams<{ projectId?: string }>();
   const { lang, isRTL } = useLang();
   const isAr = lang === 'ar';
   const [showAdd, setShowAdd] = useState(false);
@@ -31,13 +32,14 @@ export function MyTasksPage() {
     isError,
     errorStatus,
     updateStatus,
-  } = useMyTasksPage(isAr);
+    getTaskId,
+  } = useMyTasksPage(isAr, { routeProjectId });
 
   function handleOpen(task: MyTask) {
-    if (!config) return;
+    if (!config || !tasksRole) return;
     const pid = task.project?.id;
     if (!pid) return;
-    navigate(config.taskDetailPath(pid, task.id));
+    navigate(config.taskDetailPath(pid, getTaskId(task)));
   }
 
   if (!tasksRole || !config) {
@@ -93,7 +95,7 @@ export function MyTasksPage() {
         <div className="flex justify-center py-20">
           <LoadingSpinner size={32} />
         </div>
-      ) : !data || data.columns.length === 0 ? (
+      ) : !data || data.total === 0 ? (
         <EmptyState
           icon={<CheckSquare size={26} className="text-[#709028] dark:text-[#A0CD39]" />}
           title={isAr ? 'لا توجد مهام' : 'No tasks'}
@@ -107,8 +109,8 @@ export function MyTasksPage() {
           canDrag={config.canDragStatus}
           onOpen={handleOpen}
           onStatusChange={async (task, toStatus) => {
-            if (!task.project?.id) return;
-            await updateStatus(task.project.id, task.id, toStatus);
+            if (!task.project?.id || !tasksRole) return;
+            await updateStatus(task.project.id, getTaskId(task), toStatus);
           }}
         />
       )}

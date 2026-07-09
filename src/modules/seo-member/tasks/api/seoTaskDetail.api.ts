@@ -1,5 +1,5 @@
 import { http } from '@/shared/services/http.service';
-import { STATUS_TO_WIRE, toSeoTask } from './seoTask.api';
+import { STATUS_TO_WIRE, toSeoTask as mapSeoTask } from './seoTask.api';
 import type { RawSeoTask, RawSeoTaskRef } from './seoTask.api';
 import type { SeoTaskStatus } from '../types/seoTask.types';
 import type {
@@ -45,7 +45,7 @@ function toAssignee(raw: RawSeoAssignee): SeoAssignee {
 
 function toSeoTaskDetail(raw: RawSeoTaskDetail): SeoTaskDetail {
   return {
-    ...toSeoTask(raw),
+    ...mapSeoTask(raw),
     assignees:         (raw.assignees ?? []).map(toAssignee),
     createdBy:         raw.createdBy ? { id: String(raw.createdBy.id), name: raw.createdBy.name } : null,
     startDate:         raw.startDate ?? null,
