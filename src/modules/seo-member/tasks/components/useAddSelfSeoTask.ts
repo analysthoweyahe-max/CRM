@@ -17,7 +17,10 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
   const { mutate: create, isPending: creating } = useMutation({
     mutationFn: ({ projectId, payload }: { projectId: string; payload: CreateSelfSeoTaskPayload }) =>
       seoTaskDetailApi.createSelfTask(projectId, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
+      qc.invalidateQueries({ queryKey: ['my-tasks'] });
+    },
   });
 
   const [projectId,      setProjectId]      = useState('');

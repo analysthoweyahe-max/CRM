@@ -1,14 +1,42 @@
 import { http } from '@/shared/services/http.service';
 
+/** POST /v1/pm/projects/{id}/tasks — accepts camelCase (preferred) or snake_case. */
 export interface PmCreateTaskPayload {
   title:            string;
   description?:     string;
-  employee_id:      string;
-  priority:         string;
-  due_date:         string;
-  estimated_hours?: number;
-  phase_id:         number;
-  status:           string;
+  employeeId?:      string;
+  priority?:        string;
+  dueDate?:         string;
+  estimatedHours?:  number;
+  phaseId?:         number;
+  status?:          string;
+}
+
+export interface PmCreateSelfTaskPayload {
+  title:            string;
+  description?:     string;
+  priority?:        string;
+  dueDate?:         string;
+  estimatedHours?:  number;
+  phaseId?:         number;
+  file?:            File;
+}
+
+function buildSelfTaskFormData(payload: PmCreateSelfTaskPayload): FormData {
+  const fd = new FormData();
+  fd.append('title', payload.title);
+  if (payload.description)    fd.append('description', payload.description);
+  if (payload.priority)       fd.append('priority', payload.priority);
+  if (payload.dueDate)        fd.append('dueDate', payload.dueDate);
+  if (payload.estimatedHours != null) fd.append('estimatedHours', String(payload.estimatedHours));
+  if (payload.phaseId != null)        fd.append('phaseId', String(payload.phaseId));
+  if (payload.file)           fd.append('file', payload.file);
+  return fd;
+}
+
+/** PM task API stores medium priority as `normal` (see employee task list mapping). */
+export function normalizePmTaskPriority(value: string): string {
+  return value === 'medium' ? 'normal' : value;
 }
 
 export interface PmUpdateTaskPayload {
@@ -19,9 +47,18 @@ export interface PmUpdateTaskPayload {
 }
 
 export interface PmTaskApiResponse {
-  status:  string;
-  message: string;
-  data:    { id: number | string };
+  success?: boolean;
+  status?:  string;
+  message:  string;
+  data:     {
+    id:         number;
+    uuid?:      string;
+    taskNumber?: number;
+    title?:     string;
+    status?:    string;
+    priority?:  string;
+    assignee?:  { id: string; name: string };
+  };
 }
 
 export interface PmTimeLogPayload {
@@ -166,6 +203,15 @@ export const pmTaskApi = {
 
   create(projectId: number | string, payload: PmCreateTaskPayload) {
     return http.post<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks`, payload);
+  },
+
+  /** Employee self-create — POST /v1/pm/employee/projects/{id}/tasks/self (multipart). */
+  createSelf(projectId: number | string, payload: PmCreateSelfTaskPayload) {
+    return http.post<PmTaskApiResponse>(
+      `/v1/pm/employee/projects/${projectId}/tasks/self`,
+      buildSelfTaskFormData(payload),
+      { headers: { 'Content-Type': undefined } },
+    );
   },
 
   update(projectId: number | string, taskId: string, payload: PmUpdateTaskPayload) {

@@ -2,6 +2,7 @@ import { useLang }               from '@/app/providers/LanguageProvider';
 import { PageHeader }            from '@/shared/components/ui/PageHeader';
 import { SeoProfileInfoCard }    from '../components/SeoProfileInfoCard';
 import { SeoProfileSummaryCard } from '../components/SeoProfileSummaryCard';
+import { MyPermissionsCard } from '@/shared/components/auth';
 
 export function SeoProfilePage() {
   const { lang } = useLang();
@@ -15,8 +16,9 @@ export function SeoProfilePage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-5">
           <SeoProfileInfoCard isAr={isAr} />
+          <MyPermissionsCard />
         </div>
         <div>
           <SeoProfileSummaryCard isAr={isAr} />

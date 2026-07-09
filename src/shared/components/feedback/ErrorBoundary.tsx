@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
+import { clearChunkReloadFlag, isChunkLoadError, reloadForStaleChunk } from '@/shared/utils/chunkLoad.utils';
 
 interface Props  { children: ReactNode; fallback?: ReactNode; }
 interface State  { hasError: boolean; message: string; }
@@ -14,9 +15,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack);
+    if (isChunkLoadError(error)) {
+      reloadForStaleChunk();
+    }
   }
 
-  reset = () => this.setState({ hasError: false, message: '' });
+  reset = () => {
+    if (isChunkLoadError({ message: this.state.message })) {
+      clearChunkReloadFlag();
+      window.location.reload();
+      return;
+    }
+    this.setState({ hasError: false, message: '' });
+  };
 
   render() {
     if (!this.state.hasError) return this.props.children;

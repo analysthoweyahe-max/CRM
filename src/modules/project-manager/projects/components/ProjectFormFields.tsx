@@ -1,8 +1,9 @@
 import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { ProjectOptionalFields } from '@/shared/components/form/ProjectOptionalFields';
+import type { ProjectOptionalFieldErrors } from '@/shared/utils/projectOptionalFields.utils';
 import type { PmLookupItem } from '../types/project.types';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
-import { isSeoType } from '../utils/seoProject';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -14,10 +15,15 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
+function lookupLabel(l: PmLookupItem, isAr: boolean): string {
+  if (isAr && l.labelAr) return l.labelAr;
+  return translateProjectLookup(l.value, l.label, isAr, l.labelAr);
+}
+
 function toComboboxItems(lookups: PmLookupItem[], isAr: boolean): ComboboxItem[] {
   return lookups.map(l => ({
     id:    l.value,
-    label: translateProjectLookup(l.value, l.label, isAr, l.labelAr),
+    label: lookupLabel(l, isAr),
   }));
 }
 
@@ -28,10 +34,15 @@ export interface ProjectFormFieldsProps {
   status:       string;
   startDate:    string;
   deadline:     string;
-  contractMonths: string;
-  githubUrl:    string;
+  githubLink:   string;
+  driveLink:    string;
+  contractDurationMonths: string;
+  optionalFieldErrors?: ProjectOptionalFieldErrors;
   typeItems:    PmLookupItem[];
   statusItems:  PmLookupItem[];
+  templateItems?: ComboboxItem[];
+  templateId?:    string;
+  setTemplateId?: (v: string) => void;
   isAr:         boolean;
   setName:      (v: string) => void;
   setDesc:      (v: string) => void;
@@ -39,9 +50,9 @@ export interface ProjectFormFieldsProps {
   setStatus:    (v: string) => void;
   setDate:      (v: string) => void;
   setDeadline:  (v: string) => void;
-  setContractMonths: (v: string) => void;
-  setGithubUrl: (v: string) => void;
-  // Super admin only — picks who the project is assigned to.
+  setGithubLink: (v: string) => void;
+  setDriveLink:  (v: string) => void;
+  setContractDurationMonths: (v: string) => void;
   showManagerField?: boolean;
   managerId?:        string;
   setManagerId?:     (v: string) => void;
@@ -49,15 +60,18 @@ export interface ProjectFormFieldsProps {
 }
 
 export function ProjectFormFields({
-  name, description, projectType, status, startDate, deadline, contractMonths, githubUrl, typeItems, statusItems, isAr,
-  setName, setDesc, setType, setStatus, setDate, setDeadline, setContractMonths, setGithubUrl,
+  name, description, projectType, status, startDate, deadline,
+  githubLink, driveLink, contractDurationMonths, optionalFieldErrors,
+  typeItems, statusItems,
+  templateItems, templateId, setTemplateId,
+  isAr,
+  setName, setDesc, setType, setStatus, setDate, setDeadline,
+  setGithubLink, setDriveLink, setContractDurationMonths,
   showManagerField, managerId, setManagerId, managerItems = [],
 }: ProjectFormFieldsProps) {
-  const isSeo = isSeoType(typeItems, projectType);
   return (
     <div className="space-y-5">
 
-      {/* Project name */}
       <div>
         <label className={LABEL}>
           {isAr ? 'اسم المشروع' : 'Project Name'}
@@ -73,7 +87,6 @@ export function ProjectFormFields({
         />
       </div>
 
-      {/* Description */}
       <div>
         <label className={LABEL}>
           {isAr ? 'وصف المشروع' : 'Project Description'}
@@ -89,7 +102,6 @@ export function ProjectFormFields({
         />
       </div>
 
-      {/* Type + Status */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>
@@ -120,7 +132,27 @@ export function ProjectFormFields({
         </div>
       </div>
 
-      {/* Manager assignment — super admin only */}
+      {setTemplateId && (
+        <div>
+          <label className={LABEL}>
+            {isAr ? 'قالب المشروع (اختياري)' : 'Project Template (optional)'}
+          </label>
+          <Combobox
+            items={templateItems ?? []}
+            value={templateId ?? ''}
+            onChange={setTemplateId}
+            placeholder={isAr ? '-- بدون قالب --' : '-- No template --'}
+            searchPlaceholder={isAr ? 'ابحث عن قالب...' : 'Search template...'}
+            noResultsText={isAr ? 'لا توجد قوالب لهذا النوع' : 'No templates for this type'}
+          />
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            {isAr
+              ? 'تُنشأ مراحل المشروع تلقائياً من القالب المختار'
+              : 'Project phases are created automatically from the selected template'}
+          </p>
+        </div>
+      )}
+
       {showManagerField && (
         <div>
           <label className={LABEL}>
@@ -135,27 +167,27 @@ export function ProjectFormFields({
             searchPlaceholder={isAr ? 'ابحث عن مدير...' : 'Search manager...'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
+          {managerItems.length === 0 && (
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+              {isAr
+                ? 'لا يوجد مدراء متاحون. عيّن دور «مدير مشاريع» لأدمن أولاً من صفحة «المديرون».'
+                : 'No managers available. Assign the "project-manager" role to an admin first from the Managers page.'}
+            </p>
+          )}
         </div>
       )}
 
-      {/* Drive folder link (SEO) / GitHub link (everything else) */}
-      <div>
-        <label className={LABEL}>
-          {isSeo
-            ? (isAr ? 'رابط فولدر الدرايف' : 'Drive Folder Link')
-            : (isAr ? 'رابط GitHub' : 'GitHub Link')}
-        </label>
-        <input
-          type="url"
-          value={githubUrl}
-          onChange={e => setGithubUrl(e.target.value)}
-          placeholder={isSeo ? 'https://drive.google.com/drive/folders/...' : 'https://github.com/org/repo'}
-          dir="ltr"
-          className={INPUT}
-        />
-      </div>
+      <ProjectOptionalFields
+        githubLink={githubLink}
+        driveLink={driveLink}
+        contractDurationMonths={contractDurationMonths}
+        errors={optionalFieldErrors}
+        isAr={isAr}
+        onGithubLinkChange={setGithubLink}
+        onDriveLinkChange={setDriveLink}
+        onContractMonthsChange={setContractDurationMonths}
+      />
 
-      {/* Start date + Deadline (or Contract Duration for SEO) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>
@@ -170,37 +202,19 @@ export function ProjectFormFields({
             className={INPUT}
           />
         </div>
-        {isSeo ? (
-          <div>
-            <label className={LABEL}>
-              {isAr ? 'مدة العقد (بالأشهر)' : 'Contract Duration (months)'}
-              <span className="text-red-500 ms-1">*</span>
-            </label>
-            <input
-              required
-              type="number"
-              min={1}
-              value={contractMonths}
-              onChange={e => setContractMonths(e.target.value)}
-              placeholder={isAr ? 'مثال: 6' : 'e.g. 6'}
-              className={INPUT}
-            />
-          </div>
-        ) : (
-          <div>
-            <label className={LABEL}>
-              {isAr ? 'الموعد النهائي' : 'Deadline'}
-              <span className="text-red-500 ms-1">*</span>
-            </label>
-            <input
-              required
-              type="date"
-              value={deadline}
-              onChange={e => setDeadline(e.target.value)}
-              className={INPUT}
-            />
-          </div>
-        )}
+        <div>
+          <label className={LABEL}>
+            {isAr ? 'الموعد النهائي' : 'Deadline'}
+            <span className="text-red-500 ms-1">*</span>
+          </label>
+          <input
+            required
+            type="date"
+            value={deadline}
+            onChange={e => setDeadline(e.target.value)}
+            className={INPUT}
+          />
+        </div>
       </div>
 
     </div>

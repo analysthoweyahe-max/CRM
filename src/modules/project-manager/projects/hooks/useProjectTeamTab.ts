@@ -3,9 +3,10 @@ import { toast } from 'sonner';
 import { pmProjectTeamApi } from '../api/project.api';
 import { employeeApi } from '@/modules/hr/employees/api/employee.api';
 import { getAvatarColor } from '@/shared/utils';
-import type { PmProjectTeamListMember } from '../types/project.types';
+import type { PmProjectTeamListMember, PmAvailableMember } from '../types/project.types';
 import type { ProjectMemberCardData } from '@/shared/modules/team/components/ProjectMemberCard';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { toApiArray } from '@/shared/utils/apiList.utils';
 
 function toCardData(m: PmProjectTeamListMember): ProjectMemberCardData {
   return {
@@ -44,7 +45,7 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
     setIsLoading(true);
     try {
       const res = await pmProjectTeamApi.list(projectId, { per_page: 100 });
-      setMembers(res.data.data.data);
+      setMembers(toApiArray<PmProjectTeamListMember>(res.data.data));
     } catch {
       /* keep previous state */
     } finally {
@@ -58,7 +59,9 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
   useEffect(() => {
     if (!showModal) return;
     pmProjectTeamApi.available(projectId)
-      .then(res => setAvailable(res.data.data.data.map(m => ({ id: m.id, label: m.name, detail: m.jobTitle }))))
+      .then(res => setAvailable(
+        toApiArray<PmAvailableMember>(res.data.data).map(m => ({ id: m.id, label: m.name, detail: m.jobTitle }))
+      ))
       .catch(() => setAvailable([]));
   }, [showModal, projectId]);
 

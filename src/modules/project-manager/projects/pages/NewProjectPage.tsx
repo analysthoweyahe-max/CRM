@@ -1,130 +1,85 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast }       from 'sonner';
-import { useLang }     from '@/app/providers/LanguageProvider';
-import { useAuth }     from '@/modules/auth/context/AuthContext';
-import { Card }        from '@/shared/components/ui/Card';
-import { Button }      from '@/shared/components/ui/Button';
-import { ROUTES }      from '@/app/router/routes';
-import { pmProjectsApi } from '../api/project.api';
-import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
-import { SDLCPanel }        from '../components/SDLCPanel';
-import { ProjectFormFields } from '../components/ProjectFormFields';
-import { isSeoType, addMonths } from '../utils/seoProject';
+import { useLang } from '@/app/providers/LanguageProvider';
+import { Card } from '@/shared/components/ui/Card';
+import { Button } from '@/shared/components/ui/Button';
+import { Combobox } from '@/shared/components/form/Combobox';
+import { SDLCPanel } from '../components/SDLCPanel';
+import { CreateProjectForm } from '@/shared/modules/create-project/components/CreateProjectForm';
+import { useCreateProjectForm } from '@/shared/modules/create-project/hooks/useCreateProjectForm';
+import { useAllTemplates } from '@/modules/project-manager/templates/hooks/useProjectTemplates';
+import { filterTemplatesByType } from '@/modules/project-manager/templates/utils/templateFilter';
 
 export function NewProjectPage() {
-  const { lang } = useLang();
-  const isAr     = lang === 'ar';
+  const { lang, isRTL } = useLang();
+  const isAr = lang === 'ar';
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const isAdmin  = user?.role === 'admin';
 
-  const { statuses, types, managers } = usePmProjectLookups({ includeManagers: isAdmin });
+  const [templateId, setTemplateId] = useState('');
+  const form = useCreateProjectForm({ module: 'pm', templateId: templateId || undefined });
 
-  const [name,        setName]        = useState('');
-  const [description, setDesc]        = useState('');
-  const [projectType, setType]        = useState('');
-  const [status,      setStatus]      = useState('');
-  const [startDate,   setDate]        = useState('');
-  const [deadline,    setDeadline]    = useState('');
-  const [contractMonths, setContractMonths] = useState('');
-  const [githubUrl,   setGithubUrl]   = useState('');
-  const [managerId,   setManagerId]   = useState('');
-  const [saved,       setSaved]       = useState(false);
-  const [savedAsDraft, setSavedAsDraft] = useState(false);
-  const [submitting,  setSubmitting]  = useState(false);
+  const { data: allTemplates = [], isLoading: templatesLoading } = useAllTemplates();
+  const selectedTypeId = form.projectTypeId ? Number(form.projectTypeId) : null;
+  const matchingTemplates = filterTemplatesByType(allTemplates, selectedTypeId);
+  const templateItems = [
+    { id: '', label: isAr ? '-- بدون قالب --' : '-- No template --' },
+    ...matchingTemplates.map(t => ({
+      id:     t.uuid,
+      label:  t.name,
+      detail: isAr ? `${t.stepsCount} مرحلة` : `${t.stepsCount} steps`,
+    })),
+  ];
 
   useEffect(() => {
-    if (!status && statuses.length > 0) setStatus(statuses[0].value);
-  }, [statuses, status]);
-
-  const isSeo = isSeoType(types, projectType);
-
-  const isValid = !!(
-    name.trim() && description.trim() && projectType && status && startDate &&
-    (isSeo ? Number(contractMonths) > 0 : deadline) &&
-    (!isAdmin || managerId)
-  );
-
-  async function handleSave(asDraft = false) {
-    if (!isValid || submitting) return;
-    setSubmitting(true);
-    try {
-      const res = await pmProjectsApi.create({
-        name:            name.trim(),
-        description:     description.trim(),
-        project_type_id: Number(projectType),
-        status,
-        is_draft:        asDraft,
-        start_date:      startDate,
-        deadline:        isSeo ? addMonths(startDate, Number(contractMonths)) : deadline,
-        github_link:     githubUrl.trim() || undefined,
-        ...(isAdmin ? { manager_id: managerId } : {}),
-      });
-      const newId = res.data.data.id;
-      // Refresh the dashboard + drafts lists so the new project shows up when we return.
-      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['pm-drafts'] });
-      setSavedAsDraft(asDraft);
-      setSaved(true);
-      // Open the newly created project from the inside with its full details.
-      setTimeout(() => navigate(ROUTES.PROJECT_MANAGER.DETAILS(String(newId))), 1200);
-    } catch {
-      toast.error(isAr ? 'حدث خطأ أثناء إنشاء المشروع' : 'Failed to create the project');
-    } finally {
-      setSubmitting(false);
-    }
-  }
+    if (templateId && !matchingTemplates.some(t => t.uuid === templateId)) setTemplateId('');
+  }, [form.projectTypeId, allTemplates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-
-      {/* Header */}
+    <div className="space-y-6 max-w-5xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
       <div>
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
           {isAr ? 'إنشاء مشروع جديد' : 'Create New Project'}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {isAr ? 'أملأ تفاصيل المشروع وحدد مراحله' : 'Fill in project details and define stages'}
+          {isAr ? 'أملأ تفاصيل المشروع واختر الفريق في خطوة واحدة' : 'Fill in project details and assign the team in one step'}
         </p>
       </div>
 
-      {/* Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <SDLCPanel isAr={isAr} />
-        <Card padding="md" className="lg:col-span-2">
-          <ProjectFormFields
-            name={name}        description={description}
-            projectType={projectType} status={status}
-            startDate={startDate}     deadline={deadline}
-            contractMonths={contractMonths}
-            githubUrl={githubUrl}
-            typeItems={types}  statusItems={statuses}
-            isAr={isAr}
-            setName={setName}  setDesc={setDesc}
-            setType={setType}  setStatus={setStatus}
-            setDate={setDate}  setDeadline={setDeadline}
-            setContractMonths={setContractMonths}
-            setGithubUrl={setGithubUrl}
-            showManagerField={isAdmin}
-            managerId={managerId} setManagerId={setManagerId}
-            managerItems={managers}
-          />
+        <SDLCPanel
+          isAr={isAr}
+          templateId={templateId}
+          templates={matchingTemplates}
+          isLoadingTemplates={templatesLoading}
+          onTemplateSelect={setTemplateId}
+        />
+        <Card padding="md" className="lg:col-span-2 space-y-5">
+          {selectedTypeId && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                {isAr ? 'قالب المشروع (اختياري)' : 'Project Template (optional)'}
+              </label>
+              <Combobox
+                items={templateItems}
+                value={templateId}
+                onChange={setTemplateId}
+                placeholder={isAr ? '-- بدون قالب --' : '-- No template --'}
+                searchPlaceholder={isAr ? 'ابحث عن قالب...' : 'Search template...'}
+                noResultsText={isAr ? 'لا توجد قوالب لهذا النوع' : 'No templates for this type'}
+              />
+            </div>
+          )}
+          <CreateProjectForm form={form} />
         </Card>
       </div>
 
-      {/* Success toast */}
-      {saved && (
+      {form.saved && (
         <div className="fixed bottom-6 inset-x-0 flex justify-center z-50 pointer-events-none">
-          <div className="flex items-center gap-2.5 px-5 py-3 rounded-2xl
-                          bg-[#A0CD39] text-gray-900 shadow-xl
-                          animate-[fadeInUp_0.3s_ease]">
+          <div className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-[#A0CD39] text-gray-900 shadow-xl animate-[fadeInUp_0.3s_ease]">
             <CheckCircle size={18} className="shrink-0" />
             <span className="text-sm font-semibold">
-              {savedAsDraft
+              {form.savedAsDraft
                 ? (isAr ? 'تم حفظ المسودة بنجاح!' : 'Draft saved successfully!')
                 : (isAr ? 'تم إنشاء المشروع بنجاح!' : 'Project created successfully!')}
             </span>
@@ -132,33 +87,22 @@ export function NewProjectPage() {
         </div>
       )}
 
-      {/* Actions */}
       <div className="flex items-center justify-center gap-3 flex-wrap pb-4">
-        <Button
-          variant="primary"
-          onClick={() => handleSave(false)}
-          disabled={!isValid || saved || submitting}
-        >
-          {isAr ? 'حفظ المشروع' : 'Save Project'}
+        <Button variant="primary" onClick={() => form.handleSave(false)} disabled={!form.isValid || form.saved || form.isSaving}>
+          {isAr ? 'إنشاء المشروع' : 'Create Project'}
         </Button>
         <Button
           variant="secondary"
-          onClick={() => handleSave(true)}
-          disabled={!isValid || saved || submitting}
-          className="border-[#A0CD39] text-[#709028] dark:text-[#A0CD39]
-                     hover:bg-[#D8EBAE] dark:hover:bg-[#A0CD39]/10"
+          onClick={() => form.handleSave(true)}
+          disabled={!form.name.trim() || form.saved || form.isSaving}
+          className="border-[#A0CD39] text-[#709028] dark:text-[#A0CD39] hover:bg-[#D8EBAE] dark:hover:bg-[#A0CD39]/10"
         >
           {isAr ? 'حفظ كمسودة' : 'Save as Draft'}
         </Button>
-        <Button
-          variant="ghost"
-          onClick={() => navigate(ROUTES.PROJECT_MANAGER.DASHBOARD)}
-          disabled={saved || submitting}
-        >
+        <Button variant="ghost" onClick={() => navigate(form.cancelPath)} disabled={form.saved || form.isSaving}>
           {isAr ? 'إلغاء' : 'Cancel'}
         </Button>
       </div>
-
     </div>
   );
 }

@@ -1,7 +1,24 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { env } from '@/app/config/env';
-import { TOKEN_KEY, USER_KEY } from '@/app/config/constants';
+import { TOKEN_KEY, USER_KEY, LANG_KEY } from '@/app/config/constants';
+
+const PUBLIC_AUTH_SEGMENTS = [
+  '/auth/login',
+  '/auth/forgot-password',
+  '/auth/password-resets/',
+  '/auth/invitations/',
+  '/auth/magic-login',
+  '/v1/admin/auth/forgot-password',
+  '/v1/admin/auth/password-resets/',
+  '/v1/employee/auth/forgot-password',
+  '/v1/employee/auth/password-resets/',
+] as const;
+
+function isPublicAuthRequest(url?: string): boolean {
+  if (!url) return false;
+  return PUBLIC_AUTH_SEGMENTS.some((segment) => url.includes(segment));
+}
 
 const http: AxiosInstance = axios.create({
   baseURL: env.apiBaseUrl,
@@ -10,9 +27,18 @@ const http: AxiosInstance = axios.create({
 });
 
 http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const publicAuth = isPublicAuthRequest(config.url);
+
+  if (!publicAuth) {
+    const token = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  const lang = localStorage.getItem(LANG_KEY);
+  if (config.headers) {
+    config.headers['Accept-Language'] = lang === 'en' ? 'en' : 'ar';
   }
   return config;
 });
@@ -20,7 +46,9 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 http.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    const publicAuth = isPublicAuthRequest(error.config?.url);
+
+    if (error.response?.status === 401 && !publicAuth) {
       localStorage.removeItem(TOKEN_KEY);
       sessionStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);

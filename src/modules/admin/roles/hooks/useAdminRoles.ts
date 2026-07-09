@@ -33,7 +33,7 @@ export function useAdminRoles(isAr: boolean) {
   function closeModal()  { setShowModal(false); }
 
   function submitRole(input: RoleFormInput) {
-    create(input, {
+    create({ ...input, guard_name: 'admin' }, {
       onSuccess: () => {
         toast.success(isAr ? 'تم إنشاء الدور' : 'Role created');
         setShowModal(false);

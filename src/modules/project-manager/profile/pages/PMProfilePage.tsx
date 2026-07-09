@@ -2,6 +2,7 @@ import { useLang }             from '@/app/providers/LanguageProvider';
 import { PageHeader }          from '@/shared/components/ui/PageHeader';
 import { PMProfileInfoCard }   from '../components/PMProfileInfoCard';
 import { PMProfileSummaryCard } from '../components/PMProfileSummaryCard';
+import { MyPermissionsCard } from '@/shared/components/auth';
 
 export function PMProfilePage() {
   const { lang } = useLang();
@@ -15,8 +16,9 @@ export function PMProfilePage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-5">
           <PMProfileInfoCard isAr={isAr} />
+          <MyPermissionsCard />
         </div>
         <div>
           <PMProfileSummaryCard isAr={isAr} />

@@ -28,6 +28,7 @@ export interface PmProjectVM {
   team:             PmProjectMemberVM[];
   teamMembersCount: number;
   githubLink:       string | null;
+  driveLink:        string | null;
   isDraft:          boolean;
 }
 
@@ -60,6 +61,7 @@ function toProjectVM(p: PmDashboardProject): PmProjectVM {
     progressPercent:  p.progressPercent,
     teamMembersCount: p.teamMembersCount,
     githubLink:       p.githubLink ?? null,
+    driveLink:        p.driveLink ?? null,
     isDraft:          false,
     team: p.teamMembers.map(m => ({
       id:      m.id,
@@ -84,6 +86,7 @@ function draftToProjectVM(p: PmProjectListItem): PmProjectVM {
     progressPercent:  0,
     teamMembersCount: 0,
     githubLink:       p.githubLink ?? null,
+    driveLink:        p.driveLink ?? null,
     isDraft:          true,
     team:             [],
   };
@@ -121,11 +124,11 @@ export function usePmDashboard() {
 
   const { data: drafts } = useQuery({
     queryKey: ['pm-drafts'],
-    queryFn:  () => pmProjectsApi.myProjects({ is_draft: true, per_page: 100 }).then(r => r.data.data.data),
+    queryFn:  () => pmProjectsApi.list({ is_draft: true, per_page: 100 }).then(r => r.data.data.data),
     staleTime: 60_000,
   });
 
-  const statusSections: PmProjectSectionVM[] = (data?.projects.sections ?? []).map(s => ({
+  const statusSections: PmProjectSectionVM[] = (data?.projects?.sections ?? data?.myProjects?.sections ?? []).map(s => ({
     key:      s.key,
     labelAr:  SECTION_LABELS[s.key]?.ar ?? s.label,
     labelEn:  SECTION_LABELS[s.key]?.en ?? s.label,

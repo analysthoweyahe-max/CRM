@@ -8,7 +8,6 @@ import type { PmProjectStatusKey } from '../types/dashboard.types';
 import { TeamAvatars } from '@/shared/components/ui/TeamAvatars';
 import { GithubIcon }  from '@/shared/components/icons/GithubIcon';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
-import { isSeoLabel } from '@/modules/project-manager/projects/utils/seoProject';
 import { ensureHttpUrl } from '@/shared/utils';
 
 const STATUS_DOT: Record<PmProjectStatusKey, string> = {
@@ -39,7 +38,6 @@ interface Props {
 
 export function ProjectCard({ project, isAr }: Props) {
   const navigate = useNavigate();
-  const isSeo = isSeoLabel(project.projectTypeLabel, project.projectTypeLabel);
 
   const goToDetails = () => navigate(ROUTES.PROJECT_MANAGER.DETAILS(String(project.id)));
 
@@ -54,7 +52,6 @@ export function ProjectCard({ project, isAr }: Props) {
                  hover:border-[#A0CD39]! hover:shadow-lg
                  focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A0CD39]">
 
-      {/* Title + category */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-snug">
@@ -66,10 +63,22 @@ export function ProjectCard({ project, isAr }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              aria-label={isSeo ? (isAr ? 'رابط فولدر الدرايف' : 'Drive folder link') : (isAr ? 'رابط GitHub' : 'GitHub link')}
+              aria-label={isAr ? 'رابط GitHub' : 'GitHub link'}
               className="shrink-0 text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
-              {isSeo ? <FolderOpen size={16} /> : <GithubIcon size={16} />}
+              <GithubIcon size={16} />
+            </a>
+          )}
+          {project.driveLink && (
+            <a
+              href={ensureHttpUrl(project.driveLink)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={isAr ? 'رابط Google Drive' : 'Google Drive link'}
+              className="shrink-0 text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
+            >
+              <FolderOpen size={16} />
             </a>
           )}
         </div>
@@ -88,7 +97,6 @@ export function ProjectCard({ project, isAr }: Props) {
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <span>{isAr ? 'نسبة الإنجاز' : 'Progress'}</span>
@@ -102,7 +110,6 @@ export function ProjectCard({ project, isAr }: Props) {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
           <span>
@@ -122,7 +129,6 @@ export function ProjectCard({ project, isAr }: Props) {
         <TeamAvatars team={project.team} />
       </div>
 
-      {/* Details button */}
       <Button
         variant="secondary"
         fullWidth

@@ -1,9 +1,11 @@
-import { useMemo, useState, useRef, useLayoutEffect, type ReactNode } from 'react';
+import { useMemo, useState, useRef, useLayoutEffect, useEffect, type ReactNode } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavItem } from './NavItem';
 import { useLang } from '@/app/providers/LanguageProvider';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 import { NAV_BY_VARIANT, SUBTITLE, BRAND_NAME } from './appSidebar.config';
+import { filterNavSections } from './appSidebar.utils';
 import type { AppSidebarProps as _Base } from './appSidebar.types';
 
 export interface AppSidebarProps extends _Base {
@@ -13,8 +15,13 @@ export interface AppSidebarProps extends _Base {
 
 export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollapse, footerWidget, isCheckedIn }: AppSidebarProps) {
   const { lang, isRTL } = useLang();
+  const { can, hasRole, isSuperAdmin, refreshUser } = useAuth();
   const isAr             = lang === 'ar';
   const location         = useLocation();
+
+  useEffect(() => {
+    void refreshUser();
+  }, [refreshUser]);
 
   // The super-admin's nav links span several route groups that live under
   // different layout components, so navigating between them remounts this
@@ -32,7 +39,12 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
     return () => el.removeEventListener('scroll', handleScroll);
   }, [variant]);
 
-  const sections = NAV_BY_VARIANT[variant];
+  const sections = useMemo(
+    () => isSuperAdmin
+      ? NAV_BY_VARIANT[variant]
+      : filterNavSections(NAV_BY_VARIANT[variant], can, hasRole),
+    [variant, can, hasRole, isSuperAdmin],
+  );
   const allItems = sections.flatMap(s => s.items);
 
   const activeParentKey = allItems.find(item =>
@@ -115,7 +127,7 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
 
         {/* ── Navigation ── */}
         <nav ref={navRef}
-             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-4 space-y-4"
+             className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-4 space-y-4"
              style={{ overflowAnchor: 'none' }}>
           {sections.map((section, si) => (
             <div key={si} className="space-y-0.5">

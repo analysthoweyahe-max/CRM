@@ -5,7 +5,7 @@ import { SystemAccessCard }      from '../components/SystemAccessCard';
 import { ActivityLogCard }       from '../components/ActivityLogCard';
 import { PersonalInfoCard }      from '../components/PersonalInfoCard';
 import { EmploymentInfoCard }    from '../components/EmploymentInfoCard';
-import { CustomPermissionsCard } from '../components/CustomPermissionsCard';
+import { EmployeeRolesCard }     from '../components/EmployeeRolesCard';
 import { UpdateEmployeePasswordModal } from '../components/UpdateEmployeePasswordModal';
 import { useAdminEmployeeDetail } from '../hooks/useAdminEmployeeDetail';
 
@@ -23,6 +23,13 @@ export function AdminEmployeeDetailPage() {
     closePasswordModal,
     updatePassword,
     isUpdatingPassword,
+    canAssignRole,
+    availableRoles,
+    roleModalOpen,
+    openRoleModal,
+    closeRoleModal,
+    assignEmployeeRole,
+    assigningRole,
   } = useAdminEmployeeDetail(isAr);
 
   if (isLoading) {
@@ -71,7 +78,17 @@ export function AdminEmployeeDetailPage() {
         <div className="space-y-5 lg:col-span-2">
           <PersonalInfoCard employee={employee} isAr={isAr} />
           <EmploymentInfoCard employee={employee} isAr={isAr} />
-          <CustomPermissionsCard permissions={employee.customPermissions} isAr={isAr} />
+          <EmployeeRolesCard
+            roles={employee.roles}
+            isAr={isAr}
+            canAssign={canAssignRole}
+            availableRoles={availableRoles}
+            modalOpen={roleModalOpen}
+            isAssigning={assigningRole}
+            onOpenAssign={openRoleModal}
+            onCloseAssign={closeRoleModal}
+            onAssign={assignEmployeeRole}
+          />
         </div>
       </div>
 

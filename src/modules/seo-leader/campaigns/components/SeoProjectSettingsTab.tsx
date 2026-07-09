@@ -22,6 +22,9 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
     name, setName, startDate, setStartDate,
     domain, setDomain, desc, setDesc,
     status, setStatus, type, setType,
+    githubLink, setGithubLink, driveLink, setDriveLink,
+    contractDurationMonths, setContractDurationMonths,
+    optionalFieldErrors,
     statusOptions, typeOptions,
     isSaving, saved, handleSave, canSave,
   } = useSeoProjectSettings(campaignId, isAr);
@@ -73,6 +76,11 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
         desc={desc}           onChangeDesc={setDesc}
         status={status}       onChangeStatus={setStatus}
         type={type}           onChangeType={setType}
+        githubLink={githubLink} onChangeGithubLink={setGithubLink}
+        driveLink={driveLink}   onChangeDriveLink={setDriveLink}
+        contractDurationMonths={contractDurationMonths}
+        onChangeContractDurationMonths={setContractDurationMonths}
+        optionalFieldErrors={optionalFieldErrors}
         statusOptions={statusOptions}
         typeOptions={typeOptions}
         onSave={handleSave}

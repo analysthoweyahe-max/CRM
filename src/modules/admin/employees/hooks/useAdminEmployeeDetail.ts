@@ -4,18 +4,22 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ROUTES } from '@/app/router/routes';
 import { useAuth } from '@/modules/auth/context/AuthContext';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { employeeApi } from '@/modules/hr/employees/api/employee.api';
-import type { UpdateEmployeePasswordPayload } from '@/modules/hr/employees/types/employee.types';
+import type { UpdateEmployeePasswordPayload, AssignEmployeeRolePayload } from '@/modules/hr/employees/types/employee.types';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { toAdminEmployeeDetail } from '../types/adminEmployee.types';
+import { useAssignEmployeeRole } from './useAssignEmployeeRole';
+import { useEmployeeAssignableRoles } from './useEmployeeAssignableRoles';
 
 export function useAdminEmployeeDetail(isAr: boolean) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isSuperAdmin = user?.role === 'admin';
+  const { isSuperAdmin } = useAuth();
+  const canAssignRole = usePermission('assign-role');
 
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [roleModalOpen, setRoleModalOpen]         = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'employees', 'detail', id],
@@ -24,6 +28,9 @@ export function useAdminEmployeeDetail(isAr: boolean) {
   });
 
   const employee = data ? toAdminEmployeeDetail(data) : undefined;
+
+  const { availableRoles } = useEmployeeAssignableRoles(employee?.roles ?? []);
+  const { mutate: assignRole, isPending: assigningRole } = useAssignEmployeeRole();
 
   const updatePasswordMutation = useMutation({
     mutationFn: (payload: UpdateEmployeePasswordPayload) =>
@@ -52,10 +59,28 @@ export function useAdminEmployeeDetail(isAr: boolean) {
     updatePasswordMutation.mutate(payload);
   }
 
+  function assignEmployeeRole(payload: AssignEmployeeRolePayload) {
+    if (!id || assigningRole) return;
+    assignRole({ id, payload }, {
+      onSuccess: () => {
+        toast.success(isAr ? 'تم تعيين الدور بنجاح' : 'Role assigned successfully');
+        setRoleModalOpen(false);
+      },
+      onError: (err) => toast.error(extractApiError(err)),
+    });
+  }
+
   return {
     employee,
     isLoading,
     isSuperAdmin,
+    canAssignRole,
+    availableRoles,
+    roleModalOpen,
+    openRoleModal:  () => setRoleModalOpen(true),
+    closeRoleModal: () => setRoleModalOpen(false),
+    assignEmployeeRole,
+    assigningRole,
     editEmployee: () => id && navigate(ROUTES.EMPLOYEES.EDIT(id)),
     passwordModalOpen,
     openPasswordModal,

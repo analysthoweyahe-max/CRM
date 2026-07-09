@@ -9,7 +9,9 @@ export interface CreateCampaignPayload {
   end_date:      string;
   keywords:      string[];
   references:    string[];
-  github_link?:  string;
+  githubLink?:        string | null;
+  driveLink?:         string | null;
+  contractDurationMonths?: number | null;
 }
 
 export interface CampaignLookupResponse {

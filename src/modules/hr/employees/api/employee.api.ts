@@ -8,6 +8,7 @@ import type {
   UpdateEmployeePayload,
   UpdateWorkSchedulePayload,
   UpdateEmployeePasswordPayload,
+  AssignEmployeeRolePayload,
   EmploymentType,
 } from '../types/employee.types';
 
@@ -54,6 +55,10 @@ export const employeeApi = {
 
   bulkRemove(ids: string[]) {
     return http.post<{ status: string; message: string }>('/v1/employees/bulk-delete', { ids });
+  },
+
+  assignRole(id: string, payload: AssignEmployeeRolePayload) {
+    return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/role`, payload);
   },
 
   lookupDepartments() {

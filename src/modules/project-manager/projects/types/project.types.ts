@@ -34,6 +34,7 @@ export interface PmProjectListItem {
   id:               number;
   name:             string;
   description:      string;
+  projectTypeId?:   number;
   projectType:      string;
   projectTypeLabel: string;
   status:           string;
@@ -43,9 +44,10 @@ export interface PmProjectListItem {
   deadline:         string;
   teamAssignedAt:   string | null;
   workspaceUrl?:    string | null;
-  // Confirmed via a live GET /v1/pm/projects/{id} response.
-  githubLink?:      string | null;
-  manager?:         PmProjectCreator | null;
+  githubLink?:               string | null;
+  driveLink?:                string | null;
+  contractDurationMonths?:   number | null;
+  manager?:                  PmProjectCreator | null;
   createdBy:        PmProjectCreator;
   createdAt:        string;
   updatedAt:        string;
@@ -111,28 +113,37 @@ export interface PmLookupApiResponse {
 }
 
 export interface PmProjectPayload {
-  name:            string;
-  description:     string;
-  project_type_id: number;
-  status:          string;
-  is_draft:        boolean;
-  start_date:      string;
-  deadline:        string;
-  // The backend reads/writes this GitHub link under github_link (confirmed
-  // via the project card response) — not workspace_url.
-  github_link?:    string;
-  // Super admin only — omit entirely for project-manager-initiated creates.
-  manager_id?:     string;
+  name:                    string;
+  description?:            string | null;
+  projectTypeId?:          number;
+  project_type_id?:        number;
+  githubLink?:             string | null;
+  driveLink?:              string | null;
+  contractDurationMonths?: number | null;
+  managerIds?:             string[];
+  employeeIds?:            string[];
+  status?:                 string;
+  isDraft?:                boolean;
+  is_draft?:               boolean;
+  start_date?:             string | null;
+  deadline?:               string | null;
+  templateId?:             string | null;
+  manager_id?:             string;
 }
 
 /* ── Project types CRUD (admin-managed lookup) ──────────────────────────── */
 
 export interface PmProjectTypeItem {
-  id:         number;
-  name:       string;
-  nameAr:     string | null;
-  isActive:   boolean;
-  sortOrder:  number;
+  id:             number;
+  name:           string;
+  nameAr:         string | null;
+  slug:           string;
+  label?:         string;
+  isActive:       boolean;
+  sortOrder:      number;
+  projectsCount?: number;
+  createdAt?:     string;
+  updatedAt?:     string;
 }
 
 export interface PmProjectTypeListApiResponse {
@@ -148,10 +159,12 @@ export interface PmProjectTypeApiResponse {
 }
 
 export interface PmProjectTypePayload {
-  name:        string;
-  name_ar:     string;
-  is_active:   boolean;
-  sort_order:  number;
+  name:          string;
+  name_ar?:      string | null;
+  slug?:         string;
+  department_id?: number;
+  is_active?:    boolean;
+  sort_order?:   number;
 }
 
 /* ── Per-project team management (available / members / add / remove) ──── */

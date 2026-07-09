@@ -3,12 +3,15 @@ import type {
   AdminLoginApiResponse,
   AdminAuthSuccessApiResponse,
   AdminOtpResendApiResponse,
+  AdminProfileApiResponse,
   EmployeeLoginApiResponse,
   EmployeeProfileApiResponse,
   AdminInviteApiResponse,
   EmployeeInviteApiResponse,
   ChangePasswordPayload,
   ChangePasswordApiResponse,
+  ForgotPasswordApiResponse,
+  PasswordResetVerifyApiResponse,
 } from '@/modules/auth/types/auth.types';
 
 export const authApi = {
@@ -55,6 +58,22 @@ export const authApi = {
     return http.post<ChangePasswordApiResponse>('/v1/admin/auth/profile/password', payload);
   },
 
+  adminProfile() {
+    return http.get<AdminProfileApiResponse>('/v1/admin/auth/profile');
+  },
+
+  adminForgotPassword(payload: { email: string }) {
+    return http.post<ForgotPasswordApiResponse>('/v1/admin/auth/forgot-password', payload);
+  },
+
+  verifyAdminPasswordReset(token: string) {
+    return http.get<PasswordResetVerifyApiResponse>(`/v1/admin/auth/password-resets/${token}`);
+  },
+
+  resetAdminPassword(token: string, payload: { password: string; password_confirmation: string }) {
+    return http.post<void>(`/v1/admin/auth/password-resets/${token}`, payload);
+  },
+
   // ── Employee ─────────────────────────────────────────────────────────────
 
   employeeLogin(credentials: { email?: string; employee_id?: string; password: string }) {
@@ -82,5 +101,17 @@ export const authApi = {
 
   employeeChangePassword(payload: ChangePasswordPayload) {
     return http.post<ChangePasswordApiResponse>('/v1/employee/auth/profile/password', payload);
+  },
+
+  employeeForgotPassword(payload: { email: string }) {
+    return http.post<ForgotPasswordApiResponse>('/v1/employee/auth/forgot-password', payload);
+  },
+
+  verifyEmployeePasswordReset(token: string) {
+    return http.get<PasswordResetVerifyApiResponse>(`/v1/employee/auth/password-resets/${token}`);
+  },
+
+  resetEmployeePassword(token: string, payload: { password: string; password_confirmation: string }) {
+    return http.post<void>(`/v1/employee/auth/password-resets/${token}`, payload);
   },
 };

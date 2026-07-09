@@ -39,6 +39,7 @@ export interface AdminEmployee {
   status:         AdminEmployeeStatus;
   statusLabelAr:  string;
   statusLabelEn:  string;
+  phone?:         string;
 }
 
 export interface AdminEmployeeActivity {

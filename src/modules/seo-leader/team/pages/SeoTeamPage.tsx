@@ -33,7 +33,7 @@ export function SeoTeamPage() {
           {isAr ? 'فريق العمل' : 'Work Team'}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {isAr ? 'جميع أعضاء الفريق عبر مشاريعك' : 'All team members across your projects'}
+          {isAr ? 'أعضاء فريق SEO التابعين لك' : 'Your SEO team members across your projects'}
         </p>
       </div>
 

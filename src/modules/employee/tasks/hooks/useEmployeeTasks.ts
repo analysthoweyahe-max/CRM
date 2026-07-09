@@ -15,6 +15,9 @@ export function useCreateSelfTask() {
   return useMutation({
     mutationFn: ({ projectId, payload }: { projectId: string; payload: CreateSelfTaskPayload }) =>
       employeeTaskApi.createSelfTask(projectId, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['employee', 'tasks'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });
+      qc.invalidateQueries({ queryKey: ['my-tasks'] });
+    },
   });
 }

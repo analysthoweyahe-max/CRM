@@ -8,6 +8,10 @@ import type {
   ApiAdmin,
   InviteTokenPayload,
   LoginResult,
+  AuthActor,
+  PasswordResetTokenPayload,
+  ResetPasswordPayload,
+  RoleDetail,
 } from '@/modules/auth/types/auth.types';
 import { mapRolesToAppRole } from '@/shared/types/role.types';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
@@ -29,11 +33,7 @@ function setCachedAccountType(identifier: string, type: AccountType): void {
   localStorage.setItem(ACCOUNT_TYPE_KEY + identifier, type);
 }
 
-/* Confirmed shape for "wrong account type" (e.g. an employee ID tried against
-   the admin endpoint): 422 with `errors.<id_field>: ["The selected <id_field>
-   is invalid."]`. Any other failure (wrong password, network error, etc.)
-   must NOT trigger a second login attempt against the other endpoint — that
-   was needlessly doubling failed-login load on the server. */
+/** 422 with `errors.<id_field>: ["The selected <id_field> is invalid."]` — wrong guard, not wrong password. */
 function isWrongAccountTypeError(err: unknown, idField: string): boolean {
   const resp = (err as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } })?.response;
   if (resp?.status !== 422) return false;
@@ -41,26 +41,226 @@ function isWrongAccountTypeError(err: unknown, idField: string): boolean {
   return Array.isArray(fieldErrors) && fieldErrors.some((msg) => /is invalid/i.test(msg));
 }
 
-function buildEmployeeUser(employee: ApiEmployee): AuthUser {
+/** Backend may return permission slugs as strings or `{ name: string }` objects. */
+function permissionSlug(value: unknown): string | null {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'name' in value) {
+    const name = (value as { name?: unknown }).name;
+    return typeof name === 'string' ? name : null;
+  }
+  return null;
+}
+
+function normalizePermissionSlugs(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(permissionSlug).filter((slug): slug is string => !!slug);
+}
+
+function normalizeRoleDetails(raw: unknown): RoleDetail[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+
+  const details = raw
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const r = item as Record<string, unknown>;
+      const name = String(r.name ?? r.slug ?? '').trim();
+      if (!name) return null;
+      return { name, permissions: normalizePermissionSlugs(r.permissions) };
+    })
+    .filter((d): d is RoleDetail => d !== null);
+
+  return details.length > 0 ? details : undefined;
+}
+
+function mergeEffectivePermissions(flat: string[], roleDetails?: RoleDetail[]): string[] {
+  const merged = new Set(flat);
+  for (const detail of roleDetails ?? []) {
+    for (const perm of detail.permissions) merged.add(perm);
+  }
+  return [...merged];
+}
+
+/** Backend may return role slugs as strings or `{ name, permissions }` objects. */
+function normalizeRolesField(raw: unknown): { slugs: string[]; details: RoleDetail[] } {
+  if (!Array.isArray(raw)) return { slugs: [], details: [] };
+
+  const slugs: string[] = [];
+  const details: RoleDetail[] = [];
+
+  for (const item of raw) {
+    if (typeof item === 'string') {
+      slugs.push(item);
+      continue;
+    }
+    if (!item || typeof item !== 'object') continue;
+    const r = item as Record<string, unknown>;
+    const name = String(r.name ?? r.slug ?? '').trim();
+    if (!name) continue;
+    slugs.push(name);
+    details.push({ name, permissions: normalizePermissionSlugs(r.permissions) });
+  }
+
+  return { slugs, details };
+}
+
+function collectPermissionSources(extra: Record<string, unknown>): string[] {
+  return normalizePermissionSlugs(
+    extra.permissions ?? extra.all_permissions ?? extra.allPermissions,
+  );
+}
+
+function normalizeApiAdmin(raw: ApiAdmin): ApiAdmin {
+  const extra = raw as ApiAdmin & Record<string, unknown>;
+  const { slugs, details: roleObjectDetails } = normalizeRolesField(extra.roles);
+  const explicitDetails = normalizeRoleDetails(extra.roleDetails ?? extra.role_details);
+  const roleDetails = explicitDetails
+    ?? (roleObjectDetails.length > 0 ? roleObjectDetails : undefined);
+  // Admin UI checks the flat permissions array from the backend — not roleDetails.
+  const permissions = collectPermissionSources(extra);
+
   return {
-    id:         employee.id,
-    employeeId: employee.id,
-    fullName:   employee.name,
-    // Fall back to the plain employee portal when no elevated role is assigned.
-    role:       mapRolesToAppRole(employee.roles, 'employee'),
-    avatarUrl:  employee.avatar_url,
+    ...raw,
+    roles:        slugs.length > 0 ? slugs : (raw.roles ?? []),
+    permissions,
+    roleDetails,
+    isSuperAdmin: raw.isSuperAdmin ?? extra.is_super_admin === true,
   };
 }
 
-function buildAdminUser(admin: ApiAdmin): AuthUser {
+function normalizeApiEmployee(raw: ApiEmployee): ApiEmployee {
+  const extra = raw as ApiEmployee & Record<string, unknown>;
+  const { slugs, details: roleObjectDetails } = normalizeRolesField(extra.roles);
+  const explicitDetails = normalizeRoleDetails(extra.roleDetails ?? extra.role_details);
+  const roleDetails = explicitDetails
+    ?? (roleObjectDetails.length > 0 ? roleObjectDetails : undefined);
+  const permissions = mergeEffectivePermissions(
+    collectPermissionSources(extra),
+    roleDetails,
+  );
+
   return {
-    id:         admin.id,
-    employeeId: admin.id,
-    fullName:   admin.name,
-    // Admin-endpoint accounts default to full admin access when unmapped.
-    role:       mapRolesToAppRole(admin.roles, 'admin'),
-    avatarUrl:  admin.avatar_url,
+    ...raw,
+    roles:        slugs.length > 0 ? slugs : (raw.roles ?? []),
+    permissions,
+    roleDetails,
+    sectionLabel: raw.sectionLabel ?? (typeof extra.section_label === 'string' ? extra.section_label : undefined),
   };
+}
+
+function buildEmployeeUser(raw: ApiEmployee): AuthUser {
+  const employee = normalizeApiEmployee(raw);
+  return {
+    id:           employee.id,
+    employeeId:   employee.id,
+    fullName:     employee.name,
+    email:        employee.email,
+    role:         mapRolesToAppRole(employee.roles, 'employee'),
+    roles:        employee.roles ?? [],
+    permissions:  employee.permissions ?? [],
+    roleDetails:  employee.roleDetails,
+    section:      employee.section,
+    sectionLabel: employee.sectionLabel,
+    actor:        'employee',
+    avatarUrl:    employee.avatar_url,
+  };
+}
+
+function buildAdminUser(raw: ApiAdmin): AuthUser {
+  const admin = normalizeApiAdmin(raw);
+  const isSuperAdmin = admin.isSuperAdmin ?? admin.roles?.includes('super-admin') ?? false;
+  return {
+    id:           admin.id,
+    employeeId:   admin.id,
+    fullName:     admin.name,
+    email:        admin.email,
+    role:         mapRolesToAppRole(admin.roles, 'admin'),
+    roles:        admin.roles ?? [],
+    permissions:  admin.permissions ?? [],
+    roleDetails:  admin.roleDetails,
+    isSuperAdmin,
+    actor:        'admin',
+    avatarUrl:    admin.avatar_url,
+  };
+}
+
+/** Back-fill roles/permissions for sessions stored before this feature shipped. */
+function normalizeStoredUser(raw: AuthUser): AuthUser {
+  const roleField = normalizeRolesField(raw.roles);
+  const roles = roleField.slugs.length
+    ? roleField.slugs
+    : raw.role === 'admin'
+      ? ['super-admin']
+      : [];
+
+  const roleDetails = normalizeRoleDetails(raw.roleDetails)
+    ?? (roleField.details.length > 0 ? roleField.details : undefined);
+  const permissions = raw.actor === 'admin'
+    ? normalizePermissionSlugs(raw.permissions)
+    : mergeEffectivePermissions(normalizePermissionSlugs(raw.permissions), roleDetails);
+
+  return {
+    ...raw,
+    roles,
+    permissions,
+    roleDetails,
+    actor: raw.actor ?? (raw.role === 'employee' || raw.role === 'seo-member' ? 'employee' : 'admin'),
+  };
+}
+
+function parseAdminProfilePayload(data: unknown): ApiAdmin {
+  const record = data as Record<string, unknown>;
+  const nested = record.admin && typeof record.admin === 'object'
+    ? record.admin as Record<string, unknown>
+    : null;
+
+  const base = { ...(nested ?? record) } as ApiAdmin & Record<string, unknown>;
+
+  // Profile: permissions live at `data.permissions` (root), not inside nested admin.
+  const rootPermissions = record.permissions ?? record.all_permissions ?? record.allPermissions;
+  if (rootPermissions !== undefined) {
+    base.permissions = normalizePermissionSlugs(rootPermissions);
+  }
+
+  const rootRoles = record.roles;
+  if (rootRoles !== undefined && !nested) {
+    const { slugs } = normalizeRolesField(rootRoles);
+    if (slugs.length > 0) base.roles = slugs;
+  }
+
+  const rootRoleDetails = record.roleDetails ?? record.role_details;
+  if (rootRoleDetails !== undefined && !base.roleDetails) {
+    base.roleDetails = normalizeRoleDetails(rootRoleDetails);
+  }
+
+  if (record.isSuperAdmin !== undefined || record.is_super_admin !== undefined) {
+    base.isSuperAdmin = record.isSuperAdmin === true || record.is_super_admin === true;
+  }
+
+  return base;
+}
+
+function readAccessToken(payload: Record<string, unknown>): string | undefined {
+  const token = payload.accessToken ?? payload.access_token;
+  return typeof token === 'string' ? token : undefined;
+}
+
+function readOtpChallenge(payload: Record<string, unknown>, fallbackAdminId: string) {
+  const otpRequired = payload.otpRequired === true || payload.otp_required === true;
+  const magicLinkRequired = payload.magicLinkRequired === true || payload.magic_link_required === true;
+  const adminId = String(payload.adminId ?? payload.admin_id ?? fallbackAdminId).trim();
+  const expiresAt = String(payload.expiresAt ?? payload.expires_at ?? '');
+  return { otpRequired, magicLinkRequired, adminId, expiresAt };
+}
+
+function readAdminAuthSuccess(data: Record<string, unknown>) {
+  const accessToken = readAccessToken(data);
+  const admin = data.admin as ApiAdmin | undefined;
+  const redirect_path = typeof data.redirect_path === 'string' ? data.redirect_path : undefined;
+  return { accessToken, admin, redirect_path };
+}
+
+function isRememberMe(): boolean {
+  return localStorage.getItem(REMEMBER_ME_KEY) === 'true';
 }
 
 // ── Storage ──────────────────────────────────────────────────────────────────
@@ -70,6 +270,11 @@ function storeAuth(token: string, user: AuthUser, rememberMe: boolean): void {
   storage.setItem(TOKEN_KEY, token);
   storage.setItem(USER_KEY, JSON.stringify(user));
   localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
+}
+
+function updateStoredUser(user: AuthUser): void {
+  const storage = isRememberMe() ? localStorage : sessionStorage;
+  storage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 function clearAuth(): void {
@@ -88,103 +293,124 @@ function getStoredToken(): string | null {
 function getStoredUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_KEY) ?? sessionStorage.getItem(USER_KEY);
   if (!raw) return null;
-  try { return JSON.parse(raw) as AuthUser; }
+  try { return normalizeStoredUser(JSON.parse(raw) as AuthUser); }
   catch { return null; }
+}
+
+async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
+  if (actor === 'employee') {
+    const { data } = await authApi.employeeProfile();
+    return buildEmployeeUser(data.data.employee);
+  }
+  const { data } = await authApi.adminProfile();
+  return buildAdminUser(parseAdminProfilePayload(data.data));
 }
 
 // ── Auth operations ───────────────────────────────────────────────────────────
 
 async function loginAsEmployee(
-  employeeId: string,
+  identifier: string,
   password: string,
   rememberMe: boolean,
 ): Promise<LoginResult> {
-  const employeePayload = isEmail(employeeId)
-    ? { email: employeeId, password }
-    : { employee_id: employeeId, password };
+  const employeePayload = isEmail(identifier)
+    ? { email: identifier, password }
+    : { employee_id: identifier, password };
   const { data } = await authApi.employeeLogin(employeePayload);
-  const { accessToken, employee } = data.data;
+  const { accessToken, employee, redirect_path } = data.data;
   const user = buildEmployeeUser(employee);
   storeAuth(accessToken, user, rememberMe);
-  setCachedAccountType(employeeId, 'employee');
-  return { status: 'success', token: accessToken, user };
+  setCachedAccountType(identifier, 'employee');
+  return {
+    status:       'success',
+    token:        accessToken,
+    user,
+    redirectPath: redirect_path,
+  };
 }
 
 async function loginAsAdmin(
-  employeeId: string,
+  identifier: string,
   password: string,
   rememberMe: boolean,
 ): Promise<LoginResult> {
-  const { data } = await authApi.adminLogin({ admin_id: employeeId, password });
-  const payload = data.data;
+  const { data } = await authApi.adminLogin({ admin_id: identifier, password });
+  const payload = data.data as Record<string, unknown>;
 
-  // Super-admin accounts require a second factor: the backend emails a one-time
-  // OTP code instead of returning a token. Surface that so the UI can collect it.
-  if (payload?.otpRequired || payload?.magicLinkRequired) {
-    setCachedAccountType(employeeId, 'admin');
-    return { status: 'otp_required', adminId: employeeId, expiresAt: payload.expiresAt ?? '' };
+  const challenge = readOtpChallenge(payload, identifier);
+  if (challenge.otpRequired || challenge.magicLinkRequired) {
+    setCachedAccountType(identifier, 'admin');
+    return {
+      status:            'otp_required',
+      adminId:           challenge.adminId,
+      expiresAt:         challenge.expiresAt,
+      magicLinkRequired: challenge.magicLinkRequired,
+    };
   }
 
-  if (!payload?.accessToken || !payload?.admin) {
+  const { accessToken, admin, redirect_path } = readAdminAuthSuccess(payload);
+  if (!accessToken || !admin) {
     throw new Error('Invalid admin login response');
   }
-  const { accessToken, admin } = payload;
+
   const user = buildAdminUser(admin);
   storeAuth(accessToken, user, rememberMe);
-  setCachedAccountType(employeeId, 'admin');
-  return { status: 'success', token: accessToken, user };
-}
-
-// Verifies the OTP a super-admin received by email and establishes the session.
-async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false): Promise<AuthLoginResponse> {
-  const { data } = await authApi.adminVerifyOtp({ admin_id: adminId, code: otp });
-  const { accessToken, admin } = data.data;
-  const user = buildAdminUser(admin);
-  storeAuth(accessToken, user, rememberMe);
-  setCachedAccountType(adminId, 'admin');
-  return { token: accessToken, user };
-}
-
-// Requests a fresh OTP code; returns the new expiry timestamp when provided.
-async function resendAdminOtp(adminId: string): Promise<string> {
-  const { data } = await authApi.adminResendOtp({ admin_id: adminId });
-  return data.data?.expiresAt ?? '';
+  setCachedAccountType(identifier, 'admin');
+  return {
+    status:       'success',
+    token:        accessToken,
+    user,
+    redirectPath: redirect_path,
+  };
 }
 
 async function login(credentials: LoginCredentials): Promise<LoginResult> {
   const { password, rememberMe = false } = credentials;
-  const employeeId = credentials.employeeId.trim();
-  const cachedType = getCachedAccountType(employeeId);
-  const employeeIdField = isEmail(employeeId) ? 'email' : 'employee_id';
+  const identifier = credentials.adminId.trim();
+  const cachedType = getCachedAccountType(identifier);
+  const employeeIdField = isEmail(identifier) ? 'email' : 'employee_id';
 
-  // Try the account type we last succeeded with (if any) first, so returning
-  // users don't hit the wrong login endpoint and see a spurious 422 every time.
-  // Only fall back to the other endpoint when the error confirms this identifier
-  // belongs to the other account type — not for wrong passwords or other errors,
-  // which would otherwise double every failed login attempt against the server.
   if (cachedType === 'admin') {
     try {
-      return await loginAsAdmin(employeeId, password, rememberMe);
+      return await loginAsAdmin(identifier, password, rememberMe);
     } catch (err) {
       if (!isWrongAccountTypeError(err, 'admin_id')) throw err;
-      return await loginAsEmployee(employeeId, password, rememberMe);
+      return await loginAsEmployee(identifier, password, rememberMe);
     }
   }
 
   try {
-    return await loginAsEmployee(employeeId, password, rememberMe);
+    return await loginAsEmployee(identifier, password, rememberMe);
   } catch (err) {
     if (!isWrongAccountTypeError(err, employeeIdField)) throw err;
-    return await loginAsAdmin(employeeId, password, rememberMe);
+    return await loginAsAdmin(identifier, password, rememberMe);
   }
 }
 
-// The email link carries a one-time magic-login token (NOT a bearer token). We
-// exchange it here for a real access token + admin profile, then persist the
-// session so the super-admin lands logged in.
+async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false): Promise<AuthLoginResponse> {
+  const { data } = await authApi.adminVerifyOtp({ admin_id: adminId, code: otp });
+  const { accessToken, admin, redirect_path } = readAdminAuthSuccess(data.data as Record<string, unknown>);
+  if (!accessToken || !admin) {
+    throw new Error('Invalid OTP verification response');
+  }
+  const user = buildAdminUser(admin);
+  storeAuth(accessToken, user, rememberMe);
+  setCachedAccountType(adminId, 'admin');
+  return { token: accessToken, user, redirectPath: redirect_path };
+}
+
+async function resendAdminOtp(adminId: string): Promise<string> {
+  const { data } = await authApi.adminResendOtp({ admin_id: adminId });
+  const payload = data.data as Record<string, unknown>;
+  return String(payload.expiresAt ?? payload.expires_at ?? '');
+}
+
 async function completeMagicLogin(token: string, rememberMe = true): Promise<AuthUser> {
   const { data } = await authApi.adminMagicLogin(token);
-  const { accessToken, admin } = data.data;
+  const { accessToken, admin } = readAdminAuthSuccess(data.data as Record<string, unknown>);
+  if (!accessToken || !admin) {
+    throw new Error('Invalid magic login response');
+  }
   const user = buildAdminUser(admin);
   storeAuth(accessToken, user, rememberMe);
   return user;
@@ -207,30 +433,28 @@ async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginRespon
 
   if (inviteType === 'admin') {
     const { data } = await authApi.setAdminPassword(token, apiPayload);
-    const { accessToken, admin } = data.data;
+    const { accessToken, admin, redirect_path } = readAdminAuthSuccess(data.data as Record<string, unknown>);
+    if (!accessToken || !admin) {
+      throw new Error('Invalid set-password response');
+    }
     const user = buildAdminUser(admin);
     storeAuth(accessToken, user, rememberMe);
-    return { token: accessToken, user };
-  } else {
-    const { data } = await authApi.setEmployeePassword(token, apiPayload);
-    const { accessToken, employee } = data.data;
-    const user = buildEmployeeUser(employee);
-    storeAuth(accessToken, user, rememberMe);
-    return { token: accessToken, user };
+    return { token: accessToken, user, redirectPath: redirect_path };
   }
+
+  const { data } = await authApi.setEmployeePassword(token, apiPayload);
+  const { accessToken, employee, redirect_path } = data.data;
+  const user = buildEmployeeUser(employee);
+  storeAuth(accessToken, user, rememberMe);
+  return { token: accessToken, user, redirectPath: redirect_path };
 }
 
-// A 404 means "this token doesn't belong to this invite type" — safe to retry
-// against the other endpoint. Any other status (410 expired, 500, network, etc.)
-// is a real failure and must propagate instead of being silently masked.
 function isInviteNotFoundError(err: unknown): boolean {
   const status = (err as { response?: { status?: number } })?.response?.status;
   return status === 404;
 }
 
 async function validateInvite(token: string): Promise<InviteTokenPayload> {
-  // Try employee invite first; fall back to admin invite only when the
-  // employee endpoint confirms this token simply isn't an employee invite.
   try {
     const { data } = await authApi.verifyEmployeeInvite(token);
     return {
@@ -240,6 +464,7 @@ async function validateInvite(token: string): Promise<InviteTokenPayload> {
       inviteType:   'employee',
       accessToken:  data.data.accessToken,
       redirectPath: data.data.redirect_path,
+      employee:     data.data.employee,
     };
   } catch (err) {
     if (!isInviteNotFoundError(err)) throw err;
@@ -251,14 +476,58 @@ async function validateInvite(token: string): Promise<InviteTokenPayload> {
       inviteType:   'admin',
       accessToken:  data.data.accessToken,
       redirectPath: data.data.redirect_path,
+      admin:        data.data.admin,
     };
   }
 }
 
-// An invite that's already activated hands back a finished token instead of
-// requiring a new password — store it and sign the user straight in.
-function completeInviteLogin(token: string, inviteType: 'admin' | 'employee'): AuthUser {
-  const user: AuthUser = { id: '', employeeId: '', fullName: '', role: inviteType === 'admin' ? 'admin' : 'employee' };
+/** Admin forgot-password — public endpoint, no Bearer token. */
+async function requestPasswordReset(email: string): Promise<string> {
+  const { data } = await authApi.adminForgotPassword({ email: email.trim() });
+  return data?.message ?? '';
+}
+
+/** Admin reset token verification — public endpoint, no Bearer token. */
+async function validateResetToken(token: string): Promise<PasswordResetTokenPayload> {
+  const { data } = await authApi.verifyAdminPasswordReset(token);
+  const profile = data.data;
+  return {
+    actorType:    profile.actorType ?? 'admin',
+    actorId:      profile.admin_id ?? profile.user_id ?? '',
+    email:        profile.email,
+    name:         profile.name,
+    redirectPath: profile.redirect_path,
+  };
+}
+
+/** Admin password reset submit — public endpoint, no Bearer token. */
+async function resetPassword(payload: ResetPasswordPayload): Promise<void> {
+  const { token, password, confirmPassword } = payload;
+  await authApi.resetAdminPassword(token, {
+    password,
+    password_confirmation: confirmPassword,
+  });
+}
+
+async function completeInviteLogin(
+  token: string,
+  inviteType: 'admin' | 'employee',
+  profile?: ApiAdmin | ApiEmployee,
+): Promise<AuthUser> {
+  let user: AuthUser;
+
+  if (profile) {
+    user = inviteType === 'admin'
+      ? buildAdminUser(profile as ApiAdmin)
+      : buildEmployeeUser(profile as ApiEmployee);
+  } else {
+    storeAuth(token, normalizeStoredUser({
+      id: '', employeeId: '', fullName: '', role: inviteType === 'admin' ? 'admin' : 'employee',
+      roles: [], permissions: [], actor: inviteType,
+    }), true);
+    user = await fetchProfile(inviteType);
+  }
+
   storeAuth(token, user, true);
   return user;
 }
@@ -267,22 +536,15 @@ async function loadProfile(): Promise<AuthUser | null> {
   const token = getStoredToken();
   if (!token) return null;
 
-  const storedUser = getStoredUser();
-  if (!storedUser) return null;
+  const stored = getStoredUser();
+  if (!stored) return null;
 
   try {
-    if (storedUser.role === 'employee' || storedUser.role === 'seo-member') {
-      const { data } = await authApi.employeeProfile();
-      const { employee } = data.data;
-      const user = buildEmployeeUser(employee);
-      const storage = localStorage.getItem(TOKEN_KEY) ? localStorage : sessionStorage;
-      storage.setItem(USER_KEY, JSON.stringify(user));
-      return user;
-    }
-    return storedUser;
+    const fresh = await fetchProfile(stored.actor);
+    updateStoredUser(fresh);
+    return fresh;
   } catch {
-    clearAuth();
-    return null;
+    return stored;
   }
 }
 
@@ -291,14 +553,14 @@ async function changePassword(payload: {
   newPassword:     string;
   confirmPassword: string;
 }): Promise<void> {
-  const user = getStoredUser();
+  const stored = getStoredUser();
   const apiPayload = {
     current_password: payload.currentPassword,
     new_password: payload.newPassword,
     new_password_confirmation: payload.confirmPassword,
   };
 
-  if (user?.role === 'employee' || user?.role === 'seo-member') {
+  if (stored?.actor === 'employee') {
     await authApi.employeeChangePassword(apiPayload);
   } else {
     await authApi.adminChangePassword(apiPayload);
@@ -306,9 +568,9 @@ async function changePassword(payload: {
 }
 
 async function logout(): Promise<void> {
-  const user = getStoredUser();
+  const stored = getStoredUser();
   try {
-    if (user?.role === 'employee' || user?.role === 'seo-member') {
+    if (stored?.actor === 'employee') {
       await authApi.employeeLogout();
     } else {
       await authApi.adminLogout();
@@ -328,6 +590,9 @@ export const authService = {
   activateInvite,
   changePassword,
   validateInvite,
+  requestPasswordReset,
+  validateResetToken,
+  resetPassword,
   loadProfile,
   logout,
   getStoredToken,

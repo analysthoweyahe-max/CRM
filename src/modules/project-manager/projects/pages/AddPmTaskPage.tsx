@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
@@ -11,12 +11,14 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { ROUTES }     from '@/app/router/routes';
 import { useProjectDetails }   from '../hooks/useProjectDetails';
 import { usePmTaskLookups }    from '../hooks/usePmTaskLookups';
-import { pmProjectTeamApi }    from '../api/project.api';
-import type { PmProjectTeamMember } from '../types/project.types';
-import { pmTaskApi } from '../../tasks/api/task.api';
+import { pmProjectLookupsApi, pmProjectTeamApi, pmProjectsApi } from '../api/project.api';
+import type { PmAvailableMember, PmProjectTeamMember } from '../types/project.types';
+import { pmTaskApi, normalizePmTaskPriority } from '../../tasks/api/task.api';
 import { useInvalidateProjectTasks } from '../../tasks/store/taskStore';
 import { PmTaskFormFields, type PmTaskFormState } from '../components/PmTaskFormFields';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { toApiArray } from '@/shared/utils/apiList.utils';
+import { extractApiError } from '@/shared/utils/error.utils';
 
 const INITIAL: PmTaskFormState = {
   title: '', description: '', priority: '', status: '',
@@ -33,11 +35,41 @@ export function AddPmTaskPage() {
   const { statuses, priorities } = usePmTaskLookups();
   const invalidateTasks = useInvalidateProjectTasks(id);
 
-  const { data: team = [] } = useQuery({
-    queryKey: ['pm-project', id, 'team'],
-    queryFn:  () => pmProjectTeamApi.list(id, { per_page: 100 }).then((r): PmProjectTeamMember[] => r.data.data.data),
-    enabled:  !!id,
+  const projectTypeId = project?.projectTypeId;
+
+  const { data: assignees = [] } = useQuery({
+    queryKey: ['pm-project-lookups', 'employees', projectTypeId],
+    queryFn: async () => {
+      const res = await pmProjectLookupsApi.employees({ project_type_id: projectTypeId! });
+      return toApiArray<PmAvailableMember>(res.data.data);
+    },
+    enabled: !!projectTypeId,
   });
+
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['pm-project', id, 'team'],
+    queryFn: async () => {
+      const res = await pmProjectTeamApi.list(id, { per_page: 100 });
+      return toApiArray<PmProjectTeamMember>(res.data.data);
+    },
+    enabled: !!id,
+  });
+
+  const { data: projectPhases = [] } = useQuery({
+    queryKey: ['pm-project', id, 'phases'],
+    queryFn:  async () => {
+      const res = await pmProjectsApi.phases(id);
+      return res.data.data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  const teamMemberIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const member of teamMembers) ids.add(member.id);
+    for (const member of project?.teamMembers ?? []) ids.add(member.id);
+    return ids;
+  }, [teamMembers, project?.teamMembers]);
 
   const [form, setForm]         = useState<PmTaskFormState>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
@@ -55,8 +87,9 @@ export function AddPmTaskPage() {
   const goBack = () => navigate(ROUTES.PROJECT_MANAGER.DETAILS(id));
   const BackIcon = isAr ? ArrowRight : ArrowLeft;
 
-  const teamItems:     ComboboxItem[] = team.map(m => ({ id: m.id, label: m.name, detail: m.jobTitle }));
-  const phaseItems:    ComboboxItem[] = (project?.phases ?? []).map(p => ({ id: String(p.id), label: p.name }));
+  const teamItems:     ComboboxItem[] = assignees.map(m => ({ id: m.id, label: m.name, detail: m.jobTitle }));
+  const phases = projectPhases.length > 0 ? projectPhases : (project?.phases ?? []);
+  const phaseItems:    ComboboxItem[] = phases.map(p => ({ id: String(p.id), label: p.name }));
   const priorityItems: ComboboxItem[] = priorities.map(p => ({
     id:    p.value,
     label: translateProjectLookup(p.value, p.label, isAr, p.labelAr),
@@ -68,25 +101,39 @@ export function AddPmTaskPage() {
 
   const isValid = !!(form.title.trim() && form.assigneeId && form.priority && form.status && form.dueDate && form.phaseId);
 
+  async function ensureAssigneeOnTeam(assigneeId: string) {
+    if (teamMemberIds.has(assigneeId)) return;
+
+    const selected = assignees.find(m => m.id === assigneeId);
+    const projectRole =
+      selected?.jobTitle?.trim()
+      || selected?.projectRole?.trim()
+      || (isAr ? 'عضو الفريق' : 'Team Member');
+
+    await pmProjectTeamApi.addMember(id, { employee_id: assigneeId, project_role: projectRole });
+  }
+
   async function handleAdd() {
     if (!isValid || submitting) return;
     setSubmitting(true);
     try {
+      await ensureAssigneeOnTeam(form.assigneeId);
+
       await pmTaskApi.create(id, {
         title:           form.title.trim(),
         description:     form.description.trim() || undefined,
-        employee_id:     form.assigneeId,
-        priority:        form.priority,
-        due_date:        form.dueDate,
-        estimated_hours: form.estimatedHours ? Number(form.estimatedHours) : undefined,
-        phase_id:        Number(form.phaseId),
+        employeeId:      form.assigneeId,
+        priority:        normalizePmTaskPriority(form.priority),
+        dueDate:         form.dueDate,
+        estimatedHours:  form.estimatedHours ? Number(form.estimatedHours) : undefined,
+        phaseId:         Number(form.phaseId),
         status:          form.status,
       });
       invalidateTasks();
       toast.success(isAr ? 'تمت إضافة المهمة' : 'Task added');
       goBack();
-    } catch {
-      toast.error(isAr ? 'فشل إضافة المهمة' : 'Failed to add task');
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'فشل إضافة المهمة' : 'Failed to add task'));
     } finally {
       setSubmitting(false);
     }

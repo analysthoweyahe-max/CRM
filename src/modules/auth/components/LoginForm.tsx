@@ -18,6 +18,7 @@ export function LoginForm() {
   const v = t.validation;
   const [params] = useSearchParams();
   const justActivated = params.get('activated') === '1';
+  const justReset     = params.get('reset') === '1';
 
   // The backend's magic-link email may point here (/auth/login?token=...) instead
   // of the dedicated /admin/auth/callback page — handle it here too so a
@@ -58,7 +59,7 @@ export function LoginForm() {
   const fieldErr = (msg: string | undefined) =>
     msg ? (v[msg as keyof typeof v] ?? msg) : undefined;
 
-  const empIdDir = /[؀-ۿ]/.test(watch('employeeId') ?? '') ? 'rtl' : 'ltr';
+  const adminIdDir = /[؀-ۿ]/.test(watch('adminId') ?? '') ? 'rtl' : 'ltr';
 
   if (magicToken && !magicFailed) {
     return (
@@ -78,10 +79,15 @@ export function LoginForm() {
         <p className="text-base text-gray-500 mt-1">{t.login.subtitle}</p>
       </div>
 
-      {/* Success banner after account activation */}
+      {/* Success banner after account activation or password reset */}
       {justActivated && (
         <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
           {t.login.activatedSuccess}
+        </div>
+      )}
+      {justReset && (
+        <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+          {t.login.resetSuccess}
         </div>
       )}
 
@@ -97,35 +103,35 @@ export function LoginForm() {
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
           {lang === 'ar'
             ? 'معرّف المستخدم أو كلمة المرور غير صحيحة'
-            : 'Invalid employee ID or password'}
+            : 'Invalid user ID or password'}
         </div>
       )}
 
-      {/* Employee ID */}
+      {/* User ID */}
       <div className="flex flex-col gap-1">
         <label className="text-base font-medium text-gray-700">
-          {t.login.employeeId}
+          {t.login.adminId}
           <span className="text-red-500 ms-0.5">*</span>
         </label>
-        <div className="relative" dir={empIdDir}>
+        <div className="relative" dir={adminIdDir}>
           <input
-            {...register('employeeId')}
+            {...register('adminId')}
             type="text"
-            placeholder={t.login.employeeIdPlaceholder}
+            placeholder={t.login.adminIdPlaceholder}
             autoComplete="username"
-            aria-invalid={!!errors.employeeId}
+            aria-invalid={!!errors.adminId}
             className={`w-full rounded-lg border bg-white py-3 ps-11 pe-4
                        text-base outline-none focus:border-brand-500 focus:ring-2
                        focus:ring-brand-500/20 transition placeholder:text-gray-400 ${
-                         errors.employeeId ? 'border-red-300' : 'border-gray-300'
+                         errors.adminId ? 'border-red-300' : 'border-gray-300'
                        }`}
           />
           <span className="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center ps-3 text-gray-400">
             <User size={17} />
           </span>
         </div>
-        {errors.employeeId && (
-          <p className="mt-0.5 text-xs text-red-500">{fieldErr(errors.employeeId.message)}</p>
+        {errors.adminId && (
+          <p className="mt-0.5 text-xs text-red-500">{fieldErr(errors.adminId.message)}</p>
         )}
       </div>
 

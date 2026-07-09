@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal }     from '@/shared/components/ui/Modal';
 import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { PermissionGroupList } from './PermissionGroupList';
+import { usePermissionList } from '@/modules/admin/permissions/hooks/usePermissions';
+import { filterRegisteredPermissions, toPermissionNameSet } from '@/shared/permissions/permissionValidation.utils';
 import type { RoleFormInput } from '../types/adminRole.types';
 
 interface Props {
@@ -17,6 +19,8 @@ interface Props {
 export function RoleFormModal({ open, onClose, onSubmit, isLoading, isAr }: Props) {
   const [name,        setName]        = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
+  const { data: allPermissions } = usePermissionList();
+  const registered = useMemo(() => toPermissionNameSet(allPermissions), [allPermissions]);
 
   useEffect(() => {
     if (!open) return;
@@ -32,7 +36,7 @@ export function RoleFormModal({ open, onClose, onSubmit, isLoading, isAr }: Prop
 
   function handleSubmit() {
     if (!isValid) return;
-    onSubmit({ name: name.trim(), permissions });
+    onSubmit({ name: name.trim(), permissions: filterRegisteredPermissions(permissions, registered) });
   }
 
   return (

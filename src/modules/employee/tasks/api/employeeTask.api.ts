@@ -1,4 +1,5 @@
 import { http } from '@/shared/services/http.service';
+import { pmTaskApi } from '@/modules/project-manager/tasks/api/task.api';
 import type { EmployeeTask, EmpTaskListResponse, EmpTaskStatus, EmpTaskPriority, CreateSelfTaskPayload } from '../types/employeeTask.types';
 
 /* ── Raw backend shape — GET /v1/pm/employee/tasks?mine=1 ────────────────
@@ -73,6 +74,6 @@ export const employeeTaskApi = {
   },
 
   createSelfTask(projectId: string, payload: CreateSelfTaskPayload) {
-    return http.post(`/v1/pm/projects/${projectId}/tasks/self`, payload);
+    return pmTaskApi.createSelf(projectId, payload);
   },
 };

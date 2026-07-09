@@ -21,8 +21,8 @@ export const authTranslations = {
     login: {
       title:                 'تسجيل الدخول',
       subtitle:              'أدخل بياناتك للوصول إلى لوحة التحكم',
-      employeeId:            'البريد الإلكتروني / معرّف المدير',
-      employeeIdPlaceholder: 'بريدك الإلكتروني أو UUID الخاص بك',
+      adminId:            'معرّف المستخدم',
+      adminIdPlaceholder: 'أدخل معرّف المستخدم',
       password:              'كلمة المرور',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'نسيت كلمة المرور؟',
@@ -31,6 +31,7 @@ export const authTranslations = {
       activationPrompt:      'موظف جديد؟',
       activationAction:      'تفعيل الحساب',
       activatedSuccess:      'تم تفعيل حسابك بنجاح. يمكنك الآن تسجيل الدخول.',
+      resetSuccess:          'تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.',
     },
 
     setPassword: {
@@ -56,6 +57,32 @@ export const authTranslations = {
       noTokenTitle: 'إعادة تعيين كلمة المرور',
       noTokenDesc:  'لإعادة تعيين كلمة المرور، تواصل مع مسؤول النظام ليرسل لك رابطاً جديداً. افتح الرابط من بريدك لتعيين كلمة مرور جديدة.',
       backToLogin:  'العودة لتسجيل الدخول',
+      validating:   'جارٍ التحقق من الرابط...',
+      expiredTitle: 'رابط إعادة التعيين منتهي الصلاحية',
+      expiredDesc:  'انتهت صلاحية هذا الرابط أو تم استخدامه مسبقاً. اطلب رابطاً جديداً من صفحة نسيت كلمة المرور.',
+      invalidTitle: 'رابط إعادة التعيين غير صالح',
+      invalidDesc:  'الرابط غير صالح. تأكد من فتح الرابط الكامل من بريدك الإلكتروني.',
+      formTitle:    'تعيين كلمة مرور جديدة',
+      formSubtitle: 'أنشئ كلمة مرور قوية لحسابك',
+      greeting:     'مرحباً',
+      accountEmail: 'البريد الإلكتروني',
+      password:     'كلمة المرور الجديدة',
+      confirmPassword: 'تأكيد كلمة المرور',
+      submit:       'تعيين كلمة المرور',
+      submitting:   'جارٍ الحفظ...',
+      requestNewLink: 'طلب رابط جديد',
+    },
+
+    forgotPassword: {
+      title:            'نسيت كلمة المرور؟',
+      subtitle:         'أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة التعيين',
+      emailLabel:       'البريد الإلكتروني',
+      emailPlaceholder: 'user@example.com',
+      submit:           'إرسال رابط إعادة التعيين',
+      submitting:       'جارٍ الإرسال...',
+      backToLogin:      'العودة لتسجيل الدخول',
+      successTitle:     'تحقق من بريدك',
+      successDesc:      'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.',
     },
 
     magicLink: {
@@ -85,8 +112,8 @@ export const authTranslations = {
     },
 
     validation: {
-      employeeIdRequired: 'معرّف الموظف مطلوب',
-      employeeIdInvalid:  'أدخل بريدًا إلكترونيًا صحيحًا أو معرّف مدير صحيح',
+      adminIdRequired: 'معرّف المستخدم مطلوب',
+      adminIdInvalid:  'أدخل معرّف مستخدم صحيح',
       passwordRequired:   'كلمة المرور مطلوبة',
       loginPasswordMin:   'كلمة المرور يجب أن تكون 6 أحرف أو أرقام على الأقل',
       passwordMin:        'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
@@ -95,6 +122,8 @@ export const authTranslations = {
       passwordNumber:     'يجب أن تحتوي على رقم واحد على الأقل',
       confirmRequired:    'تأكيد كلمة المرور مطلوب',
       passwordsMismatch:  'كلمتا المرور غير متطابقتين',
+      emailRequired:      'البريد الإلكتروني مطلوب',
+      emailInvalid:       'أدخل بريداً إلكترونياً صحيحاً',
     },
   },
 
@@ -118,8 +147,8 @@ export const authTranslations = {
     login: {
       title:                 'Sign In',
       subtitle:              'Enter your credentials to access the dashboard',
-      employeeId:            'Email / Admin ID',
-      employeeIdPlaceholder: 'Your email or admin UUID',
+      adminId:            'User ID',
+      adminIdPlaceholder: 'Enter your user ID',
       password:              'Password',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'Forgot password?',
@@ -128,6 +157,7 @@ export const authTranslations = {
       activationPrompt:      'New employee?',
       activationAction:      'Activate account',
       activatedSuccess:      'Your account has been activated. You can now sign in.',
+      resetSuccess:          'Your password has been changed. You can now sign in.',
     },
 
     setPassword: {
@@ -153,6 +183,32 @@ export const authTranslations = {
       noTokenTitle: 'Reset your password',
       noTokenDesc:  'To reset your password, ask your system administrator to send you a new link. Open that link from your email to set a new password.',
       backToLogin:  'Back to Login',
+      validating:   'Validating your reset link...',
+      expiredTitle: 'Reset link expired',
+      expiredDesc:  'This link has expired or has already been used. Request a new one from the forgot password page.',
+      invalidTitle: 'Invalid reset link',
+      invalidDesc:  'This link is invalid. Make sure you opened the full link from your email.',
+      formTitle:    'Set a new password',
+      formSubtitle: 'Create a strong password for your account',
+      greeting:     'Hello',
+      accountEmail: 'Email',
+      password:     'New password',
+      confirmPassword: 'Confirm password',
+      submit:       'Set password',
+      submitting:   'Saving...',
+      requestNewLink: 'Request a new link',
+    },
+
+    forgotPassword: {
+      title:            'Forgot password?',
+      subtitle:         'Enter your email and we will send you a password reset link',
+      emailLabel:       'Email',
+      emailPlaceholder: 'user@example.com',
+      submit:           'Send reset link',
+      submitting:       'Sending...',
+      backToLogin:      'Back to Login',
+      successTitle:     'Check your email',
+      successDesc:      'A password reset link has been sent to your email.',
     },
 
     magicLink: {
@@ -182,8 +238,8 @@ export const authTranslations = {
     },
 
     validation: {
-      employeeIdRequired: 'Employee ID is required',
-      employeeIdInvalid:  'Enter a valid email address or admin ID',
+      adminIdRequired: 'User ID is required',
+      adminIdInvalid:  'Enter a valid user ID',
       passwordRequired:   'Password is required',
       loginPasswordMin:   'Password must be at least 6 characters',
       passwordMin:        'Password must be at least 8 characters',
@@ -192,6 +248,8 @@ export const authTranslations = {
       passwordNumber:     'Must contain at least one number',
       confirmRequired:    'Please confirm your password',
       passwordsMismatch:  'Passwords do not match',
+      emailRequired:      'Email is required',
+      emailInvalid:       'Enter a valid email address',
     },
   },
 } as const;

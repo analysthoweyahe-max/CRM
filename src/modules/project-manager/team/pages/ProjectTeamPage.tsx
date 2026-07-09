@@ -37,7 +37,7 @@ export function ProjectTeamPage() {
           {isAr ? 'فريق العمل' : 'Work Team'}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {isAr ? 'جميع أعضاء الفريق عبر مشاريعك' : 'All team members across your projects'}
+          {isAr ? 'المبرمجون وأعضاء فريقك في مشاريعك' : 'Developers and your team members across your projects'}
         </p>
       </div>
 

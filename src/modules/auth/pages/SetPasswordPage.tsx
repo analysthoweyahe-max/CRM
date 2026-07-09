@@ -24,8 +24,14 @@ export function SetPasswordPage() {
 
   useEffect(() => {
     if (!alreadyActivated || !payload?.accessToken) return;
-    completeInviteLogin(payload.accessToken, payload.inviteType);
-    navigate(payload.redirectPath && payload.redirectPath.startsWith('/') ? payload.redirectPath : ROUTES.DASHBOARD, { replace: true });
+    const profile = payload.inviteType === 'admin' ? payload.admin : payload.employee;
+    completeInviteLogin(payload.accessToken, payload.inviteType, profile)
+      .then(() => {
+        navigate(
+          payload.redirectPath?.startsWith('/') ? payload.redirectPath : ROUTES.DASHBOARD,
+          { replace: true },
+        );
+      });
   }, [alreadyActivated, payload, completeInviteLogin, navigate]);
 
   if (status === 'loading' || alreadyActivated) {

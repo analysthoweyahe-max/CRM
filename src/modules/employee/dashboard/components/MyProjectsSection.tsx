@@ -35,10 +35,14 @@ export function MyProjectsSection({ projects, isAr }: Props) {
                          border border-gray-100 dark:border-gray-700/40
                          hover:border-brand-300 dark:hover:border-brand-700/60 transition-colors"
             >
-              <a href={project.tasksUrl ?? undefined} className="flex items-center gap-2 min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => navigate(project.tasksUrl ?? ROUTES.EMPLOYEE.TASKS)}
+                className="flex items-center gap-2 min-w-0 flex-1 text-start"
+              >
                 <div className="w-2 h-2 rounded-full bg-[#A0CD39] shrink-0" />
                 <p className="text-sm text-gray-800 dark:text-gray-100 truncate">{project.name}</p>
-              </a>
+              </button>
               {project.statusLabel && (
                 <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{project.statusLabel}</span>
               )}

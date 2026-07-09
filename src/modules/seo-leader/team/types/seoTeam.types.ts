@@ -9,6 +9,11 @@ export interface SeoTeamApiMember {
   avatarInitial:       string;
   team:                { id: number; name: string; nameAr: string };
   jobTitle:            { id: number; name: string } | null;
+  department?:         string | null;
+  departmentAr?:       string | null;
+  roles?:              string[];
+  managerId?:          string | null;
+  manager?:            { id: string; name?: string } | null;
   status:              string;
   isActive:            boolean;
   statusLabel:         string;

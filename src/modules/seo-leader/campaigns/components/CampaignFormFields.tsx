@@ -1,5 +1,7 @@
-import { Combobox }   from '@/shared/components/form/Combobox';
+import { Combobox } from '@/shared/components/form/Combobox';
 import { ArrayInput } from '@/shared/components/form/ArrayInput';
+import { ProjectOptionalFields } from '@/shared/components/form/ProjectOptionalFields';
+import type { ProjectOptionalFieldErrors } from '@/shared/utils/projectOptionalFields.utils';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 
 const INPUT = [
@@ -23,6 +25,9 @@ export interface CampaignFormFieldsProps {
   keywords:     string[];
   links:        string[];
   githubLink:   string;
+  driveLink:    string;
+  contractDurationMonths: string;
+  optionalFieldErrors?: ProjectOptionalFieldErrors;
   isAr:         boolean;
   campaignTypeItems: ComboboxItem[];
   statusItems:       ComboboxItem[];
@@ -34,6 +39,8 @@ export interface CampaignFormFieldsProps {
   setStartDate: (v: string) => void;
   setEndDate:   (v: string) => void;
   setGithubLink: (v: string) => void;
+  setDriveLink:  (v: string) => void;
+  setContractDurationMonths: (v: string) => void;
   addKeyword:    () => void;
   updateKeyword: (i: number, v: string) => void;
   removeKeyword: (i: number) => void;
@@ -43,16 +50,17 @@ export interface CampaignFormFieldsProps {
 }
 
 export function CampaignFormFields({
-  name, domain, description, campaignType, status, startDate, endDate, keywords, links, githubLink, isAr,
+  name, domain, description, campaignType, status, startDate, endDate,
+  keywords, links, githubLink, driveLink, contractDurationMonths, optionalFieldErrors, isAr,
   campaignTypeItems, statusItems,
-  setName, setDomain, setDesc, setType, setStatus, setStartDate, setEndDate, setGithubLink,
+  setName, setDomain, setDesc, setType, setStatus, setStartDate, setEndDate,
+  setGithubLink, setDriveLink, setContractDurationMonths,
   addKeyword, updateKeyword, removeKeyword,
   addLink, updateLink, removeLink,
 }: CampaignFormFieldsProps) {
   return (
     <div className="space-y-5">
 
-      {/* Campaign name */}
       <div>
         <label className={LABEL}>
           {isAr ? 'اسم المشروع' : 'Project Name'}
@@ -67,7 +75,6 @@ export function CampaignFormFields({
         />
       </div>
 
-      {/* Target domain */}
       <div>
         <label className={LABEL}>
           {isAr ? 'الدومين المستهدف' : 'Target Domain'}
@@ -85,20 +92,6 @@ export function CampaignFormFields({
         </p>
       </div>
 
-      {/* GitHub link */}
-      <div>
-        <label className={LABEL}>{isAr ? 'رابط GitHub' : 'GitHub Link'}</label>
-        <input
-          type="url"
-          value={githubLink}
-          onChange={e => setGithubLink(e.target.value)}
-          placeholder="https://github.com/org/repo"
-          dir="ltr"
-          className={INPUT}
-        />
-      </div>
-
-      {/* Description */}
       <div>
         <label className={LABEL}>{isAr ? 'وصف المشروع' : 'Project Description'}</label>
         <textarea
@@ -110,7 +103,6 @@ export function CampaignFormFields({
         />
       </div>
 
-      {/* Campaign type + Status */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>
@@ -142,35 +134,34 @@ export function CampaignFormFields({
         </div>
       </div>
 
-      {/* Dates */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>
             {isAr ? 'تاريخ البدء' : 'Start Date'}
             <span className="text-red-500 ms-1">*</span>
           </label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            className={INPUT}
-          />
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={INPUT} />
         </div>
         <div>
           <label className={LABEL}>
             {isAr ? 'تاريخ الانتهاء المتوقع' : 'Expected End Date'}
             <span className="text-red-500 ms-1">*</span>
           </label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={e => setEndDate(e.target.value)}
-            className={INPUT}
-          />
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={INPUT} />
         </div>
       </div>
 
-      {/* Keywords */}
+      <ProjectOptionalFields
+        githubLink={githubLink}
+        driveLink={driveLink}
+        contractDurationMonths={contractDurationMonths}
+        errors={optionalFieldErrors}
+        isAr={isAr}
+        onGithubLinkChange={setGithubLink}
+        onDriveLinkChange={setDriveLink}
+        onContractMonthsChange={setContractDurationMonths}
+      />
+
       <div>
         <label className={LABEL}>
           {isAr ? 'الكلمات المفتاحية المستهدفة الرئيسية' : 'Primary Target Keywords'}
@@ -187,7 +178,6 @@ export function CampaignFormFields({
         />
       </div>
 
-      {/* Links */}
       <div>
         <label className={LABEL}>{isAr ? 'مراجع وروابط' : 'References & Links'}</label>
         <ArrayInput
