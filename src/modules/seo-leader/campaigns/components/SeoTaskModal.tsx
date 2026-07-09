@@ -355,7 +355,7 @@ export function SeoTaskModal({ taskId, projectId, onClose, isAr }: Props) {
                       <div className="flex items-center gap-3 min-w-0">
                         <Paperclip size={15} className="text-gray-400 dark:text-gray-500 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{att.name}</p>
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{att.fileName}</p>
                           {att.size && (
                             <p className="text-xs text-gray-400 dark:text-gray-500">{att.size}</p>
                           )}
@@ -364,7 +364,7 @@ export function SeoTaskModal({ taskId, projectId, onClose, isAr }: Props) {
                       {att.url && (
                         <a
                           href={att.url}
-                          download={att.name}
+                          download={att.fileName}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1.5 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/30 dark:hover:bg-[#A0CD39]/10 transition-colors shrink-0"

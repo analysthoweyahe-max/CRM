@@ -15,8 +15,8 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
   const qc = useQueryClient();
 
   const { mutate: create, isPending: creating } = useMutation({
-    mutationFn: ({ projectId, payload }: { projectId: string; payload: CreateSelfSeoTaskPayload }) =>
-      seoTaskDetailApi.createSelfTask(projectId, payload),
+    mutationFn: ({ projectId, payload, files }: { projectId: string; payload: CreateSelfSeoTaskPayload; files?: File[] }) =>
+      seoTaskDetailApi.createSelfTask(projectId, payload, files),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
       qc.invalidateQueries({ queryKey: ['my-tasks'] });
@@ -30,10 +30,13 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
   const [priority,       setPriority]       = useState<SeoTaskPriority>('normal');
   const [dueDate,        setDueDate]        = useState('');
   const [estimatedHours, setEstimatedHours] = useState('');
+  const [files,          setFiles]          = useState<File[]>([]);
+  const [fileError,      setFileError]      = useState<string | null>(null);
 
   function reset() {
     setProjectId(''); setTitle(''); setPhase(''); setDescription('');
     setPriority('normal'); setDueDate(''); setEstimatedHours('');
+    setFiles([]); setFileError(null);
   }
 
   function handleClose() { reset(); onClose(); }
@@ -64,7 +67,7 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
     };
 
     create(
-      { projectId, payload },
+      { projectId, payload, files: files.length ? files : undefined },
       {
         onSuccess: () => {
           toast.success(isAr ? 'تم إضافة المهمة بنجاح' : 'Task added successfully');
@@ -83,6 +86,7 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
+    files, setFiles, fileError, setFileError,
     isValid, creating,
     handleSubmit, handleClose,
   };

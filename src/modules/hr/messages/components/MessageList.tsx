@@ -45,7 +45,9 @@ function MessageBubble({ msg, isOwn, isAr }: { msg: ApiMessage; isOwn: boolean; 
         </div>
 
         <div className={`flex items-center gap-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-          <span className="text-[10px] text-gray-400 dark:text-gray-500">{fmtTime(msg.created_at, isAr)}</span>
+          <span className="text-[10px] text-gray-400 dark:text-gray-500">
+            {fmtTime(msg.sentAt ?? msg.created_at ?? '', isAr)}
+          </span>
           {isOwn && (seen
             ? <CheckCheck size={12} className="text-[#A0CD39]" />
             : <Check      size={12} className="text-gray-400"  />
@@ -77,7 +79,12 @@ export function MessageList({ messages, currentUserId, isAr }: Props) {
         </p>
       )}
       {messages.map(msg => (
-        <MessageBubble key={msg.id} msg={msg} isOwn={msg.sender.id === currentUserId} isAr={isAr} />
+        <MessageBubble
+          key={String(msg.id)}
+          msg={msg}
+          isOwn={msg.isMine ?? (msg.sender?.id === currentUserId)}
+          isAr={isAr}
+        />
       ))}
       <div ref={bottomRef} />
     </div>

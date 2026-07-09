@@ -18,8 +18,11 @@ export interface ProjectSection {
   projects:        SeoProject[];
 }
 
+import type { AttendanceTimer } from '@/shared/modules/attendance/types/attendanceTimer.types';
+
 export interface SeoMemberDashboardData {
   tasksOverview: TasksOverview;
+  checkIn?:      Partial<AttendanceTimer>;
   myProjects: {
     sections: ProjectSection[];
   };

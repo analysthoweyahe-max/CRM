@@ -13,12 +13,8 @@ export function useNotifications() {
     queryKey,
     queryFn:  () => notificationsApi.list(role, { per_page: 15 }).then((r) => r.data.data),
     staleTime: 30_000,
-    /* TODO(backend): remove once FCM push delivery is confirmed reliable end-to-end.
-       Right now the bell only updates when a foreground push fires `refetch()` — if the
-       push never arrives (token registration failing, Firebase plan/billing issues, etc.)
-       new notifications never show up without a manual reload. This poll is a resilient
-       fallback so the badge stays close to real-time either way. */
-    refetchInterval: 15_000,
+    /* Polling fallback when FCM is unavailable — keeps badge close to real-time. */
+    refetchInterval: 30_000,
   });
 
   const unreadCount     = data?.unreadCount ?? 0;

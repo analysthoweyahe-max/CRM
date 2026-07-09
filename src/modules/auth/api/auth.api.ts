@@ -11,6 +11,8 @@ import type {
   ChangePasswordPayload,
   ChangePasswordApiResponse,
   ForgotPasswordApiResponse,
+  EmployeeForgotPasswordApiResponse,
+  EmployeeVerifyResetOtpApiResponse,
   PasswordResetVerifyApiResponse,
 } from '@/modules/auth/types/auth.types';
 
@@ -100,14 +102,21 @@ export const authApi = {
   },
 
   employeeForgotPassword(payload: { email: string }) {
-    return http.post<ForgotPasswordApiResponse>('/v1/employee/auth/forgot-password', payload);
+    return http.post<EmployeeForgotPasswordApiResponse>('/v1/employee/auth/forgot-password', payload);
   },
 
-  verifyEmployeePasswordReset(token: string) {
-    return http.get<PasswordResetVerifyApiResponse>(`/v1/employee/auth/password-resets/${token}`);
+  employeeVerifyResetOtp(payload: { email: string; code: string }) {
+    return http.post<EmployeeVerifyResetOtpApiResponse>(
+      '/v1/employee/auth/verify-reset-otp',
+      payload,
+    );
   },
 
-  resetEmployeePassword(token: string, payload: { password: string; password_confirmation: string }) {
-    return http.post<void>(`/v1/employee/auth/password-resets/${token}`, payload);
+  employeeResetPasswordOtp(payload: {
+    token:                 string;
+    password:              string;
+    password_confirmation: string;
+  }) {
+    return http.post<ForgotPasswordApiResponse>('/v1/employee/auth/reset-password', payload);
   },
 };

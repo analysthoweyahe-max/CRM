@@ -4,8 +4,8 @@ import { useLang }            from '@/app/providers/LanguageProvider';
 import { ROUTES }             from '@/app/router/routes';
 import { TaskDetailTabs }     from '@/modules/employee/tasks/components/TaskDetailTabs';
 import { TaskDetailTimeTracker }  from '@/modules/employee/tasks/components/TaskDetailTimeTracker';
-import { TaskDetailAttachments }  from '@/modules/employee/tasks/components/TaskDetailAttachments';
 import { TaskDetailComments }     from '@/modules/employee/tasks/components/TaskDetailComments';
+import { SeoAttachmentsTab }      from '@/modules/seo-leader/campaigns/components/SeoAttachmentsTab';
 import type { TabId }             from '@/modules/employee/tasks/components/TaskDetailTabs';
 import type { TaskDetail }        from '@/modules/employee/tasks/types/taskDetail.types';
 import {
@@ -13,6 +13,8 @@ import {
   useUpdateSeoTaskStatus,
   useSeoTaskComments,
   useSeoTaskSessions,
+  useUploadSeoTaskAttachments,
+  useDeleteSeoTaskAttachment,
 } from '../hooks/useSeoTaskDetail';
 import { SeoTaskDetailHeader }    from '../components/SeoTaskDetailHeader';
 import { SeoTaskDetailInfo }      from '../components/SeoTaskDetailInfo';
@@ -25,10 +27,15 @@ export function SeoTaskDetailPage() {
 
   const [activeTab, setActiveTab] = useState<TabId>('time');
 
-  const { data: detail, isLoading } = useSeoTaskDetail(projectId, taskId);
+  const { data: detailRes, isLoading } = useSeoTaskDetail(projectId, taskId);
+  const detail = detailRes?.task;
+  const tabs = detailRes?.tabs;
+
   const { data: comments = [], isLoading: commentsLoading } = useSeoTaskComments(projectId, taskId);
   const { data: sessions = [], isLoading: sessionsLoading } = useSeoTaskSessions(projectId, taskId);
   const { mutate: changeStatus } = useUpdateSeoTaskStatus(projectId, taskId, isAr);
+  const { uploadFiles, isUploading, uploadError } = useUploadSeoTaskAttachments(projectId, taskId, isAr);
+  const { deleteAttachment, deletingId } = useDeleteSeoTaskAttachment(projectId, taskId, isAr);
 
   const taskDetailAdapter: TaskDetail | undefined = detail
     ? {
@@ -48,6 +55,11 @@ export function SeoTaskDetailPage() {
       }
     : undefined;
 
+  const tabCounts = {
+    attachments: detail?.attachmentsCount ?? tabs?.attachmentsCount ?? detail?.attachments?.length ?? 0,
+    comments:    tabs?.commentsCount ?? comments.length,
+  };
+
   return (
     <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
 
@@ -59,7 +71,12 @@ export function SeoTaskDetailPage() {
       />
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <TaskDetailTabs activeTab={activeTab} onTabChange={setActiveTab} isAr={isAr} />
+        <TaskDetailTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          isAr={isAr}
+          counts={tabCounts}
+        />
 
         <div className="p-5">
           {activeTab === 'time' && (
@@ -74,7 +91,15 @@ export function SeoTaskDetailPage() {
             <SeoTaskDetailInfo task={detail} isLoading={isLoading} isAr={isAr} onStatusChange={changeStatus} />
           )}
           {activeTab === 'attachments' && (
-            <TaskDetailAttachments isLoading={isLoading} isAr={isAr} />
+            <SeoAttachmentsTab
+              attachments={detail?.attachments ?? []}
+              onUploadFiles={uploadFiles}
+              onDelete={deleteAttachment}
+              isUploading={isUploading}
+              deletingId={deletingId}
+              isAr={isAr}
+              uploadError={uploadError}
+            />
           )}
           {activeTab === 'comments' && (
             <TaskDetailComments

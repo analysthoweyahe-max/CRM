@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { UseFormSetError } from 'react-hook-form';
+import { ROUTES } from '@/app/router/routes';
 import { authService } from '@/modules/auth/services/auth.service';
+import { useForgotPasswordState } from '@/modules/auth/context/ForgotPasswordContext';
 import type { ForgotPasswordFormValues } from '@/modules/auth/schemas/forgotPassword.schema';
 import {
   extractApiError,
@@ -9,17 +11,18 @@ import {
 } from '@/shared/utils/error.utils';
 
 export function useForgotPassword() {
-  const [error, setError]       = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const navigate = useNavigate();
+  const { setEmailStep } = useForgotPasswordState();
 
   async function submit(
     values: ForgotPasswordFormValues,
     setFieldError?: UseFormSetError<ForgotPasswordFormValues>,
-  ) {
-    setError(null);
+  ): Promise<string | null> {
     try {
-      await authService.requestPasswordReset(values.email);
-      setSubmitted(true);
+      const expiresAt = await authService.requestEmployeeResetOtp(values.email);
+      setEmailStep(values.email, expiresAt);
+      navigate(ROUTES.AUTH.FORGOT_PASSWORD_VERIFY, { replace: true });
+      return null;
     } catch (err: unknown) {
       const status = extractApiStatus(err);
 
@@ -27,14 +30,17 @@ export function useForgotPassword() {
         const fieldErrors = extractApiFieldErrors(err);
         if (fieldErrors.email) {
           setFieldError('email', { message: fieldErrors.email });
-          return;
+          return null;
         }
       }
 
-      const msg = extractApiError(err);
-      setError(msg || 'forgotPasswordFailed');
+      if (status === 503) {
+        return 'mailSendFailed';
+      }
+
+      return extractApiError(err) || 'forgotPasswordFailed';
     }
   }
 
-  return { submit, error, submitted };
+  return { submit };
 }

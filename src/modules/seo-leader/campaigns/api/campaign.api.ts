@@ -9,6 +9,7 @@ import type {
 import type { SeoCampaign }          from '../../dashboard/types/dashboard.types';
 import type { CreateSeoTaskPayload } from '../components/AddSeoTaskModal.types';
 import type { SeoTaskDetail }        from '../components/SeoTaskModal.types';
+import { appendSeoTaskFiles, normalizeSeoAttachments, type SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
 
 export interface SeoTaskAssignee {
   id:             string;
@@ -38,7 +39,8 @@ export interface SeoTask {
   notes?:          string | null;
   referenceLinks:  string[];
   assignees:       SeoTaskAssignee[];
-  attachments:     { id: number; name: string; url?: string }[];
+  attachments:     SeoTaskAttachment[];
+  attachmentsCount?: number;
   completedAt?:    string | null;
   createdAt:       string;
   updatedAt:       string;
@@ -119,6 +121,24 @@ export interface SeoTaskTimeLogSummary {
   progressPercent: number;
 }
 
+export interface SeoTaskUploadResponse {
+  id:               number;
+  uuid?:            string;
+  title?:           string;
+  attachments:      SeoTaskAttachment[];
+  attachmentsCount: number;
+}
+
+function unwrapTaskDetail(data: unknown): SeoTaskDetail {
+  const raw = data && typeof data === 'object' && 'task' in (data as object)
+    ? (data as { task: SeoTaskDetail }).task
+    : (data as SeoTaskDetail);
+  return {
+    ...raw,
+    attachments: normalizeSeoAttachments(raw.attachments),
+    attachmentsCount: raw.attachmentsCount ?? raw.attachments?.length ?? 0,
+  };
+}
 export interface AddSeoTimeLogPayload {
   work_date:  string;
   started_at: string;
@@ -248,13 +268,36 @@ export const campaignApi = {
 
   getTask(projectId: string | number, taskId: string | number) {
     return http.get<ApiResponse<SeoTaskDetail>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}`
-    );
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}`,
+    ).then(res => ({
+      ...res,
+      data: {
+        ...res.data,
+        data: unwrapTaskDetail(res.data.data),
+      },
+    }));
   },
 
-  createTask(projectId: string | number, payload: CreateSeoTaskPayload) {
+  createTask(projectId: string | number, payload: CreateSeoTaskPayload, files?: File[]) {
+    if (files?.length) {
+      const fd = new FormData();
+      fd.append('title', payload.title);
+      fd.append('phase', payload.phase);
+      payload.employee_ids.forEach(id => fd.append('employee_ids[]', id));
+      if (payload.description)      fd.append('description', payload.description);
+      if (payload.priority)         fd.append('priority', payload.priority);
+      if (payload.due_date)         fd.append('due_date', payload.due_date);
+      if (payload.estimated_hours != null) fd.append('estimated_hours', String(payload.estimated_hours));
+      if (payload.target_keyword)   fd.append('target_keyword', payload.target_keyword);
+      if (payload.target_url)       fd.append('target_url', payload.target_url);
+      appendSeoTaskFiles(fd, files);
+      return http.post<ApiResponse<SeoTask>>(
+        `/v1/seo/manager/projects/${projectId}/tasks`, fd,
+        { headers: { 'Content-Type': undefined } },
+      );
+    }
     return http.post<ApiResponse<SeoTask>>(
-      `/v1/seo/manager/projects/${projectId}/tasks`, payload
+      `/v1/seo/manager/projects/${projectId}/tasks`, payload,
     );
   },
 
@@ -276,19 +319,42 @@ export const campaignApi = {
     );
   },
 
-  uploadAttachment(projectId: string | number, taskId: string | number, file: File) {
+  uploadAttachments(projectId: string | number, taskId: string | number, files: File[]) {
     const fd = new FormData();
-    fd.append('file', file);
-    return http.post<ApiResponse<{ id: number; name: string; url: string }>>(
+    appendSeoTaskFiles(fd, files);
+    return http.post<ApiResponse<SeoTaskUploadResponse>>(
       `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/attachments`, fd,
-      { headers: { 'Content-Type': undefined } }
-    );
+      { headers: { 'Content-Type': undefined } },
+    ).then(res => ({
+      ...res,
+      data: {
+        ...res.data,
+        data: {
+          ...res.data.data,
+          attachments: normalizeSeoAttachments(res.data.data.attachments),
+        },
+      },
+    }));
+  },
+
+  /** @deprecated Use uploadAttachments — sends a single file via files[] */
+  uploadAttachment(projectId: string | number, taskId: string | number, file: File) {
+    return this.uploadAttachments(projectId, taskId, [file]);
   },
 
   deleteAttachment(projectId: string | number, taskId: string | number, attachmentId: string | number) {
-    return http.delete<{ status: string; message: string; data?: unknown }>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`
-    );
+    return http.delete<ApiResponse<SeoTaskUploadResponse>>(
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`,
+    ).then(res => ({
+      ...res,
+      data: {
+        ...res.data,
+        data: res.data.data ? {
+          ...res.data.data,
+          attachments: normalizeSeoAttachments(res.data.data.attachments),
+        } : res.data.data,
+      },
+    }));
   },
 
   getTimeLogs(projectId: string | number, taskId: string | number) {

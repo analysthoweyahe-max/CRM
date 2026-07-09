@@ -29,8 +29,8 @@ messaging.onBackgroundMessage(payload => {
   // in the regular page Console). Remove once realtime is confirmed stable.
   console.log('[FCM SW] background message received', payload);
 
-  const title = payload.notification?.title ?? 'Howaya HR';
-  const body  = payload.notification?.body  ?? '';
+  const title = payload.notification?.title ?? payload.data?.title ?? 'Howaya HR';
+  const body  = payload.notification?.body  ?? payload.data?.body  ?? '';
 
   // Both steps are returned together (not fire-and-forget) so the browser
   // doesn't kill the worker mid-flight after showNotification() resolves —

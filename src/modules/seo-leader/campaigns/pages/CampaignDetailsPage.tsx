@@ -1,5 +1,5 @@
-import { useState, useMemo }     from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect }     from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Plus }        from 'lucide-react';
 import { useQuery }               from '@tanstack/react-query';
 import { useLang }                from '@/app/providers/LanguageProvider';
@@ -102,11 +102,18 @@ export function CampaignDetailsPage() {
   const isAr        = lang === 'ar';
   const navigate    = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
 
-  const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');
+  const tabParam = searchParams.get('tab');
+  const initialTab: TabKey = tabParam === 'messages' ? 'messages' : 'tasks';
+  const [activeTab,      setActiveTab]      = useState<TabKey>(initialTab);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   // Keyed by task id → the real backend status key (not the coarse union).
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (tabParam === 'messages') setActiveTab('messages');
+  }, [tabParam]);
 
   /* ── Campaign header ──────────────────────────────────────────────── */
   const { data: campaign, isLoading: campaignLoading } = useQuery({

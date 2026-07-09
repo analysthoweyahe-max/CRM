@@ -155,11 +155,25 @@ export function useSeoTaskDrawer(
     },
   });
 
-  /* ── Upload attachment ──────────────────────────────────────────────── */
+  /* ── Upload attachments (batch) ─────────────────────────────────────── */
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => campaignApi.uploadAttachment(projectId, taskId!, file),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
+    mutationFn: (files: File[]) => campaignApi.uploadAttachments(projectId, taskId!, files),
+    onSuccess: (res) => {
+      const { attachments, attachmentsCount } = res.data.data;
+      queryClient.setQueryData(['seo-task', projectId, taskId], (prev: typeof task | undefined) =>
+        prev ? { ...prev, attachments, attachmentsCount } : prev,
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (attachmentId: number) =>
+      campaignApi.deleteAttachment(projectId, taskId!, attachmentId),
+    onSuccess: (res) => {
+      const { attachments, attachmentsCount } = res.data.data;
+      queryClient.setQueryData(['seo-task', projectId, taskId], (prev: typeof task | undefined) =>
+        prev ? { ...prev, attachments, attachmentsCount } : prev,
+      );
     },
   });
 
@@ -225,8 +239,11 @@ export function useSeoTaskDrawer(
     handleSave,
     isSaving: saveMutation.isPending || assigneeMutation.isPending,
     attachments: task?.attachments ?? [],
-    uploadFile:  (file: File) => uploadMutation.mutate(file),
+    attachmentsCount: task?.attachmentsCount ?? task?.attachments?.length ?? 0,
+    uploadFiles: (files: File[]) => uploadMutation.mutate(files),
+    deleteAttachment: (id: number) => deleteMutation.mutate(id),
     isUploading: uploadMutation.isPending,
+    deletingId: deleteMutation.isPending ? (deleteMutation.variables ?? null) : null,
     comments,
     commentText,
     setCommentText,

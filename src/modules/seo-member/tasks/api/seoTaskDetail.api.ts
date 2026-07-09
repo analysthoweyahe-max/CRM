@@ -3,11 +3,16 @@ import { STATUS_TO_WIRE, toSeoTask as mapSeoTask } from './seoTask.api';
 import type { RawSeoTask, RawSeoTaskRef } from './seoTask.api';
 import type { SeoTaskStatus } from '../types/seoTask.types';
 import type {
-  SeoTaskDetail, SeoTaskDetailResponse, SeoAssignee,
+  SeoTaskDetail, SeoTaskDetailResponse, SeoAssignee, SeoTaskDetailTabs,
   SeoTaskComment, SeoTaskCommentsPage,
   SeoTaskTimeLog, SeoTaskTimeLogSummary, AddTimeLogPayload,
 } from '../types/seoTaskDetail.types';
 import type { CreateSelfSeoTaskPayload } from '../types/seoTask.types';
+import {
+  appendSeoTaskFiles,
+  normalizeSeoAttachments,
+  type SeoTaskAttachment,
+} from '@/shared/utils/seoTaskAttachment.utils';
 
 interface RawSeoAssignee {
   id:        string | number;
@@ -31,6 +36,16 @@ interface RawSeoTaskDetail extends RawSeoTask {
   metaTitle?:         string | null;
   metaDescription?:   string | null;
   allocatedHours?:    number;
+  attachments?:       unknown[];
+  attachmentsCount?:  number;
+}
+
+interface SeoTaskUploadResponse {
+  id:               number;
+  uuid?:            string;
+  title?:           string;
+  attachments:      SeoTaskAttachment[];
+  attachmentsCount: number;
 }
 
 function toAssignee(raw: RawSeoAssignee): SeoAssignee {
@@ -44,6 +59,7 @@ function toAssignee(raw: RawSeoAssignee): SeoAssignee {
 }
 
 function toSeoTaskDetail(raw: RawSeoTaskDetail): SeoTaskDetail {
+  const attachments = normalizeSeoAttachments(raw.attachments);
   return {
     ...mapSeoTask(raw),
     assignees:         (raw.assignees ?? []).map(toAssignee),
@@ -60,15 +76,36 @@ function toSeoTaskDetail(raw: RawSeoTaskDetail): SeoTaskDetail {
     metaTitle:         raw.metaTitle ?? null,
     metaDescription:   raw.metaDescription ?? null,
     allocatedHours:    raw.allocatedHours ?? 0,
+    attachments,
+    attachmentsCount:  raw.attachmentsCount ?? attachments.length,
+  };
+}
+
+function mapUploadResponse(data: SeoTaskUploadResponse): SeoTaskUploadResponse {
+  return {
+    ...data,
+    attachments: normalizeSeoAttachments(data.attachments),
+    attachmentsCount: data.attachmentsCount ?? normalizeSeoAttachments(data.attachments).length,
   };
 }
 
 export const seoTaskDetailApi = {
-  async getById(projectId: string, taskId: string): Promise<SeoTaskDetail> {
-    const res = await http.get<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}`,
-    );
-    return toSeoTaskDetail(res.data.data.task);
+  async getById(projectId: string, taskId: string): Promise<{ task: SeoTaskDetail; tabs?: SeoTaskDetailTabs }> {
+    const res = await http.get<{
+      status: string;
+      message: string;
+      data: { task: RawSeoTaskDetail; tabs?: SeoTaskDetailTabs };
+    }>(`/v1/seo/employee/projects/${projectId}/tasks/${taskId}`);
+
+    const task = toSeoTaskDetail(res.data.data.task);
+    const tabs = res.data.data.tabs;
+    return {
+      task: {
+        ...task,
+        attachmentsCount: tabs?.attachmentsCount ?? task.attachmentsCount,
+      },
+      tabs,
+    };
   },
 
   async updateStatus(projectId: string, taskId: string, status: SeoTaskStatus): Promise<SeoTaskDetail> {
@@ -79,27 +116,51 @@ export const seoTaskDetailApi = {
     return toSeoTaskDetail(res.data.data.task);
   },
 
-  createSelfTask(projectId: string, payload: CreateSelfSeoTaskPayload) {
+  createSelfTask(projectId: string, payload: CreateSelfSeoTaskPayload, files?: File[]) {
+    if (files?.length) {
+      const fd = new FormData();
+      fd.append('title', payload.title);
+      fd.append('phase', payload.phase);
+      fd.append('priority', payload.priority);
+      if (payload.description)      fd.append('description', payload.description);
+      if (payload.due_date)         fd.append('due_date', payload.due_date);
+      if (payload.estimated_hours != null) fd.append('estimated_hours', String(payload.estimated_hours));
+      appendSeoTaskFiles(fd, files);
+      return http.post<SeoTaskDetailResponse>(
+        `/v1/seo/employee/projects/${projectId}/tasks/self`, fd,
+        { headers: { 'Content-Type': undefined } },
+      );
+    }
     return http.post<SeoTaskDetailResponse>(
       `/v1/seo/employee/projects/${projectId}/tasks/self`, payload,
     );
   },
 
-  /* Attachments / time-logs / comments — same prefix as the rest, per the
-     confirmed endpoint table. No UI consumes these yet on the employee side. */
-  uploadAttachment(projectId: string, taskId: string, file: File) {
+  uploadAttachments(projectId: string, taskId: string, files: File[]) {
     const fd = new FormData();
-    fd.append('file', file);
-    return http.post<{ status: string; message: string; data: { id: number; name: string; url: string } }>(
+    appendSeoTaskFiles(fd, files);
+    return http.post<{ status: string; message: string; data: SeoTaskUploadResponse }>(
       `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/attachments`, fd,
       { headers: { 'Content-Type': undefined } },
-    );
+    ).then(res => ({
+      ...res,
+      data: {
+        ...res.data,
+        data: mapUploadResponse(res.data.data),
+      },
+    }));
   },
 
   deleteAttachment(projectId: string, taskId: string, attachmentId: string | number) {
-    return http.delete<{ status: string; message: string; data?: unknown }>(
+    return http.delete<{ status: string; message: string; data: SeoTaskUploadResponse }>(
       `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`,
-    );
+    ).then(res => ({
+      ...res,
+      data: {
+        ...res.data,
+        data: mapUploadResponse(res.data.data),
+      },
+    }));
   },
 
   getTimeLogs(projectId: string, taskId: string) {

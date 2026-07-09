@@ -1,4 +1,5 @@
 import type { SeoTask } from './seoTask.types';
+import type { SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
 
 export interface SeoAssignee {
   id:       string;
@@ -22,6 +23,13 @@ export interface SeoTaskDetail extends SeoTask {
   metaTitle:         string | null;
   metaDescription:   string | null;
   allocatedHours:    number;
+  attachments:       SeoTaskAttachment[];
+  attachmentsCount:  number;
+}
+
+export interface SeoTaskDetailTabs {
+  attachmentsCount?: number;
+  commentsCount?:    number;
 }
 
 export interface SeoTaskDetailResponse {

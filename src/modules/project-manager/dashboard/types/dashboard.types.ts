@@ -48,9 +48,12 @@ export interface PmDashboardTasksOverview {
   completed:     number;
 }
 
+import type { AttendanceTimer } from '@/shared/modules/attendance/types/attendanceTimer.types';
+
 export interface PmDashboardData {
   summary?:       PmDashboardSummary;
   tasksOverview?: PmDashboardTasksOverview;
+  checkIn?:       Partial<AttendanceTimer>;
   projects?: {
     sections: PmDashboardProjectSection[];
   };

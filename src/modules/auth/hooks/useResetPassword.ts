@@ -11,10 +11,7 @@ import {
   hasTokenValidationError,
 } from '@/shared/utils/error.utils';
 
-export function useResetPassword(
-  token: string,
-  actorType: 'admin' | 'employee',
-) {
+export function useResetPassword(token: string) {
   const navigate          = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +25,7 @@ export function useResetPassword(
         token,
         password:        values.password,
         confirmPassword: values.confirmPassword,
-        actorType,
+        actorType:       'admin',
       });
       navigate(`${ROUTES.AUTH.LOGIN}?reset=1`, { replace: true });
     } catch (err: unknown) {

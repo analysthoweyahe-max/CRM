@@ -172,7 +172,8 @@ export function EmpChatWindow({ conversation, isAr }: Props) {
 
 /* ── Single message bubble ── */
 function MessageBubble({ msg, isAr, currentUserId }: { msg: EmpMessage; isAr: boolean; currentUserId: string }) {
-  const isOwn = msg.sender.id === currentUserId;
+  const isOwn = msg.isMine ?? (msg.sender?.id === currentUserId);
+  const timestamp = msg.sentAt ?? msg.created_at ?? '';
 
   return (
     <div className={`flex ${isOwn ? 'justify-start' : 'justify-end'}`}>
@@ -206,7 +207,7 @@ function MessageBubble({ msg, isAr, currentUserId }: { msg: EmpMessage; isAr: bo
 
         {/* Timestamp */}
         <p className={`text-[10px] mt-1 ${isOwn ? 'text-gray-700/70' : 'text-gray-400'} text-end`}>
-          {fmtTime(msg.created_at, isAr)}
+          {fmtTime(timestamp, isAr)}
         </p>
       </div>
     </div>

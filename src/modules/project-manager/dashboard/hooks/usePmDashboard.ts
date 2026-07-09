@@ -149,5 +149,6 @@ export function usePmDashboard() {
     summary: data?.summary ?? EMPTY_SUMMARY,
     sections,
     stats: computeStats(sections),
+    checkIn: data?.checkIn ?? null,
   };
 }

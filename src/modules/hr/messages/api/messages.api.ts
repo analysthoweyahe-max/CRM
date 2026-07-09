@@ -18,7 +18,7 @@ export const messagesApi = {
     return http.get<ConversationListResponse>('/v1/hr/messages/conversations', { params });
   },
 
-  createConversation(payload: { participant_id: string }) {
+  createConversation(payload: { employee_id: string; subject?: string; message?: string }) {
     return http.post<ConversationSingleResponse>('/v1/hr/messages/conversations', payload);
   },
 
@@ -37,6 +37,7 @@ export const messagesApi = {
   sendMedia(uuid: string, file: File) {
     const fd = new FormData();
     fd.append('file', file);
+    fd.append('type', file.type.startsWith('image/') ? 'image' : 'file');
     return http.post<SendMessageResponse>(`/v1/hr/messages/conversations/${uuid}/media`, fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });

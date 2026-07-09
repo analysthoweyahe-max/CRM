@@ -1,31 +1,20 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
-import { getAvatarColor } from '@/shared/utils';
+import { mapProjectMessage } from '@/shared/utils/projectChat.utils';
 import { pmProjectMessagesApi } from '../api/messages.api';
-import type { ChatMessage, PmMessage, PmMentionable } from '../types/message.types';
-
-function toChatMessage(m: PmMessage, currentUserId: string | undefined): ChatMessage {
-  const time = m.createdAt.split(' ')[1]?.slice(0, 5) ?? '';
-  return {
-    id:            String(m.id),
-    senderName:    m.sender.name,
-    senderInitial: m.sender.avatarInitial,
-    senderColor:   getAvatarColor(m.sender.name),
-    text:          m.body,
-    time,
-    isOwn:         !!currentUserId && m.sender.id === currentUserId,
-    isRead:        true,
-  };
-}
+import type { ChatMessage, PmMentionable } from '../types/message.types';
 
 export function useProjectMessages(projectId: string) {
-  const { user }   = useAuth();
+  const { user, isSuperAdmin } = useAuth();
+  const canSend = !isSuperAdmin;
   const [text,   setText]   = useState('');
   const [search, setSearch] = useState('');
   const [showMentions, setShowMentions] = useState(false);
-  const bottomRef            = useRef<HTMLDivElement>(null);
-  const queryClient          = useQueryClient();
+  const [sendError, setSendError] = useState<string | null>(null);
+  const bottomRef   = useRef<HTMLDivElement>(null);
+  const fileRef     = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const { data: mentionables = [] } = useQuery({
     queryKey: ['pm-project-mentionables', projectId],
@@ -40,9 +29,9 @@ export function useProjectMessages(projectId: string) {
   }
 
   const { data: messages = [], isLoading } = useQuery({
-    queryKey: ['pm-project-messages', projectId],
-    queryFn:  () => pmProjectMessagesApi.list(projectId)
-      .then(r => r.data.data.data.map(m => toChatMessage(m, user?.id))),
+    queryKey: ['pm-project-messages', projectId, search],
+    queryFn:  () => pmProjectMessagesApi.list(projectId, { per_page: 30, search: search.trim() || undefined })
+      .then(r => r.data.data.data.map(m => mapProjectMessage(m, user?.id) as ChatMessage)),
     refetchInterval: 5_000,
     enabled: !!projectId,
   });
@@ -51,20 +40,35 @@ export function useProjectMessages(projectId: string) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const filtered = search.trim()
-    ? messages.filter(m => m.text.includes(search.trim()))
-    : messages;
-
   const sendMutation = useMutation({
-    mutationFn: (body: string) => pmProjectMessagesApi.send(projectId, body),
-    onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['pm-project-messages', projectId] }),
+    mutationFn: (payload: { body?: string; file?: File }) =>
+      pmProjectMessagesApi.send(projectId, payload),
+    onSuccess: () => {
+      setSendError(null);
+      queryClient.invalidateQueries({ queryKey: ['pm-project-messages', projectId] });
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string }; status?: number } })?.response;
+      if (msg?.status === 403) {
+        setSendError('read_only');
+        return;
+      }
+      setSendError(msg?.data?.message ?? 'Send failed');
+    },
   });
 
-  function send() {
+  function send(file?: File) {
     const trimmed = text.trim();
-    if (!trimmed || sendMutation.isPending) return;
+    if ((!trimmed && !file) || sendMutation.isPending || !canSend) return;
     setText('');
-    sendMutation.mutate(trimmed);
+    sendMutation.mutate({ body: trimmed || undefined, file });
+  }
+
+  function handleFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    send(file);
   }
 
   function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -72,7 +76,9 @@ export function useProjectMessages(projectId: string) {
   }
 
   return {
-    filtered, text, setText, search, setSearch, send, handleKey, bottomRef, isLoading,
+    filtered: messages,
+    text, setText, search, setSearch, send, handleKey, handleFile, bottomRef, fileRef,
+    isLoading, canSend, sendError, isSending: sendMutation.isPending,
     showMentions, setShowMentions, mentionables, insertMention,
   };
 }

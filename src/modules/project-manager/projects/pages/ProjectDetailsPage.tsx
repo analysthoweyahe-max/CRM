@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Plus, Info, FolderOpen } from 'lucide-react';import { GithubIcon } from '@/shared/components/icons/GithubIcon';
 import { ensureHttpUrl } from '@/shared/utils';
 import { toast } from 'sonner';
@@ -37,12 +37,19 @@ export function ProjectDetailsPage() {
   const isAr      = lang === 'ar';
   const navigate  = useNavigate();
   const { id }    = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
 
   const { project, isLoading, isError, refetch } = useProjectDetails(id);
   const { statuses }                              = usePmProjectLookups();
   const tasks = useProjectTasks(id ?? '');
 
-  const [activeTab,      setActiveTab]      = useState<TabKey>('tasks');
+  const tabParam = searchParams.get('tab');
+  const initialTab: TabKey = tabParam === 'messages' ? 'messages' : 'tasks';
+  const [activeTab,      setActiveTab]      = useState<TabKey>(initialTab);
+
+  useEffect(() => {
+    if (tabParam === 'messages') setActiveTab('messages');
+  }, [tabParam]);
   const [changingStatus, setChangingStatus] = useState(false);
   if (isLoading) return <ProjectDetailsSkeleton />;
 

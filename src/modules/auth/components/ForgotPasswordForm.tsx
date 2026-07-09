@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
@@ -19,7 +20,8 @@ export function ForgotPasswordForm() {
   const v = t.validation;
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
-  const { submit, error: submitError, submitted } = useForgotPassword();
+  const { submit } = useForgotPassword();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -38,43 +40,20 @@ export function ForgotPasswordForm() {
     if (submitError === 'forgotPasswordFailed') {
       return lang === 'ar' ? 'حدث خطأ. حاول مرة أخرى.' : 'Something went wrong. Please try again.';
     }
-    if (
-      submitError === 'An unexpected error occurred.' ||
-      submitError === 'حدث خطأ غير متوقع'
-    ) {
-      return lang === 'ar'
-        ? 'تعذّر إرسال رابط إعادة التعيين. تحقق من البريد وحاول مرة أخرى، أو تواصل مع الدعم.'
-        : 'Could not send the reset link. Check the email and try again, or contact support.';
+    if (submitError === 'mailSendFailed') {
+      return tf.mailSendFailed;
     }
     return submitError;
   })();
 
-  if (submitted) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mx-auto">
-            <Mail size={30} className="text-emerald-600" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">{tf.successTitle}</h3>
-            <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">{tf.successDesc}</p>
-          </div>
-        </div>
-
-        <Link
-          to={ROUTES.AUTH.LOGIN}
-          className="inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
-        >
-          <BackIcon size={16} />
-          {tf.backToLogin}
-        </Link>
-      </div>
-    );
+  async function onSubmit(values: ForgotPasswordFormValues) {
+    setSubmitError(null);
+    const err = await submit(values, setFieldError);
+    if (err) setSubmitError(err);
   }
 
   return (
-    <form onSubmit={handleSubmit((values) => submit(values, setFieldError))} noValidate className="w-full space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="w-full space-y-5">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">{tf.title}</h2>
         <p className="mt-1 text-sm text-gray-500">{tf.subtitle}</p>

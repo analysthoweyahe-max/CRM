@@ -14,6 +14,7 @@ import type {
   RoleDetail,
 } from '@/modules/auth/types/auth.types';
 import { mapRolesToAppRole } from '@/shared/types/role.types';
+import { resetFcmRegistration } from '@/shared/services/fcm.service';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
 
 type AccountType = 'employee' | 'admin';
@@ -533,57 +534,62 @@ async function validateInvite(token: string): Promise<InviteTokenPayload> {
 }
 
 /**
- * Forgot-password form is shared between admins and employees, and this
- * page has no way to know which one is submitting — so try the admin
- * endpoint first and fall back to the employee one if the email isn't
- * an admin account (mirrors the same admin-then-employee fallback the
- * login flow already uses in `fetchProfile`/`loadProfile` above).
+ * Employee forgot-password — sends a 6-digit OTP to the email.
+ * Always succeeds from the UI perspective (unknown emails still navigate forward).
  */
-async function requestPasswordReset(email: string): Promise<string> {
-  const trimmed = email.trim();
-  try {
-    const { data } = await authApi.adminForgotPassword({ email: trimmed });
-    return data?.message ?? '';
-  } catch {
-    const { data } = await authApi.employeeForgotPassword({ email: trimmed });
-    return data?.message ?? '';
-  }
+async function requestEmployeeResetOtp(email: string): Promise<string> {
+  const { data } = await authApi.employeeForgotPassword({ email: email.trim() });
+  return (
+    data?.data?.expiresAt
+    ?? new Date(Date.now() + 10 * 60 * 1000).toISOString()
+  );
 }
 
-/** Reset-link token can belong to an admin or an employee — try both. */
+async function verifyEmployeeResetOtp(email: string, code: string): Promise<string> {
+  const { data } = await authApi.employeeVerifyResetOtp({ email: email.trim(), code });
+  const token = data?.data?.token;
+  if (!token) throw new Error('Missing reset token');
+  return token;
+}
+
+async function resetEmployeePasswordOtp(payload: {
+  token:           string;
+  password:        string;
+  confirmPassword: string;
+}): Promise<void> {
+  await authApi.employeeResetPasswordOtp({
+    token:                 payload.token,
+    password:              payload.password,
+    password_confirmation: payload.confirmPassword,
+  });
+}
+
+/** Admin forgot-password — sends an email reset link. */
+async function requestAdminPasswordReset(email: string): Promise<string> {
+  const { data } = await authApi.adminForgotPassword({ email: email.trim() });
+  return data?.message ?? '';
+}
+
+/** Reset-link token validation — admin email-link flow only. */
 async function validateResetToken(token: string): Promise<PasswordResetTokenPayload> {
-  try {
-    const { data } = await authApi.verifyAdminPasswordReset(token);
-    const profile = data.data;
-    return {
-      actorType:    profile.actorType ?? 'admin',
-      actorId:      profile.admin_id ?? profile.user_id ?? '',
-      email:        profile.email,
-      name:         profile.name,
-      redirectPath: profile.redirect_path,
-    };
-  } catch {
-    const { data } = await authApi.verifyEmployeePasswordReset(token);
-    const profile = data.data;
-    return {
-      actorType:    profile.actorType ?? 'employee',
-      actorId:      profile.employee_id ?? profile.admin_id ?? profile.user_id ?? '',
-      email:        profile.email,
-      name:         profile.name,
-      redirectPath: profile.redirect_path,
-    };
-  }
+  const { data } = await authApi.verifyAdminPasswordReset(token);
+  const profile = data.data;
+  return {
+    actorType:    profile.actorType ?? 'admin',
+    actorId:      profile.admin_id ?? profile.user_id ?? '',
+    email:        profile.email,
+    name:         profile.name,
+    redirectPath: profile.redirect_path,
+  };
 }
 
-/** Password reset submit — routes to the admin or employee endpoint per the verified token's actor type. */
+/** Password reset submit — admin email-link flow only. */
 async function resetPassword(payload: ResetPasswordPayload): Promise<void> {
-  const { token, password, confirmPassword, actorType } = payload;
-  const body = { password, password_confirmation: confirmPassword };
-  if (actorType === 'employee') {
-    await authApi.resetEmployeePassword(token, body);
-  } else {
-    await authApi.resetAdminPassword(token, body);
-  }
+  const { token, password, confirmPassword } = payload;
+  await authApi.resetAdminPassword(token, {
+    password,
+    password_confirmation: confirmPassword,
+  });
 }
 
 async function completeInviteLogin(
@@ -654,6 +660,7 @@ async function logout(): Promise<void> {
     }
   } finally {
     clearAuth();
+    resetFcmRegistration();
   }
 }
 
@@ -667,7 +674,10 @@ export const authService = {
   activateInvite,
   changePassword,
   validateInvite,
-  requestPasswordReset,
+  requestEmployeeResetOtp,
+  verifyEmployeeResetOtp,
+  resetEmployeePasswordOtp,
+  requestAdminPasswordReset,
   validateResetToken,
   resetPassword,
   loadProfile,

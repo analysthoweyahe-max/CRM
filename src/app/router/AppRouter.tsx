@@ -20,8 +20,10 @@ import { PermissionGuard }       from '@/app/guards/PermissionGuard';
 const LoginPage            = lazyImport(() => import('@/modules/auth/pages/LoginPage')            .then(m => ({ default: m.LoginPage })));
 const SetPasswordPage      = lazyImport(() => import('@/modules/auth/pages/SetPasswordPage')      .then(m => ({ default: m.SetPasswordPage })));
 const InviteValidationPage = lazyImport(() => import('@/modules/auth/pages/InviteValidationPage') .then(m => ({ default: m.InviteValidationPage })));
-const ForgotPasswordPage   = lazyImport(() => import('@/modules/auth/pages/ForgotPasswordPage')   .then(m => ({ default: m.ForgotPasswordPage })));
-const ResetPasswordPage    = lazyImport(() => import('@/modules/auth/pages/ResetPasswordPage')    .then(m => ({ default: m.ResetPasswordPage })));
+const ForgotPasswordPage        = lazyImport(() => import('@/modules/auth/pages/ForgotPasswordPage')        .then(m => ({ default: m.ForgotPasswordPage })));
+const ForgotPasswordVerifyPage  = lazyImport(() => import('@/modules/auth/pages/ForgotPasswordVerifyPage')  .then(m => ({ default: m.ForgotPasswordVerifyPage })));
+const EmployeeResetPasswordPage = lazyImport(() => import('@/modules/auth/pages/EmployeeResetPasswordPage') .then(m => ({ default: m.EmployeeResetPasswordPage })));
+const ResetPasswordPage         = lazyImport(() => import('@/modules/auth/pages/ResetPasswordPage')         .then(m => ({ default: m.ResetPasswordPage })));
 const AdminAuthCallbackPage = lazyImport(() => import('@/modules/auth/pages/AdminAuthCallbackPage').then(m => ({ default: m.AdminAuthCallbackPage })));
 const AdminOtpPage          = lazyImport(() => import('@/modules/auth/pages/AdminOtpPage').then(m => ({ default: m.AdminOtpPage })));
 const UnauthorizedPage      = lazyImport(() => import('@/modules/auth/pages/UnauthorizedPage').then(m => ({ default: m.UnauthorizedPage })));
@@ -42,6 +44,7 @@ const AdminRolesPage     = lazyImport(() => import('@/modules/admin/roles/pages/
 const AdminRoleEditPage  = lazyImport(() => import('@/modules/admin/roles/pages/AdminRoleEditPage')         .then(m => ({ default: m.AdminRoleEditPage })));
 const AdminManagersPage  = lazyImport(() => import('@/modules/admin/roles/pages/AdminManagersPage')         .then(m => ({ default: m.AdminManagersPage })));
 const AdminManagerDetailPage = lazyImport(() => import('@/modules/admin/roles/pages/AdminManagerDetailPage') .then(m => ({ default: m.AdminManagerDetailPage })));
+const AdminManagerEditPage   = lazyImport(() => import('@/modules/admin/roles/pages/AdminManagerEditPage')   .then(m => ({ default: m.AdminManagerEditPage })));
 
 /* ── HR ───────────────────────────────────────────────────────────── */
 const DashboardPage      = lazyImport(() => import('@/modules/hr/dashboard/pages/DashboardPage')           .then(m => ({ default: m.DashboardPage })));
@@ -99,6 +102,7 @@ const EmployeeDashboardPage    = lazyImport(() => import('@/modules/employee/das
 const EmployeeMessagesPage     = lazyImport(() => import('@/modules/employee/messages/pages/EmployeeMessagesPage')         .then(m => ({ default: m.EmployeeMessagesPage })));
 const EmployeeRequestsPage     = lazyImport(() => import('@/modules/employee/requests/pages/EmployeeRequestsPage')         .then(m => ({ default: m.EmployeeRequestsPage })));
 const EmployeeReportsPage      = lazyImport(() => import('@/modules/employee/reports/pages/EmployeeReportsPage')           .then(m => ({ default: m.EmployeeReportsPage })));
+const AttendanceTimerPage      = lazyImport(() => import('@/shared/modules/attendance/pages/AttendanceTimerPage')           .then(m => ({ default: m.AttendanceTimerPage })));
 const EmployeeTaskDetailPage   = lazyImport(() => import('@/modules/employee/tasks/pages/TaskDetailPage')                  .then(m => ({ default: m.TaskDetailPage })));
 const EmployeeDailyReportsPage = lazyImport(() => import('@/modules/employee/daily-reports/pages/EmployeeDailyReportsPage').then(m => ({ default: m.EmployeeDailyReportsPage })));
 const EmployeeProfilePage      = lazyImport(() => import('@/modules/employee/profile/pages/EmployeeProfilePage')           .then(m => ({ default: m.EmployeeProfilePage })));
@@ -123,8 +127,9 @@ export function AppRouter() {
                 <Route path={ROUTES.AUTH.INVITE}          element={<InviteValidationPage />} />
                 <Route path={ROUTES.AUTH.INVITE_TOKEN()}  element={<InviteValidationPage />} />
                 <Route path={ROUTES.AUTH.EMPLOYEE_INVITE_SET_PASSWORD()} element={<SetPasswordPage />} />
-                <Route path={ROUTES.AUTH.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
-                <Route path={ROUTES.AUTH.RESET_PASSWORD}  element={<ResetPasswordPage />} />
+                <Route path={ROUTES.AUTH.FORGOT_PASSWORD}        element={<ForgotPasswordPage />} />
+                <Route path={ROUTES.AUTH.FORGOT_PASSWORD_VERIFY} element={<ForgotPasswordVerifyPage />} />
+                <Route path={ROUTES.AUTH.RESET_PASSWORD}         element={<EmployeeResetPasswordPage />} />
                 <Route path={ROUTES.AUTH.RESET_PASSWORD_TOKEN()} element={<ResetPasswordPage />} />
                 <Route path={ROUTES.AUTH.ADMIN_CALLBACK}  element={<AdminAuthCallbackPage />} />
                 <Route path={ROUTES.AUTH.ADMIN_OTP}       element={<AdminOtpPage />} />
@@ -141,6 +146,7 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission={['view-employees', 'create-admin']} />}>
                     <Route path={ROUTES.ADMIN.MANAGERS}         element={<AdminManagersPage />} />
                     <Route path={ROUTES.ADMIN.MANAGER_DETAIL()} element={<AdminManagerDetailPage />} />
+                    <Route path={ROUTES.ADMIN.MANAGER_EDIT()}   element={<AdminManagerEditPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission="view-employees" />}>
                     <Route path={ROUTES.ADMIN.EMPLOYEES}        element={<AdminEmployeesPage />} />
@@ -215,6 +221,7 @@ export function AppRouter() {
                   </Route>
                   <Route element={<PermissionGuard permission={['view-pm-reports', 'view-pm-projects']} />}>
                     <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.ATTENDANCE} element={<AttendanceTimerPage layoutScope="pm" />} />
                   </Route>
                   <Route element={<PermissionGuard permission="edit-pm-project" />}>
                     <Route path={ROUTES.PROJECT_MANAGER.TEMPLATES} element={<TemplatesPage />} />
@@ -253,6 +260,7 @@ export function AppRouter() {
                   <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />} />
                   <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
                   <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
+                  <Route path={ROUTES.EMPLOYEE.ATTENDANCE}    element={<AttendanceTimerPage layoutScope="employee" />} />
                   <Route path={ROUTES.EMPLOYEE.TASKS}         element={<MyTasksPage />} />
                   <Route path={ROUTES.EMPLOYEE.PROJECT_TASKS()} element={<MyTasksPage />} />
                   <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
@@ -323,6 +331,7 @@ export function AppRouter() {
                   <Route path={ROUTES.SEO_MEMBER.MESSAGES}      element={<SeoMemberMessagesPage />} />
                   <Route path={ROUTES.SEO_MEMBER.REQUESTS}      element={<SeoMemberRequestsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.REPORTS}       element={<SeoMemberReportsPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.ATTENDANCE}    element={<AttendanceTimerPage layoutScope="seo" />} />
                   <Route path={ROUTES.SEO_MEMBER.DAILY_REPORTS} element={<SeoMemberDailyReportsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.PROFILE}       element={<SeoMemberProfilePage />} />
                 </Route>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2, Pencil } from 'lucide-react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@/shared/components/tables/DataTable';
 import { Avatar }    from '@/shared/components/ui/Avatar';
@@ -24,6 +24,7 @@ interface Props {
   pageSize:     number;
   onPage:       (page: number) => void;
   onRowClick:   (id: string) => void;
+  onEdit?:      (id: string) => void;
   selected?:    Set<string>;
   onToggleOne?: (id: string) => void;
   onToggleAll?: () => void;
@@ -31,7 +32,7 @@ interface Props {
 }
 
 export function AdminEmployeeTable({
-  employees, isAr, page, pageCount, total, pageSize, onPage, onRowClick,
+  employees, isAr, page, pageCount, total, pageSize, onPage, onRowClick, onEdit,
   selected, onToggleOne, onToggleAll, onDelete,
 }: Props) {
   const selectable = !!(selected && onToggleOne && onToggleAll);
@@ -104,6 +105,11 @@ export function AdminEmployeeTable({
         header: isAr ? 'إجراءات' : 'Actions',
         cell:   ({ row }) => (
           <div className="flex items-center gap-1">
+            {onEdit && (
+              <Button variant="icon" aria-label={isAr ? 'تعديل' : 'Edit'} onClick={() => onEdit(row.original.id)}>
+                <Pencil size={15} />
+              </Button>
+            )}
             <Button variant="icon" aria-label={isAr ? 'عرض' : 'View'} onClick={() => onRowClick(row.original.id)}>
               <Eye size={16} />
             </Button>
@@ -123,7 +129,7 @@ export function AdminEmployeeTable({
 
     return cols;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAr, onRowClick, employees, selected, selectable, onDelete]);
+  }, [isAr, onRowClick, onEdit, employees, selected, selectable, onDelete]);
 
   const table = useReactTable({
     data: employees,

@@ -42,8 +42,10 @@ export function ConversationList({
 
   const filtered = conversations.filter(conv => {
     if (!search) return true;
-    const other = conv.participants.find(p => p.id !== currentUserId) ?? conv.participants[0];
-    return matchesSearch([other?.name], search);
+    const participants = conv.participants ?? [];
+    const other = participants.find(p => p.id !== currentUserId) ?? participants[0];
+    const name = conv.employeeName ?? other?.name ?? '';
+    return matchesSearch([name, conv.subject], search);
   });
 
   return (
@@ -108,13 +110,14 @@ export function ConversationList({
           </div>
         ) : (
           filtered.map(conv => {
-            const other    = conv.participants.find(p => p.id !== currentUserId) ?? conv.participants[0];
-            const name     = other?.name ?? (isAr ? 'محادثة' : 'Chat');
+            const participants = conv.participants ?? [];
+            const other    = participants.find(p => p.id !== currentUserId) ?? participants[0];
+            const name     = conv.employeeName ?? other?.name ?? (isAr ? 'محادثة' : 'Chat');
             const initial  = name.charAt(0).toUpperCase();
             const color    = avatarColor(name);
-            const preview  = conv.last_message?.body ?? '';
-            const time     = fmtTime(conv.last_message?.created_at ?? conv.created_at, isAr);
-            const unread   = conv.unread_count ?? 0;
+            const preview  = conv.lastMessage ?? conv.last_message?.body ?? '';
+            const time     = fmtTime(conv.lastUpdatedAt ?? conv.last_message?.created_at ?? conv.created_at, isAr);
+            const unread   = conv.hasUnread ? 1 : (conv.unread_count ?? 0);
             const isActive = activeConvId === conv.id;
 
             return (

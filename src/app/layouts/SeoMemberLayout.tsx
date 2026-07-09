@@ -17,15 +17,15 @@ export function SeoMemberLayout() {
   const { lang } = useLang();
   const isAr = lang === 'ar';
 
-  const attendance    = useAttendanceWidget();
+  const attendance    = useAttendanceWidget('seo');
   const prevCollapsed = useRef(collapsed);
 
   useEffect(() => {
-    if (prevCollapsed.current && !collapsed && attendance.isCheckedIn) {
-      toast.success(isAr ? 'تم تسجيل الحضور' : 'You are checked in');
+    if (prevCollapsed.current && !collapsed && attendance.isActiveDay) {
+      toast.success(isAr ? 'جلسة العمل نشطة' : 'Work session active');
     }
     prevCollapsed.current = collapsed;
-  }, [collapsed]);
+  }, [collapsed, attendance.isActiveDay, isAr]);
 
   return (
     <TaskTimerProvider>
@@ -36,8 +36,8 @@ export function SeoMemberLayout() {
           onClose={() => setSidebarOpen(false)}
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed(p => !p)}
-          isCheckedIn={attendance.isCheckedIn}
-          footerWidget={<AttendanceWidget {...attendance} />}
+          isCheckedIn={attendance.isActiveDay}
+          footerWidget={<AttendanceWidget layoutScope="seo" />}
         />
 
         <div className={[

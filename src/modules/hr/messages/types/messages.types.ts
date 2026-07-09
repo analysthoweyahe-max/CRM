@@ -11,11 +11,17 @@ export interface ApiParticipant {
 export interface ApiConversation {
   id:                 string;
   stream_channel_id?: string;
-  participants:       ApiParticipant[];
+  participants?:      ApiParticipant[];
+  employeeName?:      string;
+  employeeNumber?:    string;
+  subject?:           string;
+  lastMessage?:       string;
   last_message?:      { body?: string; created_at?: string };
+  lastUpdatedAt?:     string;
   unread_count?:      number;
+  hasUnread?:         boolean;
   status?:            string;
-  created_at:         string;
+  created_at?:        string;
 }
 
 export interface ApiEmployeeLookup {
@@ -33,12 +39,18 @@ export interface ApiMessageAttachment {
 }
 
 export interface ApiMessage {
-  id:           string;
-  body?:        string;
-  created_at:   string;
-  read_at?:     string | null;
-  sender:       ApiParticipant;
-  attachments?: ApiMessageAttachment[];
+  id:              string | number;
+  conversationId?: string;
+  body?:           string;
+  created_at?:     string;
+  sentAt?:         string;
+  read_at?:        string | null;
+  senderName?:     string;
+  senderType?:     string;
+  type?:           string;
+  isMine?:         boolean;
+  sender?:         ApiParticipant;
+  attachments?:    ApiMessageAttachment[];
 }
 
 /* ── Response envelopes ─────────────────────────────────────── */

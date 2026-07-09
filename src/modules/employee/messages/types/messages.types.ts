@@ -22,11 +22,17 @@ export interface EmpAttachment {
 }
 
 export interface EmpMessage {
-  id:           string;
-  body:         string;
-  sender:       EmpParticipant;
-  created_at:   string;
-  attachments?: EmpAttachment[];
+  id:              string | number;
+  conversationId?: string;
+  body?:           string;
+  sender?:         EmpParticipant;
+  senderName?:     string;
+  senderType?:     string;
+  type?:           string;
+  isMine?:         boolean;
+  created_at?:     string;
+  sentAt?:         string;
+  attachments?:    EmpAttachment[];
 }
 
 /* ── Response envelopes ── */

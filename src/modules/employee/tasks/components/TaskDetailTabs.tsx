@@ -1,24 +1,26 @@
 export type TabId = 'comments' | 'info' | 'attachments' | 'time';
 
-const TABS: { id: TabId; arLabel: string; enLabel: string; count?: number }[] = [
-  { id: 'comments',    arLabel: 'التعليقات',  enLabel: 'Comments',     count: 2 },
-  { id: 'attachments', arLabel: 'المرفقات',   enLabel: 'Attachments',  count: 2 },
-  { id: 'info',        arLabel: 'المعلومات',  enLabel: 'Info'                   },
-  { id: 'time',        arLabel: 'تتبع الوقت', enLabel: 'Time Tracker'           },
+const TAB_DEFS: { id: TabId; arLabel: string; enLabel: string }[] = [
+  { id: 'comments',    arLabel: 'التعليقات',  enLabel: 'Comments'     },
+  { id: 'attachments', arLabel: 'المرفقات',   enLabel: 'Attachments'  },
+  { id: 'info',        arLabel: 'المعلومات',  enLabel: 'Info'         },
+  { id: 'time',        arLabel: 'تتبع الوقت', enLabel: 'Time Tracker' },
 ];
 
 interface TaskDetailTabsProps {
   activeTab:   TabId;
   onTabChange: (tab: TabId) => void;
   isAr:        boolean;
+  counts?:     Partial<Record<TabId, number>>;
 }
 
-export function TaskDetailTabs({ activeTab, onTabChange, isAr }: TaskDetailTabsProps) {
+export function TaskDetailTabs({ activeTab, onTabChange, isAr, counts }: TaskDetailTabsProps) {
   return (
     <div className="flex border-b border-gray-100 dark:border-gray-700 overflow-x-auto">
-      {TABS.map(tab => {
+      {TAB_DEFS.map(tab => {
         const isActive = activeTab === tab.id;
-        const label = (isAr ? tab.arLabel : tab.enLabel) + (tab.count ? ` (${tab.count})` : '');
+        const count = counts?.[tab.id];
+        const label = (isAr ? tab.arLabel : tab.enLabel) + (count != null && count > 0 ? ` (${count})` : '');
         return (
           <button
             key={tab.id}

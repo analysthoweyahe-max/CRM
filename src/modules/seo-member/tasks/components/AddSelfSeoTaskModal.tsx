@@ -4,6 +4,7 @@ import { Modal }               from '@/shared/components/ui/Modal';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox }            from '@/shared/components/form/Combobox';
 import { RichTextEditor }      from '@/shared/components/form/RichTextEditor';
+import { SeoTaskFilesInput }   from '@/modules/seo-leader/campaigns/components/SeoTaskFilesInput';
 import { useAddSelfSeoTask }   from './useAddSelfSeoTask';
 
 interface Props {
@@ -21,6 +22,7 @@ export function AddSelfSeoTaskModal({ open, onClose, isAr }: Props) {
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
+    files, setFiles, fileError, setFileError,
     isValid, creating,
     handleSubmit, handleClose,
   } = useAddSelfSeoTask(onClose, isAr);
@@ -120,6 +122,14 @@ export function AddSelfSeoTaskModal({ open, onClose, isAr }: Props) {
             <Clock size={15} className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
         </FormField>
+
+        <SeoTaskFilesInput
+          files={files}
+          onChange={setFiles}
+          isAr={isAr}
+          error={fileError}
+          onError={setFileError}
+        />
 
       </div>
     </Modal>

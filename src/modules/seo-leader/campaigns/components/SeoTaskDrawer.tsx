@@ -97,7 +97,13 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
 
         {/* ── Tabs ────────────────────────────────────────────────────── */}
         <div className="flex gap-1 px-4 pt-3 shrink-0 border-b border-gray-100 dark:border-gray-700">
-          {TABS.map(t => (
+          {TABS.map(t => {
+            const count = t.key === 'attachments'
+              ? d.attachmentsCount
+              : t.key === 'comments'
+                ? d.comments.length
+                : undefined;
+            return (
             <button
               key={t.key}
               type="button"
@@ -109,9 +115,10 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                   : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300',
               ].join(' ')}
             >
-              {t.ar}
+              {t.ar}{count != null && count > 0 ? ` (${count})` : ''}
             </button>
-          ))}
+            );
+          })}
         </div>
 
         {/* ── Tab body ────────────────────────────────────────────────── */}
@@ -171,8 +178,10 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
             {d.tab === 'attachments' && (
               <SeoAttachmentsTab
                 attachments={d.attachments}
-                onAdd={d.uploadFile}
+                onUploadFiles={d.uploadFiles}
+                onDelete={d.deleteAttachment}
                 isUploading={d.isUploading}
+                deletingId={d.deletingId}
                 isAr={isAr}
               />
             )}

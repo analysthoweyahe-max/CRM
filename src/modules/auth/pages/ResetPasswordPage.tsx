@@ -45,7 +45,6 @@ export function ResetPasswordPage() {
   return (
     <ResetPasswordForm
       resetToken={token}
-      actorType={payload.actorType}
       userName={payload.name}
       userEmail={payload.email}
     />

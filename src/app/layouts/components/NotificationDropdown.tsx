@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarCheck, MessageSquare, Wallet, AtSign, Megaphone, Bell } from 'lucide-react';
+import { CalendarCheck, MessageSquare, Wallet, AtSign, Megaphone, Bell, ClipboardList } from 'lucide-react';
 import type { AppNotification } from '@/shared/types/notification.types';
 import { formatTimeAgo } from '@/shared/utils/date.utils';
 
@@ -14,21 +14,39 @@ interface Props {
 /* Backend notification `type` values seen so far — anything else falls back
    to a generic bell icon rather than needing every type enumerated up front. */
 const TYPE_ICON: Record<string, React.ReactNode> = {
-  leave:             <CalendarCheck size={14} />,
-  message:           <MessageSquare size={14} />,
-  deduction_applied: <Wallet size={14} />,
-  bonus_applied:     <Wallet size={14} />,
-  PmMentionNotification: <AtSign size={14} />,
-  alert:             <Megaphone size={14} />,
+  leave:                  <CalendarCheck size={14} />,
+  message:                <MessageSquare size={14} />,
+  deduction_applied:      <Wallet size={14} />,
+  bonus_applied:          <Wallet size={14} />,
+  PmMentionNotification:  <AtSign size={14} />,
+  alert:                  <Megaphone size={14} />,
+  test_notification:      <Bell size={14} />,
+  seo_task_assigned:      <ClipboardList size={14} />,
+  seo_task_status_changed:<ClipboardList size={14} />,
+  seo_mention:            <AtSign size={14} />,
+  pm_task_assigned:       <ClipboardList size={14} />,
+  hr_leave_submitted:     <CalendarCheck size={14} />,
+  pm_project_message:     <MessageSquare size={14} />,
+  seo_project_message:    <MessageSquare size={14} />,
+  hr_message:             <MessageSquare size={14} />,
 };
 
 const TYPE_ICON_BG: Record<string, string> = {
-  leave:             'bg-[#D8EBAE] text-[#709028]',
-  message:           'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-  deduction_applied: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
-  bonus_applied:     'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
-  PmMentionNotification: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
-  alert:             'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]',
+  leave:                  'bg-[#D8EBAE] text-[#709028]',
+  message:                'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  deduction_applied:      'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+  bonus_applied:          'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+  PmMentionNotification:  'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+  alert:                  'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]',
+  test_notification:      'bg-gray-100 dark:bg-gray-700 text-gray-500',
+  seo_task_assigned:      'bg-[#D8EBAE] text-[#709028]',
+  seo_task_status_changed:'bg-[#D8EBAE] text-[#709028]',
+  seo_mention:            'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+  pm_task_assigned:       'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  hr_leave_submitted:     'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+  pm_project_message:     'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  seo_project_message:    'bg-[#D8EBAE] text-[#709028]',
+  hr_message:             'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
 };
 
 const DEFAULT_ICON = <Bell size={14} />;

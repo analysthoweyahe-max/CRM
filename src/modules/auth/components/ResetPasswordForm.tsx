@@ -71,14 +71,12 @@ function PasswordField({
 
 interface ResetPasswordFormProps {
   resetToken:  string;
-  actorType:   'admin' | 'employee';
   userName?:   string;
   userEmail?:  string;
 }
 
 export function ResetPasswordForm({
   resetToken,
-  actorType,
   userName  = '',
   userEmail = '',
 }: ResetPasswordFormProps) {
@@ -90,7 +88,7 @@ export function ResetPasswordForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const { submit, error: submitError } = useResetPassword(resetToken, actorType);
+  const { submit, error: submitError } = useResetPassword(resetToken);
 
   const {
     register,

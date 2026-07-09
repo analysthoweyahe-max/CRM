@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { useAuth }               from '@/modules/auth/context/AuthContext';
 import { useLang }               from '@/app/providers/LanguageProvider';
@@ -13,12 +14,20 @@ export function MessagesPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
 
+  const [searchParams] = useSearchParams();
   const [activeConversation, setActiveConversation] = useState<ApiConversation | null>(null);
   const [showModal,   setShowModal]   = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: convData, isLoading } = useConversations({ per_page: 15 });
   const conversations = convData ?? [];
+
+  useEffect(() => {
+    const convId = searchParams.get('conversation');
+    if (!convId || activeConversation?.id === convId) return;
+    const found = conversations.find(c => c.id === convId);
+    if (found) setActiveConversation(found);
+  }, [searchParams, conversations, activeConversation?.id]);
 
   const { mutateAsync: createConversation, isPending: creating } = useCreateConversation();
 

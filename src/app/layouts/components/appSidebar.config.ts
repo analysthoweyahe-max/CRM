@@ -338,6 +338,7 @@ export const PM_NAV: NavSectionDef[] = [
       { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',        labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW,      permission: 'create-pm-project' },
       { key: 'pm-team',    labelAr: 'فريق العمل',               labelEn: 'Team',               icon: Users,           path: ROUTES.PROJECT_MANAGER.TEAM,     permissions: ['view-pm-team', 'view-pm-projects'] },
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات',labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS,  permissions: ['view-pm-reports', 'view-pm-projects'] },
+      { key: 'pm-attendance', labelAr: 'الحضور والانصراف', labelEn: 'Attendance', icon: Clock, path: ROUTES.PROJECT_MANAGER.ATTENDANCE },
       { key: 'pm-templates', labelAr: 'قوالب المشاريع', labelEn: 'Project Templates', icon: ListChecks, path: ROUTES.PROJECT_MANAGER.TEMPLATES, permission: 'edit-pm-project' },
     ],
   },
@@ -368,7 +369,7 @@ export const EMPLOYEE_NAV: NavSectionDef[] = [
 
       { key: 'emp-req',     labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS      },
 
-      { key: 'emp-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.EMPLOYEE.REPORTS       },
+      { key: 'emp-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.EMPLOYEE.ATTENDANCE       },
 
       { key: 'emp-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.EMPLOYEE.DAILY_REPORTS },
 
@@ -422,7 +423,7 @@ export const SEO_MEMBER_NAV: NavSectionDef[] = [
 
       { key: 'seo-m-requests',labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.SEO_MEMBER.REQUESTS      },
 
-      { key: 'seo-m-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.SEO_MEMBER.REPORTS       },
+      { key: 'seo-m-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.SEO_MEMBER.ATTENDANCE       },
 
       { key: 'seo-m-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.SEO_MEMBER.DAILY_REPORTS },
 

@@ -3,6 +3,7 @@ import { ClipboardList, Users, ListChecks, FolderKanban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
+import { WorkTimerCard } from '@/shared/modules/attendance/components/WorkTimerCard';
 import { StatCard }        from '@/shared/components/ui/StatCard';
 import { ProjectsSection } from '../components/ProjectsSection';
 import { ProjectDashboardSkeleton } from '../components/ProjectDashboardSkeleton';
@@ -13,7 +14,7 @@ export function ProjectDashboardPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
-  const { isLoading, sections, stats } = usePmDashboard();
+  const { isLoading, sections, stats, checkIn } = usePmDashboard();
   const teamCount = usePmTeamCount();
 
   const [activeSectionKey, setActiveSectionKey] = useState<string | undefined>(undefined);
@@ -28,6 +29,8 @@ export function ProjectDashboardPage() {
 
   return (
     <div className="space-y-6">
+
+      <WorkTimerCard layoutScope="pm" variant="card" initialData={checkIn} />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

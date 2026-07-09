@@ -3,6 +3,7 @@ import { useAuth } from '@/modules/auth/context/AuthContext';
 import { authService } from '@/modules/auth/services/auth.service';
 import { ROUTES } from '@/app/router/routes';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
+import { NotificationListener } from '@/app/components/NotificationListener';
 
 export function AuthGuard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,5 +20,10 @@ export function AuthGuard() {
     return <Navigate to={ROUTES.AUTH.LOGIN} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <NotificationListener />
+      <Outlet />
+    </>
+  );
 }

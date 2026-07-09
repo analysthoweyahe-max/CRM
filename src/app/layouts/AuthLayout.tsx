@@ -2,6 +2,7 @@
 import { Banknote, CalendarDays, Clock, Globe, Users } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { authTranslations } from '@/modules/auth/i18n';
+import { ForgotPasswordProvider } from '@/modules/auth/context/ForgotPasswordContext';
 
 const FEATURE_ICONS = [Users, Clock, CalendarDays, Banknote] as const;
 
@@ -104,7 +105,9 @@ export function AuthLayout() {
 
         <div className="flex w-full flex-1 items-center justify-center pt-16 lg:justify-end lg:pt-0">
           <div className="w-full max-w-[510px] lg:me-[7.9vw]">
-            <Outlet />
+            <ForgotPasswordProvider>
+              <Outlet />
+            </ForgotPasswordProvider>
           </div>
         </div>
       </main>

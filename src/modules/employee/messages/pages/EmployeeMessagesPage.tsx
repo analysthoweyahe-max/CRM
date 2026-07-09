@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { EmpConversationList } from '../components/EmpConversationList';
@@ -10,9 +11,17 @@ export function EmployeeMessagesPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
 
+  const [searchParams] = useSearchParams();
   const [activeConv, setActiveConv] = useState<EmpConversation | null>(null);
 
   const { data: conversations = [], isLoading } = useEmpConversations();
+
+  useEffect(() => {
+    const convId = searchParams.get('conversation');
+    if (!convId || activeConv?.id === convId) return;
+    const found = conversations.find(c => c.id === convId);
+    if (found) setActiveConv(found);
+  }, [searchParams, conversations, activeConv?.id]);
 
   return (
     /* negative margin removes the layout's p-4/p-6; fixed height = viewport - topbar */

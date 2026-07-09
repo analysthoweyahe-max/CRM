@@ -19,6 +19,10 @@ export function AddSeoTaskPage() {
     teamLoading,
     form,
     set,
+    files,
+    setFiles,
+    fileError,
+    setFileError,
     apiError,
     isValid,
     isSaving,
@@ -64,6 +68,10 @@ export function AddSeoTaskPage() {
           set={set}
           teamItems={teamItems}
           isAr={isAr}
+          files={files}
+          onFilesChange={setFiles}
+          fileError={fileError}
+          onFileError={setFileError}
         />
 
         {apiError && (

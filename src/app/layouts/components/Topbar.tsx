@@ -8,7 +8,6 @@ import { useLang }                    from '@/app/providers/LanguageProvider';
 import { useTheme }                   from '@/app/providers/ThemeProvider';
 import { ROUTES }                     from '@/app/router/routes';
 import { UserRoleBadges }             from '@/shared/components/auth';
-import { useFirebaseMessaging }       from '@/shared/hooks/useFirebaseMessaging';
 import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
 import { resolveNotificationPath }    from '@/shared/utils/notificationNavigation.utils';
@@ -33,18 +32,16 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
   const [notifOpen,     setNotifOpen]     = useState(false);
   const [showChangePwd, setShowChangePwd] = useState(false);
 
-  const { notifications, unreadCount, justArrived, markRead, markAllRead, refetch } = useNotifications();
+  const { notifications, unreadCount, justArrived, markRead, markAllRead } = useNotifications();
   const [ringing, setRinging] = useState(false);
 
   useEffect(() => {
-    if (justArrived === 0) return; // initial value, not a real arrival
+    if (justArrived === 0) return;
     setRinging(true);
     const t = setTimeout(() => setRinging(false), 700);
     return () => clearTimeout(t);
   }, [justArrived]);
 
-  // "Alerts" (management instructions) are a separate feed from regular
-  // notifications, but a new one should still chime + shake the same bell.
   const isEmployee = user?.role === 'employee';
   const { data: alertsData } = useEmployeeAlertList(isEmployee);
   const unreadAlertsCount = (alertsData?.data ?? []).filter(a => !a.readAt).length;
@@ -62,13 +59,6 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
     return () => clearTimeout(t);
   }, [unreadAlertsCount, isEmployee]);
 
-  function handlePushRefresh() {
-    refetch();
-    qc.invalidateQueries({ queryKey: ['my-tasks'] });
-  }
-
-  // Alerts have no `type`/`data` shape of their own — recast them as
-  // notifications (prefixed id) so they render in the same dropdown/badge.
   const alertNotifications: AppNotification[] = (alertsData?.data ?? []).map(a => ({
     id:        `alert-${a.id}`,
     type:      'alert',
@@ -87,8 +77,6 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
     if (notification.type === 'alert') {
       const alertId = notification.id.replace(/^alert-/, '');
       navigate(ROUTES.EMPLOYEE.ALERT_DETAIL(alertId));
-      // Backend marks the alert read when its detail is fetched — refresh
-      // shortly after so the badge/list catch up without waiting for the poll.
       setTimeout(() => qc.invalidateQueries({ queryKey: ['employee', 'alerts'] }), 500);
       setNotifOpen(false);
       return;
@@ -99,17 +87,13 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
   }
 
   function handleMarkRead(id: string) {
-    if (id.startsWith('alert-')) return; // alerts are marked read by opening their detail page
+    if (id.startsWith('alert-')) return;
     markRead(id);
   }
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef    = useRef<HTMLDivElement>(null);
 
-  // Foreground FCM push arrived — refetch the real list instead of trusting the payload
-  useFirebaseMessaging(handlePushRefresh);
-
-  // Close dropdowns on outside click
   useEffect(() => {
     function onOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -131,7 +115,6 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
                        bg-white dark:bg-gray-900
                        border-b border-gray-100 dark:border-gray-700/60">
 
-      {/* Greeting + hamburger */}
       <div className="flex items-center gap-2 shrink-0">
         <button
           type="button"
@@ -158,10 +141,8 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
 
       <div className="flex-1" />
 
-      {/* Actions */}
       <div className="flex items-center gap-1 shrink-0">
 
-        {/* ── Bell / Notifications ── */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
@@ -193,7 +174,6 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
           )}
         </div>
 
-        {/* Theme toggle */}
         <button
           type="button"
           onClick={toggleTheme}
@@ -206,7 +186,6 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
 
         <span className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
 
-        {/* Avatar dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"

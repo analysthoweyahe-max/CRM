@@ -234,6 +234,32 @@ export interface ForgotPasswordApiResponse {
   message?: string;
 }
 
+export interface EmployeeForgotPasswordData {
+  expiresAt: string;
+}
+
+export interface EmployeeForgotPasswordApiResponse {
+  status?:  'true' | 'false' | string;
+  message?: string;
+  data?:    EmployeeForgotPasswordData | null;
+}
+
+export interface EmployeeVerifyResetOtpData {
+  token: string;
+}
+
+export interface EmployeeVerifyResetOtpApiResponse {
+  status?:  'true' | 'false' | string;
+  message?: string;
+  data?:    EmployeeVerifyResetOtpData | null;
+}
+
+export interface ForgotPasswordState {
+  email:       string;
+  expiresAt?:  string;
+  resetToken?: string;
+}
+
 export interface AdminResetVerifyData {
   actorType:     'admin';
   admin_id:      string;

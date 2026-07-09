@@ -16,5 +16,5 @@ export function useSeoMemberDashboard() {
   const tasksOverview: TasksOverview     = raw?.tasksOverview ?? EMPTY_OVERVIEW;
   const sections: ProjectSection[]       = raw?.myProjects?.sections ?? [];
 
-  return { tasksOverview, sections, isLoading };
+  return { tasksOverview, sections, isLoading, checkIn: raw?.checkIn ?? null };
 }

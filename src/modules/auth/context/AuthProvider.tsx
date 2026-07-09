@@ -2,6 +2,7 @@
 import { flushSync } from 'react-dom';
 import { AuthContext } from '@/modules/auth/context/AuthContext';
 import { authService } from '@/modules/auth/services/auth.service';
+import { registerFcmToken } from '@/shared/services/fcm.service';
 import type { AuthUser, LoginCredentials, SetPasswordPayload, LoginResult } from '@/modules/auth/types/auth.types';
 import type { ApiAdmin, ApiEmployee } from '@/modules/auth/types/auth.types';
 import {
@@ -57,6 +58,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => { cancelled = true; };
   }, []);
+
+  // Register FCM token after login, on refresh when authenticated, and on token refresh
+  useEffect(() => {
+    if (state.isLoading || !state.user) return;
+
+    registerFcmToken();
+
+    const onFocus = () => registerFcmToken();
+    window.addEventListener('focus', onFocus);
+
+    const interval = setInterval(registerFcmToken, 60 * 60 * 1000);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      clearInterval(interval);
+    };
+  }, [state.user, state.isLoading]);
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {

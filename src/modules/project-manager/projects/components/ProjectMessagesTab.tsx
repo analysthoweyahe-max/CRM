@@ -1,18 +1,53 @@
-import { AtSign, Paperclip, Search, Send, UserPlus } from 'lucide-react';
+import { AtSign, FileText, Paperclip, Search, Send, UserPlus } from 'lucide-react';
 import { Avatar }               from '@/shared/components/ui/Avatar';
 import { Button }               from '@/shared/components/ui/Button';
 import { useProjectMessages }   from '../hooks/useProjectMessages';
 import { useProjectTeamTab }    from '../hooks/useProjectTeamTab';
 import { AddTeamMemberModal }   from './AddTeamMemberModal';
+import type { ChatMessage } from '../types/message.types';
 
 interface Props {
   projectId: string;
   isAr:      boolean;
 }
 
+function MessageContent({ msg }: { msg: ChatMessage }) {
+  const attachments = msg.attachments ?? [];
+
+  return (
+    <>
+      {attachments.map(att => (
+        att.mimeType.startsWith('image/') && att.url ? (
+          <img
+            key={att.id}
+            src={att.url}
+            alt={att.fileName}
+            onClick={() => window.open(att.url, '_blank')}
+            className="max-w-full max-h-48 rounded-lg object-cover cursor-pointer mb-1"
+          />
+        ) : (
+          <a
+            key={att.id}
+            href={att.url}
+            target="_blank"
+            rel="noreferrer"
+            className={`flex items-center gap-2 mb-1 px-3 py-2 rounded-lg text-xs transition-colors
+                        ${msg.isOwn ? 'bg-black/10 hover:bg-black/15' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200'}`}
+          >
+            <FileText size={14} className="shrink-0" />
+            <span className="truncate max-w-40">{att.fileName}</span>
+          </a>
+        )
+      ))}
+      {msg.text && <span>{msg.text}</span>}
+    </>
+  );
+}
+
 export function ProjectMessagesTab({ projectId, isAr }: Props) {
   const {
-    filtered, text, setText, search, setSearch, send, handleKey, bottomRef, isLoading,
+    filtered, text, setText, search, setSearch, send, handleKey, handleFile, bottomRef, fileRef,
+    isLoading, canSend, sendError, isSending,
     showMentions, setShowMentions, mentionables, insertMention,
   } = useProjectMessages(projectId);
 
@@ -68,14 +103,13 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
           </p>
         ) : filtered.map(msg =>
           msg.isOwn ? (
-            /* Own message — right side */
             <div key={msg.id} className="flex flex-col items-end gap-1">
               <span className="text-xs text-gray-400 dark:text-gray-500 pe-1">
                 {msg.senderName}&emsp;{msg.time}
               </span>
               <div className="max-w-[65%] px-4 py-2.5 rounded-2xl rounded-tr-sm
                               bg-[#A0CD39] text-white text-sm leading-relaxed shadow-sm">
-                {msg.text}
+                <MessageContent msg={msg} />
               </div>
               {msg.isRead && (
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 pe-1">
@@ -84,7 +118,6 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
               )}
             </div>
           ) : (
-            /* Other member message — left side */
             <div key={msg.id} className="flex items-start gap-2.5">
               <Avatar initial={msg.senderInitial} color={msg.senderColor} size="sm" />
               <div className="space-y-1">
@@ -96,7 +129,7 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
                                 border border-gray-100 dark:border-gray-600
                                 text-sm text-gray-800 dark:text-gray-200
                                 leading-relaxed shadow-sm">
-                  {msg.text}
+                  <MessageContent msg={msg} />
                 </div>
               </div>
             </div>
@@ -106,77 +139,100 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
       </div>
 
       {/* Input bar */}
-      <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex items-center gap-2.5">
-
-          {/* Send button — visually on the right in RTL (first in DOM) */}
-          <button
-            type="button"
-            onClick={send}
-            className="w-9 h-9 rounded-full bg-[#A0CD39] hover:bg-[#709028]
-                       flex items-center justify-center shrink-0
-                       transition-colors shadow-sm"
-          >
-            <Send size={15} className="text-white" />
-          </button>
-
-          {/* Text */}
-          <textarea
-            rows={1}
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder={isAr ? 'اكتب رسالة...' : 'Write a message...'}
-            className="flex-1 resize-none text-sm rounded-xl
-                       bg-gray-50 dark:bg-gray-700/50
-                       border border-gray-100 dark:border-gray-600
-                       px-3.5 py-2
-                       text-gray-700 dark:text-gray-300
-                       placeholder:text-gray-400
-                       text-end
-                       focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50"
-          />
-
-          {/* Icon buttons — visually on the left in RTL (last in DOM) */}
-          <div className="relative">
+      {canSend ? (
+        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+          {sendError === 'read_only' && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mb-2 text-end">
+              {isAr ? 'عرض فقط — لا يمكنك إرسال رسائل' : 'View only — you cannot send messages'}
+            </p>
+          )}
+          {sendError && sendError !== 'read_only' && (
+            <p className="text-xs text-red-500 mb-2 text-end">{sendError}</p>
+          )}
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={() => setShowMentions(o => !o)}
-              className="text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
+              onClick={() => send()}
+              disabled={!text.trim() || isSending}
+              className="w-9 h-9 rounded-full bg-[#A0CD39] hover:bg-[#709028]
+                         flex items-center justify-center shrink-0
+                         transition-colors shadow-sm disabled:opacity-50"
             >
-              <AtSign size={17} />
+              <Send size={15} className="text-white" />
             </button>
-            {showMentions && (
-              <div className="absolute bottom-full mb-2 end-0 w-56 max-h-56 overflow-y-auto
-                              rounded-xl border border-gray-200 dark:border-gray-600
-                              bg-white dark:bg-gray-800 shadow-xl z-10 py-1">
-                {mentionables.length === 0 ? (
-                  <p className="px-3 py-2.5 text-xs text-gray-400 text-center">
-                    {isAr ? 'لا يوجد أعضاء' : 'No members'}
-                  </p>
-                ) : mentionables.map(m => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => insertMention(m)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-end
-                               text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    <Avatar initial={m.avatarInitial} color="bg-gray-400" size="sm" />
-                    <span className="truncate">{m.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button type="button"
-            className="text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors">
-            <Paperclip size={17} />
-          </button>
-        </div>
-      </div>
 
-      {/* Add members to project */}
+            <textarea
+              rows={1}
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder={isAr ? 'اكتب رسالة...' : 'Write a message...'}
+              className="flex-1 resize-none text-sm rounded-xl
+                         bg-gray-50 dark:bg-gray-700/50
+                         border border-gray-100 dark:border-gray-600
+                         px-3.5 py-2
+                         text-gray-700 dark:text-gray-300
+                         placeholder:text-gray-400
+                         text-end
+                         focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50"
+            />
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowMentions(o => !o)}
+                className="text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
+              >
+                <AtSign size={17} />
+              </button>
+              {showMentions && (
+                <div className="absolute bottom-full mb-2 end-0 w-56 max-h-56 overflow-y-auto
+                                rounded-xl border border-gray-200 dark:border-gray-600
+                                bg-white dark:bg-gray-800 shadow-xl z-10 py-1">
+                  {mentionables.length === 0 ? (
+                    <p className="px-3 py-2.5 text-xs text-gray-400 text-center">
+                      {isAr ? 'لا يوجد أعضاء' : 'No members'}
+                    </p>
+                  ) : mentionables.map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => insertMention(m)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-end
+                                 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    >
+                      <Avatar initial={m.avatarInitial} color="bg-gray-400" size="sm" />
+                      <span className="truncate">{m.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={isSending}
+              className="text-gray-400 hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors disabled:opacity-50"
+            >
+              <Paperclip size={17} />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              className="hidden"
+              accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+              onChange={handleFile}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+            {isAr ? 'عرض الرسائل فقط (مشرف عام)' : 'Read-only message view (super-admin)'}
+          </p>
+        </div>
+      )}
+
       <AddTeamMemberModal
         open={showModal}
         onClose={closeModal}

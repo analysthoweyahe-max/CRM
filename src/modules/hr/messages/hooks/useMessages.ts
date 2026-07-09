@@ -26,8 +26,8 @@ export function useSearchEmployees(search: string) {
 export function useCreateConversation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (participantId: string) =>
-      messagesApi.createConversation({ participant_id: participantId }),
+    mutationFn: (employeeId: string) =>
+      messagesApi.createConversation({ employee_id: employeeId }),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONV_KEY }),
   });
 }
@@ -66,5 +66,16 @@ export function useMarkRead() {
   return useMutation({
     mutationFn: (uuid: string) => messagesApi.markRead(uuid),
     onSuccess:  () => qc.invalidateQueries({ queryKey: CONV_KEY }),
+  });
+}
+
+export function useUpdateConversationStatus(uuid: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (status: 'open' | 'closed') => messagesApi.updateStatus(uuid, status),
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: CONV_KEY });
+      qc.invalidateQueries({ queryKey: msgKey(uuid) });
+    },
   });
 }

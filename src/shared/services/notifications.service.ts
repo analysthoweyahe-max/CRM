@@ -82,10 +82,20 @@ export const notificationsApi = {
     return http.put<ApiEnvelope<null>>(`${prefixFor(role)}/read-all`);
   },
 
-  registerToken(deviceToken: string, deviceType: 'web' = 'web') {
+  registerToken(deviceToken: string, deviceType: 'web' | 'android' | 'ios' = 'web') {
     return http.post<ApiEnvelope<null>>('/v1/notifications/token', {
-      device_token: deviceToken,
-      device_type:  deviceType,
+      deviceToken,
+      deviceType,
     });
+  },
+
+  test(payload: { title: string; body: string }) {
+    return http.post<ApiEnvelope<{
+      notificationId: string;
+      fcmTokenCount:    number;
+      fcmRegistered:    boolean;
+      channels:         string[];
+      notification:     AppNotification;
+    }>>('/v1/notifications/test', payload);
   },
 };

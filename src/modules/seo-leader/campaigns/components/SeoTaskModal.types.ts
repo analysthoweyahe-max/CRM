@@ -1,3 +1,5 @@
+import type { SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
+
 export interface SeoTaskFull {
   id:               number;
   taskNumber:       number;
@@ -19,7 +21,8 @@ export interface SeoTaskFull {
   referenceLinks:   string[];
   notes?:           string | null;
   assignees:        SeoAssigneeDetail[];
-  attachments:      SeoAttachmentDetail[];
+  attachments:      SeoTaskAttachment[];
+  attachmentsCount?: number;
   completedAt?:     string | null;
   createdAt:        string;
   updatedAt:        string;
@@ -40,15 +43,13 @@ export interface SeoAssigneeDetail {
   avatar?: string | null;
 }
 
-export interface SeoAttachmentDetail {
-  id:          number;
-  name:        string;
-  size?:       string;
-  url?:        string;
-  type?:       string;
-  uploadedBy?: string;
-  createdAt?:  string;
-}
+/** @deprecated Use SeoTaskAttachment */
+export type SeoAttachmentDetail = SeoTaskAttachment & {
+  name?:        string;
+  type?:        string;
+  createdAt?:   string;
+  uploadedBy?:  string;
+};
 
 /* Keep old aliases so existing imports don't break */
 export type SeoTaskDetail  = SeoTaskFull;

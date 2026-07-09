@@ -3,6 +3,7 @@ import { CheckCircle, Eye, RefreshCw, Clock, CalendarCheck } from 'lucide-react'
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { useAuth }     from '@/modules/auth/context/AuthContext';
 import { ROUTES }      from '@/app/router/routes';
+import { WorkTimerCard } from '@/shared/modules/attendance/components/WorkTimerCard';
 import { DashboardStatCard }     from '@/shared/components/ui/DashboardStatCard';
 import { useSeoMemberDashboard } from '../hooks/useSeoMemberDashboard';
 import { useTodayTasks }         from '../hooks/useTodayTasks';
@@ -36,7 +37,7 @@ export function SeoMemberDashboardPage() {
   const isAr      = lang === 'ar';
   const { user }  = useAuth();
   const navigate  = useNavigate();
-  const { tasksOverview, isLoading } = useSeoMemberDashboard();
+  const { tasksOverview, isLoading, checkIn } = useSeoMemberDashboard();
   const { tasks: todayTasks, isLoading: tasksLoading } = useTodayTasks();
 
   if (isLoading) return <DashboardSkeleton />;
@@ -51,6 +52,8 @@ export function SeoMemberDashboardPage() {
     <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
 
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{greeting}</h1>
+
+      <WorkTimerCard layoutScope="seo" variant="card" initialData={checkIn} />
 
       {/* 4 stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

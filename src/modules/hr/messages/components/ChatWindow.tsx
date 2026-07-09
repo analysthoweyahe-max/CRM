@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
-import { Send, Paperclip, Smile, Check, CheckCheck, FileText, Menu } from 'lucide-react';
+import { Send, Paperclip, Smile, Check, CheckCheck, FileText, Menu, Lock } from 'lucide-react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
 import { useTheme } from '@/app/providers/ThemeProvider';
-import { useMessages, useSendMessage, useSendMedia, useMarkRead } from '../hooks/useMessages';
+import { useMessages, useSendMessage, useSendMedia, useMarkRead, useUpdateConversationStatus } from '../hooks/useMessages';
 import type { ApiConversation, ApiMessage } from '../types/messages.types';
 
 interface Props {
@@ -19,7 +19,18 @@ const AVATAR_COLORS = [
 
 function avatarColor(s: string) { return AVATAR_COLORS[s.charCodeAt(0) % AVATAR_COLORS.length]; }
 
+function messageTimestamp(msg: ApiMessage): string {
+  return msg.sentAt ?? msg.created_at ?? '';
+}
+
+function isOwnMessage(msg: ApiMessage, currentUserId: string): boolean {
+  if (msg.isMine !== undefined) return msg.isMine;
+  if (msg.sender?.id) return msg.sender.id === currentUserId;
+  return false;
+}
+
 function fmtTime(raw: string, isAr: boolean) {
+  if (!raw) return '';
   return new Date(raw).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -43,6 +54,12 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
   const { mutate: sendText,  isPending: sending   } = useSendMessage(conversation.id);
   const { mutate: sendMedia, isPending: uploading } = useSendMedia(conversation.id);
   const { mutate: markRead } = useMarkRead();
+  const { mutate: updateStatus, isPending: closing } = useUpdateConversationStatus(conversation.id);
+
+  const [localStatus, setLocalStatus] = useState(conversation.status);
+  useEffect(() => { setLocalStatus(conversation.status); }, [conversation.status, conversation.id]);
+
+  const isClosed = localStatus === 'closed';
 
   // mark as read when a conversation opens
   useEffect(() => {
@@ -78,8 +95,9 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
     sendMedia(file);
   }
 
-  const other = conversation.participants.find(p => p.id !== currentUserId) ?? conversation.participants[0];
-  const name  = other?.name ?? (isAr ? 'محادثة' : 'Chat');
+  const participants = conversation.participants ?? [];
+  const other = participants.find(p => p.id !== currentUserId) ?? participants[0];
+  const name  = conversation.employeeName ?? conversation.subject ?? other?.name ?? (isAr ? 'محادثة' : 'Chat');
   const color = avatarColor(name);
 
   return (
@@ -93,7 +111,28 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{name}</p>
+          {conversation.subject && conversation.employeeName && (
+            <p className="text-[11px] text-gray-400 truncate">{conversation.subject}</p>
+          )}
         </div>
+        {!isClosed && (
+          <button
+            type="button"
+            onClick={() => updateStatus('closed', { onSuccess: () => setLocalStatus('closed') })}
+            disabled={closing}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
+                       text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+            title={isAr ? 'إغلاق المحادثة' : 'Close conversation'}
+          >
+            <Lock size={14} />
+            {isAr ? 'إغلاق' : 'Close'}
+          </button>
+        )}
+        {isClosed && (
+          <span className="text-xs text-amber-600 dark:text-amber-400 shrink-0">
+            {isAr ? 'مغلقة' : 'Closed'}
+          </span>
+        )}
         {onOpenSidebar && (
           <button
             type="button"
@@ -120,13 +159,26 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
           </p>
         ) : (
           messages.map(msg => (
-            <MessageBubble key={msg.id} msg={msg} isAr={isAr} isOwn={msg.sender.id === currentUserId} />
+            <MessageBubble
+              key={String(msg.id)}
+              msg={msg}
+              isAr={isAr}
+              isOwn={isOwnMessage(msg, currentUserId)}
+            />
           ))
         )}
         <div ref={bottomRef} />
       </div>
 
       {/* ── Input area */}
+      {isClosed ? (
+        <div className="shrink-0 border-t border-gray-100 dark:border-gray-700/60 bg-gray-50 dark:bg-gray-800/50 px-4 py-4">
+          <p className="text-sm text-center text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+            <Lock size={14} />
+            {isAr ? 'المحادثة مغلقة — لا يمكن إرسال رسائل جديدة' : 'Conversation closed — cannot send new messages'}
+          </p>
+        </div>
+      ) : (
       <div className="shrink-0 border-t border-gray-100 dark:border-gray-700/60 bg-white dark:bg-gray-900">
 
         {showEmoji && (
@@ -208,6 +260,7 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -255,7 +308,7 @@ function MessageBubble({ msg, isAr, isOwn }: { msg: ApiMessage; isAr: boolean; i
         </div>
 
         <div className={`flex items-center gap-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-          <span className="text-[10px] text-gray-400 dark:text-gray-500">{fmtTime(msg.created_at, isAr)}</span>
+          <span className="text-[10px] text-gray-400 dark:text-gray-500">{fmtTime(messageTimestamp(msg), isAr)}</span>
           {isOwn && (
             seen
               ? <CheckCheck size={12} className="text-[#A0CD39]" />

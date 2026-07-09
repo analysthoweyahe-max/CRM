@@ -12,7 +12,8 @@ const PUBLIC_AUTH_SEGMENTS = [
   '/v1/admin/auth/forgot-password',
   '/v1/admin/auth/password-resets/',
   '/v1/employee/auth/forgot-password',
-  '/v1/employee/auth/password-resets/',
+  '/v1/employee/auth/verify-reset-otp',
+  '/v1/employee/auth/reset-password',
 ] as const;
 
 function isPublicAuthRequest(url?: string): boolean {

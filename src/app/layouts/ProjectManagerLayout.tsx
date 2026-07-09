@@ -1,18 +1,34 @@
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth }    from '@/modules/auth/context/AuthContext';
+import { useLang }    from '@/app/providers/LanguageProvider';
 import { AppSidebar } from './components/AppSidebar';
 import { Topbar }     from './components/Topbar';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
 import { MyPermissionsWidget } from '@/shared/components/auth';
+import { AttendanceWidget } from './components/AttendanceWidget';
+import { useAttendanceWidget } from './components/useAttendanceWidget';
 import { ROUTES }     from '@/app/router/routes';
 
 export function ProjectManagerLayout() {
   const { user } = useAuth();
+  const { lang } = useLang();
+  const isAr = lang === 'ar';
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed,   setCollapsed]   = useState(false);
   const isProfilePage = location.pathname === ROUTES.PROJECT_MANAGER.PROFILE;
+
+  const attendance = useAttendanceWidget('pm');
+  const prevCollapsed = useRef(collapsed);
+
+  useEffect(() => {
+    if (prevCollapsed.current && !collapsed && attendance.isActiveDay) {
+      toast.success(isAr ? 'جلسة العمل نشطة' : 'Work session active');
+    }
+    prevCollapsed.current = collapsed;
+  }, [collapsed, attendance.isActiveDay, isAr]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -22,6 +38,8 @@ export function ProjectManagerLayout() {
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(p => !p)}
+        isCheckedIn={attendance.isActiveDay}
+        footerWidget={<AttendanceWidget layoutScope="pm" />}
       />
 
       <div className={[

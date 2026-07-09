@@ -1,6 +1,7 @@
 import { Combobox }     from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
+import { SeoTaskFilesInput } from './SeoTaskFilesInput';
 import type { AddSeoTaskForm } from './AddSeoTaskModal.types';
 
 /* ── Shared style tokens ─────────────────────────────────────────────── */
@@ -25,9 +26,13 @@ interface Props {
   set:        <K extends keyof AddSeoTaskForm>(key: K, val: AddSeoTaskForm[K]) => void;
   teamItems:  ComboboxItem[];
   isAr:       boolean;
+  files?:     File[];
+  onFilesChange?: (files: File[]) => void;
+  fileError?: string | null;
+  onFileError?: (msg: string | null) => void;
 }
 
-export function AddSeoTaskForm({ form, set, teamItems, isAr }: Props) {
+export function AddSeoTaskForm({ form, set, teamItems, isAr, files = [], onFilesChange, fileError, onFileError }: Props) {
   return (
     <div className="space-y-4">
 
@@ -159,6 +164,16 @@ export function AddSeoTaskForm({ form, set, teamItems, isAr }: Props) {
           </div>
         </div>
       </div>
+
+      {onFilesChange && (
+        <SeoTaskFilesInput
+          files={files}
+          onChange={onFilesChange}
+          isAr={isAr}
+          error={fileError}
+          onError={onFileError}
+        />
+      )}
 
     </div>
   );

@@ -7,6 +7,7 @@ import { Card }    from '@/shared/components/ui/Card';
 import { useEmployeeTasks } from '@/modules/employee/tasks/hooks/useEmployeeTasks';
 import { useEmpLeaveSummary } from '@/modules/employee/requests/hooks/useEmployeeLeave';
 import { LeaveBalancePanel }  from '@/modules/employee/requests/components/LeaveBalancePanel';
+import { WorkTimerCard } from '@/shared/modules/attendance/components/WorkTimerCard';
 import { EmpStatCards }      from '../components/EmpStatCards';
 import { MyTasksSection }    from '../components/MyTasksSection';
 import { MyProjectsSection } from '../components/MyProjectsSection';
@@ -36,6 +37,8 @@ export function EmployeeDashboardPage() {
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
         {isAr ? `مرحباً، ${user?.fullName ?? ''} 👋` : `Welcome, ${user?.fullName ?? ''} 👋`}
       </h1>
+
+      <WorkTimerCard layoutScope="employee" variant="card" />
 
       <EmpStatCards overview={overview} pending={pending} isAr={isAr} />
 

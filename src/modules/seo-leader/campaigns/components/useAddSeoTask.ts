@@ -22,6 +22,8 @@ export function useAddSeoTask(
 ) {
   const queryClient = useQueryClient();
   const [form,      setForm]     = useState<AddSeoTaskForm>({ ...INITIAL, targetUrl: prefillUrl });
+  const [files,     setFiles]    = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [apiError,  setApiError] = useState<string | null>(null);
 
   function set<K extends keyof AddSeoTaskForm>(key: K, val: AddSeoTaskForm[K]) {
@@ -42,15 +44,15 @@ export function useAddSeoTask(
         target_keyword:   form.targetKeyword.trim() || undefined,
         target_url:       form.targetUrl.trim()     || undefined,
       };
-      return campaignApi.createTask(campaignId, payload);
+      return campaignApi.createTask(campaignId, payload, files.length ? files : undefined);
     },
 
     onSuccess: () => {
-      /* Refetch so the kanban shows the task with a fully populated assignee name
-         — the create response itself doesn't return a resolved assignee. */
       queryClient.refetchQueries({ queryKey: ['campaign-tasks', campaignId] });
 
       setForm({ ...INITIAL, targetUrl: prefillUrl });
+      setFiles([]);
+      setFileError(null);
       onClose();
     },
 
@@ -64,6 +66,10 @@ export function useAddSeoTask(
 
   return {
     form,
+    files,
+    setFiles,
+    fileError,
+    setFileError,
     apiError,
     set,
     isValid:   !!form.title.trim() && !!form.assignee && !!form.phase.trim(),
