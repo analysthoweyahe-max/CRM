@@ -10,22 +10,38 @@ interface Props {
 }
 
 export function WorkSettingsCard({ settings, onChange, isAr }: Props) {
+  const windowFrom = settings.normalStartWindowFrom ?? settings.workStartTime ?? '10:00';
+  const windowTo   = settings.normalStartWindowTo   ?? settings.workEndTime   ?? '12:00';
+
   return (
     <Card padding="lg" className="space-y-5">
       <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">
         {isAr ? 'إعدادات العمل' : 'Work Settings'}
       </h2>
 
-      <FormField label={isAr ? 'ساعات العمل' : 'Work Hours'}>
+      <FormField label={isAr ? 'نافذة البدء الطبيعي' : 'Normal Start Window'}>
         <div className="flex items-center gap-2">
-          <Input type="time" value={settings.workStartTime} onChange={(e) => onChange('workStartTime', e.target.value)} />
+          <Input
+            type="time"
+            value={windowFrom.slice(0, 5)}
+            onChange={(e) => onChange('normalStartWindowFrom', e.target.value)}
+          />
           <span className="text-gray-400 shrink-0">{isAr ? 'إلى' : 'to'}</span>
-          <Input type="time" value={settings.workEndTime} onChange={(e) => onChange('workEndTime', e.target.value)} />
+          <Input
+            type="time"
+            value={windowTo.slice(0, 5)}
+            onChange={(e) => onChange('normalStartWindowTo', e.target.value)}
+          />
         </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          {isAr
+            ? 'أقرب وأبعد وقت لتسجيل حضور عادي (مثال: 10:00 – 12:00)'
+            : 'Earliest and latest normal check-in times (e.g. 10:00 – 12:00)'}
+        </p>
       </FormField>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField label={isAr ? 'ساعات العمل اليومية' : 'Daily Work Hours'}>
+        <FormField label={isAr ? 'عدد ساعات العمل اليومية' : 'Daily Work Hours'}>
           <Input type="number" min={1} value={settings.dailyWorkHours}
             onChange={(e) => onChange('dailyWorkHours', Number(e.target.value))} />
         </FormField>

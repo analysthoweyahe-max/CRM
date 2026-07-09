@@ -54,7 +54,7 @@ export const empMessagesApi = {
   },
 
   markRead(uuid: string) {
-    return http.post<{ status: string }>(
+    return http.put<{ status: string }>(
       `/v1/employee/messages/conversations/${uuid}/read`,
     );
   },

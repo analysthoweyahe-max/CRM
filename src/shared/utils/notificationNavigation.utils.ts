@@ -57,7 +57,9 @@ function isMessageNotification(notification: AppNotification): boolean {
 function leavePath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
   if (user?.role === 'employee')   return ROUTES.EMPLOYEE.REQUESTS;
   if (user?.role === 'seo-member') return ROUTES.SEO_MEMBER.REQUESTS;
-  if (user?.role === 'hr')         return ROUTES.LEAVES.LIST;
+  if (user?.role === 'hr' || user?.role === 'admin' || user?.role === 'manager') {
+    return ROUTES.LEAVES.LIST;
+  }
   return null;
 }
 
@@ -183,8 +185,10 @@ export function resolveNotificationPath(
     case 'pm_task_assigned':
       return resolvePmTaskPath(data, user);
 
-    case 'hr_leave_submitted':
-      return ROUTES.LEAVES.LIST;
+    case 'hr_leave_submitted': {
+      const leaveId = readId(data.leave_id, data.leaveId, data.id);
+      return leaveId ? ROUTES.LEAVES.DETAIL(String(leaveId)) : ROUTES.LEAVES.LIST;
+    }
 
     default:
       break;
@@ -234,6 +238,10 @@ export function resolveNotificationPath(
   }
 
   if (isLeaveNotification(notification)) {
+    const leaveId = readId(data.leave_id, data.leaveId, data.id);
+    if (leaveId && (user?.role === 'hr' || user?.role === 'admin' || user?.role === 'manager')) {
+      return ROUTES.LEAVES.DETAIL(String(leaveId));
+    }
     return leavePath(user);
   }
 

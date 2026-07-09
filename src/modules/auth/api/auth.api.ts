@@ -32,12 +32,12 @@ export const authApi = {
   },
 
   // Verifies the OTP code emailed to a super-admin on each login attempt.
-  adminVerifyOtp(payload: { admin_id: string; code: string }) {
+  adminVerifyOtp(payload: { admin_id: string; adminId?: string; email?: string; code: string; otp?: string }) {
     return http.post<AdminAuthSuccessApiResponse>('/v1/admin/auth/login/verify-otp', payload);
   },
 
   // Requests a fresh OTP code for the given super-admin.
-  adminResendOtp(payload: { admin_id: string }) {
+  adminResendOtp(payload: { admin_id: string; adminId?: string; email?: string }) {
     return http.post<AdminOtpResendApiResponse>('/v1/admin/auth/login/resend-otp', payload);
   },
 
@@ -78,6 +78,10 @@ export const authApi = {
 
   // ── Employee ─────────────────────────────────────────────────────────────
 
+  employeeLogin(credentials: { email?: string; employee_id?: string; password: string }) {
+    return http.post<EmployeeLoginApiResponse>('/v1/employee/auth/login', credentials);
+  },
+
   employeeLogout() {
     return http.post<void>('/v1/employee/auth/logout');
   },
@@ -105,18 +109,22 @@ export const authApi = {
     return http.post<EmployeeForgotPasswordApiResponse>('/v1/employee/auth/forgot-password', payload);
   },
 
-  employeeVerifyResetOtp(payload: { email: string; code: string }) {
+  employeeVerifyResetOtp(payload: { email: string; code: string; otp?: string }) {
     return http.post<EmployeeVerifyResetOtpApiResponse>(
       '/v1/employee/auth/verify-reset-otp',
-      payload,
+      { ...payload, otp: payload.otp ?? payload.code },
     );
   },
 
   employeeResetPasswordOtp(payload: {
     token:                 string;
+    reset_token?:          string;
     password:              string;
     password_confirmation: string;
   }) {
-    return http.post<ForgotPasswordApiResponse>('/v1/employee/auth/reset-password', payload);
+    return http.post<ForgotPasswordApiResponse>('/v1/employee/auth/reset-password', {
+      ...payload,
+      reset_token: payload.reset_token ?? payload.token,
+    });
   },
 };

@@ -1,3 +1,5 @@
+import type { ApiLookup } from '@/modules/hr/employees/types/employee.types';
+
 export type CreateProjectModule = 'pm' | 'seo';
 
 export interface DepartmentLookup {
@@ -22,8 +24,8 @@ export interface EmployeeLookup {
   name:         string;
   email:        string;
   departmentId: number;
-  department?:  string;
-  jobTitle?:    string;
+  department?:  string | ApiLookup | null;
+  jobTitle?:    string | ApiLookup | null;
 }
 
 export interface ManagerLookup {

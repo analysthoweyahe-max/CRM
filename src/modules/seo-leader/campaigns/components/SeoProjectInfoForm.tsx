@@ -108,6 +108,7 @@ export function SeoProjectInfoForm({
         contractDurationMonths={contractDurationMonths}
         errors={optionalFieldErrors}
         isAr={isAr}
+        showGithubLink={false}
         onGithubLinkChange={onChangeGithubLink}
         onDriveLinkChange={onChangeDriveLink}
         onContractMonthsChange={onChangeContractDurationMonths}

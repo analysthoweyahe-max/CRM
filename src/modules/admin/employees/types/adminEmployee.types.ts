@@ -1,6 +1,6 @@
 import type { PermissionAction } from '../../roles/types/adminRole.types';
 import type { ApiEmployee } from '@/modules/hr/employees/types/employee.types';
-import { mapEmploymentType } from '@/modules/hr/employees/types/employee.types';
+import { mapEmploymentType, resolveDisplayText, resolveIdentifier } from '@/modules/hr/employees/types/employee.types';
 import { getAvatarColor, getInitial } from '@/shared/utils/avatar.utils';
 
 export type AdminEmployeeStatus = 'active' | 'inactive' | 'pending';
@@ -28,6 +28,7 @@ export function getRoleLabel(role: string, isAr: boolean): string {
 export interface AdminEmployee {
   id:             string;
   employeeNumber: string;
+  userId:         string;
   name:           string;
   email:          string;
   avatarInitial:  string;
@@ -80,16 +81,24 @@ function toStatus(emp: ApiEmployee): AdminEmployeeStatus {
 
 export function toAdminEmployee(emp: ApiEmployee): AdminEmployee {
   const status = toStatus(emp);
-  const roles  = emp.roles ?? [];
+  const roles  = (emp.roles ?? [])
+    .map((role) => (typeof role === 'string' ? role : resolveDisplayText(role, true)))
+    .filter(Boolean);
+  const userId = resolveIdentifier(
+    emp.userId ?? emp.user_id ?? emp.employeeNumber ?? emp.id,
+    String(emp.employeeNumber ?? emp.id ?? '—'),
+  );
+
   return {
     id:             emp.id,
     employeeNumber: emp.employeeNumber ?? emp.id,
+    userId,
     name:           emp.name,
     email:          emp.email,
     avatarInitial:  getInitial(emp.name),
     avatarColor:    getAvatarColor(emp.name),
-    department:     emp.department?.name ?? '—',
-    jobTitle:       emp.jobTitle?.name ?? '—',
+    department:     resolveDisplayText(emp.department, true) || '—',
+    jobTitle:       resolveDisplayText(emp.jobTitle, true) || '—',
     roles,
     role:           roles.length ? roles.map(r => getRoleLabel(r, true)).join('، ') : '—',
     status,

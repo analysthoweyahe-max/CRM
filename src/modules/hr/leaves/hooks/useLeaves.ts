@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLang } from '@/app/providers/LanguageProvider';
 import { leavesApi } from '../api/leaves.api';
+import { normalizeLeaveRequest } from '../utils/leave.utils';
 import type { LeaveListParams, EmployeeLeaveHistoryParams } from '../types/leaves.types';
+
 
 export function useLeaveList(params?: LeaveListParams) {
   return useQuery({
@@ -10,9 +13,12 @@ export function useLeaveList(params?: LeaveListParams) {
 }
 
 export function useLeaveDetail(id: string | undefined) {
+  const { lang } = useLang();
+  const isAr = lang === 'ar';
+
   return useQuery({
-    queryKey: ['leaves', 'detail', id],
-    queryFn:  () => leavesApi.show(id!).then((r) => r.data.data),
+    queryKey: ['leaves', 'detail', id, isAr],
+    queryFn:  () => leavesApi.show(id!).then((r) => normalizeLeaveRequest(r.data.data, isAr)),
     enabled:  !!id,
   });
 }

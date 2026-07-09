@@ -6,6 +6,7 @@ import { useAuth } from '@/modules/auth/context/AuthContext';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES } from '@/app/router/routes';
 import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
+import { resolveDisplayText } from '@/modules/hr/employees/types/employee.types';
 import {
   optionalLink,
   optionalContractDurationMonths,
@@ -109,9 +110,12 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
       id:     e.id,
       label:  e.name,
       detail: e.email,
-      meta:   [e.jobTitle, e.department].filter(Boolean).join(' · '),
+      meta:   [e.jobTitle, e.department]
+        .map(v => resolveDisplayText(v, isAr))
+        .filter(Boolean)
+        .join(' · '),
     })),
-  [employeesQ.data]);
+  [employeesQ.data, isAr]);
 
   const managerItems = useMemo(() => {
     const q = managerSearch.trim().toLowerCase();

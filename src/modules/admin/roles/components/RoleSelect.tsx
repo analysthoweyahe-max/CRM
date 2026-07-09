@@ -27,12 +27,22 @@ export function RoleSelect({
       .filter(r => r.name !== 'super-admin' && (!allowed || allowed.has(r.name)))
       .map(r => ({ id: r.name, label: getRoleNameLabel(r.name, isAr) }));
 
-    if (fromApi.length > 0) return fromApi;
+    if (fromApi.length > 0) {
+      if (value && !fromApi.some((item) => item.id === value)) {
+        return [...fromApi, { id: value, label: getRoleNameLabel(value, isAr) }];
+      }
+      return fromApi;
+    }
 
-    return MANAGER_ROLE_OPTIONS
+    const fallback = MANAGER_ROLE_OPTIONS
       .filter(r => !allowed || allowed.has(r.id))
       .map(r => ({ id: r.id, label: isAr ? r.labelAr : r.labelEn }));
-  }, [availableRoles, allowedRoleNames, isAr]);
+
+    if (value && !fallback.some((item) => item.id === value)) {
+      return [...fallback, { id: value, label: getRoleNameLabel(value, isAr) }];
+    }
+    return fallback;
+  }, [availableRoles, allowedRoleNames, isAr, value]);
 
   return (
     <Combobox

@@ -33,6 +33,7 @@ export const ar = {
       addEmployee:      'إضافة موظف',
       dailyAttendance:  'الحضور اليومي',
       attendanceLog:    'سجل الحضور',
+      attendanceExceptions: 'طلبات الاستثناء',
       leaveManagement:  'إدارة الإجازات',
       payroll:          'الرواتب',
       deductions:       'الخصومات',
@@ -178,7 +179,7 @@ export const ar = {
 
   auth: {
     login: {
-      invalidCredentials: 'معرّف المستخدم أو كلمة المرور غير صحيحة',
+      invalidCredentials: 'البريد الإلكتروني أو معرّف المستخدم أو كلمة المرور غير صحيحة',
       signingIn:          'جارٍ تسجيل الدخول...',
     },
     setPassword: {

@@ -27,8 +27,6 @@ interface EditFormValues {
   basicSalary:    string;
   managerId:      string;
   status:         string;
-  shiftStart:     string;
-  shiftEnd:       string;
   workingHours:   string;
 }
 
@@ -55,15 +53,11 @@ export function EmployeeEditPage() {
       basicSalary:    String(emp.salary ?? ''),
       managerId:      String(emp.manager?.id ?? 'none'),
       status:         emp.status ?? 'active',
-      shiftStart:     (emp.shiftStart ?? emp.shift_start ?? '').slice(0, 5),
-      shiftEnd:       (emp.shiftEnd   ?? emp.shift_end   ?? '').slice(0, 5),
-      workingHours:   String(emp.workingHours ?? ''),
+      workingHours:   String(emp.workingHours ?? 8),
     } : undefined,
   });
 
   const selectedDept                   = useWatch({ control, name: 'department' });
-  const selectedEmploymentType         = useWatch({ control, name: 'employmentType' });
-  const isPartTime                     = selectedEmploymentType === 'part_time';
   const { data: jobTitles = [] }       = useJobTitles(selectedDept || undefined);
   const { data: employmentTypes = [] } = useEmploymentTypes();
 
@@ -95,9 +89,7 @@ export function EmployeeEditPage() {
         status:          data.status as EmployeeStatus,
         employment_type: data.employmentType as EmploymentType,
         salary:          parseFloat(data.basicSalary) || undefined,
-        ...(data.employmentType === 'part_time'
-          ? { working_hours: Number(data.workingHours) || undefined }
-          : { shift_start: data.shiftStart || undefined, shift_end: data.shiftEnd || undefined }),
+        working_hours:   Number(data.workingHours) || 8,
       }),
 
     onSuccess: () => {
@@ -209,24 +201,9 @@ export function EmployeeEditPage() {
               )} />
             </FormField>
 
-            {isPartTime ? (
-              /* Working hours */
-              <FormField label={isAr ? 'عدد ساعات العمل' : 'Working Hours'} icon={<Clock size={15} className="text-gray-400" />}>
-                <Input {...register('workingHours')} type="number" min={1} endIcon={<Clock size={15} />} placeholder="4" />
-              </FormField>
-            ) : (
-              <>
-                {/* Shift start */}
-                <FormField label={isAr ? 'وقت بداية الدوام' : 'Shift Start'} icon={<Clock size={15} className="text-gray-400" />}>
-                  <Input {...register('shiftStart')} type="time" endIcon={<Clock size={15} />} />
-                </FormField>
-
-                {/* Shift end */}
-                <FormField label={isAr ? 'وقت نهاية الدوام' : 'Shift End'} icon={<Clock size={15} className="text-gray-400" />}>
-                  <Input {...register('shiftEnd')} type="time" endIcon={<Clock size={15} />} />
-                </FormField>
-              </>
-            )}
+            <FormField label={isAr ? 'عدد ساعات العمل اليومية' : 'Daily Working Hours'} icon={<Clock size={15} className="text-gray-400" />}>
+              <Input {...register('workingHours')} type="number" min={1} endIcon={<Clock size={15} />} placeholder="8" />
+            </FormField>
 
             {/* Status */}
             <FormField label={isAr ? 'الحالة' : 'Status'} icon={<Activity size={15} className="text-gray-400" />}>

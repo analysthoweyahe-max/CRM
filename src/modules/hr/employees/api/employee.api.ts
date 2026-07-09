@@ -54,7 +54,7 @@ export const employeeApi = {
   },
 
   bulkRemove(ids: string[]) {
-    return http.post<{ status: string; message: string }>('/v1/employees/bulk-delete', { ids });
+    return http.post<{ status: string; message: string }>('/v1/employees/bulk-delete', { employee_ids: ids });
   },
 
   assignRole(id: string, payload: AssignEmployeeRolePayload) {

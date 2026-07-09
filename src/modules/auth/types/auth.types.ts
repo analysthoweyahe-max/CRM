@@ -156,7 +156,10 @@ export interface AdminLoginApiResponse {
 
 export interface AdminOtpResendApiResponse {
   data: {
-    expiresAt?: string;
+    adminId?:    string;
+    admin_id?:   string;
+    expiresAt?:  string;
+    expires_at?: string;
   };
 }
 

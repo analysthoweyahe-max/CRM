@@ -19,20 +19,30 @@ export function PermissionGroupList({ selected, onToggle, isAr }: Props) {
     () => PERMISSION_GROUPS.map((group) => ({
       ...group,
       slugs: group.slugs.filter(({ slug }) =>
-        registered.size === 0 ? PANEL_PERMISSION_SLUGS.has(slug) : registered.has(slug),
+        registered.size === 0
+          ? PANEL_PERMISSION_SLUGS.has(slug)
+          : registered.has(slug) || selected.includes(slug),
       ),
     })).filter((group) => group.slugs.length > 0),
-    [registered],
+    [registered, selected],
+  );
+
+  const catalogSlugs = useMemo(
+    () => new Set(PERMISSION_GROUPS.flatMap((group) => group.slugs.map((s) => s.slug))),
+    [],
   );
 
   // Any permission created via the Permissions page that isn't part of the curated
   // catalogue above still needs to be selectable here — group it under "Other".
-  const otherSlugs = useMemo(
-    () => (allPermissions ?? [])
+  const otherSlugs = useMemo(() => {
+    const fromApi = (allPermissions ?? [])
       .map((p) => p.name)
-      .filter((name) => !PANEL_PERMISSION_SLUGS.has(name)),
-    [allPermissions],
-  );
+      .filter((name) => !PANEL_PERMISSION_SLUGS.has(name));
+    const fromSelected = selected.filter(
+      (slug) => !catalogSlugs.has(slug) && !fromApi.includes(slug),
+    );
+    return [...new Set([...fromApi, ...fromSelected])];
+  }, [allPermissions, selected, catalogSlugs]);
 
   const visibleSelected = useMemo(
     () => filterRegisteredPermissions(selected, registered.size ? registered : undefined),

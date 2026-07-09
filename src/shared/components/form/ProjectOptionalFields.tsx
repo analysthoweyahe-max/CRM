@@ -18,6 +18,7 @@ export interface ProjectOptionalFieldsProps {
   contractDurationMonths:  string;
   errors?:                 ProjectOptionalFieldErrors;
   isAr:                    boolean;
+  showGithubLink?:         boolean;
   onGithubLinkChange:      (v: string) => void;
   onDriveLinkChange:       (v: string) => void;
   onContractMonthsChange:  (v: string) => void;
@@ -25,25 +26,28 @@ export interface ProjectOptionalFieldsProps {
 
 export function ProjectOptionalFields({
   githubLink, driveLink, contractDurationMonths, errors, isAr,
+  showGithubLink = true,
   onGithubLinkChange, onDriveLinkChange, onContractMonthsChange,
 }: ProjectOptionalFieldsProps) {
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className={LABEL}>{isAr ? 'رابط GitHub' : 'GitHub Link'}</label>
-          <input
-            type="url"
-            value={githubLink}
-            onChange={e => onGithubLinkChange(e.target.value)}
-            placeholder="https://github.com/org/repo"
-            dir="ltr"
-            className={`${INPUT}${errors?.githubLink ? ` ${INPUT_ERROR}` : ''}`}
-          />
-          {errors?.githubLink && (
-            <p className="mt-1 text-xs text-red-500">{errors.githubLink}</p>
-          )}
-        </div>
+      <div className={`grid grid-cols-1 ${showGithubLink ? 'sm:grid-cols-2' : ''} gap-4`}>
+        {showGithubLink && (
+          <div>
+            <label className={LABEL}>{isAr ? 'رابط GitHub' : 'GitHub Link'}</label>
+            <input
+              type="url"
+              value={githubLink}
+              onChange={e => onGithubLinkChange(e.target.value)}
+              placeholder="https://github.com/org/repo"
+              dir="ltr"
+              className={`${INPUT}${errors?.githubLink ? ` ${INPUT_ERROR}` : ''}`}
+            />
+            {errors?.githubLink && (
+              <p className="mt-1 text-xs text-red-500">{errors.githubLink}</p>
+            )}
+          </div>
+        )}
         <div>
           <label className={LABEL}>{isAr ? 'رابط Google Drive' : 'Google Drive Link'}</label>
           <input

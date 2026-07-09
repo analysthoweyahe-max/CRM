@@ -19,9 +19,9 @@ import { useCreateAdmin }     from '../hooks/useCreateAdmin';
 import { useDeleteAdmin }     from '../hooks/useDeleteAdmin';
 import { useRoleList }        from '../hooks/useRoles';
 import { assignableRoles }    from '../utils/role.utils';
+import { getRoleNameLabel } from '../types/adminRole.types';
 import {
   HR_CREATABLE_MANAGER_ROLES,
-  MANAGER_ROLE_OPTIONS,
   MANAGER_STATUS_OPTIONS,
   type CreateAdminPayload,
 } from '../types/adminManager.types';
@@ -52,7 +52,10 @@ export function AdminManagersPage() {
 
   const roleItems = [
     { id: '', label: isAr ? 'كل الأدوار' : 'All roles' },
-    ...MANAGER_ROLE_OPTIONS.map(r => ({ id: r.id, label: isAr ? r.labelAr : r.labelEn })),
+    ...assignableRoles(allRoles).map((r) => ({
+      id: r.name,
+      label: getRoleNameLabel(r.name, isAr),
+    })),
   ];
 
   function submitManager(payload: CreateAdminPayload) {

@@ -24,13 +24,8 @@ export function canEditManager(editor: EditorContext, targetRoles: string[]): bo
 
 /** Role options visible in the role dropdown for the current editor. */
 export function editableRoleNames(editor: EditorContext): string[] | undefined {
-  if (editor.isSuperAdmin) {
-    return MANAGER_ROLE_NAMES;
-  }
-  if (isHrManager(editor)) {
-    return [...HR_CREATABLE_MANAGER_ROLES];
-  }
+  // Super-admins see every admin guard role from the API (RoleSelect hides super-admin).
+  if (editor.isSuperAdmin) return undefined;
+  if (isHrManager(editor)) return [...HR_CREATABLE_MANAGER_ROLES];
   return [];
 }
-
-const MANAGER_ROLE_NAMES = ['hr-manager', 'seo-manager', 'project-manager'];

@@ -55,7 +55,7 @@ export function AttendanceTimerPage({ layoutScope }: AttendanceTimerPageProps) {
         }
       />
 
-      <WorkTimerCard layoutScope={layoutScope} variant="card" />
+      <WorkTimerCard layoutScope={layoutScope} variant="card" showExceptionLink={layoutScope === 'employee'} />
 
       <div>
         <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">

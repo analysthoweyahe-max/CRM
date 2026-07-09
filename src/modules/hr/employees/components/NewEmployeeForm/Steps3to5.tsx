@@ -41,7 +41,9 @@ export function Step2Review({ isAr, isRTL, formData, onBack, onSubmit }: Step2Pr
     : (managerItems.find((m) => m.id === s1.managerId)?.label ?? '—');
   const jobTypeLabel = employmentTypes.find((t) => t.value === s1?.jobType)?.label ?? s1?.jobType ?? '—';
   const salaryFmt    = s1?.salary ? `${Number(s1.salary).toLocaleString()} ${s1.currency ?? 'EGP'}` : '—';
-  const schedule     = s1?.startTime && s1?.endTime ? `${s1.startTime} - ${s1.endTime}` : '—';
+  const schedule     = s1?.workingHours != null
+    ? `${s1.workingHours} ${isAr ? 'ساعات/يوم' : 'hrs/day'}`
+    : '—';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -73,7 +75,7 @@ export function Step2Review({ isAr, isRTL, formData, onBack, onSubmit }: Step2Pr
                           grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
             <ReviewField label={isAr ? 'نوع التوظيف'   : 'Job Type'}  value={jobTypeLabel} />
             <ReviewField label={isAr ? 'الراتب'         : 'Salary'}    value={salaryFmt}    />
-            <ReviewField label={isAr ? 'مواعيد الدوام' : 'Schedule'}  value={schedule}     />
+            <ReviewField label={isAr ? 'عدد ساعات العمل اليومية' : 'Daily Working Hours'} value={schedule} />
           </div>
         </div>
 

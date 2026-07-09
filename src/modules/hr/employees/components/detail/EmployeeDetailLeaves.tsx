@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/app/router/routes';
 import { useEmployeeLeaveSummary, useEmployeeLeaveHistory } from '@/modules/hr/leaves/hooks/useLeaves';
+import { formatDateShort } from '@/shared/utils/date.utils';
+import { formatLeaveDuration } from '@/modules/hr/leaves/utils/leave.utils';
 import type { LeaveStatus, ApiLeaveRequest } from '@/modules/hr/leaves/types/leaves.types';
 
 interface Props { employeeId: string; isAr: boolean }
@@ -107,10 +109,14 @@ export function EmployeeDetailLeaves({ employeeId, isAr }: Props) {
                     <td className="px-4 py-3.5 font-medium text-gray-800 dark:text-gray-200">
                       {row.leave_type_label ?? row.leave_type}
                     </td>
-                    <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">{row.start_date}</td>
-                    <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">{row.end_date}</td>
+                    <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">
+                      {formatDateShort(row.start_date, isAr)}
+                    </td>
+                    <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">
+                      {formatDateShort(row.end_date, isAr)}
+                    </td>
                     <td className="px-4 py-3.5 text-gray-600 dark:text-gray-300">
-                      {row.days_count} {isAr ? 'يوم' : 'days'}
+                      {formatLeaveDuration(row.days_count, isAr)}
                     </td>
                     <td className="px-4 py-3.5">
                       <LeaveBadge status={row.status} isAr={isAr} />

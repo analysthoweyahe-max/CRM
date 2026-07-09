@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { pmProjectsApi } from '@/modules/project-manager/projects/api/project.api';
 import { messagesMonitorApi } from '../api/monitor.api';
-
-const SOURCE_OPTIONS = ['pm', 'seo'] as const;
+import { normalizeMonitoredMessages } from '../utils/monitor.utils';
 
 export function useMessagesMonitor(isAr: boolean) {
   const [projectId, setProjectId] = useState('');
@@ -16,28 +15,39 @@ export function useMessagesMonitor(isAr: boolean) {
     staleTime: 60_000,
   });
 
-  const projectItems = (projectsPage?.data ?? []).map((p) => ({ id: String(p.id), label: p.name }));
-  const sourceItems = SOURCE_OPTIONS.map((s) => ({
-    id: s,
-    label: s === 'pm' ? (isAr ? 'مشاريع البرمجة' : 'PM Projects') : (isAr ? 'مشاريع السيو' : 'SEO Projects'),
+  const projectItems = (projectsPage?.data ?? []).map((p) => ({
+    id:    String(p.id),
+    label: p.name,
   }));
+
+  const sourceItems = [
+    { id: '',              label: isAr ? 'كل المصادر'       : 'All sources' },
+    { id: 'project',       label: isAr ? 'رسائل المشروع'    : 'Project messages' },
+    { id: 'client_update', label: isAr ? 'تحديثات العميل'  : 'Client updates' },
+  ];
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['admin', 'messages-monitor', 'messages', projectId, source, search],
-    queryFn:  () => (
-      projectId
-        ? messagesMonitorApi.projectMessages(projectId, { search: search || undefined, per_page: 50 })
-        : messagesMonitorApi.list({
+    queryFn:  async () => {
+      const res = projectId
+        ? await messagesMonitorApi.projectMessages(projectId, { search: search || undefined, per_page: 50, source: source || undefined })
+        : await messagesMonitorApi.list({
             source: source || undefined,
             search: search || undefined,
             per_page: 50,
-          })
-    ).then((r) => r.data.data),
-    refetchInterval: 15_000,
+          });
+      return {
+        messages: normalizeMonitoredMessages(res.data.data?.data),
+        total:    res.data.data?.total ?? 0,
+      };
+    },
+    refetchInterval: 10_000,
+    staleTime: 5_000,
+    refetchOnWindowFocus: true,
   });
 
   return {
-    messages: data?.data ?? [],
+    messages: data?.messages ?? [],
     total:    data?.total ?? 0,
     isLoading, isFetching,
     projectId, setProjectId,

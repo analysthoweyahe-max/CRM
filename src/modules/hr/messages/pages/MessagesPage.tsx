@@ -8,6 +8,7 @@ import { ChatWindow }            from '../components/ChatWindow';
 import { NewConversationModal }  from '../components/NewConversationModal';
 import { useConversations, useCreateConversation } from '../hooks/useMessages';
 import type { ApiConversation } from '../types/messages.types';
+import { normalizeApiConversation } from '../utils/message.utils';
 
 export function MessagesPage() {
   const { user } = useAuth();
@@ -40,7 +41,7 @@ export function MessagesPage() {
     if (creating) return;
     try {
       const res = await createConversation(empId);
-      setActiveConversation(res.data.data);
+      setActiveConversation(normalizeApiConversation(res.data.data));
       setShowModal(false);
       setSidebarOpen(false);
     } catch (e) {

@@ -20,7 +20,7 @@ interface Props {
 }
 
 const EMPTY_VALUES: ManagerFormValues = {
-  name: '', email: '', phone: '', status: 'pending', role: '', permissions: [],
+  name: '', email: '', phone: '', departmentId: '', jobTitleId: '', status: 'pending', role: '', permissions: [],
 };
 
 export function AddManagerModal({
@@ -67,15 +67,23 @@ export function AddManagerModal({
     }));
   }, [values.role, selectableRoles, registered, canCustomizePermissions]);
 
-  const isValid = !!(values.name.trim() && values.email.trim() && values.role
-    && (!canCustomizePermissions || values.permissions.length > 0));
+  const isValid = !!(
+    values.name.trim()
+    && values.email.trim()
+    && values.departmentId
+    && values.jobTitleId
+    && values.role
+    && (!canCustomizePermissions || values.permissions.length > 0)
+  );
 
   function handleSubmit() {
     if (!isValid) return;
     const payload: CreateAdminPayload = {
-      name:  values.name.trim(),
-      email: values.email.trim(),
-      role:  values.role,
+      name:           values.name.trim(),
+      email:          values.email.trim(),
+      role:           values.role,
+      department_id:  Number(values.departmentId),
+      job_title_id:   Number(values.jobTitleId),
     };
     if (canCustomizePermissions) {
       payload.permissions = filterRegisteredPermissions(values.permissions, registered);

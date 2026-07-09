@@ -6,10 +6,14 @@ export interface OrgSettings {
   sickLeave:            number;
   maxCarryover:         number;
   notifyBeforeDays:     number;
-  dailyWorkHours:       number;
-  lateAllowanceMinutes: number;
-  workStartTime:        string;
-  workEndTime:          string;
+  dailyWorkHours:          number;
+  lateAllowanceMinutes:    number;
+  normalStartWindowFrom:   string;
+  normalStartWindowTo:     string;
+  /** @deprecated use normalStartWindowFrom */
+  workStartTime?:          string;
+  /** @deprecated use normalStartWindowTo */
+  workEndTime?:            string;
   updatedAt:            string;
 }
 

@@ -13,7 +13,27 @@ import {
   wasNotificationToasted,
 } from '@/shared/utils/notificationSeen.store';
 import { resolveNotificationPath } from '@/shared/utils/notificationNavigation.utils';
+import { getNotificationDisplayText, isLeaveNotificationType } from '@/shared/utils/notificationDisplay.utils';
+import { isEmployeeLeaveStatusNotification, isHrLeaveSubmittedNotification } from '@/shared/utils/notificationRoleFilter.utils';
+import { playNotificationSound } from '@/shared/utils/sound.utils';
 import type { AppNotification } from '@/shared/types/notification.types';
+
+function isMessageNotificationType(type: string): boolean {
+  return type === 'hr_message'
+    || type === 'pm_project_message'
+    || type === 'seo_project_message';
+}
+
+function refreshMessageQueries(qc: ReturnType<typeof useQueryClient>, type: string) {
+  if (type === 'hr_message') {
+    qc.invalidateQueries({ queryKey: ['hr', 'messages'] });
+    qc.invalidateQueries({ queryKey: ['employee', 'messages'] });
+    return;
+  }
+  if (type === 'pm_project_message' || type === 'seo_project_message') {
+    qc.invalidateQueries({ queryKey: ['admin', 'messages-monitor'] });
+  }
+}
 
 function readFcmField(data: Record<string, unknown>, key: string): string {
   const v = data[key];
@@ -33,24 +53,51 @@ export function NotificationListener() {
   const initialisedRef = useRef(false);
   const lastFcmRef = useRef<{ key: string; at: number } | null>(null);
 
+  function shouldShowForRole(notification: AppNotification): boolean {
+    const role = user?.role;
+    if (!role) return true;
+    if (role === 'admin' || role === 'hr') {
+      return !isEmployeeLeaveStatusNotification(notification);
+    }
+    if (role === 'employee' || role === 'seo-member') {
+      return !isHrLeaveSubmittedNotification(notification);
+    }
+    return true;
+  }
+
   function navigateTo(notification: AppNotification) {
     const path = resolveNotificationPath(notification, user);
     if (path) navigate(path);
   }
 
   function showForNotification(notification: AppNotification) {
+    if (!shouldShowForRole(notification)) return;
     if (wasNotificationToasted(notification.id)) return;
 
     markNotificationToasted(notification.id);
     seenIdsRef.current.add(notification.id);
+    playNotificationSound();
+
+    const display = getNotificationDisplayText(notification, isAr, user?.role);
 
     showInAppNotification({
-      id:     notification.id,
-      title:  notification.title,
-      body:   notification.body,
+      id:        notification.id,
+      title:     display.title,
+      body:      display.body,
+      createdAt: notification.createdAt,
       isAr,
       onView: () => navigateTo(notification),
     });
+
+    if (isLeaveNotificationType(notification.type)) {
+      qc.invalidateQueries({ queryKey: ['leaves'] });
+      qc.invalidateQueries({ queryKey: ['dashboard', 'recent-leaves'] });
+      qc.invalidateQueries({ queryKey: ['dashboard', 'pending-leaves'] });
+    }
+
+    if (isMessageNotificationType(notification.type)) {
+      refreshMessageQueries(qc, notification.type);
+    }
   }
 
   function handlePushRefresh() {
@@ -87,24 +134,47 @@ export function NotificationListener() {
       markNotificationToasted(dedupKey);
     }
 
+    const createdAt = readFcmField(data, 'created_at')
+      || readFcmField(data, 'createdAt')
+      || new Date().toISOString();
+
+    const fakeNotification: AppNotification = {
+      id:        notificationId || 'fcm',
+      type:      String(data.type || ''),
+      title:     String(title),
+      body:      String(body || ''),
+      data,
+      readAt:    null,
+      createdAt,
+    };
+
+    if (!shouldShowForRole(fakeNotification)) {
+      handlePushRefresh();
+      return;
+    }
+
+    const display = getNotificationDisplayText(fakeNotification, isAr, user?.role);
+
+    playNotificationSound();
+
     showInAppNotification({
-      id:    notificationId || dedupKey,
-      title: String(title),
-      body:  typeof body === 'string' ? body : undefined,
+      id:        notificationId || dedupKey,
+      title:     display.title,
+      body:      display.body || undefined,
+      createdAt,
       isAr,
-      onView: () => {
-        const fakeNotification: AppNotification = {
-          id:        notificationId || 'fcm',
-          type:      String(data.type || ''),
-          title:     String(title),
-          body:      String(body || ''),
-          data,
-          readAt:    null,
-          createdAt: new Date().toISOString(),
-        };
-        navigateTo(fakeNotification);
-      },
+      onView: () => navigateTo(fakeNotification),
     });
+
+    if (isLeaveNotificationType(fakeNotification.type)) {
+      qc.invalidateQueries({ queryKey: ['leaves'] });
+      qc.invalidateQueries({ queryKey: ['dashboard', 'recent-leaves'] });
+      qc.invalidateQueries({ queryKey: ['dashboard', 'pending-leaves'] });
+    }
+
+    if (isMessageNotificationType(fakeNotification.type)) {
+      refreshMessageQueries(qc, fakeNotification.type);
+    }
 
     handlePushRefresh();
   });

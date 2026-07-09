@@ -14,13 +14,6 @@ export const CURRENCIES = [
   { id: 'KWD', label: 'KWD', detail: 'دينار كويتي'   },
 ];
 
-/* ─── Job types ──────────────────────────────────────────────────────────
-   The set of employment types is now fetched live from
-   GET /v1/employees/lookups/employment-types (value/label pairs, already
-   localized by the backend). These maps only supply presentation extras
-   (icon + short description) keyed by the API's `value` — any value the
-   API returns that isn't listed here just falls back to a default icon
-   and no description. ─────────────────────────────────────────────── */
 export const EMPLOYMENT_TYPE_ICONS: Record<string, LucideIcon> = {
   full_time:  Briefcase,
   part_time:  Clock,
@@ -38,7 +31,6 @@ export const EMPLOYMENT_TYPE_DESCRIPTIONS: Record<string, { ar: string; en: stri
   internship: { ar: 'فترة تدريبية محددة',              en: 'Fixed-term training period' },
 };
 
-/* ─── Schemas ────────────────────────────────────── */
 export function makeStep1Schema(ar: boolean) {
   return z.object({
     fullName:   z.string().min(1, ar ? 'الاسم الكامل مطلوب'         : 'Full name is required'),
@@ -65,30 +57,15 @@ export function makeStep3Schema(ar: boolean) {
 }
 
 export const step4Schema = z.object({
-  startTime: z.string().min(1),
-  endTime:   z.string().min(1),
+  workingHours: z.number().min(1),
 });
 
-/* ─── Types ──────────────────────────────────────── */
 export type Step1Values = z.infer<ReturnType<typeof makeStep1Schema>>;
 export type Step2Values = z.infer<typeof step2Schema>;
 export type Step3Values = z.infer<ReturnType<typeof makeStep3Schema>>;
 export type Step4Values = z.infer<typeof step4Schema>;
 
-/* ─── Combined 2-step schema ─────────────────────── */
-export interface WorkHoursBounds {
-  /** Company work-day start, "HH:MM" (from org settings). */
-  workStart?: string;
-  /** Company work-day end, "HH:MM" (from org settings). */
-  workEnd?:   string;
-}
-
-/** Normalize a time value ("HH:MM" or "HH:MM:SS") to "HH:MM" for comparison. */
-function toHHMM(v?: string) {
-  return v ? v.slice(0, 5) : '';
-}
-
-export function makeAllDataSchema(ar: boolean, bounds?: WorkHoursBounds) {
+export function makeAllDataSchema(ar: boolean, _defaultDailyHours = 8) {
   return z.object({
     fullName:   z.string().min(1, ar ? 'الاسم الكامل مطلوب'          : 'Full name is required'),
     email:      z.string()
@@ -104,66 +81,8 @@ export function makeAllDataSchema(ar: boolean, bounds?: WorkHoursBounds) {
                   .min(1, ar ? 'الراتب يجب أن يكون أكبر من صفر' : 'Salary must be > 0')
                   .optional(),
     currency:     z.string().min(1),
-    startTime:    z.string().optional(),
-    endTime:      z.string().optional(),
     workingHours: z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
-                    .min(1, ar ? 'عدد الساعات يجب أن يكون أكبر من صفر' : 'Working hours must be > 0')
-                    .optional(),
-  }).superRefine((data, ctx) => {
-    if (data.jobType === 'part_time') {
-      if (!data.workingHours || data.workingHours <= 0) {
-        ctx.addIssue({
-          code: 'custom', path: ['workingHours'],
-          message: ar ? 'عدد ساعات العمل مطلوب' : 'Working hours is required',
-        });
-      }
-    } else {
-      if (!data.startTime) {
-        ctx.addIssue({ code: 'custom', path: ['startTime'], message: ar ? 'وقت بدء الدوام مطلوب' : 'Start time is required' });
-      }
-      if (!data.endTime) {
-        ctx.addIssue({ code: 'custom', path: ['endTime'], message: ar ? 'وقت انتهاء الدوام مطلوب' : 'End time is required' });
-      }
-
-      /* Employee work hours must fall within the company's configured window. */
-      const workStart = toHHMM(bounds?.workStart);
-      const workEnd   = toHHMM(bounds?.workEnd);
-      const start     = toHHMM(data.startTime);
-      const end       = toHHMM(data.endTime);
-
-      if (workStart && start && start < workStart) {
-        ctx.addIssue({
-          code: 'custom', path: ['startTime'],
-          message: ar
-            ? `لا يمكن أن يبدأ الدوام قبل ${workStart} (مواعيد الشركة)`
-            : `Start time cannot be before ${workStart} (company hours)`,
-        });
-      }
-      if (workEnd && start && start > workEnd) {
-        ctx.addIssue({
-          code: 'custom', path: ['startTime'],
-          message: ar
-            ? `لا يمكن أن يبدأ الدوام بعد ${workEnd} (مواعيد الشركة)`
-            : `Start time cannot be after ${workEnd} (company hours)`,
-        });
-      }
-      if (workEnd && end && end > workEnd) {
-        ctx.addIssue({
-          code: 'custom', path: ['endTime'],
-          message: ar
-            ? `لا يمكن أن ينتهي الدوام بعد ${workEnd} (مواعيد الشركة)`
-            : `End time cannot be after ${workEnd} (company hours)`,
-        });
-      }
-      if (workStart && end && end < workStart) {
-        ctx.addIssue({
-          code: 'custom', path: ['endTime'],
-          message: ar
-            ? `لا يمكن أن ينتهي الدوام قبل ${workStart} (مواعيد الشركة)`
-            : `End time cannot be before ${workStart} (company hours)`,
-        });
-      }
-    }
+                    .min(1, ar ? 'عدد الساعات يجب أن يكون أكبر من صفر' : 'Working hours must be > 0'),
   });
 }
 

@@ -15,17 +15,17 @@ import { GuestGuard }            from '@/app/guards/GuestGuard';
 import { AuthGuard }             from '@/app/guards/AuthGuard';
 import { RoleGuard }             from '@/app/guards/RoleGuard';
 import { PermissionGuard }       from '@/app/guards/PermissionGuard';
+import { LoginPage }             from '@/modules/auth/pages/LoginPage';
+import { AdminOtpPage }          from '@/modules/auth/pages/AdminOtpPage';
+import { AdminAuthCallbackPage } from '@/modules/auth/pages/AdminAuthCallbackPage';
 
 /* ── Auth ─────────────────────────────────────────────────────────── */
-const LoginPage            = lazyImport(() => import('@/modules/auth/pages/LoginPage')            .then(m => ({ default: m.LoginPage })));
 const SetPasswordPage      = lazyImport(() => import('@/modules/auth/pages/SetPasswordPage')      .then(m => ({ default: m.SetPasswordPage })));
 const InviteValidationPage = lazyImport(() => import('@/modules/auth/pages/InviteValidationPage') .then(m => ({ default: m.InviteValidationPage })));
 const ForgotPasswordPage        = lazyImport(() => import('@/modules/auth/pages/ForgotPasswordPage')        .then(m => ({ default: m.ForgotPasswordPage })));
 const ForgotPasswordVerifyPage  = lazyImport(() => import('@/modules/auth/pages/ForgotPasswordVerifyPage')  .then(m => ({ default: m.ForgotPasswordVerifyPage })));
 const EmployeeResetPasswordPage = lazyImport(() => import('@/modules/auth/pages/EmployeeResetPasswordPage') .then(m => ({ default: m.EmployeeResetPasswordPage })));
 const ResetPasswordPage         = lazyImport(() => import('@/modules/auth/pages/ResetPasswordPage')         .then(m => ({ default: m.ResetPasswordPage })));
-const AdminAuthCallbackPage = lazyImport(() => import('@/modules/auth/pages/AdminAuthCallbackPage').then(m => ({ default: m.AdminAuthCallbackPage })));
-const AdminOtpPage          = lazyImport(() => import('@/modules/auth/pages/AdminOtpPage').then(m => ({ default: m.AdminOtpPage })));
 const UnauthorizedPage      = lazyImport(() => import('@/modules/auth/pages/UnauthorizedPage').then(m => ({ default: m.UnauthorizedPage })));
 
 /* ── Admin ────────────────────────────────────────────────────────── */
@@ -55,6 +55,7 @@ const EmployeeEditPage   = lazyImport(() => import('@/modules/hr/employees/pages
 const ProfilePage        = lazyImport(() => import('@/modules/hr/profile/pages/ProfilePage')                .then(m => ({ default: m.ProfilePage })));
 const AttendancePage     = lazyImport(() => import('@/modules/hr/attendance/pages/AttendancePage')          .then(m => ({ default: m.AttendancePage })));
 const AttendanceLogPage  = lazyImport(() => import('@/modules/hr/attendance/pages/AttendanceLogPage')       .then(m => ({ default: m.AttendanceLogPage })));
+const AttendanceExceptionsPage = lazyImport(() => import('@/modules/hr/attendance-exceptions/pages/AttendanceExceptionsPage').then(m => ({ default: m.AttendanceExceptionsPage })));
 const LeavesPage         = lazyImport(() => import('@/modules/hr/leaves/pages/LeavesPage')                  .then(m => ({ default: m.LeavesPage })));
 const LeaveDetailPage    = lazyImport(() => import('@/modules/hr/leaves/pages/LeaveDetailPage')             .then(m => ({ default: m.LeaveDetailPage })));
 const DeductionsPage     = lazyImport(() => import('@/modules/hr/payroll/pages/DeductionsPage')             .then(m => ({ default: m.DeductionsPage })));
@@ -103,6 +104,7 @@ const EmployeeMessagesPage     = lazyImport(() => import('@/modules/employee/mes
 const EmployeeRequestsPage     = lazyImport(() => import('@/modules/employee/requests/pages/EmployeeRequestsPage')         .then(m => ({ default: m.EmployeeRequestsPage })));
 const EmployeeReportsPage      = lazyImport(() => import('@/modules/employee/reports/pages/EmployeeReportsPage')           .then(m => ({ default: m.EmployeeReportsPage })));
 const AttendanceTimerPage      = lazyImport(() => import('@/shared/modules/attendance/pages/AttendanceTimerPage')           .then(m => ({ default: m.AttendanceTimerPage })));
+const EmployeeAttendanceExceptionsPage = lazyImport(() => import('@/modules/employee/attendance-exceptions/pages/EmployeeAttendanceExceptionsPage').then(m => ({ default: m.EmployeeAttendanceExceptionsPage })));
 const EmployeeTaskDetailPage   = lazyImport(() => import('@/modules/employee/tasks/pages/TaskDetailPage')                  .then(m => ({ default: m.TaskDetailPage })));
 const EmployeeDailyReportsPage = lazyImport(() => import('@/modules/employee/daily-reports/pages/EmployeeDailyReportsPage').then(m => ({ default: m.EmployeeDailyReportsPage })));
 const EmployeeProfilePage      = lazyImport(() => import('@/modules/employee/profile/pages/EmployeeProfilePage')           .then(m => ({ default: m.EmployeeProfilePage })));
@@ -183,6 +185,7 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission="view-attendance" />}>
                     <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
                     <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
+                    <Route path={ROUTES.ATTENDANCE.EXCEPTIONS}  element={<AttendanceExceptionsPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission="view-leave" />}>
                     <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />
@@ -239,6 +242,7 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission="view-attendance" />}>
                     <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
                     <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
+                    <Route path={ROUTES.ATTENDANCE.EXCEPTIONS}  element={<AttendanceExceptionsPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission={['view-leave', 'approve-leave']} />}>
                     <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />
@@ -260,7 +264,8 @@ export function AppRouter() {
                   <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />} />
                   <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
                   <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
-                  <Route path={ROUTES.EMPLOYEE.ATTENDANCE}    element={<AttendanceTimerPage layoutScope="employee" />} />
+                  <Route path={ROUTES.EMPLOYEE.ATTENDANCE}             element={<AttendanceTimerPage layoutScope="employee" />} />
+                  <Route path={ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS} element={<EmployeeAttendanceExceptionsPage />} />
                   <Route path={ROUTES.EMPLOYEE.TASKS}         element={<MyTasksPage />} />
                   <Route path={ROUTES.EMPLOYEE.PROJECT_TASKS()} element={<MyTasksPage />} />
                   <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
@@ -305,6 +310,7 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission="view-attendance" />}>
                     <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
                     <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
+                    <Route path={ROUTES.ATTENDANCE.EXCEPTIONS}  element={<AttendanceExceptionsPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission={['view-leave', 'approve-leave']} />}>
                     <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />

@@ -35,6 +35,7 @@ export const en: Translations = {
       addEmployee:      'Add Employee',
       dailyAttendance:  'Daily Attendance',
       attendanceLog:    'Attendance Log',
+      attendanceExceptions: 'Exception Requests',
       leaveManagement:  'Leave Management',
       payroll:          'Payroll',
       deductions:       'Deductions',
@@ -180,7 +181,7 @@ export const en: Translations = {
 
   auth: {
     login: {
-      invalidCredentials: 'Invalid employee ID or password',
+      invalidCredentials: 'Invalid email, user ID, or password',
       signingIn:          'Signing in...',
     },
     setPassword: {

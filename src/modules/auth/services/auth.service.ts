@@ -17,10 +17,31 @@ import { mapRolesToAppRole } from '@/shared/types/role.types';
 import { resetFcmRegistration } from '@/shared/services/fcm.service';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isEmail(value: string): boolean {
+  return EMAIL_RE.test(value);
+}
+
 type AccountType = 'employee' | 'admin';
+
+function getCachedAccountType(identifier: string): AccountType | null {
+  const value = localStorage.getItem(ACCOUNT_TYPE_KEY + identifier);
+  return value === 'employee' || value === 'admin' ? value : null;
+}
 
 function setCachedAccountType(identifier: string, type: AccountType): void {
   localStorage.setItem(ACCOUNT_TYPE_KEY + identifier, type);
+}
+
+/** 422 with invalid identifier — wrong guard, not wrong password. */
+function isWrongAccountTypeError(err: unknown, idField: string): boolean {
+  const resp = (err as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } })?.response;
+  if (resp?.status !== 422) return false;
+  const fieldErrors = resp.data?.errors?.[idField];
+  return Array.isArray(fieldErrors) && fieldErrors.some((msg) =>
+    /is invalid/i.test(msg) || /غير صالح/i.test(msg) || /غير صحيح/i.test(msg),
+  );
 }
 
 /** Backend may return permission slugs as strings or `{ name: string }` objects. */
@@ -231,7 +252,17 @@ function readAccessToken(payload: Record<string, unknown>): string | undefined {
 function readOtpChallenge(payload: Record<string, unknown>, fallbackAdminId: string) {
   const otpRequired = payload.otpRequired === true || payload.otp_required === true;
   const magicLinkRequired = payload.magicLinkRequired === true || payload.magic_link_required === true;
-  const adminId = String(payload.adminId ?? payload.admin_id ?? fallbackAdminId).trim();
+
+  const nestedAdmin = payload.admin && typeof payload.admin === 'object' && !Array.isArray(payload.admin)
+    ? payload.admin as Record<string, unknown>
+    : null;
+
+  const adminId = String(
+    payload.adminId ?? payload.admin_id
+    ?? nestedAdmin?.id ?? nestedAdmin?.admin_id
+    ?? fallbackAdminId,
+  ).trim();
+
   const expiresAt = String(payload.expiresAt ?? payload.expires_at ?? '');
   return { otpRequired, magicLinkRequired, adminId, expiresAt };
 }
@@ -401,10 +432,38 @@ async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
 
 // ── Auth operations ───────────────────────────────────────────────────────────
 
-async function login(credentials: LoginCredentials): Promise<LoginResult> {
-  const { password, rememberMe = false } = credentials;
-  const identifier = credentials.adminId.trim();
+async function loginAsEmployee(
+  identifier: string,
+  password: string,
+  rememberMe: boolean,
+): Promise<LoginResult> {
+  const employeePayload = isEmail(identifier)
+    ? { email: identifier, password }
+    : { employee_id: identifier, password };
+  const { data } = await authApi.employeeLogin(employeePayload);
+  const payload = unwrapLoginPayload(data);
+  const accessToken = readAccessToken(payload);
+  if (!accessToken) {
+    throw new Error('Invalid employee login response');
+  }
 
+  const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
+  const user = await resolveLoginUser(accessToken, payload, rememberMe);
+  storeAuth(accessToken, user, rememberMe);
+  setCachedAccountType(identifier, 'employee');
+  return {
+    status:       'success',
+    token:        accessToken,
+    user,
+    redirectPath: redirect_path,
+  };
+}
+
+async function loginAsAdmin(
+  identifier: string,
+  password: string,
+  rememberMe: boolean,
+): Promise<LoginResult> {
   const { data } = await authApi.adminLogin({ admin_id: identifier, password });
   const payload = unwrapLoginPayload(data);
 
@@ -421,13 +480,13 @@ async function login(credentials: LoginCredentials): Promise<LoginResult> {
 
   const accessToken = readAccessToken(payload);
   if (!accessToken) {
-    throw new Error('Invalid login response');
+    throw new Error('Invalid admin login response');
   }
 
   const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
   const user = await resolveLoginUser(accessToken, payload, rememberMe);
   storeAuth(accessToken, user, rememberMe);
-  setCachedAccountType(identifier, user.actor);
+  setCachedAccountType(identifier, 'admin');
   return {
     status:       'success',
     token:        accessToken,
@@ -436,8 +495,37 @@ async function login(credentials: LoginCredentials): Promise<LoginResult> {
   };
 }
 
+async function login(credentials: LoginCredentials): Promise<LoginResult> {
+  const { password, rememberMe = false } = credentials;
+  const identifier = credentials.adminId.trim();
+  const cachedType = getCachedAccountType(identifier);
+  const employeeIdField = isEmail(identifier) ? 'email' : 'employee_id';
+
+  if (cachedType === 'admin') {
+    try {
+      return await loginAsAdmin(identifier, password, rememberMe);
+    } catch (err) {
+      if (!isWrongAccountTypeError(err, 'admin_id')) throw err;
+      return await loginAsEmployee(identifier, password, rememberMe);
+    }
+  }
+
+  try {
+    return await loginAsEmployee(identifier, password, rememberMe);
+  } catch (err) {
+    if (!isWrongAccountTypeError(err, employeeIdField)) throw err;
+    return await loginAsAdmin(identifier, password, rememberMe);
+  }
+}
+
 async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false): Promise<AuthLoginResponse> {
-  const { data } = await authApi.adminVerifyOtp({ admin_id: adminId, code: otp });
+  const { data } = await authApi.adminVerifyOtp({
+    admin_id: adminId,
+    adminId,
+    code:     otp,
+    otp,
+    ...(adminId.includes('@') ? { email: adminId } : {}),
+  });
   const payload = unwrapLoginPayload(data);
   const { accessToken, admin, redirect_path } = readAdminAuthSuccess(payload);
   if (!accessToken || !admin) {
@@ -449,10 +537,29 @@ async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false):
   return { token: accessToken, user, redirectPath: redirect_path };
 }
 
-async function resendAdminOtp(adminId: string): Promise<string> {
-  const { data } = await authApi.adminResendOtp({ admin_id: adminId });
-  const payload = unwrapLoginPayload(data);
-  return String(payload.expiresAt ?? payload.expires_at ?? '');
+async function resendAdminOtp(
+  adminId: string,
+  fallback?: { identifier: string; password: string; rememberMe: boolean },
+): Promise<{ expiresAt: string; adminId: string }> {
+  try {
+    const { data } = await authApi.adminResendOtp({
+      admin_id: adminId,
+      adminId,
+      ...(adminId.includes('@') ? { email: adminId } : {}),
+    });
+    const payload = unwrapLoginPayload(data);
+    const expiresAt = String(payload.expiresAt ?? payload.expires_at ?? '');
+    const nextAdminId = String(payload.adminId ?? payload.admin_id ?? adminId).trim() || adminId;
+    return { expiresAt, adminId: nextAdminId };
+  } catch (primaryErr) {
+    if (!fallback) throw primaryErr;
+
+    const result = await loginAsAdmin(fallback.identifier, fallback.password, fallback.rememberMe);
+    if (result.status !== 'otp_required') {
+      throw primaryErr;
+    }
+    return { expiresAt: result.expiresAt, adminId: result.adminId };
+  }
 }
 
 async function completeMagicLogin(token: string, rememberMe = true): Promise<AuthUser> {
@@ -546,9 +653,10 @@ async function requestEmployeeResetOtp(email: string): Promise<string> {
 }
 
 async function verifyEmployeeResetOtp(email: string, code: string): Promise<string> {
-  const { data } = await authApi.employeeVerifyResetOtp({ email: email.trim(), code });
-  const token = data?.data?.token;
-  if (!token) throw new Error('Missing reset token');
+  const { data } = await authApi.employeeVerifyResetOtp({ email: email.trim(), code, otp: code });
+  const payload = data?.data as Record<string, unknown> | null | undefined;
+  const token = payload?.token ?? payload?.reset_token ?? payload?.resetToken;
+  if (typeof token !== 'string' || !token) throw new Error('Missing reset token');
   return token;
 }
 

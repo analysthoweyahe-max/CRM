@@ -5,9 +5,14 @@ import { ROUTES } from '@/app/router/routes';
 import { Card }   from '@/shared/components/ui/Card';
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge }  from '@/shared/components/ui/Badge';
+import { formatDateShort } from '@/shared/utils/date.utils';
 import type { ApiEmployee } from '@/modules/hr/employees/types/employee.types';
 import type { ApiLeaveRequest } from '@/modules/hr/leaves/types/leaves.types';
 import { LEAVE_STATUS_CFG } from '@/modules/hr/leaves/types/leaves.types';
+import {
+  formatLeaveDuration,
+  getLeaveEmployeeName,
+} from '@/modules/hr/leaves/utils/leave.utils';
 
 const AVATAR_COLORS = [
   'bg-pink-500', 'bg-violet-500', 'bg-orange-500',
@@ -101,12 +106,20 @@ export function RecentData({ isAr, recentEmployees, recentLeaves }: Props) {
               {isAr ? 'لا توجد طلبات' : 'No requests'}
             </li>
           ) : recentLeaves.map((leave) => {
-            const employeeName = leave.employee?.name ?? (isAr ? 'موظف' : 'Employee');
+            const employeeName = getLeaveEmployeeName(leave) || (isAr ? 'موظف' : 'Employee');
             const statusCfg = LEAVE_STATUS_CFG[leave.status];
+            const periodLabel = leave.start_date && leave.end_date
+              ? `${formatDateShort(leave.start_date, isAr)} – ${formatDateShort(leave.end_date, isAr)}`
+              : null;
             return (
             <li key={leave.id}
-              className="flex items-start gap-3 px-5 py-3
-                         hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+              className="flex items-start gap-3 px-5 py-3 cursor-pointer
+                         hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+              onClick={() => navigate(ROUTES.LEAVES.DETAIL(leave.id))}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate(ROUTES.LEAVES.DETAIL(leave.id)); }}
+              role="button"
+              tabIndex={0}
+            >
               <div className="bg-amber-50 dark:bg-amber-900/20 mt-0.5 rounded-lg p-1.5 shrink-0">
                 <CalendarDays size={13} className="text-amber-600 dark:text-amber-400" />
               </div>
@@ -114,9 +127,16 @@ export function RecentData({ isAr, recentEmployees, recentLeaves }: Props) {
                 <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
                   {employeeName}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
-                  {leave.leave_type_label} · {leave.days_count} {isAr ? 'يوم' : 'days'}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                  {(leave.leave_type_label || leave.leave_type || (isAr ? 'إجازة' : 'Leave'))}
+                  {periodLabel ? ` · ${periodLabel}` : ''}
+                  {leave.days_count ? ` · ${formatLeaveDuration(leave.days_count, isAr)}` : ''}
                 </p>
+                {leave.request_date && (
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                    {isAr ? 'تاريخ الطلب:' : 'Requested:'} {formatDateShort(leave.request_date, isAr)}
+                  </p>
+                )}
               </div>
               {statusCfg && (
               <Badge

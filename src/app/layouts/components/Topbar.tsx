@@ -11,6 +11,7 @@ import { UserRoleBadges }             from '@/shared/components/auth';
 import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
 import { resolveNotificationPath }    from '@/shared/utils/notificationNavigation.utils';
+import { parseBackendTimestamp }      from '@/shared/utils/date.utils';
 import { playNotificationSound }      from '@/shared/utils/sound.utils';
 import { useEmployeeAlertList }       from '@/modules/employee/alerts/hooks/useEmployeeAlerts';
 import type { AppNotification }     from '@/shared/types/notification.types';
@@ -69,7 +70,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
   }));
 
   const mergedNotifications = [...notifications, ...alertNotifications]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a, b) => parseBackendTimestamp(b.createdAt).getTime() - parseBackendTimestamp(a.createdAt).getTime());
 
   const mergedUnreadCount = unreadCount + unreadAlertsCount;
 

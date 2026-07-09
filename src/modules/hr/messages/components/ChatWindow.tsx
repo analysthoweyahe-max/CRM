@@ -3,6 +3,7 @@ import { Send, Paperclip, Smile, Check, CheckCheck, FileText, Menu, Lock } from 
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useMessages, useSendMessage, useSendMedia, useMarkRead, useUpdateConversationStatus } from '../hooks/useMessages';
+import { conversationMessageId } from '../utils/message.utils';
 import type { ApiConversation, ApiMessage } from '../types/messages.types';
 
 interface Props {
@@ -50,22 +51,24 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
   const fileRef   = useRef<HTMLInputElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
-  const { data: messages = [], isLoading } = useMessages(conversation.id);
-  const { mutate: sendText,  isPending: sending   } = useSendMessage(conversation.id);
-  const { mutate: sendMedia, isPending: uploading } = useSendMedia(conversation.id);
+  const { data: messages = [], isLoading, isError, refetch, isFetching } = useMessages(conversation);
+  const { mutate: sendText,  isPending: sending   } = useSendMessage(conversation);
+  const { mutate: sendMedia, isPending: uploading } = useSendMedia(conversation);
   const { mutate: markRead } = useMarkRead();
-  const { mutate: updateStatus, isPending: closing } = useUpdateConversationStatus(conversation.id);
+  const { mutate: updateStatus, isPending: closing } = useUpdateConversationStatus(conversation);
 
   const [localStatus, setLocalStatus] = useState(conversation.status);
   useEffect(() => { setLocalStatus(conversation.status); }, [conversation.status, conversation.id]);
 
   const isClosed = localStatus === 'closed';
 
+  const messageConvId = conversationMessageId(conversation);
+
   // mark as read when a conversation opens
   useEffect(() => {
-    if (conversation.id) markRead(conversation.id);
+    if (messageConvId) markRead(messageConvId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation.id]);
+  }, [messageConvId]);
 
   // auto-scroll on new messages
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
@@ -153,6 +156,20 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
               <div className="h-10 rounded-2xl bg-gray-200 dark:bg-gray-700 w-48" />
             </div>
           ))
+        ) : isError ? (
+          <div className="text-center py-10 space-y-2">
+            <p className="text-xs text-red-500">
+              {isAr ? 'تعذّر تحميل الرسائل. حاول مرة أخرى.' : 'Failed to load messages. Please try again.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="text-xs text-[#709028] hover:underline disabled:opacity-50"
+            >
+              {isAr ? 'إعادة المحاولة' : 'Retry'}
+            </button>
+          </div>
         ) : messages.length === 0 ? (
           <p className="text-center text-xs text-gray-400 py-10">
             {isAr ? 'ابدأ المحادثة...' : 'Start the conversation...'}

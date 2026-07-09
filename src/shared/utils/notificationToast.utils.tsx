@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { Bell } from 'lucide-react';
+import { formatNotificationDateTime } from '@/shared/utils/date.utils';
 import { markNotificationToasted, wasNotificationToasted } from './notificationSeen.store';
 
 interface ShowInAppNotificationOptions {
@@ -7,6 +8,7 @@ interface ShowInAppNotificationOptions {
   dedupKeys?: string[];
   title:      string;
   body?:      string;
+  createdAt?: string;
   isAr:       boolean;
   onView?:    () => void;
 }
@@ -17,6 +19,7 @@ export function showInAppNotification({
   dedupKeys,
   title,
   body,
+  createdAt,
   isAr,
   onView,
 }: ShowInAppNotificationOptions): void {
@@ -50,6 +53,11 @@ export function showInAppNotification({
             {body && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                 {body}
+              </p>
+            )}
+            {createdAt && (
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                {formatNotificationDateTime(createdAt, isAr)}
               </p>
             )}
             {onView && (

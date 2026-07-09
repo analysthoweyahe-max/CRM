@@ -1,3 +1,5 @@
+import { parseBackendTimestamp } from '@/shared/utils/date.utils';
+
 const STORAGE_KEY = 'crm:toasted-notifications';
 const MAX_ENTRIES = 300;
 
@@ -46,7 +48,7 @@ export function markNotificationsToasted(ids: string[]): void {
 /** Only toast notifications created within this window (avoids stale unread resurfacing). */
 export function isRecentlyCreated(createdAt: string | undefined, windowMs = 180_000): boolean {
   if (!createdAt) return false;
-  const t = new Date(createdAt).getTime();
+  const t = parseBackendTimestamp(createdAt).getTime();
   if (Number.isNaN(t)) return false;
   return Date.now() - t <= windowMs;
 }

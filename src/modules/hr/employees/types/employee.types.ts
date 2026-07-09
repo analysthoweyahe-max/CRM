@@ -13,6 +13,8 @@ export interface ApiLookup {
 export interface ApiEmployee {
   id:                  string;
   employeeNumber?:     string;
+  userId?:             string;
+  user_id?:            string;
   name:                string;
   email:               string;
   phone:               string | null;
@@ -24,10 +26,6 @@ export interface ApiEmployee {
   employmentType?:     EmploymentType | null;
   employmentTypeLabel?: string | null;
   salary?:             number | null;
-  shiftStart?:         string | null;
-  shiftEnd?:           string | null;
-  shift_start?:        string | null;
-  shift_end?:          string | null;
   workingHours?:       number | null;
   onboardingStep?:     number;
   manager?:            ApiLookup | null;
@@ -96,14 +94,12 @@ export interface UpdateEmployeePayload {
   status?:          EmployeeStatus;
   employment_type?: EmploymentType;
   salary?:          number;
-  shift_start?:     string;
-  shift_end?:       string;
   working_hours?:   number;
 }
 
-export type UpdateWorkSchedulePayload =
-  | { shift_start: string; shift_end: string }
-  | { working_hours: number };
+export interface UpdateWorkSchedulePayload {
+  working_hours: number;
+}
 
 export interface UpdateEmployeePasswordPayload {
   password:              string;
@@ -138,6 +134,38 @@ export function getInitial(name: string): string {
 export function getLookupLabel(lookup: ApiLookup | null | undefined, isAr: boolean): string {
   if (!lookup) return '–';
   return isAr ? (lookup.nameAr || lookup.name) : lookup.name;
+}
+
+/** Coerce API lookup / string / object fields to a display string. */
+export function resolveDisplayText(value: unknown, isAr = false): string {
+  if (value == null || value === '') return '';
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (typeof value !== 'object') return '';
+
+  const obj = value as Record<string, unknown>;
+  const nameAr = obj.nameAr ?? obj.name_ar;
+  const name   = obj.name ?? obj.label ?? obj.title;
+
+  if (isAr && typeof nameAr === 'string' && nameAr.trim()) return nameAr;
+  if (typeof name === 'string' && name.trim()) return name;
+  return '';
+}
+
+/** Coerce API identifier fields (user id, employee number, etc.) to a string. */
+export function resolveIdentifier(value: unknown, fallback = '—'): string {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  if (typeof value === 'number' && !Number.isNaN(value)) return String(value);
+
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    for (const key of ['id', 'user_id', 'userId', 'employee_id', 'employee_number', 'employeeNumber']) {
+      const v = obj[key];
+      if (typeof v === 'string' && v.trim()) return v.trim();
+      if (typeof v === 'number' && !Number.isNaN(v)) return String(v);
+    }
+  }
+
+  return fallback;
 }
 
 export function mapEmploymentType(type: EmploymentType | null | undefined, isAr: boolean): string {

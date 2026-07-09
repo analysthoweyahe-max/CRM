@@ -10,7 +10,8 @@ export function lazyImport<T extends ComponentType<any>>(
     try {
       return await factory();
     } catch (error) {
-      if (isChunkLoadError(error) && reloadForStaleChunk()) {
+      if (isChunkLoadError(error)) {
+        reloadForStaleChunk();
         return new Promise<ModuleWithDefault<T>>(() => {});
       }
       throw error;

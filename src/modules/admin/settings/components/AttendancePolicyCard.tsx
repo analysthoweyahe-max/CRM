@@ -11,8 +11,8 @@ import { useSettings, useUpdateSetting } from '../hooks/useSettings';
 interface AttendanceValues {
   daily_hours:    number;
   late_allowance: number;
-  start_time:     string;
-  end_time:       string;
+  window_from:    string;
+  window_to:      string;
 }
 
 export function AttendancePolicyCard({ isAr }: { isAr: boolean }) {
@@ -20,15 +20,17 @@ export function AttendancePolicyCard({ isAr }: { isAr: boolean }) {
   const { mutateAsync: updateSetting } = useUpdateSetting();
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } =
-    useForm<AttendanceValues>({ defaultValues: { daily_hours: 8, late_allowance: 15, start_time: '09:00', end_time: '17:00' } });
+    useForm<AttendanceValues>({
+      defaultValues: { daily_hours: 8, late_allowance: 15, window_from: '10:00', window_to: '12:00' },
+    });
 
   useEffect(() => {
     if (!settings) return;
     reset({
       daily_hours:    Number(settings.daily_hours    ?? 8),
       late_allowance: Number(settings.late_allowance ?? 15),
-      start_time:     String(settings.start_time     ?? '09:00'),
-      end_time:       String(settings.end_time       ?? '17:00'),
+      window_from:    String(settings.start_time     ?? '10:00').slice(0, 5),
+      window_to:      String(settings.end_time       ?? '12:00').slice(0, 5),
     });
   }, [settings, reset]);
 
@@ -36,8 +38,8 @@ export function AttendancePolicyCard({ isAr }: { isAr: boolean }) {
     await Promise.all([
       updateSetting({ key: 'daily_hours',    value: data.daily_hours    }),
       updateSetting({ key: 'late_allowance', value: data.late_allowance }),
-      updateSetting({ key: 'start_time',     value: data.start_time     }),
-      updateSetting({ key: 'end_time',       value: data.end_time       }),
+      updateSetting({ key: 'start_time',     value: data.window_from     }),
+      updateSetting({ key: 'end_time',       value: data.window_to       }),
     ]);
     toast.success(isAr ? 'تم حفظ سياسة الحضور' : 'Attendance policy saved');
   }
@@ -54,21 +56,21 @@ export function AttendancePolicyCard({ isAr }: { isAr: boolean }) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <FormField label={isAr ? 'نافذة البدء الطبيعي' : 'Normal Start Window'} icon={<Clock size={15} className="text-gray-400" />}>
+          <div className="flex items-center gap-2">
+            <Input {...register('window_from')} type="time" />
+            <span className="text-gray-400 shrink-0">{isAr ? 'إلى' : 'to'}</span>
+            <Input {...register('window_to')} type="time" />
+          </div>
+        </FormField>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label={isAr ? 'ساعات العمل اليومية' : 'Daily Work Hours'}>
+          <FormField label={isAr ? 'عدد ساعات العمل اليومية' : 'Daily Work Hours'}>
             <Input {...register('daily_hours', { valueAsNumber: true })} type="number" min={1} max={24} />
           </FormField>
 
           <FormField label={isAr ? 'سماح التأخير (دقيقة)' : 'Late Allowance (min)'}>
             <Input {...register('late_allowance', { valueAsNumber: true })} type="number" min={0} />
-          </FormField>
-
-          <FormField label={isAr ? 'وقت بدء الدوام' : 'Work Start Time'} icon={<Clock size={15} className="text-gray-400" />}>
-            <Input {...register('start_time')} type="time"  />
-          </FormField>
-
-          <FormField label={isAr ? 'وقت انتهاء الدوام' : 'Work End Time'} icon={<Clock size={15} className="text-gray-400" />}>
-            <Input {...register('end_time')} type="time" />
           </FormField>
         </div>
 

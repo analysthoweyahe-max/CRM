@@ -33,7 +33,10 @@ export function useEmpSendMessage(uuid: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: string) => empMessagesApi.sendMessage(uuid, body),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: msgKey(uuid) }),
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: msgKey(uuid) });
+      qc.invalidateQueries({ queryKey: CONV_KEY });
+    },
   });
 }
 
@@ -42,7 +45,10 @@ export function useEmpSendMedia(uuid: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (file: File) => empMessagesApi.sendMedia(uuid, file),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: msgKey(uuid) }),
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: msgKey(uuid) });
+      qc.invalidateQueries({ queryKey: CONV_KEY });
+    },
   });
 }
 

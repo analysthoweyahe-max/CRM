@@ -3,6 +3,19 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { authTranslations } from '@/modules/auth/i18n';
 import { Button } from '@/shared/components/ui/Button';
 import { useAdminOtp } from '@/modules/auth/hooks/useAdminOtp';
+import { parseBackendTimestamp } from '@/shared/utils/date.utils';
+
+function resolveOtpError(
+  error: string | null,
+  t: (typeof authTranslations)['ar']['otp'],
+): string | null {
+  if (!error) return null;
+  if (error === 'invalidCode') return t.invalidCode;
+  if (error === 'resendFailed') return t.resendFailed;
+  if (error === 'mailSendFailed') return t.mailSendFailed;
+  if (error === 'resendTooSoon') return t.resendTooSoon;
+  return error;
+}
 
 export function AdminOtpPage() {
   const { lang } = useLang();
@@ -13,14 +26,17 @@ export function AdminOtpPage() {
     expiresAt,
     error, info,
     isVerifying,
+    isResending,
     cooldown,
     submit, resend,
     goBack,
   } = useAdminOtp();
 
+  const errorMessage = resolveOtpError(error, t);
+
   const formattedExpiry = expiresAt
-    ? new Date(expiresAt).toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US', {
-        hour: '2-digit',
+    ? parseBackendTimestamp(expiresAt).toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+        hour:   '2-digit',
         minute: '2-digit',
       })
     : null;
@@ -46,9 +62,9 @@ export function AdminOtpPage() {
           {t.resent}
         </div>
       )}
-      {error && (
+      {errorMessage && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-          {t.invalidCode}
+          {errorMessage}
         </div>
       )}
 
@@ -82,7 +98,7 @@ export function AdminOtpPage() {
         size="lg"
         fullWidth
         isLoading={isVerifying}
-        disabled={otp.length < 4}
+        disabled={otp.length < 6}
       >
         {isVerifying ? t.verifying : t.submit}
       </Button>
@@ -96,9 +112,10 @@ export function AdminOtpPage() {
           <button
             type="button"
             onClick={resend}
-            className="text-brand-600 font-medium hover:text-brand-700 transition-colors"
+            disabled={isResending}
+            className="text-brand-600 font-medium hover:text-brand-700 transition-colors disabled:opacity-50"
           >
-            {t.resend}
+            {isResending ? t.verifying : t.resend}
           </button>
         )}
       </p>

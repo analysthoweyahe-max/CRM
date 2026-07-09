@@ -6,7 +6,7 @@ export const messagesMonitorApi = {
     return http.get<MonitoredMessageListResponse>('/v1/pm/admin/messages', { params: filters });
   },
 
-  projectMessages(projectId: string | number, params: { search?: string; per_page?: number; page?: number } = {}) {
+  projectMessages(projectId: string | number, params: { search?: string; per_page?: number; page?: number; source?: string } = {}) {
     return http.get<MonitoredMessageListResponse>(`/v1/pm/admin/projects/${projectId}/messages`, { params });
   },
 };

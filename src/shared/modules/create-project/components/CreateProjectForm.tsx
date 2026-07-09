@@ -169,6 +169,7 @@ export function CreateProjectForm({ form }: Props) {
         contractDurationMonths={contractDurationMonths}
         errors={fieldErrors}
         isAr={isAr}
+        showGithubLink={module !== 'seo'}
         onGithubLinkChange={v => { setGithubLink(v); clearFieldError('githubLink'); }}
         onDriveLinkChange={v => { setDriveLink(v); clearFieldError('driveLink'); }}
         onContractMonthsChange={v => { setContractDurationMonths(v); clearFieldError('contractDurationMonths'); }}

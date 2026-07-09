@@ -18,12 +18,14 @@ function normalizeRoleList(payload: unknown): ApiRole[] {
 }
 
 export function useRoleList(guardName = 'admin') {
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, can } = useAuth();
+  const canManageManagers = isSuperAdmin || can('create-admin') || can('assign-role');
 
   return useQuery({
     queryKey: rolesQueryKey(guardName),
     queryFn:  () => roleApi.list(guardName).then((r) => normalizeRoleList(r.data.data)),
-    enabled: isSuperAdmin,
+    enabled: guardName === 'admin' ? canManageManagers : isSuperAdmin,
+    staleTime: 60 * 1000,
   });
 }
 

@@ -17,19 +17,29 @@ import { useRoleList } from '../hooks/useRoles';
 import { assignableRoles, permissionsForRole } from '../utils/role.utils';
 import { canEditManager, editableRoleNames } from '../utils/managerAccess.utils';
 import type { ApiAdminManager, ManagerFormValues, ManagerStatus, UpdateAdminPayload } from '../types/adminManager.types';
+import { managerLookupId } from '../types/adminManager.types';
 
 const DANGER_STATUSES: ManagerStatus[] = ['suspended', 'banned'];
+
+function toOrgId(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isNaN(parsed) ? null : parsed;
+}
 
 function toFormValues(raw: ApiAdminManager, registered: Set<string>): ManagerFormValues {
   const role = raw.roles?.[0] ?? '';
   const perms = raw.permissions ?? [];
   return {
-    name:        raw.name ?? '',
-    email:       raw.email ?? '',
-    phone:       raw.phone ?? '',
-    status:      (raw.status as ManagerStatus) || 'active',
+    name:         raw.name ?? '',
+    email:        raw.email ?? '',
+    phone:        raw.phone ?? '',
+    departmentId: managerLookupId(raw.department),
+    jobTitleId:   managerLookupId(raw.jobTitle),
+    status:       (raw.status as ManagerStatus) || 'active',
     role,
-    permissions: filterRegisteredPermissions(perms, registered),
+    permissions:  filterRegisteredPermissions(perms, registered),
   };
 }
 
@@ -62,6 +72,14 @@ function buildPartialPayload(
   if (current.status !== initial.status) payload.status = current.status;
   if (current.role !== initial.role) payload.role = current.role;
 
+  const departmentId = toOrgId(current.departmentId);
+  const initialDept  = toOrgId(initial.departmentId);
+  if (departmentId !== initialDept) payload.department_id = departmentId;
+
+  const jobTitleId = toOrgId(current.jobTitleId);
+  const initialTitle = toOrgId(initial.jobTitleId);
+  if (jobTitleId !== initialTitle) payload.job_title_id = jobTitleId;
+
   if (includePermissions) {
     const next = filterRegisteredPermissions(current.permissions, registered);
     const prev = filterRegisteredPermissions(initial.permissions, registered);
@@ -90,8 +108,10 @@ export function AdminManagerEditPage() {
   const { data: allPermissions } = usePermissionList();
   const registered = useMemo(() => toPermissionNameSet(allPermissions), [allPermissions]);
 
-  const managerRoles = assignableRoles(allRoles, raw?.roles ?? []);
-  const roleNames = editableRoleNames({ isSuperAdmin, roles: user?.roles });
+  const managerRoles = assignableRoles(allRoles);
+  const roleNames = isSuperAdmin
+    ? undefined
+    : editableRoleNames({ isSuperAdmin, roles: user?.roles });
 
   const [values, setValues] = useState<ManagerFormValues | null>(null);
   const [initial, setInitial] = useState<ManagerFormValues | null>(null);
@@ -253,7 +273,13 @@ export function AdminManagerEditPage() {
     );
   }
 
-  const isValid = !!(values.name.trim() && values.email.trim() && values.role);
+  const isValid = !!(
+    values.name.trim()
+    && values.email.trim()
+    && values.departmentId
+    && values.jobTitleId
+    && values.role
+  );
 
   return (
     <div className="space-y-5">

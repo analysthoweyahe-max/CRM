@@ -14,6 +14,10 @@ export const queryKeys = {
     byEmployee:      (id: string) => ['attendance', id]                   as const,
     history:         (id: string) => ['attendance', 'history', id]        as const,
     selfHistory:     (month: string) => ['employee', 'reports', 'history', month] as const,
+    exceptions: {
+      employee: (params?: object) => ['attendance', 'exceptions', 'employee', params] as const,
+      hr:       (params?: object) => ['attendance', 'exceptions', 'hr', params]       as const,
+    },
   },
 
   leaves: {

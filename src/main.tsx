@@ -6,7 +6,9 @@ import { AppProvider } from './app/providers/AppProvider';
 import { AppRouter }   from './app/router/AppRouter';
 import { ErrorBoundary } from '@/shared/components/feedback/ErrorBoundary';
 import { AuthProvider } from '@/modules/auth/context/AuthProvider';
-import { isChunkLoadError, reloadForStaleChunk } from '@/shared/utils/chunkLoad.utils';
+import { clearChunkReloadFlag, isChunkLoadError, reloadForStaleChunk } from '@/shared/utils/chunkLoad.utils';
+
+clearChunkReloadFlag();
 
 window.addEventListener('unhandledrejection', (event) => {
   if (isChunkLoadError(event.reason)) {

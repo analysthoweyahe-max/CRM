@@ -32,6 +32,7 @@ function mapRecord(r: ApiDailyRecord): AttendanceRecord {
     checkOut:    r.checkOutTime,
     workedHours: r.workingHours,
     dayStatus:   r.dayStatus,
+    dayStatusLabel: r.dayStatusLabel,
     workStatus:  r.workStatus,
   };
 }

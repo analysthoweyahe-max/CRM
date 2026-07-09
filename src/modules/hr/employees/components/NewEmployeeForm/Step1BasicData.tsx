@@ -15,11 +15,6 @@ import {
 import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../../hooks/useLookups';
 import { useOrgSettingsData } from '@/modules/admin/org-settings/hooks/useOrgSettings';
 
-/** Normalize a time value ("HH:MM" or "HH:MM:SS") to "HH:MM". */
-function toHHMM(v?: string) {
-  return v ? v.slice(0, 5) : '';
-}
-
 interface Step1Props {
   isAr:           boolean;
   isRTL:          boolean;
@@ -30,34 +25,28 @@ interface Step1Props {
 
 export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: Step1Props) {
   const { data: orgSettings } = useOrgSettingsData();
-  const workStart = toHHMM(orgSettings?.workStartTime);
-  const workEnd   = toHHMM(orgSettings?.workEndTime);
+  const defaultDailyHours = orgSettings?.dailyWorkHours ?? 8;
 
   const {
     register, control, handleSubmit, watch, setValue,
     formState: { errors, isSubmitting },
   } = useForm<AllDataValues>({
-    resolver: (v, c, o) => zodResolver(makeAllDataSchema(isAr, { workStart, workEnd }))(v, c, o),
-    defaultValues: { managerId: 'none', startTime: '09:00', endTime: '17:00', currency: 'EGP', ...defaultValues },
+    resolver: (v, c, o) => zodResolver(makeAllDataSchema(isAr, defaultDailyHours))(v, c, o),
+    defaultValues: { managerId: 'none', workingHours: defaultDailyHours, currency: 'EGP', ...defaultValues },
   });
 
   const selectedDept = watch('department');
-  const jobType      = watch('jobType');
 
-  /* Prefill start/end from the company's configured work hours once loaded,
-     unless the caller already supplied explicit values (e.g. when editing). */
   useEffect(() => {
-    if (!orgSettings) return;
-    if (defaultValues?.startTime == null && workStart) setValue('startTime', workStart);
-    if (defaultValues?.endTime   == null && workEnd)   setValue('endTime',   workEnd);
-  }, [orgSettings]);
+    if (orgSettings && defaultValues?.workingHours == null) {
+      setValue('workingHours', orgSettings.dailyWorkHours ?? 8);
+    }
+  }, [orgSettings, defaultValues?.workingHours, setValue]);
 
-  // Reset job title when department changes
   useEffect(() => {
     setValue('jobTitle', '');
   }, [selectedDept, setValue]);
 
-  // Lookups from API
   const { data: departments = [], isLoading: deptsLoading }   = useDepartments();
   const { data: jobTitles   = [], isLoading: titlesLoading }  = useJobTitles(selectedDept || undefined);
   const { data: employmentTypes = [], isLoading: typesLoading } = useEmploymentTypes();
@@ -74,14 +63,12 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
   }));
 
   const salaryLabel = isAr ? 'الراتب الشهري (ج.م)' : 'Monthly Salary (EGP)';
-
   const jobTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
 
   return (
     <form onSubmit={handleSubmit(onNext)} noValidate>
       <Card padding="lg" className="space-y-6">
 
-        {/* ── البيانات الأساسية ── */}
         <div className="space-y-4">
           <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
             {isAr ? 'البيانات الأساسية' : 'Basic Information'}
@@ -157,7 +144,6 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
           </div>
         </div>
 
-        {/* ── معلومات الدوام ── */}
         <div className="space-y-4">
           <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
             {isAr ? 'معلومات الدوام' : 'Work Information'}
@@ -198,43 +184,17 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               </div>
             </FormField>
 
-            {jobType === 'part_time' ? (
-              <FormField label={isAr ? 'عدد ساعات العمل' : 'Working Hours'} required error={errors.workingHours?.message}>
-                <Input {...register('workingHours', {
-                    setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-                  })}
-                  type="number" min="1" placeholder="4"
-                  hasError={!!errors.workingHours} endIcon={<Clock size={15} />} />
-              </FormField>
-            ) : (
-              <>
-                <FormField
-                  label={isAr ? 'وقت بدء الدوام' : 'Start Time'}
-                  required
-                  error={errors.startTime?.message}
-                  hint={workStart && workEnd
-                    ? (isAr ? `ضمن مواعيد الشركة: ${workStart} - ${workEnd}` : `Within company hours: ${workStart} - ${workEnd}`)
-                    : undefined}
-                >
-                  <Input {...register('startTime')} type="time"
-                    min={workStart || undefined} max={workEnd || undefined}
-                    hasError={!!errors.startTime} endIcon={<Clock size={15} />} />
-                </FormField>
-
-                <FormField
-                  label={isAr ? 'وقت انتهاء الدوام' : 'End Time'}
-                  required
-                  error={errors.endTime?.message}
-                  hint={workStart && workEnd
-                    ? (isAr ? `ضمن مواعيد الشركة: ${workStart} - ${workEnd}` : `Within company hours: ${workStart} - ${workEnd}`)
-                    : undefined}
-                >
-                  <Input {...register('endTime')} type="time"
-                    min={workStart || undefined} max={workEnd || undefined}
-                    hasError={!!errors.endTime} endIcon={<Clock size={15} />} />
-                </FormField>
-              </>
-            )}
+            <FormField
+              label={isAr ? 'عدد ساعات العمل اليومية' : 'Daily Working Hours'}
+              required
+              error={errors.workingHours?.message}
+            >
+              <Input {...register('workingHours', {
+                  setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+                })}
+                type="number" min="1" placeholder={String(defaultDailyHours)}
+                hasError={!!errors.workingHours} endIcon={<Clock size={15} />} />
+            </FormField>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -242,8 +202,8 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               <Clock size={15} className="text-[#709028] mt-0.5 shrink-0" />
               <p className="text-sm text-[#709028] leading-relaxed">
                 {isAr
-                  ? 'سيتم احتساب التأخر والانصراف المبكر والساعات الإضافية بناءً على هذه المواعيد.'
-                  : 'Late arrivals, early departures, and overtime will be calculated based on these times.'}
+                  ? 'يُحسب الدوام بعدد الساعات اليومية. نافذة الحضور الطبيعي 10:00 – 12:00 ظ.'
+                  : 'Work is measured by daily hours. Normal check-in window is 10:00 AM – 12:00 PM.'}
               </p>
             </div>
 
@@ -251,8 +211,8 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               <Info size={15} className="text-blue-500 mt-0.5 shrink-0" />
               <p className="text-sm text-blue-600 dark:text-blue-300 leading-relaxed">
                 {isAr
-                  ? 'سيتم ربط نموذج الراتب تلقائياً بحسابات الحضور والأداء لاحتساب الإضافي والخصومات.'
-                  : 'The salary model will automatically link to attendance and performance to calculate overtime and deductions.'}
+                  ? 'البدء المبكر والتأخر والعمل الإضافي يحتاج موافقة مسبقة من المدير.'
+                  : 'Early start, late start, and overtime require manager approval.'}
               </p>
             </div>
           </div>

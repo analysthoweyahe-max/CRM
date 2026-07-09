@@ -5,6 +5,7 @@ import { attendanceApi } from '@/modules/hr/attendance/api/attendance.api';
 import { leavesApi }    from '@/modules/hr/leaves/api/leaves.api';
 import type { ApiEmployee } from '@/modules/hr/employees/types/employee.types';
 import type { ApiLeaveRequest } from '@/modules/hr/leaves/types/leaves.types';
+import { getLeaveEmployeeName } from '@/modules/hr/leaves/utils/leave.utils';
 import type { DailyAttendanceSummary } from '@/modules/hr/attendance/types/attendance.types';
 
 export interface DashboardStats {
@@ -91,6 +92,6 @@ export function useDashboard() {
     deptDistribution,
     attendanceSummary: summary as DailyAttendanceSummary | undefined,
     recentEmployees: employees.slice(0, 5),
-    recentLeaves:    (recentLeavesQ.data ?? []).filter((l) => l.employee != null) as ApiLeaveRequest[],
+    recentLeaves:    (recentLeavesQ.data ?? []).filter((leave) => getLeaveEmployeeName(leave) || leave.leave_type || leave.leave_type_label),
   };
 }

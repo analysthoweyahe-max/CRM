@@ -11,16 +11,23 @@ const STATUS_VARIANT: Record<AdminEmployeeDetail['status'], 'success' | 'error' 
 };
 
 interface Props {
-  employee: AdminEmployeeDetail;
-  isAr:     boolean;
+  employee:     AdminEmployeeDetail;
+  isAr:         boolean;
+  isSuperAdmin?: boolean;
 }
 
-export function SystemAccessCard({ employee, isAr }: Props) {
+export function SystemAccessCard({ employee, isAr, isSuperAdmin }: Props) {
   return (
     <Card padding="lg" className="space-y-1">
       <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-2">
         {isAr ? 'وصول النظام' : 'System Access'}
       </h2>
+      {isSuperAdmin && (
+        <InfoRow
+          label={isAr ? 'معرّف المستخدم' : 'User ID'}
+          value={<span dir="ltr" className="font-mono text-sm">{employee.userId}</span>}
+        />
+      )}
       <InfoRow
         label={isAr ? 'الأدوار' : 'Roles'}
         value={

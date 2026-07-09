@@ -72,7 +72,7 @@ export function AdminEmployeeDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         <div className="space-y-5 lg:col-span-1">
-          <SystemAccessCard employee={employee} isAr={isAr} />
+          <SystemAccessCard employee={employee} isAr={isAr} isSuperAdmin={isSuperAdmin} />
           <ActivityLogCard activity={employee.activity} isAr={isAr} />
         </div>
         <div className="space-y-5 lg:col-span-2">

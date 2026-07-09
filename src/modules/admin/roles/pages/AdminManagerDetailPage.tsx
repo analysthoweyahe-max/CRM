@@ -11,7 +11,7 @@ import { Badge }  from '@/shared/components/ui/Badge';
 import { Button } from '@/shared/components/ui/Button';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { InfoRow } from '@/modules/admin/employees/components/InfoRow';
-import { getRoleLabel } from '@/modules/admin/employees/types/adminEmployee.types';
+import { getRoleNameLabel } from '../types/adminRole.types';
 import { useAdminManagerDetail } from '../hooks/useAdminManagerDetail';
 import { useDeleteAdmin } from '../hooks/useDeleteAdmin';
 import { DeleteManagerModal } from '../components/DeleteManagerModal';
@@ -123,19 +123,27 @@ export function AdminManagerDetailPage() {
               variant={statusVariant(status)}
             />
             {manager.roles.map(r => (
-              <Badge key={r} label={getRoleLabel(r, isAr)} variant="gray" />
+              <Badge key={r} label={getRoleNameLabel(r, isAr)} variant="gray" />
             ))}
           </div>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         <Card padding="lg" className="space-y-1">
           <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-2">
             {isAr ? 'معلومات التواصل' : 'Contact Information'}
           </h2>
           <InfoRow label={isAr ? 'البريد الإلكتروني' : 'Email'} value={manager.email} />
           <InfoRow label={isAr ? 'رقم الهاتف' : 'Phone Number'} value={manager.phone || '—'} />
+        </Card>
+
+        <Card padding="lg" className="space-y-1">
+          <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-2">
+            {isAr ? 'معلومات التوظيف' : 'Employment Information'}
+          </h2>
+          <InfoRow label={isAr ? 'القسم' : 'Department'} value={manager.department} />
+          <InfoRow label={isAr ? 'المسمى الوظيفي' : 'Job Title'} value={manager.jobTitle} />
         </Card>
 
         <Card padding="lg" className="space-y-1">
@@ -152,7 +160,7 @@ export function AdminManagerDetailPage() {
               manager.roles.length ? (
                 <div className="flex flex-wrap items-center gap-1.5 justify-end">
                   {manager.roles.map(r => (
-                    <Badge key={r} label={getRoleLabel(r, isAr)} variant="gray" />
+                    <Badge key={r} label={getRoleNameLabel(r, isAr)} variant="gray" />
                   ))}
                 </div>
               ) : '—'

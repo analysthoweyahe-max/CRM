@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useLang }   from '@/app/providers/LanguageProvider';
 import { useLeaveDetail, useLeaveApprove, useLeaveReject } from '../hooks/useLeaves';
 import { getInitial, getAvatarColor } from '@/modules/hr/employees/types/employee.types';
+import { formatLeaveDuration, getLeaveEmployeeName } from '../utils/leave.utils';
 import type { UseLeaveDetailPageReturn } from '../types/leaves.types';
 
 export function useLeaveDetailPage(): UseLeaveDetailPageReturn {
@@ -20,14 +21,10 @@ export function useLeaveDetailPage(): UseLeaveDetailPageReturn {
   const approveMutation = useLeaveApprove();
   const rejectMutation  = useLeaveReject();
 
-  const name     = req?.employee?.name ?? req?.employee_name ?? '';
+  const name     = req ? getLeaveEmployeeName(req) : '';
   const initial  = name ? getInitial(name) : '?';
   const avatarBg = name ? getAvatarColor(name) : 'bg-gray-400';
-  const daysLabel = req
-    ? `${req.days_count} ${isAr
-        ? (req.days_count === 1 ? 'يوم' : 'أيام')
-        : (req.days_count === 1 ? 'day' : 'days')}`
-    : '';
+  const daysLabel = req ? formatLeaveDuration(req.days_count, isAr) : '';
 
   function handleApprove() {
     approveMutation.mutate(

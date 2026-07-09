@@ -1,3 +1,5 @@
+import type { ApiLookup } from '@/modules/hr/employees/types/employee.types';
+
 export const MANAGER_ROLE_OPTIONS = [
   { id: 'hr-manager',      labelAr: 'مدير موارد بشرية', labelEn: 'HR Manager'       },
   { id: 'project-manager', labelAr: 'مدير مشاريع',      labelEn: 'Project Manager'  },
@@ -30,20 +32,29 @@ export function getManagerStatusLabel(status: ManagerStatus | string, isAr: bool
   return status;
 }
 
+export function managerLookupId(lookup?: ApiLookup | null): string {
+  if (lookup?.id == null) return '';
+  return String(lookup.id);
+}
+
 export interface CreateAdminPayload {
-  name:         string;
-  email:        string;
-  role:         string;
-  permissions?: string[];
+  name:           string;
+  email:          string;
+  role:           string;
+  department_id?: number | null;
+  job_title_id?:  number | null;
+  permissions?:   string[];
 }
 
 export interface UpdateAdminPayload {
-  name?:        string;
-  email?:       string;
-  phone?:       string | null;
-  status?:      ManagerStatus;
-  role?:        ManagerRole | string;
-  permissions?: string[];
+  name?:           string;
+  email?:          string;
+  phone?:          string | null;
+  status?:         ManagerStatus;
+  role?:           ManagerRole | string;
+  department_id?:  number | null;
+  job_title_id?:   number | null;
+  permissions?:    string[];
 }
 
 export type AssignAdminRolePayload = UpdateAdminPayload;
@@ -69,6 +80,8 @@ export interface ApiAdminManager {
   roleDetails?:  Array<{ name: string; permissions: string[] }>;
   avatar_url?:   string;
   phone?:        string | null;
+  department?:   ApiLookup | null;
+  jobTitle?:     ApiLookup | null;
   status?:       string;
   emailVerified?: boolean;
   lastLoginAt?:  string | null;
@@ -104,10 +117,12 @@ export interface AdminManagerDetailResponse {
 }
 
 export interface ManagerFormValues {
-  name:        string;
-  email:       string;
-  phone:       string;
-  status:      ManagerStatus;
-  role:        string;
-  permissions: string[];
+  name:         string;
+  email:        string;
+  phone:        string;
+  departmentId: string;
+  jobTitleId:   string;
+  status:       ManagerStatus;
+  role:         string;
+  permissions:  string[];
 }

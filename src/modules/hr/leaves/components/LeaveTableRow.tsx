@@ -3,6 +3,12 @@ import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { ROUTES }           from '@/app/router/routes';
 import { LeaveStatusBadge } from './LeaveStatusBadge';
 import { getInitial, getAvatarColor } from '@/modules/hr/employees/types/employee.types';
+import { formatDateShort } from '@/shared/utils/date.utils';
+import {
+  formatLeaveDuration,
+  getLeaveEmployeeDepartment,
+  getLeaveEmployeeName,
+} from '../utils/leave.utils';
 import type { ApiLeaveRequest } from '../types/leaves.types';
 
 interface Props {
@@ -12,8 +18,8 @@ interface Props {
 
 export function LeaveTableRow({ row, isAr }: Props) {
   const navigate = useNavigate();
-  const name    = row.employee?.name ?? row.employee_name ?? '';
-  const dept    = row.employee?.department ?? row.employee_department ?? '';
+  const name    = getLeaveEmployeeName(row);
+  const dept    = getLeaveEmployeeDepartment(row, isAr);
   const initial = name ? getInitial(name) : '?';
   const color   = name ? getAvatarColor(name) : 'bg-gray-400';
 
@@ -32,16 +38,20 @@ export function LeaveTableRow({ row, isAr }: Props) {
         </div>
       </td>
       <td className="px-4 py-3.5 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-        {row.leave_type_label ?? row.leave_type}
+        {row.leave_type_label || row.leave_type || '–'}
       </td>
-      <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{row.start_date}</td>
-      <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{row.end_date}</td>
+      <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        {formatDateShort(row.start_date, isAr)}
+      </td>
+      <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        {formatDateShort(row.end_date, isAr)}
+      </td>
       <td className="px-4 py-3.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">
-        {row.days_count} {isAr
-          ? (row.days_count === 1 ? 'يوم' : 'أيام')
-          : (row.days_count === 1 ? 'day' : 'days')}
+        {formatLeaveDuration(row.days_count, isAr)}
       </td>
-      <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{row.request_date}</td>
+      <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        {formatDateShort(row.request_date, isAr)}
+      </td>
       <td className="px-4 py-3.5"><LeaveStatusBadge status={row.status} isAr={isAr} /></td>
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-1">

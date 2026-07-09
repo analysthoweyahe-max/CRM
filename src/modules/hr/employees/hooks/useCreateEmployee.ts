@@ -10,7 +10,6 @@ export function useCreateEmployee() {
     mutationFn: async (formData: AllFormData) => {
       const d = formData.step1!;
 
-      // 1. Create employee record
       const created = await employeeApi.create({
         name:          d.fullName,
         email:         d.email,
@@ -24,38 +23,27 @@ export function useCreateEmployee() {
       const id   = emp.id;
       const step = emp.onboardingStep ?? 0;
 
-      // 2. Employment type — skip if already done
       if (step < 2) {
         await employeeApi.updateEmploymentType(id, {
           employment_type: d.jobType as EmploymentType,
         });
       }
 
-      // 3. Salary — optional; skip if not provided or already done
       if (step < 3 && d.salary && d.salary > 0) {
         await employeeApi.updateSalary(id, { salary: d.salary });
       }
 
-      // 4. Work schedule — skip if already done
-      const isPartTime = d.jobType === 'part_time';
       if (step < 4) {
-        await employeeApi.updateWorkSchedule(
-          id,
-          isPartTime
-            ? { working_hours: d.workingHours! }
-            : { shift_start: d.startTime!, shift_end: d.endTime! },
-        );
+        await employeeApi.updateWorkSchedule(id, {
+          working_hours: d.workingHours ?? 8,
+        });
       }
 
-      // Cache the completed employee so the detail page works immediately
-      // (the backend has no GET /employees/:id endpoint)
       const finalEmp = {
         ...emp,
         employmentType: d.jobType as EmploymentType,
         salary:         d.salary,
-        shiftStart:     isPartTime ? null : d.startTime,
-        shiftEnd:       isPartTime ? null : d.endTime,
-        workingHours:   isPartTime ? d.workingHours : null,
+        workingHours:   d.workingHours ?? 8,
         onboardingStep: 4,
       };
       queryClient.setQueryData(['employee', id], finalEmp);

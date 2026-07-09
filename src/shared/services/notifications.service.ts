@@ -1,6 +1,7 @@
 import { http } from './http.service';
 import type { AppNotification } from '../types/notification.types';
 import type { Role } from '../types/role.types';
+import { filterNotificationsForRole } from '../utils/notificationRoleFilter.utils';
 
 export interface NotificationsPage {
   data:         AppNotification[];
@@ -47,10 +48,15 @@ function parseNotificationData(raw: unknown): Record<string, unknown> {
     : {};
 }
 
-function normalizeNotification(raw: AppNotification): AppNotification {
+function normalizeNotification(raw: AppNotification & Record<string, unknown>): AppNotification {
   return {
-    ...raw,
-    data: parseNotificationData(raw.data),
+    id:        String(raw.id ?? ''),
+    type:      String(raw.type ?? ''),
+    title:     String(raw.title ?? ''),
+    body:      String(raw.body ?? raw.message ?? ''),
+    data:      parseNotificationData(raw.data),
+    readAt:    (raw.readAt ?? raw.read_at ?? null) as string | null,
+    createdAt: String(raw.createdAt ?? raw.created_at ?? ''),
   };
 }
 
@@ -62,13 +68,20 @@ export const notificationsApi = {
   async list(role: Role | undefined, params?: { per_page?: number; page?: number }) {
     const res = await http.get<ApiEnvelope<NotificationsPage>>(prefixFor(role), { params });
     const page = res.data.data;
+    const normalized = (page.data ?? []).map((item) =>
+      normalizeNotification(item as AppNotification & Record<string, unknown>),
+    );
+    const data = filterNotificationsForRole(normalized, role);
+    const unreadCount = data.filter((n) => !n.readAt).length;
+
     return {
       ...res,
       data: {
         ...res.data,
         data: {
           ...page,
-          data: (page.data ?? []).map(normalizeNotification),
+          data,
+          unreadCount,
         },
       },
     };

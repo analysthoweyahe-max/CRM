@@ -11,8 +11,7 @@ export interface UpdateEmployeeFormData {
   manager_id?:    string | null;
   employmentType: string;
   salary:         number;
-  shiftStart:     string;
-  shiftEnd:       string;
+  workingHours:   number;
 }
 
 export function useUpdateEmployee(employeeId: string, original?: ApiEmployee) {
@@ -36,15 +35,10 @@ export function useUpdateEmployee(employeeId: string, original?: ApiEmployee) {
         );
       }
 
-      if (
-        data.employmentType !== 'part_time' &&
-        (data.shiftStart !== (original?.shiftStart ?? '') ||
-         data.shiftEnd   !== (original?.shiftEnd   ?? ''))
-      ) {
+      if (data.workingHours > 0 && data.workingHours !== (original?.workingHours ?? 0)) {
         calls.push(
           employeeApi.updateWorkSchedule(employeeId, {
-            shift_start: data.shiftStart,
-            shift_end:   data.shiftEnd,
+            working_hours: data.workingHours,
           }),
         );
       }

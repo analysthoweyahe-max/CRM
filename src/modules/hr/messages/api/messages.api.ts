@@ -44,7 +44,7 @@ export const messagesApi = {
   },
 
   markRead(uuid: string) {
-    return http.post<{ status: string }>(`/v1/hr/messages/conversations/${uuid}/read`);
+    return http.put<{ status: string }>(`/v1/hr/messages/conversations/${uuid}/read`);
   },
 
   updateStatus(uuid: string, status: string) {

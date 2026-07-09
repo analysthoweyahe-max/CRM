@@ -40,8 +40,9 @@ export const ROUTES = {
     EDIT:   (id = ':id') => `/employees/${id}/edit`,
   },
   ATTENDANCE: {
-    DAILY: '/attendance',
-    LOG:   '/attendance/log',
+    DAILY:      '/attendance',
+    LOG:        '/attendance/log',
+    EXCEPTIONS: '/attendance/exceptions',
   },
   LEAVES: {
     LIST:   '/leaves',
@@ -90,7 +91,8 @@ export const ROUTES = {
     MESSAGES:      '/employee/messages',
     REQUESTS:      '/employee/requests',
     REPORTS:       '/employee/reports',
-    ATTENDANCE:    '/employee/attendance',
+    ATTENDANCE:           '/employee/attendance',
+    ATTENDANCE_EXCEPTIONS:'/employee/attendance-exceptions',
     TASKS:         '/pm/tasks',
     PROJECT_TASKS: (projectId: string | number = ':projectId') => `/pm/projects/${projectId}/tasks`,
     TASK_DETAIL:   (projectId: string | number = ':projectId', taskId: string | number = ':taskId') =>

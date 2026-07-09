@@ -9,6 +9,7 @@ const PUBLIC_AUTH_SEGMENTS = [
   '/auth/password-resets/',
   '/auth/invitations/',
   '/auth/magic-login',
+  '/v1/admin/auth/login',
   '/v1/admin/auth/forgot-password',
   '/v1/admin/auth/password-resets/',
   '/v1/employee/auth/forgot-password',

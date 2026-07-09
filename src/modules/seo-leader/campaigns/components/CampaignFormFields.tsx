@@ -157,6 +157,7 @@ export function CampaignFormFields({
         contractDurationMonths={contractDurationMonths}
         errors={optionalFieldErrors}
         isAr={isAr}
+        showGithubLink={false}
         onGithubLinkChange={setGithubLink}
         onDriveLinkChange={setDriveLink}
         onContractMonthsChange={setContractDurationMonths}

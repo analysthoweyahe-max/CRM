@@ -3,6 +3,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { authService } from '@/modules/auth/services/auth.service';
 import { ROUTES } from '@/app/router/routes';
+import {
+  clearAdminOtpChallenge,
+  patchAdminOtpChallenge,
+  readAdminOtpChallenge,
+} from '@/modules/auth/utils/adminOtpChallenge.store';
+import {
+  extractApiError,
+  extractApiStatus,
+} from '@/shared/utils/error.utils';
 import type { Role } from '@/shared/types/role.types';
 
 interface OtpLocationState {
@@ -33,23 +42,23 @@ export function useAdminOtp() {
   const location = useLocation();
   const { verifyOtp } = useAuth();
 
+  const stored = readAdminOtpChallenge();
   const state = (location.state ?? {}) as OtpLocationState;
-  const adminId    = state.adminId ?? '';
-  const rememberMe = state.rememberMe ?? false;
 
-  const [otp, setOtp]           = useState('');
-  const [expiresAt, setExpires] = useState(state.expiresAt ?? '');
-  const [error, setError]       = useState<string | null>(null);
-  const [info, setInfo]         = useState<string | null>(null);
+  const [adminId, setAdminId]       = useState(state.adminId ?? stored?.adminId ?? '');
+  const rememberMe                  = state.rememberMe ?? stored?.rememberMe ?? false;
+  const [expiresAt, setExpires]     = useState(state.expiresAt ?? stored?.expiresAt ?? '');
+  const [otp, setOtp]               = useState('');
+  const [error, setError]           = useState<string | null>(null);
+  const [info, setInfo]             = useState<string | null>(null);
   const [isVerifying, setVerifying] = useState(false);
+  const [isResending, setResending] = useState(false);
   const [cooldown, setCooldown]     = useState(0);
 
-  // No admin context (e.g. page opened directly) → back to login.
   useEffect(() => {
     if (!adminId) navigate(ROUTES.AUTH.LOGIN, { replace: true });
   }, [adminId, navigate]);
 
-  // Resend cooldown ticker.
   useEffect(() => {
     if (cooldown <= 0) return;
     const id = setTimeout(() => setCooldown((s) => s - 1), 1000);
@@ -57,31 +66,66 @@ export function useAdminOtp() {
   }, [cooldown]);
 
   async function submit() {
-    if (isVerifying || otp.trim().length < 4) return;
+    if (isVerifying || otp.trim().length < 6) return;
     setError(null);
     setInfo(null);
     setVerifying(true);
     try {
       const { user, redirectPath } = await verifyOtp(adminId, otp.trim(), rememberMe);
+      clearAdminOtpChallenge();
       navigate(resolveRedirect(redirectPath, user.role), { replace: true });
-    } catch {
-      setError('invalidCode');
+    } catch (err: unknown) {
+      const status = extractApiStatus(err);
+      if (status === 422 || status === 401) {
+        setError('invalidCode');
+      } else {
+        setError(extractApiError(err) || 'invalidCode');
+      }
       setVerifying(false);
     }
   }
 
   async function resend() {
-    if (cooldown > 0) return;
+    if (cooldown > 0 || isResending || !adminId) return;
     setError(null);
     setInfo(null);
+    setResending(true);
     try {
-      const newExpiry = await authService.resendAdminOtp(adminId);
-      if (newExpiry) setExpires(newExpiry);
+      const fallback = stored
+        ? { identifier: stored.identifier, password: stored.password, rememberMe: stored.rememberMe }
+        : undefined;
+
+      const result = await authService.resendAdminOtp(adminId, fallback);
+      if (result.adminId && result.adminId !== adminId) {
+        setAdminId(result.adminId);
+      }
+      if (result.expiresAt) {
+        setExpires(result.expiresAt);
+      }
+      patchAdminOtpChallenge({
+        adminId:   result.adminId || adminId,
+        expiresAt: result.expiresAt || expiresAt,
+      });
+      setOtp('');
       setInfo('resent');
       setCooldown(RESEND_COOLDOWN);
-    } catch {
-      setError('invalidCode');
+    } catch (err: unknown) {
+      const status = extractApiStatus(err);
+      if (status === 503) {
+        setError('mailSendFailed');
+      } else if (status === 429) {
+        setError('resendTooSoon');
+      } else {
+        setError(extractApiError(err) || 'resendFailed');
+      }
+    } finally {
+      setResending(false);
     }
+  }
+
+  function goBack() {
+    clearAdminOtpChallenge();
+    navigate(ROUTES.AUTH.LOGIN, { replace: true });
   }
 
   return {
@@ -89,8 +133,9 @@ export function useAdminOtp() {
     expiresAt,
     error, info,
     isVerifying,
+    isResending,
     cooldown,
     submit, resend,
-    goBack: () => navigate(ROUTES.AUTH.LOGIN, { replace: true }),
+    goBack,
   };
 }

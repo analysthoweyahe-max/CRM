@@ -13,11 +13,16 @@ export function printAttendance(
   empName: string,
   isAr:    boolean,
 ) {
-  const LABELS: Record<DayStatus, string> = {
+  const LABELS: Partial<Record<DayStatus, string>> = {
     present: isAr ? 'حاضر'  : 'Present',
+    normal_day: isAr ? 'يوم عادي' : 'Normal',
     late:    isAr ? 'متأخر' : 'Late',
+    late_arrival: isAr ? 'تأخر' : 'Late',
     absent:  isAr ? 'غائب'  : 'Absent',
     leave:   isAr ? 'إجازة' : 'Leave',
+    early_leave: isAr ? 'انصراف مبكر' : 'Early Leave',
+    overtime: isAr ? 'ساعات إضافية' : 'Overtime',
+    awaiting_check_in: isAr ? 'بانتظار الحضور' : 'Awaiting',
   };
   const win = window.open('', '_blank', 'width=900,height=700');
   if (!win) return;

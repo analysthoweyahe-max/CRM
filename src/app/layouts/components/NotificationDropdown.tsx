@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CalendarCheck, MessageSquare, Wallet, AtSign, Megaphone, Bell, ClipboardList } from 'lucide-react';
 import type { AppNotification } from '@/shared/types/notification.types';
-import { formatTimeAgo } from '@/shared/utils/date.utils';
+import { formatNotificationDateTime } from '@/shared/utils/date.utils';
 
 interface Props {
   notifications: AppNotification[];
@@ -157,7 +157,7 @@ export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMar
                   {n.body}
                 </p>
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                  {formatTimeAgo(n.createdAt, isAr)}
+                  {formatNotificationDateTime(n.createdAt, isAr)}
                 </p>
               </div>
             </button>

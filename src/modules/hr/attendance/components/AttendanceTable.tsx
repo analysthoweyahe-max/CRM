@@ -3,11 +3,16 @@ import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge }  from '@/shared/components/ui/Badge';
 import type { AttendanceRecord, DayStatus, WorkStatus } from '@/modules/hr/attendance/types/attendance.types';
 
-const DAY_STATUS_MAP: Record<DayStatus, { ar: string; en: string; variant: 'success' | 'warning' | 'error' | 'brand' }> = {
-  present: { ar: 'حاضر',  en: 'Present', variant: 'success' },
-  late:    { ar: 'متأخر', en: 'Late',    variant: 'warning' },
-  absent:  { ar: 'غائب',  en: 'Absent',  variant: 'error'   },
-  leave:   { ar: 'إجازة', en: 'Leave',   variant: 'brand'   },
+const DAY_STATUS_MAP: Record<string, { ar: string; en: string; variant: 'success' | 'warning' | 'error' | 'brand' }> = {
+  present:           { ar: 'حاضر',           en: 'Present',           variant: 'success' },
+  normal_day:        { ar: 'يوم عادي',       en: 'Normal Day',        variant: 'success' },
+  late:              { ar: 'متأخر',          en: 'Late',              variant: 'warning' },
+  late_arrival:      { ar: 'تأخر',           en: 'Late Arrival',      variant: 'warning' },
+  absent:            { ar: 'غائب',           en: 'Absent',            variant: 'error'   },
+  leave:             { ar: 'إجازة',          en: 'Leave',             variant: 'brand'   },
+  early_leave:       { ar: 'انصراف مبكر',    en: 'Early Leave',       variant: 'warning' },
+  overtime:          { ar: 'ساعات إضافية',   en: 'Overtime',          variant: 'brand'   },
+  awaiting_check_in: { ar: 'بانتظار الحضور', en: 'Awaiting Check-in', variant: 'brand'   },
 };
 
 const WORK_STATUS_MAP: Record<WorkStatus, { ar: string; en: string; dot: string }> = {
@@ -80,10 +85,11 @@ export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>
     {
       accessorKey: 'dayStatus',
       header: isAr ? 'حالة اليوم' : 'Status',
-      cell: ({ getValue }) => {
+      cell: ({ getValue, row }) => {
         const s = DAY_STATUS_MAP[getValue<DayStatus>()];
-        if (!s) return <span className="text-sm text-gray-400">—</span>;
-        return <Badge label={isAr ? s.ar : s.en} variant={s.variant} />;
+        const label = row.original.dayStatusLabel;
+        if (!s && !label) return <span className="text-sm text-gray-400">—</span>;
+        return <Badge label={label ?? (isAr ? s?.ar : s?.en) ?? String(getValue())} variant={s?.variant ?? 'brand'} />;
       },
     },
     {

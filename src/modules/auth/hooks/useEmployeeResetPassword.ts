@@ -25,7 +25,8 @@ export function useEmployeeResetPassword(resetToken: string) {
         password:        values.password,
         confirmPassword: values.confirmPassword,
       });
-      clearAll();
+      /* Navigate before clearing state — clearing first triggers the reset-page
+         guard and sends the user back to forgot-password instead of login. */
       navigate(`${ROUTES.AUTH.LOGIN}?reset=1`, { replace: true });
       return null;
     } catch (err: unknown) {

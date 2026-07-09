@@ -1,4 +1,6 @@
-export type DayStatus  = 'present' | 'late' | 'absent' | 'leave';
+export type DayStatus =
+  | 'present' | 'late' | 'absent' | 'leave'
+  | 'normal_day' | 'late_arrival' | 'early_leave' | 'overtime' | 'awaiting_check_in';
 export type WorkStatus = 'working' | 'done' | 'not_started' | 'offline';
 
 /* ── Frontend display record (used by table + stats) ── */
@@ -13,6 +15,7 @@ export interface AttendanceRecord {
   checkOut:    string | null;
   workedHours: number | null;
   dayStatus:   DayStatus;
+  dayStatusLabel?: string;
   workStatus:  WorkStatus;
 }
 

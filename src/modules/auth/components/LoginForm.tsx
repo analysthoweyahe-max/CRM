@@ -6,6 +6,7 @@ import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '@/modules/auth/schemas/login.schema';
 import { useLogin } from '@/modules/auth/hooks/useLogin';
 import { useAuth } from '@/modules/auth/context/AuthContext';
+import { useForgotPasswordState } from '@/modules/auth/context/ForgotPasswordContext';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { authTranslations } from '@/modules/auth/i18n';
 import { ROUTES } from '@/app/router/routes';
@@ -19,6 +20,12 @@ export function LoginForm() {
   const [params] = useSearchParams();
   const justActivated = params.get('activated') === '1';
   const justReset     = params.get('reset') === '1';
+  const { clearAll: clearForgotPasswordState } = useForgotPasswordState();
+
+  useEffect(() => {
+    if (!justReset) return;
+    clearForgotPasswordState();
+  }, [justReset, clearForgotPasswordState]);
 
   // The backend's magic-link email may point here (/auth/login?token=...) instead
   // of the dedicated /admin/auth/callback page — handle it here too so a
@@ -102,8 +109,8 @@ export function LoginForm() {
       {submitError && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
           {lang === 'ar'
-            ? 'معرّف المستخدم أو كلمة المرور غير صحيحة'
-            : 'Invalid user ID or password'}
+            ? 'البريد الإلكتروني أو معرّف المستخدم أو كلمة المرور غير صحيحة'
+            : 'Invalid email, user ID, or password'}
         </div>
       )}
 

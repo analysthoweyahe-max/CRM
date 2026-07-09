@@ -4,6 +4,7 @@ import { useAuth } from '@/modules/auth/context/AuthContext';
 import { adminApi } from '../api/admin.api';
 import { getAvatarColor, getInitial } from '@/shared/utils/avatar.utils';
 import { getRoleLabel } from '@/modules/admin/employees/types/adminEmployee.types';
+import { resolveDisplayText } from '@/modules/hr/employees/types/employee.types';
 import type { AdminEmployee } from '@/modules/admin/employees/types/adminEmployee.types';
 import type { ApiAdminManager, ManagerStatus } from '../types/adminManager.types';
 import { getManagerStatusLabel } from '../types/adminManager.types';
@@ -26,8 +27,8 @@ export function toManagerVM(m: ApiAdminManager): AdminEmployee {
     email:          m.email,
     avatarInitial:  getInitial(m.name),
     avatarColor:    getAvatarColor(m.name),
-    department:     '—',
-    jobTitle:       '—',
+    department:     resolveDisplayText(m.department, true) || '—',
+    jobTitle:       resolveDisplayText(m.jobTitle, true) || '—',
     roles,
     role:           roles.length ? roles.map(r => getRoleLabel(r, true)).join('، ') : '—',
     status:         status === 'active' ? 'active' : status === 'pending' ? 'pending' : 'inactive',

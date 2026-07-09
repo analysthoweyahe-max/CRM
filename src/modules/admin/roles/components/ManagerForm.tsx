@@ -1,5 +1,7 @@
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
+import { Combobox }  from '@/shared/components/form/Combobox';
+import { useDepartments, useJobTitles } from '@/modules/hr/employees/hooks/useLookups';
 import { RoleSelect }        from './RoleSelect';
 import { StatusSelect }      from './StatusSelect';
 import { PermissionsPicker } from './PermissionsPicker';
@@ -31,6 +33,19 @@ export function ManagerForm({
   allowedRoleNames,
   disableEmail = false,
 }: Props) {
+  const { data: departments = [], isLoading: deptsLoading } = useDepartments();
+  const { data: jobTitles = [], isLoading: titlesLoading } = useJobTitles(values.departmentId || undefined);
+
+  const deptItems = departments.map((d) => ({
+    id:    String(d.id),
+    label: isAr ? (d.nameAr || d.name) : d.name,
+  }));
+
+  const titleItems = jobTitles.map((t) => ({
+    id:    String(t.id),
+    label: isAr ? (t.nameAr || t.name) : t.name,
+  }));
+
   function togglePermission(slug: string) {
     onChange({
       permissions: values.permissions.includes(slug)
@@ -79,6 +94,30 @@ export function ManagerForm({
             />
           </FormField>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField label={isAr ? 'القسم' : 'Department'} required error={errors.departmentId}>
+          <Combobox
+            items={deptItems}
+            value={values.departmentId}
+            onChange={departmentId => onChange({ departmentId, jobTitleId: '' })}
+            searchPlaceholder={isAr ? 'ابحث عن قسم...' : 'Search department...'}
+            noResultsText={isAr ? 'لا نتائج' : 'No results'}
+            disabled={deptsLoading}
+          />
+        </FormField>
+
+        <FormField label={isAr ? 'المسمى الوظيفي' : 'Job Title'} required error={errors.jobTitleId}>
+          <Combobox
+            items={titleItems}
+            value={values.jobTitleId}
+            onChange={jobTitleId => onChange({ jobTitleId })}
+            searchPlaceholder={isAr ? 'ابحث عن مسمى...' : 'Search job title...'}
+            noResultsText={isAr ? 'لا نتائج' : 'No results'}
+            disabled={!values.departmentId || titlesLoading}
+          />
+        </FormField>
       </div>
 
       <FormField label={isAr ? 'الدور' : 'Role'} required error={errors.role}>

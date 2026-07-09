@@ -67,16 +67,18 @@ export function useForgotPasswordVerify() {
       setResetToken(token);
       navigate(ROUTES.AUTH.RESET_PASSWORD, { replace: true });
     } catch (err: unknown) {
-      setVerifying(false);
       const status = extractApiStatus(err);
       if (status === 422) {
         const fieldErrors = extractApiFieldErrors(err);
-        if (fieldErrors.code) {
-          setCodeError(fieldErrors.code);
+        const otpError = fieldErrors.code ?? fieldErrors.otp;
+        if (otpError) {
+          setCodeError(otpError);
           return;
         }
       }
       setError(extractApiError(err) || 'invalidCode');
+    } finally {
+      setVerifying(false);
     }
   }
 
@@ -91,6 +93,7 @@ export function useForgotPasswordVerify() {
         setExpiresAt(newExpiry);
         setEmailStep(email, newExpiry);
       }
+      setOtp('');
       setInfo(true);
       setCooldown(RESEND_COOLDOWN);
     } catch (err: unknown) {

@@ -96,6 +96,8 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
           { key: 'hr-att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'view-attendance' },
 
+          { key: 'hr-att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'view-attendance' },
+
           { key: 'hr-leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays, permission: 'view-leave' },
 
         ],
@@ -230,6 +232,8 @@ export const HR_NAV: NavSectionDef[] = [
 
           { key: 'att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'view-attendance' },
 
+          { key: 'att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'view-attendance' },
+
           { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays, permission: 'view-leave' },
 
         ],
@@ -305,6 +309,7 @@ const HR_OPERATIONS_ITEMS: NavSectionDef['items'] = [
     children: [
       { key: 'att-daily', labelAr: 'الحضور اليومي',  labelEn: 'Daily Attendance', path: ROUTES.ATTENDANCE.DAILY, icon: Clock,        permission: 'view-attendance' },
       { key: 'att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'view-attendance' },
+      { key: 'att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'view-attendance' },
       { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays, permission: ['view-leave', 'approve-leave'] },
     ],
   },

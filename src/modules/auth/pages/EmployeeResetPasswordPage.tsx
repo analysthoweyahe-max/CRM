@@ -11,14 +11,15 @@ export function EmployeeResetPasswordPage() {
   const resetToken = state?.resetToken ?? '';
   const email      = state?.email ?? '';
 
+  /* Guard direct access only — do not re-run when resetToken is cleared during submit. */
   useEffect(() => {
-    if (!resetToken) {
-      navigate(
-        email ? ROUTES.AUTH.FORGOT_PASSWORD_VERIFY : ROUTES.AUTH.FORGOT_PASSWORD,
-        { replace: true },
-      );
-    }
-  }, [resetToken, email, navigate]);
+    if (resetToken) return;
+    navigate(
+      email ? ROUTES.AUTH.FORGOT_PASSWORD_VERIFY : ROUTES.AUTH.FORGOT_PASSWORD,
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!resetToken) return null;
 

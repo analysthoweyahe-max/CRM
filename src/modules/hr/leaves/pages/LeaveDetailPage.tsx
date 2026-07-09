@@ -5,6 +5,7 @@ import { Card }          from '@/shared/components/ui/Card';
 import { LeaveStatusBadge }  from '../components/LeaveStatusBadge';
 import { ApproveModal, RejectModal } from '../components/LeaveActionModals';
 import { useLeaveDetailPage } from './useLeaveDetailPage';
+import { formatDateFull } from '@/shared/utils/date.utils';
 import type { FieldProps } from '../types/leaves.types';
 
 function Field({ label, value }: FieldProps) {
@@ -102,12 +103,12 @@ export function LeaveDetailPage() {
         <Card padding="lg" className="lg:col-span-2 space-y-5">
           <LeaveStatusBadge status={req.status} isAr={isAr} />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
-            <Field label={isAr ? 'تاريخ تقديم الطلب' : 'Request Date'} value={req.request_date} />
-            <Field label={isAr ? 'تاريخ البداية'      : 'Start Date'}   value={req.start_date} />
-            <Field label={isAr ? 'تاريخ النهاية'      : 'End Date'}     value={req.end_date} />
+            <Field label={isAr ? 'تاريخ تقديم الطلب' : 'Request Date'} value={formatDateFull(req.request_date, isAr)} />
+            <Field label={isAr ? 'تاريخ البداية'      : 'Start Date'}   value={formatDateFull(req.start_date, isAr)} />
+            <Field label={isAr ? 'تاريخ النهاية'      : 'End Date'}     value={formatDateFull(req.end_date, isAr)} />
             <Field label={isAr ? 'المدة'              : 'Duration'}     value={daysLabel} />
             <Field label={isAr ? 'تاريخ الموافقة'     : 'Approval Date'}
-              value={req.approved_at ?? (isAr ? 'بانتظار المراجعة' : 'Pending Review')} />
+              value={req.approved_at ? formatDateFull(req.approved_at, isAr) : (isAr ? 'بانتظار المراجعة' : 'Pending Review')} />
           </div>
           <div>
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-1.5">{isAr ? 'سبب الإجازة' : 'Leave Reason'}</p>
