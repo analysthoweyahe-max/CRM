@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery }               from '@tanstack/react-query';
 import { useLang }                from '@/app/providers/LanguageProvider';
 import { ROUTES }                 from '@/app/router/routes';
+import { useAuth }                from '@/modules/auth/context/AuthContext';
 import { campaignApi }            from '../api/campaign.api';
 import { seoTeamApi }             from '../../team/api/seoTeam.api';
 import type { SeoProjectMember }  from '../../team/types/seoTeam.types';
@@ -11,7 +12,12 @@ export function useAddSeoTaskPage() {
   const { lang }    = useLang();
   const isAr        = lang === 'ar';
   const navigate    = useNavigate();
+  const { user }    = useAuth();
   const { id = '' } = useParams<{ id: string }>();
+
+  const detailsPath = user?.role === 'seo-member'
+    ? ROUTES.SEO_MEMBER.DETAILS(id)
+    : ROUTES.SEO_LEADER.DETAILS(id);
 
   const { data: campaign, isLoading: campaignLoading } = useQuery({
     queryKey: ['campaign-detail', id],
@@ -41,7 +47,7 @@ export function useAddSeoTaskPage() {
   const taskForm = useAddSeoTask(
     id,
     prefillUrl,
-    () => navigate(ROUTES.SEO_LEADER.DETAILS(id)),
+    () => navigate(detailsPath),
   );
 
   return {
@@ -53,6 +59,6 @@ export function useAddSeoTaskPage() {
     teamLoading,
     prefillUrl,
     ...taskForm,
-    goBack: () => navigate(ROUTES.SEO_LEADER.DETAILS(id)),
+    goBack: () => navigate(detailsPath),
   };
 }

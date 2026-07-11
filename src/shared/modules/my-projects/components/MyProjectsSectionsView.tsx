@@ -10,17 +10,20 @@ interface Props {
 }
 
 export function MyProjectsSectionsView({ sections, config, isAr }: Props) {
+  const visibleSections = sections.filter((s) => s.total > 0);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(sections.map(s => [s.key, s.defaultExpanded])),
+    Object.fromEntries(visibleSections.map(s => [s.key, s.defaultExpanded])),
   );
 
   const toggle = (key: string) => {
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  if (visibleSections.length === 0) return null;
+
   return (
     <div className="space-y-4">
-      {sections.map(section => {
+      {visibleSections.map(section => {
         const isOpen = expanded[section.key] ?? section.defaultExpanded;
         return (
           <div
@@ -47,7 +50,7 @@ export function MyProjectsSectionsView({ sections, config, isAr }: Props) {
               />
             </button>
 
-            {isOpen && section.projects.length > 0 && (
+            {isOpen && (
               <div className="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {section.projects.map(project => (
                   <MyProjectCard
@@ -58,12 +61,6 @@ export function MyProjectsSectionsView({ sections, config, isAr }: Props) {
                   />
                 ))}
               </div>
-            )}
-
-            {isOpen && section.projects.length === 0 && (
-              <p className="px-5 pb-5 text-sm text-gray-400 dark:text-gray-500">
-                {isAr ? 'لا توجد مشاريع في هذا القسم' : 'No projects in this section'}
-              </p>
             )}
           </div>
         );

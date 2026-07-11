@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
-import { Send, Paperclip, AtSign, FileText } from 'lucide-react';
+import { Send, Paperclip, AtSign } from 'lucide-react';
 import { useAuth }           from '@/modules/auth/context/AuthContext';
+import { ChatAttachments, MessageBodyText } from '@/shared/components/chat';
 import { setOpenConversation } from '@/shared/realtime-messages';
 import { useEmpMessages, useEmpSendMessage, useEmpSendMedia, useEmpMarkRead } from '../hooks/useEmployeeMessages';
 import type { EmpConversation, EmpMessage } from '../types/messages.types';
@@ -9,13 +10,6 @@ function fmtTime(raw: string, isAr: boolean) {
   return new Date(raw).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', {
     hour: '2-digit', minute: '2-digit',
   });
-}
-
-function fmtSize(bytes?: number) {
-  if (!bytes) return '';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 interface Props {
@@ -190,25 +184,15 @@ function MessageBubble({ msg, isAr, currentUserId }: { msg: EmpMessage; isAr: bo
           : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-700/60 rounded-se-sm',
       ].join(' ')}>
 
-        {/* Attachments */}
-        {msg.attachments?.map((att, i) => (
-          <a
-            key={i}
-            href={att.url}
-            target="_blank"
-            rel="noreferrer"
-            className={`flex items-center gap-2 mb-2 p-2 rounded-xl text-xs
-                        ${isOwn ? 'bg-white/30 hover:bg-white/50' : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100'} transition-colors`}
-          >
-            <FileText size={14} className="shrink-0" />
-            <span className="truncate max-w-[150px]">{att.name}</span>
-            {att.size && <span className="shrink-0 opacity-60">{fmtSize(att.size)}</span>}
-          </a>
-        ))}
+        <ChatAttachments attachments={msg.attachments ?? []} isOwn={isOwn} />
 
-        {/* Body */}
         {msg.body && (
-          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.body}</p>
+          <MessageBodyText
+            text={msg.body}
+            linkClassName={isOwn
+              ? 'underline break-all text-gray-900 hover:opacity-80'
+              : 'underline break-all text-[#709028] dark:text-[#A0CD39] hover:opacity-80'}
+          />
         )}
 
         {/* Timestamp */}

@@ -216,20 +216,16 @@ export function AppRouter() {
                 </Route>
               </Route>
 
-              <Route element={<RoleGuard allowedRoles={['manager', 'admin']} />}>
+              <Route element={<RoleGuard allowedRoles={['manager', 'employee', 'admin']} />}>
                 <Route element={<ProjectManagerLayout />}>
                   <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.TASKS}        element={<MyTasksPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.MESSAGES}     element={<SeoMemberMessagesPage />} />
-                  <Route element={<PermissionGuard permission="view-pm-projects" />}>
-                    <Route path={ROUTES.PROJECT_MANAGER.MY_PROJECTS} element={<MyProjectsPage module="pm" />} />
-                    <Route path={ROUTES.PROJECT_MANAGER.ADD_TASK()} element={<AddPmTaskPage />} />
-                    <Route path={ROUTES.PROJECT_MANAGER.INFO()}    element={<ProjectInfoPage />} />
-                    <Route path={ROUTES.PROJECT_MANAGER.DETAILS()} element={<ProjectDetailsPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission="create-pm-project" />}>
-                    <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
-                  </Route>
+                  <Route path={ROUTES.PROJECT_MANAGER.MY_PROJECTS} element={<MyProjectsPage module="pm" />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.ADD_TASK()} element={<AddPmTaskPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.INFO()}    element={<ProjectInfoPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.DETAILS()} element={<ProjectDetailsPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.NEW}       element={<NewProjectPage />} />
                   <Route element={<PermissionGuard permission={['view-pm-team', 'view-pm-projects']} />}>
                     <Route path={ROUTES.PROJECT_MANAGER.TEAM}      element={<ProjectTeamPage />} />
                     <Route path={ROUTES.PROJECT_MANAGER.TEAM_MEMBER()} element={<ProjectTeamMemberPage />} />
@@ -304,18 +300,14 @@ export function AppRouter() {
                 </Route>
               </Route>
 
-              <Route element={<RoleGuard allowedRoles={['seo-leader', 'admin']} />}>
+              <Route element={<RoleGuard allowedRoles={['seo-leader', 'seo-member', 'admin']} />}>
                 <Route element={<SeoLeaderLayout />}>
                   <Route path={ROUTES.SEO_LEADER.DASHBOARD} element={<SeoLeaderDashboardPage />} />
                   <Route path={ROUTES.SEO_LEADER.TASKS}       element={<MyTasksPage />} />
-                  <Route element={<PermissionGuard permission="view-seo-projects" />}>
-                    <Route path={ROUTES.SEO_LEADER.MY_PROJECTS} element={<MyProjectsPage module="seo" />} />
-                    <Route path={ROUTES.SEO_LEADER.ADD_TASK()}  element={<AddSeoTaskPage />} />
-                    <Route path={ROUTES.SEO_LEADER.DETAILS()} element={<CampaignDetailsPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission="create-seo-project" />}>
-                    <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />
-                  </Route>
+                  <Route path={ROUTES.SEO_LEADER.MY_PROJECTS} element={<MyProjectsPage module="seo" />} />
+                  <Route path={ROUTES.SEO_LEADER.ADD_TASK()}  element={<AddSeoTaskPage />} />
+                  <Route path={ROUTES.SEO_LEADER.DETAILS()} element={<CampaignDetailsPage />} />
+                  <Route path={ROUTES.SEO_LEADER.NEW}       element={<NewCampaignPage />} />
                   <Route element={<PermissionGuard permission="view-seo-projects" />}>
                     <Route path={ROUTES.SEO_LEADER.TEAM}      element={<SeoTeamPage />} />
                   </Route>
@@ -366,6 +358,8 @@ export function AppRouter() {
                 <Route element={<SeoMemberLayout />}>
                   <Route path={ROUTES.SEO_MEMBER.DASHBOARD}        element={<SeoMemberDashboardPage />} />
                   <Route path={ROUTES.SEO_MEMBER.MY_PROJECTS}      element={<MyProjectsPage module="seo" />} />
+                  <Route path={ROUTES.SEO_MEMBER.NEW}              element={<NewCampaignPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.ADD_TASK()}       element={<AddSeoTaskPage />} />
                   <Route path={ROUTES.SEO_MEMBER.DETAILS()}        element={<SeoMemberProjectDetailsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.TASKS}            element={<MyTasksPage />} />
                   <Route path={ROUTES.SEO_MEMBER.PROJECT_TASKS()} element={<MyTasksPage />} />

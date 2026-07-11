@@ -41,7 +41,12 @@ export function MyProjectsSection({ projects, isAr }: Props) {
                 className="flex items-center gap-2 min-w-0 flex-1 text-start"
               >
                 <div className="w-2 h-2 rounded-full bg-[#A0CD39] shrink-0" />
-                <p className="text-sm text-gray-800 dark:text-gray-100 truncate">{project.name}</p>
+                <div className="min-w-0">
+                  <p className="text-sm text-gray-800 dark:text-gray-100 truncate">{project.name}</p>
+                  {project.myProjectRole && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{project.myProjectRole}</p>
+                  )}
+                </div>
               </button>
               {project.statusLabel && (
                 <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{project.statusLabel}</span>

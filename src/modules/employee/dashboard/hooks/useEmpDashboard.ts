@@ -8,25 +8,26 @@ import type { EmpTasksOverview, EmpProject } from '../types/dashboard.types';
 export function useEmpDashboard() {
   const { data: tasks = [], isLoading: tasksLoading } = useEmployeeTasks();
 
-  // `/v1/employee/projects` — confirmed reliable source of the employee's
-  // own projects (unlike `/v1/pm/dashboard`, which returns empty sections
-  // for accounts confirmed to have real project assignments).
-  const { data: employeeProjects = [], isLoading: projectsLoading } = useQuery({
+  // GET /v1/employee/projects — membership only (never manager lists)
+  const { data: membership = [], isLoading: projectsLoading } = useQuery({
     queryKey: ['emp-dashboard', 'employee-projects'],
     queryFn:  () => myProjectsApi.listEmployeeProjects(),
     staleTime: 60_000,
   });
 
-  const projects: EmpProject[] = useMemo(() => employeeProjects.map((project) => ({
-    id:              project.id,
+  const projects: EmpProject[] = useMemo(() => membership.map((project) => ({
+    id:              project.uuid || project.id,
     name:            project.name,
     status:          project.status,
     statusLabel:     project.statusLabel,
-    tasksTotal:      project.tasksTotal,
+    tasksTotal:      project.tasksAssigned,
     tasksCompleted:  project.tasksCompleted,
     progressPercent: project.progressPercent,
-    tasksUrl:        project.tasksUrl ?? ROUTES.EMPLOYEE.PROJECT_TASKS(project.id),
-  })), [employeeProjects]);
+    tasksUrl:        project.tasksUrl
+      ?? ROUTES.EMPLOYEE.PROJECT_TASKS(project.uuid),
+    myProjectRole:   project.myProjectRole,
+    module:          project.module,
+  })), [membership]);
 
   const overview: EmpTasksOverview = {
     totalAssigned: tasks.length,

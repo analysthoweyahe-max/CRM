@@ -21,6 +21,18 @@ function basePath(module: CreateProjectModule): string {
   return module === 'pm' ? '/v1/pm' : '/v1/seo';
 }
 
+/** Laravel FormRequests only accept snake_case write keys. */
+function toProjectTypeApiPayload(payload: CreateProjectTypePayload) {
+  return {
+    name: payload.name,
+    ...(payload.nameAr !== undefined ? { name_ar: payload.nameAr } : {}),
+    ...(payload.slug !== undefined ? { slug: payload.slug } : {}),
+    ...(payload.departmentId !== undefined ? { department_id: payload.departmentId } : {}),
+    ...(payload.isActive !== undefined ? { is_active: payload.isActive } : {}),
+    ...(payload.sortOrder !== undefined ? { sort_order: payload.sortOrder } : {}),
+  };
+}
+
 const PM_MANAGER_ROLES  = new Set(['project-manager', 'super-admin']);
 const SEO_MANAGER_ROLES = new Set(['seo-manager', 'super-admin']);
 
@@ -183,11 +195,14 @@ export const createProjectApi = {
   },
 
   createProjectType(module: CreateProjectModule, payload: CreateProjectTypePayload) {
-    return http.post<{ data: ProjectType }>(`${basePath(module)}/project-types`, payload);
+    return http.post<{ data: ProjectType }>(`${basePath(module)}/project-types`, toProjectTypeApiPayload(payload));
   },
 
   updateProjectType(module: CreateProjectModule, id: number, payload: CreateProjectTypePayload) {
-    return http.post<{ data: ProjectType }>(`${basePath(module)}/project-types/${id}`, payload);
+    return http.post<{ data: ProjectType }>(
+      `${basePath(module)}/project-types/${id}`,
+      toProjectTypeApiPayload(payload),
+    );
   },
 
   deleteProjectType(module: CreateProjectModule, id: number) {

@@ -2,6 +2,25 @@ export type ProjectStatus = 'not_started' | 'in_progress' | 'on_hold' | 'complet
 
 export type MyProjectsModule = 'pm' | 'seo';
 
+/** Membership row from GET /v1/employee/projects or /v1/seo/employee/projects */
+export interface EmployeeMembershipProject {
+  /** Prefer uuid for routing; falls back to numeric id when uuid missing. */
+  id:            number | string;
+  uuid:          string;
+  name:          string;
+  status:        ProjectStatus;
+  statusLabel:   string;
+  myProjectRole?: string | null;
+  module:        'seo' | 'pm';
+  projectTypeLabel?: string | null;
+  progressPercent?: number;
+  tasksAssigned?:   number;
+  tasksCompleted?:  number;
+  tasksInProgress?: number;
+  workspaceUrl?:    string | null;
+  tasksUrl?:        string | null;
+}
+
 export interface PmProject {
   id:                     number;
   name:                   string;
@@ -25,6 +44,9 @@ export interface PmProject {
   progressPercent?:       number;
   createdAt:              string;
   updatedAt:              string;
+  uuid?:                  string;
+  myProjectRole?:         string | null;
+  module?:                'seo' | 'pm';
 }
 
 export interface SeoProject {
@@ -47,6 +69,9 @@ export interface SeoProject {
   tasksCompleted?:        number;
   tasksInProgress?:       number;
   progressPercent?:       number;
+  uuid?:                  string;
+  myProjectRole?:         string | null;
+  module?:                'seo' | 'pm';
 }
 
 export interface PaginatedProjectsResponse<T = PmProject | SeoProject> {
@@ -70,6 +95,8 @@ export interface DashboardProjectCard {
   tasksCompleted?:  number;
   tasksInProgress?: number;
   lastUpdatedAt?:   string;
+  myProjectRole?:   string | null;
+  module?:          'seo' | 'pm';
 }
 
 export interface ProjectSection {

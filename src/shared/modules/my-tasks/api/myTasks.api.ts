@@ -1,4 +1,5 @@
 import { http } from '@/shared/services/http.service';
+import { myProjectsApi } from '@/shared/modules/my-projects/api/myProjects.api';
 import type { GroupedTasksData, TasksApiRole } from '../types/myTasks.types';
 import {
   getTasksEndpoint,
@@ -19,7 +20,7 @@ export interface ListMyTasksOptions {
 }
 
 export interface EmployeeProjectSummary {
-  id:   number;
+  id:   number | string;
   name: string;
 }
 
@@ -50,9 +51,21 @@ export const myTasksApi = {
    * tasks per project and merge them client-side.
    */
   async listEmployeeProjects(tasksRole: TasksApiRole): Promise<EmployeeProjectSummary[]> {
-    const endpoint = tasksRole === 'seo-employee' ? '/v1/seo/employee/projects' : '/v1/employee/projects';
-    const { data } = await http.get<EmployeeProjectsEnvelope>(endpoint);
-    return data?.data?.data ?? [];
+    if (tasksRole === 'seo-employee') {
+      // GET /v1/seo/employee/projects
+      const projects = await myProjectsApi.listSeoEmployeeProjects();
+      return projects.map((p) => ({
+        id:   p.uuid || p.id,
+        name: p.name,
+      }));
+    }
+
+    // GET /v1/employee/projects — membership only
+    const projects = await myProjectsApi.listEmployeeProjects();
+    return projects.map((p) => ({
+      id:   p.uuid || p.id,
+      name: p.name,
+    }));
   },
 
   updateStatus(

@@ -12,6 +12,7 @@ import type {
   SeoConversationType,
   SeoMentionable,
   SeoMessage,
+  SendSeoMessagePayload,
 } from '../types/messages.types';
 
 const CONV_KEY = ['seo-member', 'messages', 'conversations'] as const;
@@ -89,7 +90,8 @@ export function useSeoMessages(conversationId: string | null) {
 export function useSendSeoMessage(conversationId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) => seoMessagesApi.sendMessage(conversationId, body),
+    mutationFn: (payload: SendSeoMessagePayload | string) =>
+      seoMessagesApi.sendMessage(conversationId, payload),
     onSuccess: (res) => {
       const msg = res.data.data;
       qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) => {
@@ -104,9 +106,14 @@ export function useSendSeoMessage(conversationId: string) {
           const idx = prev.findIndex(c => c.id === conversationId);
           if (idx === -1) return prev;
           const existing = prev[idx]!;
+          const preview =
+            msg.body
+            ?? msg.attachments?.[0]?.name
+            ?? msg.attachments?.[0]?.fileName
+            ?? existing.lastMessage;
           const updated: SeoConversation = {
             ...existing,
-            lastMessage: msg.body ?? existing.lastMessage,
+            lastMessage: preview,
             lastMessageAt: msg.sentAt ?? msg.created_at ?? new Date().toISOString(),
             unreadCount: 0,
           };
@@ -114,6 +121,27 @@ export function useSendSeoMessage(conversationId: string) {
         },
       );
     },
+    onError: (err) => toast.error(extractApiError(err)),
+  });
+}
+
+export function useReactSeoMessage(conversationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, emoji }: { messageId: number | string; emoji: string }) =>
+      seoMessagesApi.reactToMessage(conversationId, messageId, emoji),
+    onSuccess: (res) => {
+      const updated = res.data.data;
+      qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) => {
+        if (!prev) return prev;
+        return prev.map(m => (String(m.id) === String(updated.id) ? { ...m, ...updated } : m));
+      });
+      // Some backends return only the reaction payload — refresh thread as fallback.
+      if (!updated?.id) {
+        qc.invalidateQueries({ queryKey: msgKey(conversationId) });
+      }
+    },
+    onError: (err) => toast.error(extractApiError(err)),
   });
 }
 

@@ -101,6 +101,7 @@ export function refreshRealtimeMessages(qc: QueryClient, payload: RealtimeMessag
     case 'hr_message':
       qc.invalidateQueries({ queryKey: ['hr', 'messages'] });
       qc.invalidateQueries({ queryKey: ['employee', 'messages'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'messages-monitor'] });
       if (conversationId) {
         qc.invalidateQueries({ queryKey: ['hr', 'messages', 'thread', conversationId] });
         qc.invalidateQueries({ queryKey: ['employee', 'messages', 'messages', conversationId] });
@@ -109,6 +110,7 @@ export function refreshRealtimeMessages(qc: QueryClient, payload: RealtimeMessag
 
     case 'seo_direct_message':
       qc.invalidateQueries({ queryKey: ['seo-member', 'messages'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'messages-monitor'] });
       if (conversationId) {
         qc.invalidateQueries({ queryKey: ['seo-member', 'messages', 'messages', conversationId] });
         qc.invalidateQueries({ queryKey: ['seo-member', 'messages', 'conversation', conversationId] });
@@ -135,6 +137,7 @@ export function refreshRealtimeMessages(qc: QueryClient, payload: RealtimeMessag
     case 'pm_client_update':
       qc.invalidateQueries({ queryKey: ['pm-client-updates'] });
       qc.invalidateQueries({ queryKey: ['pm-phase-messages'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'messages-monitor'] });
       if (projectId) {
         qc.invalidateQueries({ queryKey: ['pm-client-updates', projectId] });
         if (phaseId) {

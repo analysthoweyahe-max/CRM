@@ -59,6 +59,18 @@ function normalizeAdminList(raw: unknown, fallback: ProjectTypeCategory): PmProj
     .filter((t): t is PmProjectTypeItem => t != null);
 }
 
+/** Laravel FormRequests only accept snake_case write keys. */
+function toApiPayload(payload: PmProjectTypePayload) {
+  return {
+    name: payload.name,
+    ...(payload.nameAr !== undefined ? { name_ar: payload.nameAr } : {}),
+    ...(payload.slug !== undefined ? { slug: payload.slug } : {}),
+    ...(payload.departmentId !== undefined ? { department_id: payload.departmentId } : {}),
+    ...(payload.isActive !== undefined ? { is_active: payload.isActive } : {}),
+    ...(payload.sortOrder !== undefined ? { sort_order: payload.sortOrder } : {}),
+  };
+}
+
 export const pmAdminProjectTypesApi = {
   list(params?: { department_id?: number }) {
     return http
@@ -71,10 +83,10 @@ export const pmAdminProjectTypesApi = {
       .then((r) => normalizeAdminProjectType(r.data.data as RawAdminProjectType, 'pm'));
   },
   create(payload: PmProjectTypePayload) {
-    return http.post<PmProjectTypeApiResponse>('/v1/pm/project-types', payload);
+    return http.post<PmProjectTypeApiResponse>('/v1/pm/project-types', toApiPayload(payload));
   },
   update(id: number, payload: PmProjectTypePayload) {
-    return http.post<PmProjectTypeApiResponse>(`/v1/pm/project-types/${id}`, payload);
+    return http.post<PmProjectTypeApiResponse>(`/v1/pm/project-types/${id}`, toApiPayload(payload));
   },
   remove(id: number) {
     return http.delete<{ status: string; message: string }>(`/v1/pm/project-types/${id}`);
@@ -93,10 +105,10 @@ export const seoAdminProjectTypesApi = {
       .then((r) => normalizeAdminProjectType(r.data.data as RawAdminProjectType, 'seo'));
   },
   create(payload: PmProjectTypePayload) {
-    return http.post<PmProjectTypeApiResponse>('/v1/seo/project-types', payload);
+    return http.post<PmProjectTypeApiResponse>('/v1/seo/project-types', toApiPayload(payload));
   },
   update(id: number, payload: PmProjectTypePayload) {
-    return http.post<PmProjectTypeApiResponse>(`/v1/seo/project-types/${id}`, payload);
+    return http.post<PmProjectTypeApiResponse>(`/v1/seo/project-types/${id}`, toApiPayload(payload));
   },
   remove(id: number) {
     return http.delete<{ status: string; message: string }>(`/v1/seo/project-types/${id}`);

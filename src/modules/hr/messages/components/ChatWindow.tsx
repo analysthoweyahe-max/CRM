@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
-import { Send, Paperclip, Smile, Check, CheckCheck, FileText, Menu, Lock } from 'lucide-react';
+import { Send, Paperclip, Smile, Check, CheckCheck, Menu, Lock } from 'lucide-react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { ChatAttachments, MessageBodyText } from '@/shared/components/chat';
 import { useMessages, useSendMessage, useSendMedia, useMarkRead, useUpdateConversationStatus } from '../hooks/useMessages';
 import { conversationMessageId } from '../utils/message.utils';
 import type { ApiConversation, ApiMessage } from '../types/messages.types';
@@ -33,13 +34,6 @@ function isOwnMessage(msg: ApiMessage, currentUserId: string): boolean {
 function fmtTime(raw: string, isAr: boolean) {
   if (!raw) return '';
   return new Date(raw).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-}
-
-function fmtSize(bytes?: number) {
-  if (!bytes) return '';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }: Props) {
@@ -294,34 +288,17 @@ function MessageBubble({ msg, isAr, isOwn }: { msg: ApiMessage; isAr: boolean; i
                          ${isOwn
                            ? 'bg-[#A0CD39] text-gray-900 rounded-ee-sm'
                            : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-sm rounded-es-sm'}`}>
-          {msg.body && <p className="whitespace-pre-wrap wrap-break-word">{msg.body}</p>}
+          {msg.body && (
+            <MessageBodyText
+              text={msg.body}
+              className="whitespace-pre-wrap wrap-break-word"
+              linkClassName={isOwn
+                ? 'underline break-all text-gray-900 hover:opacity-80'
+                : 'underline break-all text-[#709028] dark:text-[#A0CD39] hover:opacity-80'}
+            />
+          )}
 
-          {msg.attachments?.map((att, i) => (
-            att.type?.startsWith('image') ? (
-              <img
-                key={i}
-                src={att.url}
-                alt={att.name ?? ''}
-                onClick={() => window.open(att.url, '_blank')}
-                className="mt-1 max-w-full max-h-60 rounded-lg object-cover cursor-pointer"
-              />
-            ) : (
-              <a
-                key={i}
-                href={att.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`flex items-center gap-2 mt-1 px-3 py-2 rounded-lg text-xs transition-colors
-                            ${isOwn
-                              ? 'bg-black/10 hover:bg-black/15'
-                              : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-              >
-                <FileText size={14} className="shrink-0" />
-                <span className="truncate max-w-40">{att.name}</span>
-                {att.size && <span className="shrink-0 opacity-50 ms-auto">{fmtSize(att.size)}</span>}
-              </a>
-            )
-          ))}
+          <ChatAttachments attachments={msg.attachments ?? []} isOwn={isOwn} />
         </div>
 
         <div className={`flex items-center gap-1 ${isOwn ? 'flex-row-reverse' : ''}`}>

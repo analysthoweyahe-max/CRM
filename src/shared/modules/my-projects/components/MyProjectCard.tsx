@@ -11,6 +11,7 @@ import {
   STATUS_BADGE_FALLBACK,
   calcProgress,
   formatContractMonths,
+  membershipWorkspacePath,
 } from '../utils/myProjects.utils';
 import type { MyProjectsPageConfig } from '../types/myProjects.types';
 import type { DashboardProjectCard, PmProject, SeoProject } from '../types/myProjects.types';
@@ -36,6 +37,8 @@ export function MyProjectCard({ item, config, isAr }: Props) {
   const name         = p.name;
   const statusLabel  = p.statusLabel;
   const isDraft      = 'isDraft' in p ? p.isDraft : false;
+  const myProjectRole = 'myProjectRole' in p ? p.myProjectRole : undefined;
+  const projectModule = 'module' in p ? p.module : undefined;
 
   let typeLabel: string | null = null;
   let dateStart: string | null = null;
@@ -81,10 +84,36 @@ export function MyProjectCard({ item, config, isAr }: Props) {
 
   const contractLabel = formatContractMonths(contractMonths, isAr);
 
-  const goWorkspace = () => navigate(config.workspacePath(p.id));
+  const goWorkspace = () => {
+    if (item.kind === 'dashboard' && projectModule) {
+      navigate(membershipWorkspacePath({
+        uuid: String(p.id),
+        id: p.id,
+        module: projectModule,
+      }));
+      return;
+    }
+    if (item.kind === 'seo' && item.project.uuid) {
+      navigate(config.workspacePath(item.project.uuid));
+      return;
+    }
+    navigate(config.workspacePath(p.id));
+  };
 
   const goTasks = (e: MouseEvent) => {
     e.stopPropagation();
+    if (item.kind === 'dashboard' && projectModule) {
+      navigate(membershipWorkspacePath({
+        uuid: String(p.id),
+        id: p.id,
+        module: projectModule,
+      }));
+      return;
+    }
+    if (item.kind === 'seo' && item.project.uuid) {
+      navigate(config.tasksPath(item.project.uuid));
+      return;
+    }
     const tasksApiUrl = 'tasksApiUrl' in p ? p.tasksApiUrl : undefined;
     const path = config.tasksPath(p.id);
     if (tasksApiUrl) {
@@ -140,6 +169,12 @@ export function MyProjectCard({ item, config, isAr }: Props) {
             <span className="text-xs px-2.5 py-1 rounded-full whitespace-nowrap font-medium
                              bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
               {isAr ? 'مسودة' : 'Draft'}
+            </span>
+          )}
+          {myProjectRole && (
+            <span className="text-xs px-2.5 py-1 rounded-full whitespace-nowrap font-medium
+                             bg-[#D8EBAE]/60 text-[#709028] dark:bg-[#A0CD39]/15 dark:text-[#A0CD39]">
+              {myProjectRole}
             </span>
           )}
           {typeLabel && (

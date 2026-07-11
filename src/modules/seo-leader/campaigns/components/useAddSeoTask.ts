@@ -49,6 +49,9 @@ export function useAddSeoTask(
 
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ['campaign-tasks', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['seo-member-project'] });
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['my-projects'] });
 
       setForm({ ...INITIAL, targetUrl: prefillUrl });
       setFiles([]);

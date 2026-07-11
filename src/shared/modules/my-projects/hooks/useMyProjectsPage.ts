@@ -5,7 +5,7 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { myProjectsApi } from '../api/myProjects.api';
 import {
   PER_PAGE,
-  groupProjectsIntoSections,
+  groupMembershipProjectsIntoSections,
   groupSeoProjectsIntoSections,
   resolveMyProjectsConfig,
 } from '../utils/myProjects.utils';
@@ -79,7 +79,8 @@ export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageRe
     queryKey: ['my-projects', module, role, listParams],
     queryFn: async () => {
       if (module === 'pm') {
-        const res = await myProjectsApi.listPm(listParams, role === 'employee');
+        // Managers only — employees use sections + listEmployeeProjects
+        const res = await myProjectsApi.listPm(listParams, false);
         return res.data.data;
       }
       const res = await myProjectsApi.listSeo(listParams);
@@ -93,10 +94,11 @@ export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageRe
     queryKey: ['my-projects', 'sections', module, role],
     queryFn: async () => {
       if (module === 'pm') {
+        // Membership only — GET /v1/employee/projects (never manager lists)
         const projects = await myProjectsApi.listEmployeeProjects();
-        return groupProjectsIntoSections(projects, isAr);
+        return groupMembershipProjectsIntoSections(projects, isAr);
       }
-      // SEO dashboard sections are unreliable — use employee projects list.
+      // SEO membership only — GET /v1/seo/employee/projects
       const projects = await myProjectsApi.listSeoEmployeeProjects();
       return groupSeoProjectsIntoSections(projects, isAr);
     },

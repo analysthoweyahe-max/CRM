@@ -1,8 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AtSign, FileText, MessageSquare, Paperclip, Send, Users } from 'lucide-react';
+import {
+  AtSign,
+  MessageSquare,
+  Paperclip,
+  Reply,
+  Send,
+  Smile,
+  Users,
+  X,
+} from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { useAuth } from '@/modules/auth/context/AuthContext';
+import { ChatAttachments, MessageBodyText } from '@/shared/components/chat';
 import { setOpenConversation } from '@/shared/realtime-messages';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { CreateSeoGroupModal } from '../components/CreateSeoGroupModal';
@@ -14,6 +24,7 @@ import {
   useSeoConversation,
   useSeoMessages,
   useSendSeoMessage,
+  useReactSeoMessage,
   useMarkSeoRead,
   useSeoMentionables,
   useCreateSeoConversation,
@@ -25,6 +36,8 @@ import type {
   SeoMessage,
 } from '../types/messages.types';
 
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
+
 function fmtTime(msg: SeoMessage, isAr: boolean) {
   const raw = msg.sentAt ?? msg.created_at;
   if (msg.sentTime) return msg.sentTime;
@@ -34,17 +47,15 @@ function fmtTime(msg: SeoMessage, isAr: boolean) {
   });
 }
 
-function fmtSize(bytes?: number) {
-  if (!bytes) return '';
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function conversationTitle(conv: SeoConversation, isAr: boolean) {
   if (conv.type === 'group') {
     return conv.name?.trim() || (isAr ? 'جروب' : 'Group');
   }
   return conv.participant?.name?.trim() || conv.name?.trim() || (isAr ? 'محادثة' : 'Chat');
+}
+
+function replyPreview(msg: SeoMessage) {
+  return msg.replyTo ?? msg.reply_to ?? null;
 }
 
 interface ChatProps {
@@ -64,6 +75,8 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
   const [text, setText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [replyTo, setReplyTo] = useState<SeoMessage | null>(null);
+  const [reactionFor, setReactionFor] = useState<string | null>(null);
 
   const isGroup = conversation.type === 'group';
 
@@ -71,7 +84,8 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
   const liveConversation = detail ?? conversation;
 
   const { data: messages = [], isLoading } = useSeoMessages(conversation.id);
-  const { mutate: sendText, isPending: sending } = useSendSeoMessage(conversation.id);
+  const { mutate: sendMessage, isPending: sending } = useSendSeoMessage(conversation.id);
+  const { mutate: reactToMessage, isPending: reacting } = useReactSeoMessage(conversation.id);
   const { mutate: markRead } = useMarkSeoRead();
   const { data: mentionables = [] } = useSeoMentionables(showMentions);
 
@@ -92,13 +106,30 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
     setShowMembers(false);
     setText('');
     setShowMentions(false);
+    setReplyTo(null);
+    setReactionFor(null);
   }, [conversation.id]);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest('[data-reaction-menu]')) setReactionFor(null);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
 
   function handleSend() {
     const body = text.trim();
-    if (!body || sending) return;
+    if ((!body && !replyTo) || sending) return;
+    if (!body) return;
     setText('');
-    sendText(body);
+    const parentId = replyTo?.id;
+    setReplyTo(null);
+    sendMessage({
+      body,
+      ...(parentId != null ? { reply_to: parentId } : {}),
+    });
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -108,6 +139,24 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
   function insertMention(name: string) {
     setText(prev => (prev.endsWith(' ') || !prev ? prev : `${prev} `) + `@${name} `);
     setShowMentions(false);
+  }
+
+  function handleFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || sending) return;
+    sendMessage({
+      body: text.trim() || undefined,
+      file,
+      ...(replyTo?.id != null ? { reply_to: replyTo.id } : {}),
+    });
+    setText('');
+    setReplyTo(null);
+  }
+
+  function handleReact(messageId: number | string, emoji: string) {
+    setReactionFor(null);
+    reactToMessage({ messageId, emoji });
   }
 
   const convName = conversationTitle(liveConversation, isAr);
@@ -159,36 +208,113 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
         ) : (
           messages.map(msg => {
             const isOwn = msg.isMine ?? (msg.sender.id === currentUserId);
+            const quoted = replyPreview(msg);
+            const msgKey = String(msg.id);
+
             return (
-              <div key={msg.id} className={`flex ${isOwn ? 'justify-start' : 'justify-end'}`}>
-                <div className={[
-                  'max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm',
-                  isOwn
-                    ? 'bg-[#A0CD39] text-gray-900 rounded-ss-sm'
-                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-700/60 rounded-se-sm',
-                ].join(' ')}>
-                  {!isOwn && isGroup && (
-                    <p className="text-[11px] font-semibold text-[#709028] dark:text-[#A0CD39] mb-0.5">
-                      {msg.sender.name}
+              <div key={msg.id} className={`group flex ${isOwn ? 'justify-start' : 'justify-end'}`}>
+                <div className="relative max-w-[70%]">
+                  <div className={[
+                    'rounded-2xl px-4 py-2.5 shadow-sm',
+                    isOwn
+                      ? 'bg-[#A0CD39] text-gray-900 rounded-ss-sm'
+                      : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-700/60 rounded-se-sm',
+                  ].join(' ')}>
+                    {!isOwn && isGroup && (
+                      <p className="text-[11px] font-semibold text-[#709028] dark:text-[#A0CD39] mb-0.5">
+                        {msg.sender.name}
+                      </p>
+                    )}
+
+                    {quoted && (
+                      <div className={`mb-2 px-2.5 py-1.5 rounded-lg border-s-2 text-[11px] leading-snug
+                                      ${isOwn
+                                        ? 'bg-white/25 border-gray-700/40'
+                                        : 'bg-gray-50 dark:bg-gray-700/60 border-[#A0CD39]'}`}>
+                        <p className="font-semibold opacity-80 truncate">
+                          {quoted.sender?.name ?? (isAr ? 'رسالة' : 'Message')}
+                        </p>
+                        <p className="opacity-70 line-clamp-2 whitespace-pre-wrap">
+                          {quoted.body?.trim() || (isAr ? 'مرفق' : 'Attachment')}
+                        </p>
+                      </div>
+                    )}
+
+                    <ChatAttachments attachments={msg.attachments ?? []} isOwn={isOwn} />
+
+                    {msg.body && (
+                      <MessageBodyText
+                        text={msg.body}
+                        linkClassName={isOwn
+                          ? 'underline break-all text-gray-900 hover:opacity-80'
+                          : 'underline break-all text-[#709028] dark:text-[#A0CD39] hover:opacity-80'}
+                      />
+                    )}
+
+                    {(msg.reactions?.length ?? 0) > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {msg.reactions!.map(r => (
+                          <button
+                            key={r.emoji}
+                            type="button"
+                            disabled={reacting}
+                            onClick={() => handleReact(msg.id, r.emoji)}
+                            className={`px-1.5 py-0.5 rounded-full text-[11px] border transition-colors
+                                        ${r.reactedByMe
+                                          ? 'bg-white/50 border-gray-700/30'
+                                          : 'bg-black/5 dark:bg-white/10 border-transparent hover:border-gray-300'}`}
+                          >
+                            {r.emoji}{(r.count ?? 0) > 1 ? ` ${r.count}` : ''}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className={`text-[10px] mt-1 text-end ${isOwn ? 'text-gray-700/70' : 'text-gray-400'}`}>
+                      {fmtTime(msg, isAr)}
                     </p>
-                  )}
+                  </div>
 
-                  {msg.attachments?.map((att, i) => (
-                    <div key={i} className={`flex items-center gap-2 mb-2 p-2 rounded-xl text-xs
-                                            ${isOwn ? 'bg-white/30' : 'bg-gray-50 dark:bg-gray-700'}`}>
-                      <FileText size={14} className="shrink-0" />
-                      <span className="truncate max-w-37.5">{att.name ?? att.fileName ?? 'file'}</span>
-                      {att.size != null && <span className="shrink-0 opacity-60">{fmtSize(att.size)}</span>}
+                  <div className={`absolute -top-2 ${isOwn ? 'end-0' : 'start-0'}
+                                  flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                    <button
+                      type="button"
+                      title={isAr ? 'رد' : 'Reply'}
+                      onClick={() => setReplyTo(msg)}
+                      className="w-7 h-7 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600
+                                 shadow-sm flex items-center justify-center text-gray-500 hover:text-[#709028]"
+                    >
+                      <Reply size={12} />
+                    </button>
+                    <div className="relative" data-reaction-menu>
+                      <button
+                        type="button"
+                        title={isAr ? 'تفاعل' : 'React'}
+                        onClick={() => setReactionFor(prev => (prev === msgKey ? null : msgKey))}
+                        className="w-7 h-7 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600
+                                   shadow-sm flex items-center justify-center text-gray-500 hover:text-[#709028]"
+                      >
+                        <Smile size={12} />
+                      </button>
+                      {reactionFor === msgKey && (
+                        <div className={`absolute bottom-full mb-1 ${isOwn ? 'end-0' : 'start-0'}
+                                        flex gap-0.5 px-1.5 py-1 rounded-full bg-white dark:bg-gray-800
+                                        border border-gray-200 dark:border-gray-600 shadow-lg z-10`}>
+                          {QUICK_REACTIONS.map(emoji => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              disabled={reacting}
+                              onClick={() => handleReact(msg.id, emoji)}
+                              className="w-7 h-7 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-
-                  {msg.body && (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">{msg.body}</p>
-                  )}
-
-                  <p className={`text-[10px] mt-1 text-end ${isOwn ? 'text-gray-700/70' : 'text-gray-400'}`}>
-                    {fmtTime(msg, isAr)}
-                  </p>
+                  </div>
                 </div>
               </div>
             );
@@ -199,6 +325,31 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
 
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700/60
                       bg-white dark:bg-gray-900 relative">
+        {replyTo && (
+          <div className="mb-2 flex items-start gap-2 px-3 py-2 rounded-xl
+                          bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+            <Reply size={14} className="shrink-0 mt-0.5 text-[#709028]" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-[#709028] truncate">
+                {isAr ? 'الرد على' : 'Replying to'} {replyTo.sender.name}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                {replyTo.body?.trim()
+                  || replyTo.attachments?.[0]?.name
+                  || replyTo.attachments?.[0]?.fileName
+                  || (isAr ? 'مرفق' : 'Attachment')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         <div className="flex items-end gap-2">
           <button
             type="button"
@@ -264,12 +415,21 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
 
           <button
             type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={sending}
             className="w-8 h-8 rounded-full flex items-center justify-center
-                       text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 transition-colors"
+                       text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 transition-colors
+                       disabled:opacity-50"
           >
             <Paperclip size={16} />
           </button>
-          <input ref={fileRef} type="file" className="hidden" />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+            className="hidden"
+            onChange={handleFile}
+          />
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import type {
   CreateSeoGroupPayload,
   ManageSeoGroupMembersPayload,
   SeoConversationListParams,
+  SendSeoMessagePayload,
 } from '../types/messages.types';
 
 /**
@@ -66,10 +67,35 @@ export const seoMessagesApi = {
     );
   },
 
-  sendMessage(conversationId: string, body: string) {
+  sendMessage(conversationId: string, payload: SendSeoMessagePayload | string) {
+    const data = typeof payload === 'string' ? { body: payload } : payload;
+
+    if (data.file) {
+      const fd = new FormData();
+      if (data.body?.trim()) fd.append('body', data.body.trim());
+      if (data.reply_to != null) fd.append('reply_to', String(data.reply_to));
+      fd.append('file', data.file);
+      return http.post<SeoMessageSendResponse>(
+        `${messengerBase()}/conversations/${conversationId}/messages`,
+        fd,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+    }
+
     return http.post<SeoMessageSendResponse>(
       `${messengerBase()}/conversations/${conversationId}/messages`,
-      { body },
+      {
+        body: data.body?.trim() ?? '',
+        ...(data.reply_to != null ? { reply_to: data.reply_to } : {}),
+      },
+    );
+  },
+
+  /** Toggle / add an emoji reaction on a message. */
+  reactToMessage(conversationId: string, messageId: number | string, emoji: string) {
+    return http.post<SeoMessageSendResponse>(
+      `${messengerBase()}/conversations/${conversationId}/messages/${messageId}/reactions`,
+      { emoji },
     );
   },
 

@@ -19,7 +19,6 @@ import { SeoStatusColumn } from '@/modules/seo-leader/campaigns/components/SeoSt
 import { ProjectMessages } from '@/modules/seo-leader/campaigns/components/ProjectMessages';
 import { SeoProgressTab } from '@/modules/seo-leader/campaigns/components/SeoProgressTab';
 import { SeoProjectTeamTab } from '@/modules/seo-leader/projects/components/SeoProjectTeamTab';
-import { AddSelfSeoTaskModal } from '@/modules/seo-member/tasks/components/AddSelfSeoTaskModal';
 import { myTasksApi } from '@/shared/modules/my-tasks/api/myTasks.api';
 import type { Task, TaskStatus } from '@/modules/project-manager/tasks/types/task.types';
 
@@ -106,7 +105,6 @@ export function SeoMemberProjectDetailsPage() {
       : 'tasks';
 
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
-  const [showAddTask, setShowAddTask] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
 
   const { data: campaign, isLoading: campaignLoading } = useQuery({
@@ -314,7 +312,7 @@ export function SeoMemberProjectDetailsPage() {
           <Button
             variant="primary"
             startIcon={<Plus size={16} />}
-            onClick={() => setShowAddTask(true)}
+            onClick={() => navigate(ROUTES.SEO_MEMBER.ADD_TASK(id))}
           >
             {isAr ? 'مهمة جديدة' : 'New Task'}
           </Button>
@@ -429,17 +427,6 @@ export function SeoMemberProjectDetailsPage() {
       {activeTab === 'progress' && (
         <SeoProgressTab projectId={projectKey} tasks={tasks} isAr={isAr} />
       )}
-
-      <AddSelfSeoTaskModal
-        open={showAddTask}
-        onClose={() => {
-          setShowAddTask(false);
-          qc.invalidateQueries({ queryKey: ['seo-member-project-tasks', projectKey] });
-        }}
-        isAr={isAr}
-        initialProjectId={projectKey}
-        lockProject
-      />
     </div>
   );
 }

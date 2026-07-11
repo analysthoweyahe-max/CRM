@@ -1,37 +1,58 @@
 export interface ApiMonitoredMessageSender {
   id?:            string | null;
   name?:          string | null;
+  type?:          string | null;
   avatarInitial?: string | null;
 }
 
 export interface ApiMonitoredMessage {
   id:          string | number;
-  projectId?:   string | number | null;
-  projectName?: string | null;
-  project?:     { id?: string | number; name?: string | null } | null;
+  conversationId?: string | null;
+  conversationName?: string | null;
   source?:      string | null;
   sender?:      ApiMonitoredMessageSender | null;
   body?:        string | null;
   createdAt:   string;
-  sentAt?:      string;
-  created_at?:  string;
 }
 
-export interface MonitoredMessageListResponse {
+export interface MonitoredParty {
+  id?:   string | null;
+  name:  string;
+  type?: 'admin' | 'employee' | string | null;
+}
+
+export interface MonitoredConversation {
+  id:           string;
+  type:         'direct' | 'group' | string;
+  name:         string;
+  /** Participants from API — always shown (including when isObserver). */
+  parties:      MonitoredParty[];
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
+  /** Super-admin may be observer on chats they are not a member of. */
+  isObserver:   boolean;
+  unreadCount:  number;
+  source:       'messenger';
+}
+
+export interface MessengerConversationListResponse {
   status:  string;
-  message: string;
+  message?: string;
   data: {
-    data:         ApiMonitoredMessage[];
-    current_page: number;
-    last_page:    number;
-    total:        number;
+    data:         unknown[];
+    current_page?: number;
+    last_page?:    number;
+    total?:        number;
   };
 }
 
-export interface MessagesMonitorFilters {
-  project_id?: string | number;
-  source?:     string;
-  search?:     string;
-  per_page?:   number;
-  page?:       number;
+export interface MessengerMessageListResponse {
+  status:  string;
+  message?: string;
+  data: {
+    data:         unknown[];
+    current_page?: number;
+    last_page?:    number;
+    total?:        number;
+  };
 }

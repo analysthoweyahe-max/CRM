@@ -2,6 +2,7 @@ import { ROUTES } from '@/app/router/routes';
 import type { Role } from '@/shared/types/role.types';
 import type {
   DashboardProjectCard,
+  EmployeeMembershipProject,
   MyProjectsModule,
   MyProjectsPageConfig,
   PmProject,
@@ -22,12 +23,13 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
       canSearch:       false,
       canFilterStatus: false,
       canToggleDraft:  false,
-      canCreate:       false,
+      canCreate:       true,
       showManager:     false,
       showTasksButton: true,
-      createPath:      ROUTES.SEO_LEADER.NEW,
-      workspacePath:   (id) => ROUTES.SEO_MEMBER.DETAILS(id),
-      tasksPath:       (id) => ROUTES.SEO_MEMBER.DETAILS(id),
+      createPath:      ROUTES.SEO_MEMBER.NEW,
+      // uuid from membership API
+      workspacePath:   (id) => ROUTES.SEO_MEMBER.DETAILS(String(id)),
+      tasksPath:       (id) => ROUTES.SEO_MEMBER.DETAILS(String(id)),
     };
   }
 
@@ -38,10 +40,11 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
       canSearch:       false,
       canFilterStatus: false,
       canToggleDraft:  false,
-      canCreate:       false,
+      canCreate:       true,
       showManager:     false,
       showTasksButton: true,
       createPath:      ROUTES.PROJECT_MANAGER.NEW,
+      // Membership may be seo or pm — card navigates via module-aware path below when kind=dashboard
       workspacePath:   (id) => ROUTES.EMPLOYEE.PROJECT_TASKS(id),
       tasksPath:       (id) => ROUTES.EMPLOYEE.PROJECT_TASKS(id),
     };
@@ -63,7 +66,6 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
     };
   }
 
-  // PM manager / super-admin on PM module
   return {
     module,
     viewMode:        'paginated',
@@ -77,6 +79,12 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
     workspacePath:   (id) => ROUTES.PROJECT_MANAGER.DETAILS(String(id)),
     tasksPath:       (_id) => ROUTES.EMPLOYEE.TASKS,
   };
+}
+
+/** Open membership project by uuid (employee-accessible tasks path). */
+export function membershipWorkspacePath(project: Pick<EmployeeMembershipProject, 'uuid' | 'module' | 'id'>): string {
+  const id = project.uuid || String(project.id);
+  return ROUTES.EMPLOYEE.PROJECT_TASKS(id);
 }
 
 export function formatContractMonths(months: number | null | undefined, isAr: boolean): string | null {
@@ -114,13 +122,67 @@ const SECTION_LABEL_FALLBACK: Record<ProjectStatus, { ar: string; en: string }> 
   not_started: { ar: 'لم يبدأ',      en: 'Not Started' },
 };
 
-/** Group a flat project list (e.g. from `/v1/employee/projects`) into the
- * same fixed status sections `/v1/pm/dashboard` used to provide — that
- * endpoint's aggregation is unreliable, so this rebuilds the same shape
- * client-side from a source confirmed to actually list the employee's projects. */
+function toDashboardCard(p: EmployeeMembershipProject): DashboardProjectCard {
+  return {
+    id:              p.uuid || p.id,
+    name:            p.name,
+    clientName:      p.projectTypeLabel || (p.module === 'seo' ? 'SEO' : 'PM') || undefined,
+    status:          p.status,
+    statusLabel:     p.statusLabel,
+    workspaceUrl:    p.workspaceUrl ?? '',
+    tasksUrl:        p.tasksUrl ?? undefined,
+    progressPercent: p.progressPercent,
+    tasksAssigned:   p.tasksAssigned,
+    tasksCompleted:  p.tasksCompleted,
+    tasksInProgress: p.tasksInProgress,
+    myProjectRole:   p.myProjectRole,
+    module:          p.module,
+  };
+}
+
+/** Group membership projects from GET /v1/employee/projects. */
+export function groupMembershipProjectsIntoSections(
+  projects: EmployeeMembershipProject[],
+  isAr: boolean,
+): ProjectSection[] {
+  const known = projects.filter(p => SECTION_ORDER.includes(p.status));
+  const unknown = projects.filter(p => !SECTION_ORDER.includes(p.status));
+
+  const sections = SECTION_ORDER.map((key) => {
+    const inSection = known.filter(p => p.status === key);
+    const label = inSection[0]?.statusLabel || SECTION_LABEL_FALLBACK[key][isAr ? 'ar' : 'en'];
+
+    return {
+      key,
+      label,
+      defaultExpanded: key === 'in_progress',
+      total: inSection.length,
+      projects: inSection.map(toDashboardCard),
+    };
+  });
+
+  if (unknown.length > 0) {
+    const fallback = sections.find(s => s.key === 'in_progress') ?? sections[0];
+    if (fallback) {
+      fallback.projects.push(...unknown.map((p) => ({
+        ...toDashboardCard(p),
+        status: 'in_progress' as const,
+        statusLabel: p.statusLabel || SECTION_LABEL_FALLBACK.in_progress[isAr ? 'ar' : 'en'],
+      })));
+      fallback.total = fallback.projects.length;
+    }
+  }
+
+  return sections.filter(s => s.total > 0);
+}
+
+/** @deprecated Prefer groupMembershipProjectsIntoSections for employee views. */
 export function groupProjectsIntoSections(projects: PmProject[], isAr: boolean): ProjectSection[] {
-  return SECTION_ORDER.map((key) => {
-    const inSection = projects.filter(p => p.status === key);
+  const known = projects.filter(p => SECTION_ORDER.includes(p.status));
+  const unknown = projects.filter(p => !SECTION_ORDER.includes(p.status));
+
+  const sections = SECTION_ORDER.map((key) => {
+    const inSection = known.filter(p => p.status === key);
     const label = inSection[0]?.statusLabel || SECTION_LABEL_FALLBACK[key][isAr ? 'ar' : 'en'];
 
     return {
@@ -129,7 +191,7 @@ export function groupProjectsIntoSections(projects: PmProject[], isAr: boolean):
       defaultExpanded: key === 'in_progress',
       total: inSection.length,
       projects: inSection.map((p): DashboardProjectCard => ({
-        id:              p.id,
+        id:              p.uuid || p.id,
         name:            p.name,
         clientName:      p.projectTypeLabel,
         status:          p.status,
@@ -139,12 +201,36 @@ export function groupProjectsIntoSections(projects: PmProject[], isAr: boolean):
         progressPercent: p.progressPercent,
         tasksAssigned:   p.tasksTotal,
         tasksCompleted:  p.tasksCompleted,
+        myProjectRole:   p.myProjectRole,
+        module:          p.module,
       })),
     };
   });
+
+  if (unknown.length > 0) {
+    const fallback = sections.find(s => s.key === 'in_progress') ?? sections[0];
+    if (fallback) {
+      fallback.projects.push(...unknown.map((p): DashboardProjectCard => ({
+        id:              p.uuid || p.id,
+        name:            p.name,
+        clientName:      p.projectTypeLabel,
+        status:          'in_progress',
+        statusLabel:     p.statusLabel || SECTION_LABEL_FALLBACK.in_progress[isAr ? 'ar' : 'en'],
+        workspaceUrl:    p.workspaceUrl ?? '',
+        tasksUrl:        p.tasksUrl ?? undefined,
+        progressPercent: p.progressPercent,
+        tasksAssigned:   p.tasksTotal,
+        tasksCompleted:  p.tasksCompleted,
+        myProjectRole:   p.myProjectRole,
+        module:          p.module,
+      })));
+      fallback.total = fallback.projects.length;
+    }
+  }
+
+  return sections.filter(s => s.total > 0);
 }
 
-/** Same section grouping for SEO employee projects from `/v1/seo/employee/projects`. */
 export function groupSeoProjectsIntoSections(projects: SeoProject[], isAr: boolean): ProjectSection[] {
   const known = projects.filter(p => SECTION_ORDER.includes(p.status));
   const unknown = projects.filter(p => !SECTION_ORDER.includes(p.status));
@@ -159,7 +245,7 @@ export function groupSeoProjectsIntoSections(projects: SeoProject[], isAr: boole
       defaultExpanded: key === 'in_progress',
       total: inSection.length,
       projects: inSection.map((p): DashboardProjectCard => ({
-        id:              p.id,
+        id:              p.uuid || p.id,
         name:            p.name,
         clientName:      p.campaignTypeLabel || undefined,
         status:          p.status,
@@ -170,16 +256,17 @@ export function groupSeoProjectsIntoSections(projects: SeoProject[], isAr: boole
         tasksAssigned:   p.tasksAssigned,
         tasksCompleted:  p.tasksCompleted,
         tasksInProgress: p.tasksInProgress,
+        myProjectRole:   p.myProjectRole,
+        module:          p.module ?? 'seo',
       })),
     };
   });
 
-  // Projects with missing/unknown status still need to appear for the member.
   if (unknown.length > 0) {
     const fallback = sections.find(s => s.key === 'in_progress') ?? sections[0];
     if (fallback) {
       fallback.projects.push(...unknown.map((p): DashboardProjectCard => ({
-        id:              p.id,
+        id:              p.uuid || p.id,
         name:            p.name,
         clientName:      p.campaignTypeLabel || undefined,
         status:          'in_progress',
@@ -190,6 +277,8 @@ export function groupSeoProjectsIntoSections(projects: SeoProject[], isAr: boole
         tasksAssigned:   p.tasksAssigned,
         tasksCompleted:  p.tasksCompleted,
         tasksInProgress: p.tasksInProgress,
+        myProjectRole:   p.myProjectRole,
+        module:          p.module ?? 'seo',
       })));
       fallback.total = fallback.projects.length;
     }

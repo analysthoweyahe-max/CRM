@@ -53,8 +53,22 @@ export interface SeoMessageAttachment {
   fileName?:  string;
   name?:      string;
   mimeType?:  string;
+  type?:      string;
   size?:      number;
   url?:       string;
+}
+
+export interface SeoMessageReaction {
+  emoji:  string;
+  count?: number;
+  reactedByMe?: boolean;
+  users?: Array<{ id?: string; name?: string }>;
+}
+
+export interface SeoMessageReplyPreview {
+  id:     number | string;
+  body?:  string | null;
+  sender?: { id?: string; name?: string };
 }
 
 export interface SeoMessage {
@@ -67,6 +81,16 @@ export interface SeoMessage {
   sentAt?:     string;
   sentTime?:   string;
   created_at?: string;
+  /** Quoted parent when this message is a reply */
+  replyTo?:    SeoMessageReplyPreview | null;
+  reply_to?:   SeoMessageReplyPreview | null;
+  reactions?:  SeoMessageReaction[];
+}
+
+export interface SendSeoMessagePayload {
+  body?:     string;
+  reply_to?: number | string;
+  file?:     File;
 }
 
 export interface SeoMessageListResponse {

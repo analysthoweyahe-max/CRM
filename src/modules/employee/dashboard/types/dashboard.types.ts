@@ -5,7 +5,7 @@ export interface EmpTasksOverview {
 }
 
 export interface EmpProject {
-  id:               number;
+  id:               number | string;
   name:             string;
   status:           string;
   statusLabel?:     string;
@@ -13,6 +13,8 @@ export interface EmpProject {
   tasksCompleted?:  number;
   progressPercent?: number;
   tasksUrl?:        string;
+  myProjectRole?:   string | null;
+  module?:          'seo' | 'pm';
 }
 
 export interface EmpProjectListResponse {

@@ -42,7 +42,7 @@ export function resolveMyTasksConfig(tasksRole: TasksApiRole): MyTasksPageConfig
         canDragStatus:   true,
         showProjectName: true,
         taskDetailPath:  ROUTES.EMPLOYEE.TASK_DETAIL,
-        projectPath:     (_projectId) => ROUTES.EMPLOYEE.MY_PROJECTS,
+        projectPath:     (projectId) => ROUTES.PROJECT_MANAGER.DETAILS(String(projectId)),
       };
     case 'seo-employee':
       return {

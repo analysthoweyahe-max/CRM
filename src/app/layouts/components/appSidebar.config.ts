@@ -352,9 +352,9 @@ export const PM_NAV: NavSectionDef[] = [
     sectionEn: 'Projects',
     items: [
       { key: 'pm-dash',    labelAr: 'الرئيسية',                 labelEn: 'Dashboard',         icon: LayoutDashboard, path: ROUTES.PROJECT_MANAGER.DASHBOARD },
-      { key: 'pm-projects', labelAr: 'مشاريعي',                 labelEn: 'My Projects',       icon: FolderKanban,    path: ROUTES.PROJECT_MANAGER.MY_PROJECTS, permission: 'view-pm-projects' },
+      { key: 'pm-projects', labelAr: 'مشاريعي',                 labelEn: 'My Projects',       icon: FolderKanban,    path: ROUTES.PROJECT_MANAGER.MY_PROJECTS },
       { key: 'pm-tasks',   labelAr: 'مهامي',                   labelEn: 'My Tasks',          icon: CheckSquare,     path: ROUTES.PROJECT_MANAGER.TASKS },
-      { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',        labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW,      permission: 'create-pm-project' },
+      { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',        labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW },
       { key: 'pm-team',    labelAr: 'فريق العمل',               labelEn: 'Team',               icon: Users,           path: ROUTES.PROJECT_MANAGER.TEAM,     permissions: ['view-pm-team', 'view-pm-projects'] },
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات',labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS,  permissions: ['view-pm-reports', 'view-pm-projects'] },
       { key: 'pm-templates', labelAr: 'قوالب المشاريع', labelEn: 'Project Templates', icon: ListChecks, path: ROUTES.PROJECT_MANAGER.TEMPLATES, permission: 'edit-pm-project' },
@@ -388,6 +388,8 @@ export const EMPLOYEE_NAV: NavSectionDef[] = [
       { key: 'emp-home',    labelAr: 'الرئيسية',          labelEn: 'Dashboard',      icon: LayoutDashboard, path: ROUTES.EMPLOYEE.DASHBOARD     },
 
       { key: 'emp-projects', labelAr: 'مشاريعي',          labelEn: 'My Projects',    icon: FolderKanban,    path: ROUTES.EMPLOYEE.MY_PROJECTS   },
+
+      { key: 'emp-new',     labelAr: 'إنشاء مشروع جديد', labelEn: 'New Project',    icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW   },
 
       { key: 'emp-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.EMPLOYEE.TASKS         },
 
@@ -428,9 +430,9 @@ export const SEO_NAV: NavSectionDef[] = [
     sectionEn: 'SEO',
     items: [
       { key: 'seo-dash',    labelAr: 'الرئيسية',                  labelEn: 'Dashboard',         icon: LayoutDashboard, path: ROUTES.SEO_LEADER.DASHBOARD },
-      { key: 'seo-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',       icon: FolderKanban,    path: ROUTES.SEO_LEADER.MY_PROJECTS, permission: 'view-seo-projects' },
+      { key: 'seo-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',       icon: FolderKanban,    path: ROUTES.SEO_LEADER.MY_PROJECTS },
       { key: 'seo-tasks',   labelAr: 'مهامي',                    labelEn: 'My Tasks',          icon: CheckSquare,     path: ROUTES.SEO_LEADER.TASKS },
-      { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW,      permission: 'create-seo-project' },
+      { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW },
       { key: 'seo-team',    labelAr: 'فريق العمل',                labelEn: 'Team',               icon: Users,           path: ROUTES.SEO_LEADER.TEAM,     permission: 'view-seo-projects' },
       { key: 'seo-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.SEO_LEADER.REPORTS,  permission: 'view-seo-projects' },
       { key: 'seo-templates', labelAr: 'قوالب مشاريع SEO', labelEn: 'SEO Project Templates', icon: ListChecks, path: ROUTES.SEO_LEADER.TEMPLATES, permission: 'edit-seo-project' },
@@ -464,6 +466,8 @@ export const SEO_MEMBER_NAV: NavSectionDef[] = [
       { key: 'seo-m-dash',     labelAr: 'الرئيسية',          labelEn: 'Dashboard',      icon: LayoutDashboard, path: ROUTES.SEO_MEMBER.DASHBOARD     },
 
       { key: 'seo-m-projects', labelAr: 'مشاريعي',          labelEn: 'My Projects',    icon: FolderKanban,    path: ROUTES.SEO_MEMBER.MY_PROJECTS   },
+
+      { key: 'seo-m-new',     labelAr: 'إنشاء مشروع جديد', labelEn: 'New Project',    icon: FilePlus2,       path: ROUTES.SEO_MEMBER.NEW          },
 
       { key: 'seo-m-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.SEO_MEMBER.TASKS         },
 

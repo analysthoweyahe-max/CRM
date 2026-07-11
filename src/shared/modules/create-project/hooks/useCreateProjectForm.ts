@@ -88,6 +88,16 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     staleTime: 30_000,
   });
 
+  // SEO/PM employees: pre-select themselves so the project appears under "My Projects".
+  useEffect(() => {
+    if (user?.role !== 'seo-member' && user?.role !== 'employee') return;
+    if (employeeIds.length > 0) return;
+    const selfId = user.employeeId || user.id;
+    if (!selfId) return;
+    const inList = (employeesQ.data ?? []).some((e) => String(e.id) === String(selfId));
+    if (inList) setEmployeeIds([String(selfId)]);
+  }, [user?.role, user?.employeeId, user?.id, employeesQ.data, employeeIds.length]);
+
   const managersQ = useQuery({
     queryKey: ['create-project', module, 'managers', typeNum ?? 'all'],
     queryFn:  () => createProjectApi.managersForCreate(module, typeNum),
@@ -211,6 +221,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     onSuccess: (res, asDraft) => {
       const newId = res.data?.data?.id;
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-member-dashboard'] });
       queryClient.invalidateQueries({ queryKey: module === 'pm' ? ['pm-dashboard'] : ['seo-leader', 'projects'] });
       setSavedAsDraft(asDraft);
       setSaved(true);
@@ -222,7 +233,9 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
       }
       const path = module === 'pm'
         ? ROUTES.PROJECT_MANAGER.DETAILS(String(newId))
-        : ROUTES.SEO_LEADER.DETAILS(String(newId));
+        : (user?.role === 'seo-member'
+          ? ROUTES.SEO_MEMBER.DETAILS(String(newId))
+          : ROUTES.SEO_LEADER.DETAILS(String(newId)));
       setTimeout(() => navigate(path), 1200);
     },
     onError: (err) => {
@@ -285,8 +298,8 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
   }
 
   const cancelPath = module === 'pm'
-    ? ROUTES.PROJECT_MANAGER.DASHBOARD
-    : ROUTES.SEO_LEADER.DASHBOARD;
+    ? (user?.role === 'employee' ? ROUTES.EMPLOYEE.MY_PROJECTS : ROUTES.PROJECT_MANAGER.DASHBOARD)
+    : (user?.role === 'seo-member' ? ROUTES.SEO_MEMBER.MY_PROJECTS : ROUTES.SEO_LEADER.DASHBOARD);
 
   const isValid = !!name.trim() && !!projectTypeId && (!isAdmin || managerIds.length > 0);
 

@@ -3,9 +3,11 @@ import type { ApiResponse } from '@/shared/types/api.types';
 import type { Role } from '@/shared/types/role.types';
 import { campaignApi } from '@/modules/seo-leader/campaigns/api/campaign.api';
 import type {
+  EmployeeMembershipProject,
   MyProjectsModule,
   PaginatedProjectsResponse,
   PmProject,
+  ProjectStatus,
   SeoProject,
   SeoMemberDashboardPayload,
   StatusLookupItem,
@@ -74,10 +76,10 @@ function unwrapPaginatedPayload<T>(body: unknown): PaginatedProjectsResponse<T> 
 
 export function getMyProjectsEndpoint(role: Role, module: MyProjectsModule): string {
   if (module === 'pm') {
-    if (role === 'employee') return '/v1/pm/my-projects';
+    if (role === 'employee') return '/v1/employee/projects';
     return '/v1/pm/projects';
   }
-  if (role === 'seo-member') return '/v1/seo/dashboard';
+  if (role === 'seo-member') return '/v1/seo/employee/projects';
   return '/v1/seo/projects';
 }
 
@@ -88,69 +90,126 @@ function unwrapLookupItems(body: unknown): StatusLookupItem[] {
   return [];
 }
 
-const SEO_STATUS_KEYS = new Set(['not_started', 'in_progress', 'on_hold', 'completed']);
+const STATUS_KEYS = new Set(['not_started', 'in_progress', 'on_hold', 'completed']);
 
-/** Normalize sparse employee-project rows into SeoProject for the My Projects UI. */
-function normalizeSeoEmployeeProject(raw: unknown): SeoProject {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+/**
+ * Membership project from:
+ * - GET /v1/employee/projects  (module: seo | pm)
+ * - GET /v1/seo/employee/projects (SEO only)
+ *
+ * Uses uuid for opening details. Never from manager project lists.
+ */
+export function normalizeMembershipProject(raw: unknown): EmployeeMembershipProject | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+
+  const uuid = typeof r.uuid === 'string' && r.uuid.trim()
+    ? r.uuid.trim()
+    : (r.id != null ? String(r.id) : '');
+  if (!uuid) return null;
+
   const statusRaw = String(r.status ?? 'in_progress');
-  const status = (SEO_STATUS_KEYS.has(statusRaw) ? statusRaw : 'in_progress') as SeoProject['status'];
+  const status = (STATUS_KEYS.has(statusRaw) ? statusRaw : 'in_progress') as ProjectStatus;
+  const moduleRaw = String(r.module ?? '').toLowerCase();
+  const module: 'seo' | 'pm' = moduleRaw === 'pm' ? 'pm' : 'seo';
 
   return {
-    id:                     (typeof r.uuid === 'string' && r.uuid.trim()
-      ? r.uuid.trim()
-      : (r.id as number | string)),
-    name:                   String(r.name ?? ''),
-    targetDomain:           (r.targetDomain ?? r.target_domain ?? null) as string | null,
-    campaignType:           String(r.campaignType ?? r.campaign_type ?? r.projectType ?? ''),
-    campaignTypeLabel:      String(r.campaignTypeLabel ?? r.campaign_type_label ?? r.projectTypeLabel ?? ''),
+    id:              uuid,
+    uuid,
+    name:            String(r.name ?? ''),
     status,
-    statusLabel:            String(r.statusLabel ?? r.status_label ?? status),
-    isDraft:                Boolean(r.isDraft ?? r.is_draft ?? false),
-    startDate:              (r.startDate ?? r.start_date ?? null) as string | null,
-    expectedEndDate:        (r.expectedEndDate ?? r.expected_end_date ?? null) as string | null,
-    contractDurationMonths: (r.contractDurationMonths ?? r.contract_duration_months ?? null) as number | null,
-    githubLink:             (r.githubLink ?? r.github_link ?? null) as string | null,
-    driveLink:              (r.driveLink ?? r.drive_link ?? null) as string | null,
-    workspaceUrl:           (r.workspaceUrl ?? r.workspace_url ?? null) as string | null,
-    tasksUrl:               (r.tasksUrl ?? r.tasks_url ?? null) as string | null,
-    tasksAssigned:          r.tasksAssigned != null ? Number(r.tasksAssigned)
+    statusLabel:     String(r.statusLabel ?? r.status_label ?? status),
+    myProjectRole:   (r.myProjectRole ?? r.my_project_role ?? null) as string | null,
+    module,
+    projectTypeLabel: (r.projectTypeLabel ?? r.project_type_label
+      ?? r.campaignTypeLabel ?? r.campaign_type_label ?? null) as string | null,
+    progressPercent: r.progressPercent != null ? Number(r.progressPercent)
+      : r.progress_percent != null ? Number(r.progress_percent)
+      : undefined,
+    tasksAssigned:   r.tasksAssigned != null ? Number(r.tasksAssigned)
       : r.tasks_assigned != null ? Number(r.tasks_assigned)
       : r.tasksTotal != null ? Number(r.tasksTotal)
       : r.tasks_total != null ? Number(r.tasks_total)
       : undefined,
-    tasksCompleted:         r.tasksCompleted != null ? Number(r.tasksCompleted)
+    tasksCompleted:  r.tasksCompleted != null ? Number(r.tasksCompleted)
       : r.tasks_completed != null ? Number(r.tasks_completed)
       : undefined,
-    tasksInProgress:        r.tasksInProgress != null ? Number(r.tasksInProgress)
+    tasksInProgress: r.tasksInProgress != null ? Number(r.tasksInProgress)
       : r.tasks_in_progress != null ? Number(r.tasks_in_progress)
       : undefined,
-    progressPercent:        r.progressPercent != null ? Number(r.progressPercent)
-      : r.progress_percent != null ? Number(r.progress_percent)
-      : undefined,
+    workspaceUrl:    (r.workspaceUrl ?? r.workspace_url ?? null) as string | null,
+    tasksUrl:        (r.tasksUrl ?? r.tasks_url ?? null) as string | null,
+  };
+}
+
+function toSeoProject(m: EmployeeMembershipProject): SeoProject {
+  return {
+    id:                     m.uuid || m.id,
+    uuid:                   m.uuid,
+    name:                   m.name,
+    targetDomain:           null,
+    campaignType:           '',
+    campaignTypeLabel:      m.projectTypeLabel ?? '',
+    status:                 m.status,
+    statusLabel:            m.statusLabel,
+    isDraft:                false,
+    startDate:              null,
+    expectedEndDate:        null,
+    contractDurationMonths: null,
+    githubLink:             null,
+    driveLink:              null,
+    workspaceUrl:           m.workspaceUrl,
+    tasksUrl:               m.tasksUrl,
+    tasksAssigned:          m.tasksAssigned,
+    tasksCompleted:         m.tasksCompleted,
+    tasksInProgress:        m.tasksInProgress,
+    progressPercent:        m.progressPercent,
+    myProjectRole:          m.myProjectRole,
+    module:                 m.module,
   };
 }
 
 export const myProjectsApi = {
-  async listPm(params: MyProjectsListParams, asEmployee: boolean) {
-    const path = asEmployee ? '/v1/pm/my-projects' : '/v1/pm/projects';
+  /** Manager / admin PM project list — NOT for employee membership. */
+  async listPm(params: MyProjectsListParams, _asEmployee = false) {
     const res = await http.get<{ status: string; message: string; data: PaginatedProjectsResponse<PmProject> }>(
-      path,
+      '/v1/pm/projects',
       { params: buildListQueryParams(params) },
     );
-    return { ...res, data: { ...res.data, data: unwrapPaginatedPayload<PmProject>(res.data) } };
+    const page = unwrapPaginatedPayload<PmProject>(res.data);
+    return { ...res, data: { ...res.data, data: page } };
   },
 
-  /** PM employee's own project list — confirmed reliable source of which
-   * projects the employee belongs to (unlike `/v1/pm/dashboard`, which
-   * returns empty sections for accounts confirmed to have real projects). */
-  async listEmployeeProjects(): Promise<PmProject[]> {
-    const res = await http.get<{ status: string; message: string; data: PaginatedProjectsResponse<PmProject> }>(
-      '/v1/employee/projects',
-    );
-    return unwrapPaginatedPayload<PmProject>(res.data).data;
+  /**
+   * Employee membership projects (seo_project_members / pm membership).
+   * - GET /v1/employee/projects  (module: seo | pm)
+   * - plus SEO membership: GET /v1/seo/employee/projects
+   * Never uses manager project lists.
+   */
+  async listEmployeeProjects(): Promise<EmployeeMembershipProject[]> {
+    const [general, seoOnly] = await Promise.all([
+      http.get<{ status: string; message: string; data: unknown }>('/v1/employee/projects')
+        .then((res) => unwrapPaginatedPayload<unknown>(res.data).data
+          .map(normalizeMembershipProject)
+          .filter((p): p is EmployeeMembershipProject => !!p))
+        .catch(() => [] as EmployeeMembershipProject[]),
+      this.listSeoEmployeeMembership().catch(() => [] as EmployeeMembershipProject[]),
+    ]);
+
+    const byUuid = new Map<string, EmployeeMembershipProject>();
+    for (const project of [...general, ...seoOnly]) {
+      const key = project.uuid || String(project.id);
+      if (!key) continue;
+      // Prefer explicit SEO row when same uuid appears in both sources
+      const existing = byUuid.get(key);
+      if (!existing || project.module === 'seo') {
+        byUuid.set(key, project);
+      }
+    }
+    return Array.from(byUuid.values());
   },
 
+  /** Manager SEO project list — NOT for employee membership. */
   async listSeo(params: MyProjectsListParams) {
     const res = await http.get<ApiResponse<PaginatedProjectsResponse<SeoProject>>>(
       '/v1/seo/projects',
@@ -159,13 +218,43 @@ export const myProjectsApi = {
     return { ...res, data: { ...res.data, data: unwrapPaginatedPayload<SeoProject>(res.data) } };
   },
 
-  /** SEO employee's own project list — `/v1/seo/dashboard` myProjects.sections
-   * is often empty even when the member is assigned to real projects. */
+  /**
+   * Raw SEO membership rows (seo_project_members).
+   * GET /v1/seo/employee/projects — fallback: singular /project
+   */
+  async listSeoEmployeeMembership(): Promise<EmployeeMembershipProject[]> {
+    const tryPath = async (path: string) => {
+      const res = await http.get<{ status: string; message: string; data: unknown }>(path);
+      return unwrapPaginatedPayload<unknown>(res.data).data
+        .map((raw) => {
+          const normalized = normalizeMembershipProject(raw);
+          if (!normalized) return null;
+          return { ...normalized, module: 'seo' as const };
+        })
+        .filter((p): p is EmployeeMembershipProject => !!p);
+    };
+
+    try {
+      const primary = await tryPath('/v1/seo/employee/projects');
+      if (primary.length > 0) return primary;
+    } catch {
+      /* try singular */
+    }
+
+    try {
+      return await tryPath('/v1/seo/employee/project');
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * SEO employee membership only.
+   * GET /api/v1/seo/employee/projects
+   */
   async listSeoEmployeeProjects(): Promise<SeoProject[]> {
-    const res = await http.get<{ status: string; message: string; data: unknown }>(
-      '/v1/seo/employee/projects',
-    );
-    return unwrapPaginatedPayload<SeoProject>(res.data).data.map(normalizeSeoEmployeeProject);
+    const membership = await this.listSeoEmployeeMembership();
+    return membership.map(toSeoProject);
   },
 
   async getSeoEmployeeDashboard() {
