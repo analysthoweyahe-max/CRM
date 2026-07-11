@@ -18,10 +18,18 @@ interface RawPmTaskDetail {
   createdAt:      string | null;
 }
 
+/** GET .../tasks/{task_id} wraps the task under a `task` key (alongside sibling `tabs` data). */
 interface RawTaskDetailResponse {
   status:  string;
   message: string;
   data:    { task: RawPmTaskDetail };
+}
+
+/** PATCH .../tasks/{task_id} and .../status return the task fields directly under `data`. */
+interface RawTaskMutationResponse {
+  status:  string;
+  message: string;
+  data:    RawPmTaskDetail;
 }
 
 const STATUS_MAP: Record<string, EmpTaskStatus> = {
@@ -157,22 +165,22 @@ export const taskDetailApi = {
   },
 
   async updateStatus(projectId: string, taskId: string, status: EmpTaskStatus): Promise<{ data: TaskDetail }> {
-    const res = await http.patch<RawTaskDetailResponse>(
+    const res = await http.patch<RawTaskMutationResponse>(
       `/v1/pm/projects/${projectId}/tasks/${taskId}/status`,
       { status: REVERSE_STATUS_MAP[status] },
     );
-    return { data: toTaskDetail(res.data.data.task, projectId) };
+    return { data: toTaskDetail(res.data.data, projectId) };
   },
 
   async update(projectId: string, taskId: string, payload: UpdateTaskPayload): Promise<{ data: TaskDetail }> {
-    const res = await http.patch<RawTaskDetailResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}`, {
+    const res = await http.patch<RawTaskMutationResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}`, {
       title:           payload.title,
       description:     payload.description,
       priority:        REVERSE_PRIORITY_MAP[payload.priority],
       due_date:        payload.deadline,
       estimated_hours: payload.allocatedHours,
     });
-    return { data: toTaskDetail(res.data.data.task, projectId) };
+    return { data: toTaskDetail(res.data.data, projectId) };
   },
 
   async getComments(projectId: string, taskId: string, currentUserId: string | undefined): Promise<{ data: TaskComment[] }> {
