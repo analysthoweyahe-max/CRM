@@ -346,7 +346,7 @@ function groupTasksByStatus(tasks: MyTask[]): MyTaskColumn[] {
  * project-scoped task response doesn't repeat the project on every task.
  */
 export function mergeGroupedTasksAcrossProjects(
-  perProject: Array<{ project: { id: number; name: string }; data: GroupedTasksData }>,
+  perProject: Array<{ project: { id: number | string; name: string }; data: GroupedTasksData }>,
 ): GroupedTasksData {
   const columnMap = new Map<string, MyTaskColumn>();
 
@@ -369,16 +369,17 @@ export function mergeGroupedTasksAcrossProjects(
   return { columns, total: countTasks(columns) };
 }
 
-export function extractProjectsFromColumns(columns: MyTaskColumn[]): { id: number; name: string }[] {
-  const seen = new Map<number, string>();
+export function extractProjectsFromColumns(columns: MyTaskColumn[]): { id: number | string; name: string }[] {
+  const seen = new Map<string, { id: number | string; name: string }>();
   for (const col of columns) {
     for (const task of col.tasks) {
-      if (task.project) seen.set(task.project.id, task.project.name);
+      if (task.project) {
+        const key = String(task.project.id);
+        if (!seen.has(key)) seen.set(key, { id: task.project.id, name: task.project.name });
+      }
     }
   }
-  return [...seen.entries()]
-    .map(([id, name]) => ({ id, name }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 }
 
 /** Keep only tasks assigned to the current user when assignee is present in the payload. */

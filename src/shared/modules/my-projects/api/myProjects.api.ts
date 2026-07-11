@@ -223,15 +223,15 @@ export const myProjectsApi = {
    * GET /v1/seo/employee/projects — fallback: singular /project
    */
   async listSeoEmployeeMembership(): Promise<EmployeeMembershipProject[]> {
-    const tryPath = async (path: string) => {
+    const tryPath = async (path: string): Promise<EmployeeMembershipProject[]> => {
       const res = await http.get<{ status: string; message: string; data: unknown }>(path);
-      return unwrapPaginatedPayload<unknown>(res.data).data
-        .map((raw) => {
-          const normalized = normalizeMembershipProject(raw);
-          if (!normalized) return null;
-          return { ...normalized, module: 'seo' as const };
-        })
-        .filter((p): p is EmployeeMembershipProject => !!p);
+      const out: EmployeeMembershipProject[] = [];
+      for (const raw of unwrapPaginatedPayload<unknown>(res.data).data) {
+        const normalized = normalizeMembershipProject(raw);
+        if (!normalized) continue;
+        out.push({ ...normalized, module: 'seo' });
+      }
+      return out;
     };
 
     try {

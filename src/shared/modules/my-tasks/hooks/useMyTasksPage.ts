@@ -24,7 +24,7 @@ export interface UseMyTasksPageResult {
   isAr:            boolean;
   projectId:       string;
   setProjectId:    (id: string) => void;
-  projectOptions:  { id: number; name: string }[];
+  projectOptions:  { id: number | string; name: string }[];
   data:            GroupedTasksData | undefined;
   isLoading:       boolean;
   isError:         boolean;

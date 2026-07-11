@@ -94,7 +94,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     if (employeeIds.length > 0) return;
     const selfId = user.employeeId || user.id;
     if (!selfId) return;
-    const inList = (employeesQ.data ?? []).some((e) => String(e.id) === String(selfId));
+    const inList = (employeesQ.data?.data ?? []).some((e) => String(e.id) === String(selfId));
     if (inList) setEmployeeIds([String(selfId)]);
   }, [user?.role, user?.employeeId, user?.id, employeesQ.data, employeeIds.length]);
 

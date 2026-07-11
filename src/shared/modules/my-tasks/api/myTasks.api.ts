@@ -24,12 +24,6 @@ export interface EmployeeProjectSummary {
   name: string;
 }
 
-interface EmployeeProjectsEnvelope {
-  status:  string;
-  message: string;
-  data: { data: EmployeeProjectSummary[]; current_page: number; last_page: number; total: number };
-}
-
 export const myTasksApi = {
   async list(
     tasksRole: TasksApiRole,

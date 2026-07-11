@@ -4,7 +4,7 @@ interface Props {
   isAr:            boolean;
   projectId:       string;
   onProjectChange: (id: string) => void;
-  projects:        { id: number; name: string }[];
+  projects:        { id: number | string; name: string }[];
 }
 
 export function MyTasksProjectFilter({
