@@ -12,7 +12,7 @@ interface DeductionStatsProps {
 export function DeductionStats({ total, autoC, manualC, isAr }: DeductionStatsProps) {
   return (
     <Card overflow>
-      <div className="grid grid-cols-3 divide-x divide-x-reverse divide-gray-100 dark:divide-gray-700">
+      <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y sm:divide-y-0 divide-x-reverse divide-gray-100 dark:divide-gray-700">
         <StatItem
           label={isAr ? 'إجمالي الخصومات' : 'Total Deductions'}
           value={`${total.toLocaleString('ar-EG')} ${isAr ? 'ج.م' : 'EGP'}`}

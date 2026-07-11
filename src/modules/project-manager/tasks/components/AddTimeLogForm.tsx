@@ -34,7 +34,7 @@ export function AddTimeLogForm({ onSubmit, submitting, isAr }: Props) {
       <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
         {isAr ? 'تسجيل وقت جديد' : 'Log New Session'}
       </p>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <input type="date" value={date}  onChange={e => setDate(e.target.value)}  className={INPUT} />
         <input type="time" value={start} onChange={e => setStart(e.target.value)} className={INPUT} />
         <input type="time" value={end}   onChange={e => setEnd(e.target.value)}   className={INPUT} />

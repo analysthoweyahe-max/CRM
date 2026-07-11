@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, X } from 'lucide-react';
 import { SearchInput } from '@/shared/components/form/SearchInput';
 import { matchesSearch } from '@/shared/utils/search.utils';
 import type { EmpConversation } from '../types/messages.types';
@@ -30,9 +30,10 @@ interface Props {
   loading:       boolean;
   isAr:          boolean;
   onSelect:      (conv: EmpConversation) => void;
+  onClose?:      () => void;
 }
 
-export function EmpConversationList({ conversations, activeId, loading, isAr, onSelect }: Props) {
+export function EmpConversationList({ conversations, activeId, loading, isAr, onSelect, onClose }: Props) {
   const [search, setSearch] = useState('');
 
   const filtered = conversations.filter(c => {
@@ -45,12 +46,23 @@ export function EmpConversationList({ conversations, activeId, loading, isAr, on
     <div className="flex flex-col h-full border-s border-gray-100 dark:border-gray-700/60">
 
       {/* Search */}
-      <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-700/60">
+      <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-2">
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="md:hidden p-1.5 rounded-lg text-gray-400 shrink-0
+                       hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        )}
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder={isAr ? 'بحث في المحادثات...' : 'Search...'}
           isAr={isAr}
+          className="flex-1 min-w-0"
         />
       </div>
 

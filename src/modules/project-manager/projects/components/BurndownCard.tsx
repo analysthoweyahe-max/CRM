@@ -30,7 +30,7 @@ export function BurndownCard({ tasks, totalTasks, isAr }: Props) {
 
   return (
     <Card className="p-5">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between flex-wrap gap-y-2 mb-4">
         {/* Legend (end = left in RTL) */}
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2">

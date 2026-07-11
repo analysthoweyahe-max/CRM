@@ -39,7 +39,7 @@ export function EmployeeDetailLeaves({ employeeId, isAr }: Props) {
     <div className="space-y-4">
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100
                         dark:border-gray-700 shadow-sm p-5 text-center">
           {summaryLoading

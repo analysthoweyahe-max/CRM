@@ -148,43 +148,47 @@ export function TaskDetailTimeTracker({ task, sessions: serverSessions, isLoadin
           </p>
         </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 px-1 pb-2 text-xs text-gray-400 border-b border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-8">
-            <span>{isAr ? 'التاريخ' : 'Date'}</span>
-            <span>{isAr ? 'من' : 'From'}</span>
-            <span>{isAr ? 'إلى' : 'To'}</span>
-          </div>
-          <div className="flex items-center gap-5">
-            <span>{isAr ? 'المدة' : 'Duration'}</span>
-            <span className="w-3.5" />
-          </div>
-        </div>
-
-        {sessions.map(s => (
-          <div key={s.id} className="flex items-center justify-between gap-4 px-1 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
-            <div className="flex items-center gap-8 text-gray-700 dark:text-gray-300">
-              <span className="tabular-nums">{s.date}</span>
-              <span className="tabular-nums">{s.from}</span>
-              <span className="tabular-nums">{s.to}</span>
-            </div>
-            <div className="flex items-center gap-5">
-              <span className="text-brand-500 font-medium tabular-nums">{s.durationHours} {isAr ? 'س' : 'h'}</span>
-              <button
-                onClick={() => deleteSession(s.id)}
-                className="text-gray-300 hover:text-red-500 transition-colors"
-                title={isAr ? 'حذف' : 'Delete'}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {sessions.length === 0 && (
+        {sessions.length === 0 ? (
           <p className="text-center text-sm text-gray-400 py-6">
             {isAr ? 'لا توجد جلسات مسجلة' : 'No recorded sessions'}
           </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="min-w-[420px]">
+              {/* Header */}
+              <div className="flex items-center justify-between gap-4 px-1 pb-2 text-xs text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-8">
+                  <span>{isAr ? 'التاريخ' : 'Date'}</span>
+                  <span>{isAr ? 'من' : 'From'}</span>
+                  <span>{isAr ? 'إلى' : 'To'}</span>
+                </div>
+                <div className="flex items-center gap-5">
+                  <span>{isAr ? 'المدة' : 'Duration'}</span>
+                  <span className="w-3.5" />
+                </div>
+              </div>
+
+              {sessions.map(s => (
+                <div key={s.id} className="flex items-center justify-between gap-4 px-1 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
+                  <div className="flex items-center gap-8 text-gray-700 dark:text-gray-300">
+                    <span className="tabular-nums">{s.date}</span>
+                    <span className="tabular-nums">{s.from}</span>
+                    <span className="tabular-nums">{s.to}</span>
+                  </div>
+                  <div className="flex items-center gap-5">
+                    <span className="text-brand-500 font-medium tabular-nums">{s.durationHours} {isAr ? 'س' : 'h'}</span>
+                    <button
+                      onClick={() => deleteSession(s.id)}
+                      className="text-gray-300 hover:text-red-500 transition-colors"
+                      title={isAr ? 'حذف' : 'Delete'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Totals */}

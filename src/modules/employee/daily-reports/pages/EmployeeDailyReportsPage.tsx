@@ -32,7 +32,7 @@ export function EmployeeDailyReportsPage() {
         subtitle={isAr ? 'سجّل بداية ونهاية يومك' : 'Log your day start and end'}
       />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center flex-wrap gap-2">
         {TABS.map(({ id, arLabel, enLabel, Icon }) => {
           const isActive = activeTab === id;
           return (

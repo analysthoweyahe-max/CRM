@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   AtSign,
   MessageSquare,
+  Menu,
   Paperclip,
   Reply,
   Send,
@@ -63,9 +64,10 @@ interface ChatProps {
   isAr:         boolean;
   onConversationUpdate: (conv: SeoConversation) => void;
   onLeftGroup: () => void;
+  onOpenSidebar?: () => void;
 }
 
-function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftGroup }: ChatProps) {
+function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftGroup, onOpenSidebar }: ChatProps) {
   const { user }  = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
@@ -182,14 +184,24 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
             type="button"
             onClick={() => setShowMembers(o => !o)}
             className={[
-              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
+              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0',
               showMembers
                 ? 'bg-[#D8EBAE] text-[#709028]'
                 : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800',
             ].join(' ')}
           >
             <Users size={14} />
-            {isAr ? 'الأعضاء' : 'Members'}
+            <span className="hidden sm:inline">{isAr ? 'الأعضاء' : 'Members'}</span>
+          </button>
+        )}
+        {onOpenSidebar && (
+          <button
+            type="button"
+            onClick={onOpenSidebar}
+            className="md:hidden p-2 rounded-lg text-gray-400 shrink-0
+                       hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <Menu size={20} />
           </button>
         )}
       </div>
@@ -450,7 +462,7 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
 type TypeFilter = 'all' | SeoConversationType;
 
 export function SeoMemberMessagesPage() {
-  const { lang } = useLang();
+  const { lang, isRTL } = useLang();
   const isAr = lang === 'ar';
   const { user, isSuperAdmin, hasAnyRole } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -464,6 +476,8 @@ export function SeoMemberMessagesPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const hiddenTranslate = isRTL ? '-translate-x-full' : 'translate-x-full';
 
   const {
     data: conversations = [],
@@ -510,7 +524,7 @@ export function SeoMemberMessagesPage() {
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
-      className="-m-4 md:-m-6 h-[calc(100vh-4rem)] flex overflow-hidden
+      className="relative -m-4 md:-m-6 h-[calc(100vh-4rem)] flex overflow-hidden
                  bg-white dark:bg-gray-900 rounded-none"
     >
       <div className="flex-1 min-w-0 flex flex-col">
@@ -520,6 +534,7 @@ export function SeoMemberMessagesPage() {
             isAr={isAr}
             onConversationUpdate={setActiveConv}
             onLeftGroup={() => setActiveConv(null)}
+            onOpenSidebar={() => setSidebarOpen(true)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-400 select-none">
@@ -535,11 +550,34 @@ export function SeoMemberMessagesPage() {
                 {isAr ? 'محادثات مباشرة وجروبات الفريق' : 'Direct chats and team groups'}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden mt-1 px-4 py-2 rounded-lg bg-[#A0CD39]
+                         text-white text-sm font-medium hover:bg-[#709028] transition-colors"
+            >
+              {isAr ? 'عرض المحادثات' : 'View Conversations'}
+            </button>
           </div>
         )}
       </div>
 
-      <div className="w-72 shrink-0 flex flex-col">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="absolute inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <div className={`
+        absolute inset-y-0 inset-e-0 z-50 flex w-72 flex-col
+        bg-white dark:bg-gray-900
+        shadow-2xl
+        transition-transform duration-300 ease-in-out
+        md:relative md:inset-auto md:z-auto md:w-80 md:shadow-none md:translate-x-0
+        ${sidebarOpen ? 'translate-x-0' : hiddenTranslate}
+      `}>
         <SeoConversationList
           conversations={conversations}
           activeId={activeConv?.id ?? null}
@@ -550,10 +588,11 @@ export function SeoMemberMessagesPage() {
           isAr={isAr}
           typeFilter={typeFilter}
           onTypeFilter={setTypeFilter}
-          onSelect={setActiveConv}
+          onSelect={conv => { setActiveConv(conv); setSidebarOpen(false); }}
           onNewChat={() => setShowNewChat(true)}
           onCreateGroup={() => setShowCreateGroup(true)}
           canCreateGroup={canCreateGroup}
+          onClose={() => setSidebarOpen(false)}
         />
       </div>
 

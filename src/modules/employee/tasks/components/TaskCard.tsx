@@ -46,7 +46,7 @@ export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
         </div>
 
         {/* Row 3: priority+deadline (start→right in RTL) | timer+details (end→left in RTL) */}
-        <div className="flex items-center justify-between gap-4 pt-1">
+        <div className="flex items-center justify-between flex-wrap gap-3 gap-y-2 pt-1">
           <div className="flex items-center gap-3">
             <Badge
               label={isAr ? priority.ar : priority.en}

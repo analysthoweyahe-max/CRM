@@ -119,14 +119,14 @@ export function ProjectTeamPage() {
 
       {/* Pagination */}
       {total > 0 && (
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-500 dark:text-gray-400">
           <p>
             {isAr
               ? `يتم عرض ${members.length} من أصل ${total}`
               : `Showing ${members.length} of ${total}`}
           </p>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto max-w-full">
             <PageBtn onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>‹</PageBtn>
             {Array.from({ length: pageCount }, (_, i) => i + 1).map(n => (
               <PageBtn key={n} onClick={() => setPage(n)} active={n === page}>{n}</PageBtn>

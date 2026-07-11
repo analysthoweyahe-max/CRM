@@ -113,9 +113,10 @@ export function SeoGroupMembersPanel({
   const busy = addingPending || removingPending || leavingPending;
 
   return (
-    <div className="absolute inset-y-0 end-0 z-20 w-72 flex flex-col
+    <div className="absolute inset-y-0 inset-s-0 sm:inset-s-auto inset-e-0 z-20 flex flex-col
+                    w-full sm:w-72
                     bg-white dark:bg-gray-900
-                    border-s border-gray-100 dark:border-gray-700/60 shadow-xl">
+                    sm:border-s border-gray-100 dark:border-gray-700/60 shadow-xl">
       <div className="flex items-center justify-between gap-2 px-4 py-3.5
                       border-b border-gray-100 dark:border-gray-700/60">
         <div className="flex items-center gap-2 min-w-0">

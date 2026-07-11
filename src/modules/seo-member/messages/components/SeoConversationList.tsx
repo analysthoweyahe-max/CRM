@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, Plus, UsersRound } from 'lucide-react';
+import { MessageSquare, Plus, UsersRound, X } from 'lucide-react';
 import { SearchInput } from '@/shared/components/form/SearchInput';
 import { matchesSearch } from '@/shared/utils/search.utils';
 import type { SeoConversation, SeoConversationType } from '../types/messages.types';
@@ -48,6 +48,7 @@ interface Props {
   onNewChat:     () => void;
   onCreateGroup: () => void;
   canCreateGroup?: boolean;
+  onClose?:      () => void;
 }
 
 const FILTERS: { value: TypeFilter; labelAr: string; labelEn: string }[] = [
@@ -70,6 +71,7 @@ export function SeoConversationList({
   onNewChat,
   onCreateGroup,
   canCreateGroup = false,
+  onClose,
 }: Props) {
   const [search, setSearch] = useState('');
 
@@ -84,9 +86,21 @@ export function SeoConversationList({
     <div className="flex flex-col h-full border-s border-gray-100 dark:border-gray-700/60">
       <div className="px-4 pt-5 pb-3 border-b border-gray-100 dark:border-gray-700/60 space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">
-            {isAr ? 'الرسائل' : 'Messages'}
-          </h2>
+          <div className="flex items-center gap-2">
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="md:hidden p-1.5 rounded-lg text-gray-400
+                           hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            )}
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">
+              {isAr ? 'الرسائل' : 'Messages'}
+            </h2>
+          </div>
           <button
             type="button"
             onClick={onNewChat}

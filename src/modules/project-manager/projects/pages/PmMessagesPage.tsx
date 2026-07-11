@@ -44,7 +44,7 @@ export function PmMessagesPage() {
       className="-m-4 md:-m-6 h-[calc(100vh-4rem)] flex overflow-hidden
                  bg-white dark:bg-gray-900 rounded-none"
     >
-      <div className="flex-1 min-w-0 flex flex-col items-center justify-center gap-4 text-gray-400 select-none px-6">
+      <div className="hidden md:flex flex-1 min-w-0 flex-col items-center justify-center gap-4 text-gray-400 select-none px-6">
         <div className="w-16 h-16 rounded-full bg-[#D8EBAE]/50 dark:bg-[#A0CD39]/10
                         flex items-center justify-center">
           <MessageSquare size={28} className="text-[#A0CD39]" />
@@ -61,7 +61,7 @@ export function PmMessagesPage() {
         </div>
       </div>
 
-      <div className="w-80 shrink-0 flex flex-col border-s border-gray-100 dark:border-gray-700/60">
+      <div className="w-full md:w-80 shrink-0 flex flex-col md:border-s border-gray-100 dark:border-gray-700/60">
         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700/60">
           <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
             {isAr ? 'محادثات المشاريع' : 'Project chats'}

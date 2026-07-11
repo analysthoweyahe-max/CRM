@@ -29,8 +29,8 @@ export function TaskDistributionCard({ tasks, isAr }: Props) {
         {isAr ? 'توزيع المهام حسب الحالة' : 'Task Distribution'}
       </h3>
 
-      <div className="flex items-center justify-center gap-8">
-        <div className="relative w-36 h-36 shrink-0">
+      <div className="flex items-center justify-center gap-4 sm:gap-8">
+        <div className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0">
           <Doughnut
             data={{
               datasets: [{

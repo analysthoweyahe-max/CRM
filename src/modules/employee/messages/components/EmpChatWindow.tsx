@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
-import { Send, Paperclip, AtSign } from 'lucide-react';
+import { Send, Paperclip, AtSign, Menu } from 'lucide-react';
 import { useAuth }           from '@/modules/auth/context/AuthContext';
 import { ChatAttachments, MessageBodyText } from '@/shared/components/chat';
 import { setOpenConversation } from '@/shared/realtime-messages';
@@ -13,11 +13,12 @@ function fmtTime(raw: string, isAr: boolean) {
 }
 
 interface Props {
-  conversation: EmpConversation;
-  isAr:         boolean;
+  conversation:   EmpConversation;
+  isAr:           boolean;
+  onOpenSidebar?: () => void;
 }
 
-export function EmpChatWindow({ conversation, isAr }: Props) {
+export function EmpChatWindow({ conversation, isAr, onOpenSidebar }: Props) {
   const { user }   = useAuth();
   const bottomRef  = useRef<HTMLDivElement>(null);
   const fileRef    = useRef<HTMLInputElement>(null);
@@ -77,12 +78,22 @@ export function EmpChatWindow({ conversation, isAr }: Props) {
         <div className="w-9 h-9 rounded-full bg-[#A0CD39] flex items-center justify-center shrink-0">
           <span className="text-sm font-bold text-gray-900">{initial}</span>
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{convName}</p>
           <p className="text-[11px] text-[#709028] dark:text-[#A0CD39]">
             {isAr ? 'محادثات المشاريع' : 'Project conversations'}
           </p>
         </div>
+        {onOpenSidebar && (
+          <button
+            type="button"
+            onClick={onOpenSidebar}
+            className="md:hidden p-2 rounded-lg text-gray-400
+                       hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+          >
+            <Menu size={20} />
+          </button>
+        )}
       </div>
 
       {/* ── Messages ── */}
