@@ -37,7 +37,7 @@ export function MyTasksPage() {
 
   function handleOpen(task: MyTask) {
     if (!config || !tasksRole) return;
-    const pid = task.project?.id;
+    const pid = task.project?.id ?? (projectId || undefined);
     if (!pid) return;
     navigate(config.taskDetailPath(pid, getTaskId(task)));
   }
@@ -109,8 +109,9 @@ export function MyTasksPage() {
           canDrag={config.canDragStatus}
           onOpen={handleOpen}
           onStatusChange={async (task, toStatus) => {
-            if (!task.project?.id || !tasksRole) return;
-            await updateStatus(task.project.id, getTaskId(task), toStatus);
+            const pid = task.project?.id ?? (projectId || undefined);
+            if (!pid || !tasksRole) return;
+            await updateStatus(pid, getTaskId(task), toStatus);
           }}
         />
       )}

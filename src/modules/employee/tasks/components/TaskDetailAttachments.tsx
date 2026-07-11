@@ -14,11 +14,6 @@ interface AttachmentItem {
   file?: File;
 }
 
-const INITIAL_ATTACHMENTS: AttachmentItem[] = [
-  { id: '1', name: 'design-mockup-v2.figma', size: '4.2 MB', type: 'Figma' },
-  { id: '2', name: 'requirements.pdf',        size: '1.1 MB', type: 'PDF'   },
-];
-
 function fmtSize(bytes: number): string {
   if (bytes < 1024)        return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -63,7 +58,7 @@ function Skeleton() {
 
 export function TaskDetailAttachments({ isLoading, isAr }: Props) {
   const inputRef                = useRef<HTMLInputElement>(null);
-  const [items, setItems]       = useState<AttachmentItem[]>(INITIAL_ATTACHMENTS);
+  const [items, setItems]       = useState<AttachmentItem[]>([]);
   const [isDragging, setDrag]   = useState(false);
 
   if (isLoading) return <Skeleton />;
