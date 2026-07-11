@@ -64,9 +64,13 @@ function leavePath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | u
 }
 
 function messagesPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
-  if (user?.role === 'employee')   return ROUTES.EMPLOYEE.MESSAGES;
-  if (user?.role === 'seo-member') return ROUTES.SEO_MEMBER.MESSAGES;
-  if (user?.role === 'hr')         return ROUTES.MESSAGES;
+  if (user?.role === 'employee')    return ROUTES.EMPLOYEE.MESSAGES;
+  if (user?.role === 'seo-member')  return ROUTES.SEO_MEMBER.MESSAGES;
+  if (user?.role === 'manager')     return ROUTES.PROJECT_MANAGER.MESSAGES;
+  if (user?.role === 'seo-leader')  return ROUTES.SEO_LEADER.MESSAGES;
+  if (user?.role === 'hr')          return ROUTES.MESSAGES;
+  if (user?.role === 'admin')       return ROUTES.MESSAGES;
+  if (user?.actor === 'employee')   return ROUTES.EMPLOYEE.MESSAGES;
   return null;
 }
 
@@ -113,9 +117,14 @@ function resolvePmTaskPath(
 }
 
 function resolveMessagesPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string {
-  if (user?.role === 'seo-member') return ROUTES.SEO_MEMBER.MESSAGES;
-  if (user?.role === 'employee') return ROUTES.EMPLOYEE.MESSAGES;
-  return ROUTES.MESSAGES;
+  return messagesPath(user) ?? ROUTES.MESSAGES;
+}
+
+/** Topbar / nav shortcut to the role's messages inbox. */
+export function getMessagesRoute(
+  user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined,
+): string {
+  return resolveMessagesPath(user);
 }
 
 function resolveProjectMessagesTabPath(
@@ -139,8 +148,37 @@ function resolveHrMessagesPath(
   user: Pick<AuthUser, 'role'> | null | undefined,
 ): string {
   const convId = readId(data.conversationId, data.conversation_id);
-  const base = user?.role === 'employee' ? ROUTES.EMPLOYEE.MESSAGES : ROUTES.MESSAGES;
+  const base = (user?.role === 'employee' || user?.role === 'seo-member')
+    ? ROUTES.EMPLOYEE.HR_MESSAGES
+    : ROUTES.MESSAGES;
   return convId ? `${base}?conversation=${convId}` : base;
+}
+
+function resolvePmProjectPath(
+  data: Record<string, unknown>,
+  user: Pick<AuthUser, 'role'> | null | undefined,
+): string | null {
+  const projectId = readId(data.projectId, data.project_id, data.projectUuid, data.project_uuid);
+  if (!projectId) {
+    return isPmManager(user) ? ROUTES.PROJECT_MANAGER.DASHBOARD : ROUTES.EMPLOYEE.MY_PROJECTS;
+  }
+  const pid = String(projectId);
+  if (isPmManager(user)) return ROUTES.PROJECT_MANAGER.DETAILS(pid);
+  return ROUTES.EMPLOYEE.PROJECT_TASKS(pid);
+}
+
+function resolveSeoProjectPath(
+  data: Record<string, unknown>,
+  user: Pick<AuthUser, 'section' | 'role'> | null | undefined,
+): string | null {
+  const projectId = readId(data.projectId, data.project_id, data.projectUuid, data.project_uuid);
+  if (!projectId) {
+    if (user?.role === 'seo-leader') return ROUTES.SEO_LEADER.DASHBOARD;
+    return ROUTES.SEO_MEMBER.MY_PROJECTS;
+  }
+  const pid = String(projectId);
+  if (user?.role === 'seo-leader') return ROUTES.SEO_LEADER.DETAILS(pid);
+  return ROUTES.SEO_MEMBER.PROJECT_TASKS(pid);
 }
 
 /** Resolve in-app path when a notification is clicked. */
@@ -162,9 +200,26 @@ export function resolveNotificationPath(
     case 'seo_mention':
       return resolveMessagesPath(user);
 
+    case 'pm_project_team_assigned':
+    case 'pm_project_manager_assigned':
+      return resolvePmProjectPath(data, user);
+
+    case 'seo_project_team_assigned':
+    case 'seo_project_manager_assigned':
+      return resolveSeoProjectPath(data, user);
+
     case 'pm_project_message': {
       const projectId = readId(data.projectId, data.project_id);
       return projectId ? resolveProjectMessagesTabPath(String(projectId), user) : null;
+    }
+
+    case 'pm_client_update': {
+      const projectId = readId(data.projectId, data.project_id);
+      if (!projectId) return null;
+      if (isPmManager(user)) {
+        return `${ROUTES.PROJECT_MANAGER.DETAILS(String(projectId))}?tab=client-updates`;
+      }
+      return resolveProjectMessagesTabPath(String(projectId), user);
     }
 
     case 'seo_project_message': {
@@ -177,6 +232,21 @@ export function resolveNotificationPath(
         return ROUTES.SEO_MEMBER.MESSAGES;
       }
       return `${ROUTES.SEO_LEADER.DETAILS(String(projectId))}?tab=messages`;
+    }
+
+    case 'seo_client_update': {
+      const projectId = readId(data.projectId, data.project_id);
+      if (!projectId) return null;
+      if (user?.role === 'seo-leader') {
+        return `${ROUTES.SEO_LEADER.DETAILS(String(projectId))}?tab=client-updates`;
+      }
+      return ROUTES.SEO_MEMBER.MESSAGES;
+    }
+
+    case 'seo_direct_message': {
+      const convId = readId(data.conversationId, data.conversation_id);
+      const base = resolveMessagesPath(user);
+      return convId ? `${base}?conversation=${convId}` : base;
     }
 
     case 'hr_message':

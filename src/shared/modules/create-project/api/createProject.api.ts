@@ -14,6 +14,7 @@ import type {
   EmployeeLookup,
   ManagerLookup,
   ProjectType,
+  StatusLookup,
 } from '../types/createProject.types';
 
 function basePath(module: CreateProjectModule): string {
@@ -32,13 +33,13 @@ interface AdminManagerRecord {
 
 
 /** Build multipart form data for project creation when an attachment is
- * included — arrays are sent Laravel-style as repeated `key[]` fields. */
+ * included — arrays are sent Laravel-style as indexed `key[i]` fields. */
 function toFormData(payload: object, file: File, fileField = 'attachment'): FormData {
   const fd = new FormData();
   for (const [key, value] of Object.entries(payload)) {
     if (value === undefined || value === null) continue;
     if (Array.isArray(value)) {
-      value.forEach(v => fd.append(`${key}[]`, String(v)));
+      value.forEach((v, i) => fd.append(`${key}[${i}]`, String(v)));
     } else if (typeof value === 'boolean') {
       fd.append(key, value ? '1' : '0');
     } else {
@@ -68,12 +69,12 @@ export const createProjectApi = {
     return http.get<{ data: ProjectType[] }>(
       `${basePath(module)}/projects/lookups/types`,
       { params: departmentId ? { department_id: departmentId } : undefined },
-    ).then(r => normalizeProjectTypes(unwrapArray(r.data)));
+    ).then(r => normalizeProjectTypes(unwrapArray(r.data), module));
   },
 
   listAllProjectTypes(module: CreateProjectModule) {
     return http.get<{ data: ProjectType[] }>(`${basePath(module)}/project-types`)
-      .then(r => normalizeProjectTypes(unwrapArray(r.data)));
+      .then(r => normalizeProjectTypes(unwrapArray(r.data), module));
   },
 
   /** Admin create flow — prefer full type list, then match department client-side. */
@@ -82,7 +83,7 @@ export const createProjectApi = {
       const filtered = await http.get<{ data: ProjectType[] }>(
         `${basePath(module)}/project-types`,
         { params: { department_id: departmentId } },
-      ).then(r => normalizeProjectTypes(unwrapArray(r.data)));
+      ).then(r => normalizeProjectTypes(unwrapArray(r.data), module));
       if (filtered.length > 0) return filtered;
     } catch {
       // Fall through when the filtered endpoint fails.
@@ -117,6 +118,12 @@ export const createProjectApi = {
     ).then(r => normalizeManagers(unwrapArray(r.data)));
   },
 
+  statuses(module: CreateProjectModule) {
+    return http.get<{ data: StatusLookup[] }>(
+      `${basePath(module)}/projects/lookups/statuses`,
+    ).then(r => unwrapArray<StatusLookup>(r.data));
+  },
+
   /** Prefer project lookup managers; fall back to admins with the right role. */
   async managersForCreate(module: CreateProjectModule, projectTypeId?: number) {
     try {
@@ -144,7 +151,8 @@ export const createProjectApi = {
       return http.post<{ status: string; message: string; data: { id: number } }>(
         '/v1/pm/projects',
         toFormData(payload, attachment),
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        /* Let the browser set multipart boundary — do not force Content-Type. */
+        { headers: { 'Content-Type': undefined } },
       );
     }
     return http.post<{ status: string; message: string; data: { id: number } }>(
@@ -158,7 +166,7 @@ export const createProjectApi = {
       return http.post<{ status: string; message: string; data: { id: number } }>(
         '/v1/seo/projects',
         toFormData(payload, attachment),
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { 'Content-Type': undefined } },
       );
     }
     return http.post<{ status: string; message: string; data: { id: number } }>(
@@ -171,7 +179,7 @@ export const createProjectApi = {
     return http.get<{ data: ProjectType[] }>(
       `${basePath(module)}/project-types`,
       { params: { department_id: departmentId } },
-    ).then(r => normalizeProjectTypes(unwrapArray(r.data)));
+    ).then(r => normalizeProjectTypes(unwrapArray(r.data), module));
   },
 
   createProjectType(module: CreateProjectModule, payload: CreateProjectTypePayload) {

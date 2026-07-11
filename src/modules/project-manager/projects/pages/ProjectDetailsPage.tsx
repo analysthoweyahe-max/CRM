@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Plus, Info, FolderOpen } from 'lucide-react';import { GithubIcon } from '@/shared/components/icons/GithubIcon';
 import { ensureHttpUrl } from '@/shared/utils';
 import { toast } from 'sonner';
@@ -9,6 +10,7 @@ import { Button }          from '@/shared/components/ui/Button';
 import { Combobox }        from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { ROUTES }          from '@/app/router/routes';
+import { extractApiError } from '@/shared/utils/error.utils';
 import { useProjectDetails }   from '../hooks/useProjectDetails';
 import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
 import { pmProjectsApi } from '../api/project.api';
@@ -38,6 +40,7 @@ export function ProjectDetailsPage() {
   const navigate  = useNavigate();
   const { id }    = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const queryClient    = useQueryClient();
 
   const { project, isLoading, isError, refetch } = useProjectDetails(id);
   const { statuses }                              = usePmProjectLookups();
@@ -51,6 +54,7 @@ export function ProjectDetailsPage() {
     if (tabParam === 'messages') setActiveTab('messages');
   }, [tabParam]);
   const [changingStatus, setChangingStatus] = useState(false);
+  const [publishing, setPublishing]         = useState(false);
   if (isLoading) return <ProjectDetailsSkeleton />;
 
   if (isError || !project) {
@@ -64,11 +68,32 @@ export function ProjectDetailsPage() {
     try {
       await pmProjectsApi.updateStatus(project!.id, status);
       toast.success(isAr ? 'تم تحديث حالة المشروع' : 'Project status updated');
-      refetch();
-    } catch {
-      toast.error(isAr ? 'تعذر تحديث حالة المشروع' : 'Failed to update status');
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', String(project!.id)] });
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المشروع' : 'Failed to update status'));
     } finally {
       setChangingStatus(false);
+    }
+  }
+
+  async function handlePublish() {
+    if (!project!.isDraft || publishing) return;
+    setPublishing(true);
+    try {
+      await pmProjectsApi.updateSettings(project!.id, {
+        name:    project!.name,
+        isDraft: false,
+      });
+      toast.success(isAr ? 'تم نشر المشروع' : 'Project published');
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ['my-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', String(project!.id)] });
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر نشر المشروع' : 'Failed to publish project'));
+    } finally {
+      setPublishing(false);
     }
   }
 
@@ -162,9 +187,21 @@ export function ProjectDetailsPage() {
             {translateProjectLookup(project.projectType, project.projectTypeLabel, isAr)}
           </span>
           {project.isDraft && (
-            <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-              {isAr ? 'مسودة' : 'Draft'}
-            </span>
+            <>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                {isAr ? 'مسودة' : 'Draft'}
+              </span>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={publishing}
+                onClick={handlePublish}
+              >
+                {publishing
+                  ? (isAr ? 'جاري النشر...' : 'Publishing…')
+                  : (isAr ? 'نشر المشروع' : 'Publish')}
+              </Button>
+            </>
           )}
         </div>
 
@@ -240,7 +277,9 @@ export function ProjectDetailsPage() {
       {activeTab === 'client'   && <ProjectClientUpdatesTab projectId={String(project.id)} isAr={isAr} />}
       {activeTab === 'team'     && <ProjectTeamTab projectId={String(project.id)} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab tasks={tasks} isAr={isAr} />}
-      {activeTab === 'settings' && <ProjectSettingsTab project={project} isAr={isAr} />}
+      {activeTab === 'settings' && (
+        <ProjectSettingsTab project={project} isAr={isAr} onPublished={refetch} />
+      )}
       {activeTab === 'messages' && <ProjectMessagesTab projectId={String(project.id)} isAr={isAr} />}
     </div>  );
 }

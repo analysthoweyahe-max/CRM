@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal }     from '@/shared/components/ui/Modal';
 import { Button }    from '@/shared/components/ui/Button';
 import { ManagerForm } from './ManagerForm';
-import { permissionsForRole } from '../utils/role.utils';
+import { permissionsForRole, resolveAssignableRoleName } from '../utils/role.utils';
 import { HR_CREATABLE_MANAGER_ROLES, type CreateAdminPayload, type ManagerFormValues } from '../types/adminManager.types';
 import { usePermissionList } from '@/modules/admin/permissions/hooks/usePermissions';
 import { filterRegisteredPermissions, toPermissionNameSet } from '@/shared/permissions/permissionValidation.utils';
@@ -20,8 +20,14 @@ interface Props {
 }
 
 const EMPTY_VALUES: ManagerFormValues = {
-  name: '', email: '', phone: '', departmentId: '', jobTitleId: '', status: 'pending', role: '', permissions: [],
+  name: '', email: '', phone: '', departmentIds: [], jobTitleId: '', status: 'pending', role: '', permissions: [],
 };
+
+function toDeptIds(ids: string[]): number[] {
+  return ids
+    .map((id) => Number(id))
+    .filter((n) => !Number.isNaN(n));
+}
 
 export function AddManagerModal({
   open,
@@ -70,7 +76,7 @@ export function AddManagerModal({
   const isValid = !!(
     values.name.trim()
     && values.email.trim()
-    && values.departmentId
+    && values.departmentIds.length > 0
     && values.jobTitleId
     && values.role
     && (!canCustomizePermissions || values.permissions.length > 0)
@@ -78,12 +84,15 @@ export function AddManagerModal({
 
   function handleSubmit() {
     if (!isValid) return;
+    const role = resolveAssignableRoleName(values.role, selectableRoles);
+    if (!role) return;
+
     const payload: CreateAdminPayload = {
-      name:           values.name.trim(),
-      email:          values.email.trim(),
-      role:           values.role,
-      department_id:  Number(values.departmentId),
-      job_title_id:   Number(values.jobTitleId),
+      name:            values.name.trim(),
+      email:           values.email.trim(),
+      role, // English slug only — never label or numeric id
+      department_ids:  toDeptIds(values.departmentIds),
+      job_title_id:    Number(values.jobTitleId),
     };
     if (canCustomizePermissions) {
       payload.permissions = filterRegisteredPermissions(values.permissions, registered);

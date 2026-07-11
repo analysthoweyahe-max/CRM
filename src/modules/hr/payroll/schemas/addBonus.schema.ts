@@ -5,7 +5,7 @@ export const makeBonusSchema = (isAr: boolean) =>
     employee_id: z.string().min(1,
       isAr ? 'يرجى اختيار الموظف' : 'Please select an employee'),
 
-    adjustment_type: z.string().min(1,
+    bonus_type_id: z.string().min(1,
       isAr ? 'يرجى اختيار نوع المكافأة' : 'Please select a bonus type'),
 
     financial_month: z.string().min(1,

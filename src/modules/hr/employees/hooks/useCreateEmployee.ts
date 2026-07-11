@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { employeeApi } from '../api/employee.api';
 import type { AllFormData } from '../components/NewEmployeeForm/newEmployeeForm.types';
 import type { EmploymentType } from '../types/employee.types';
+import { toDepartmentIds } from '../types/employee.types';
 
 export function useCreateEmployee() {
   const queryClient = useQueryClient();
@@ -11,12 +12,13 @@ export function useCreateEmployee() {
       const d = formData.step1!;
 
       const created = await employeeApi.create({
-        name:          d.fullName,
-        email:         d.email,
-        phone:         d.phone ?? '',
-        department_id: d.department,
-        job_title_id:  d.jobTitle,
-        joining_date:  d.hireDate,
+        name:            d.fullName,
+        email:           d.email,
+        phone:           d.phone ?? '',
+        department_ids:  toDepartmentIds(d.departmentIds),
+        job_title_id:    Number(d.jobTitle) || d.jobTitle,
+        joining_date:    d.hireDate,
+        manager_id:      !d.managerId || d.managerId === 'none' ? null : d.managerId,
       });
 
       const emp  = created.data.data;

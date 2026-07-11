@@ -52,6 +52,11 @@ export interface CreateExceptionPayload {
   reason:       string;
 }
 
+/** HR / super-admin — create on behalf of an employee */
+export interface HrCreateExceptionPayload extends CreateExceptionPayload {
+  employee_id: string;
+}
+
 export interface RejectExceptionPayload {
   rejection_reason: string;
 }

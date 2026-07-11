@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Menu, Bell, Globe, LogOut, User, ChevronDown, Moon, Sun, KeyRound } from 'lucide-react';
+import { Menu, Bell, Globe, LogOut, User, ChevronDown, Moon, Sun, KeyRound, MessageSquare } from 'lucide-react';
 import { ChangePasswordModal }        from '@/modules/auth/components/ChangePasswordModal';
 import { useAuth }                    from '@/modules/auth/context/AuthContext';
 import { useLang }                    from '@/app/providers/LanguageProvider';
@@ -10,7 +10,7 @@ import { ROUTES }                     from '@/app/router/routes';
 import { UserRoleBadges }             from '@/shared/components/auth';
 import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
-import { resolveNotificationPath }    from '@/shared/utils/notificationNavigation.utils';
+import { resolveNotificationPath, getMessagesRoute } from '@/shared/utils/notificationNavigation.utils';
 import { parseBackendTimestamp }      from '@/shared/utils/date.utils';
 import { playNotificationSound }      from '@/shared/utils/sound.utils';
 import { useEmployeeAlertList }       from '@/modules/employee/alerts/hooks/useEmployeeAlerts';
@@ -109,6 +109,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
   }, []);
 
   const initial   = user?.fullName?.slice(0, 1).toUpperCase() ?? '?';
+  const messagesRoute = getMessagesRoute(user);
 
   return (
     <>
@@ -143,6 +144,17 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
       <div className="flex-1" />
 
       <div className="flex items-center gap-1 shrink-0">
+
+        <button
+          type="button"
+          aria-label={isAr ? 'المحادثات' : 'Messages'}
+          title={isAr ? 'المحادثات' : 'Messages'}
+          onClick={() => { navigate(messagesRoute); setNotifOpen(false); setOpen(false); }}
+          className="p-2 rounded-lg text-gray-500 dark:text-gray-400
+                     hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <MessageSquare size={18} />
+        </button>
 
         <div className="relative" ref={notifRef}>
           <button

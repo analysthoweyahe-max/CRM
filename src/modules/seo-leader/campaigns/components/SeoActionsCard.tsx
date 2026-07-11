@@ -1,11 +1,14 @@
 import { useState }         from 'react';
 import { Archive, Download } from 'lucide-react';
 import { useNavigate }       from 'react-router-dom';
+import { useQueryClient }    from '@tanstack/react-query';
 import { toast }             from 'sonner';
 import { Button }            from '@/shared/components/ui/Button';
 import { Modal }             from '@/shared/components/ui/Modal';
 import { ROUTES }            from '@/app/router/routes';
+import { extractApiError }   from '@/shared/utils/error.utils';
 import { archiveSeoProject } from '../store/seoArchivedStore';
+import { campaignApi }       from '../api/campaign.api';
 
 export interface SeoExportData {
   name:             string;
@@ -21,8 +24,10 @@ export interface SeoExportData {
 interface Props {
   campaignId:   number | string;
   campaignName: string;
+  isDraft?:     boolean;
   exportData?:  SeoExportData;
   isAr:         boolean;
+  onPublished?: () => void;
 }
 
 function buildExcel(data: SeoExportData, isAr: boolean): string {
@@ -67,9 +72,13 @@ function buildExcel(data: SeoExportData, isAr: boolean): string {
   ].join('\n');
 }
 
-export function SeoActionsCard({ campaignId, campaignName, exportData, isAr }: Props) {
+export function SeoActionsCard({
+  campaignId, campaignName, isDraft = false, exportData, isAr, onPublished,
+}: Props) {
   const navigate                      = useNavigate();
+  const queryClient                   = useQueryClient();
   const [openArchive, setOpenArchive] = useState(false);
+  const [publishing, setPublishing]   = useState(false);
 
   function handleExport() {
     const data   = exportData ?? { name: campaignName };
@@ -81,6 +90,27 @@ export function SeoActionsCard({ campaignId, campaignName, exportData, isAr }: P
     });
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function handlePublish() {
+    if (!isDraft || publishing) return;
+    setPublishing(true);
+    try {
+      await campaignApi.updateSettings(campaignId, {
+        name:    campaignName,
+        isDraft: false,
+      });
+      toast.success(isAr ? 'تم نشر المشروع' : 'Project published');
+      queryClient.invalidateQueries({ queryKey: ['campaign-detail', String(campaignId)] });
+      queryClient.invalidateQueries({ queryKey: ['seo-project-settings', String(campaignId)] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['my-projects'] });
+      onPublished?.();
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر نشر المشروع' : 'Failed to publish project'));
+    } finally {
+      setPublishing(false);
+    }
   }
 
   function handleArchive() {
@@ -102,6 +132,13 @@ export function SeoActionsCard({ campaignId, campaignName, exportData, isAr }: P
         </h2>
 
         <div className="flex flex-wrap gap-3 justify-end">
+          {isDraft && (
+            <Button variant="primary" disabled={publishing} onClick={handlePublish}>
+              {publishing
+                ? (isAr ? 'جاري النشر...' : 'Publishing…')
+                : (isAr ? 'نشر المشروع' : 'Publish Project')}
+            </Button>
+          )}
           <Button variant="secondary" startIcon={<Archive size={15} />} onClick={() => setOpenArchive(true)}>
             {isAr ? 'أرشفة' : 'Archive'}
           </Button>

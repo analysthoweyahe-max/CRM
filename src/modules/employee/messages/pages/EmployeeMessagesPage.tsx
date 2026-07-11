@@ -43,7 +43,7 @@ export function EmployeeMessagesPage() {
                 {isAr ? 'اختر محادثة للبدء' : 'Select a conversation to start'}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                {isAr ? 'رسائلك مع المشاريع والفريق' : 'Your project and team messages'}
+                {isAr ? 'تذاكر الدعم مع الموارد البشرية' : 'HR support tickets'}
               </p>
             </div>
           </div>

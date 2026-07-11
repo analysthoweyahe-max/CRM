@@ -14,7 +14,7 @@ export function EmploymentInfoCard({ employee, isAr }: Props) {
         {isAr ? 'معلومات التوظيف' : 'Employment Information'}
       </h2>
       <InfoRow label={isAr ? 'الرقم الوظيفي' : 'Employee Number'} value={employee.employeeNumber} />
-      <InfoRow label={isAr ? 'القسم' : 'Department'} value={employee.department} />
+      <InfoRow label={isAr ? 'الأقسام' : 'Departments'} value={employee.department} />
       <InfoRow label={isAr ? 'المسمى الوظيفي' : 'Job Title'} value={employee.jobTitle} />
       <InfoRow label={isAr ? 'المدير المباشر' : 'Direct Manager'} value={employee.managerName || '—'} />
       <InfoRow label={isAr ? 'تاريخ الالتحاق' : 'Joining Date'} value={isAr ? employee.joiningDateAr : employee.joiningDateEn} />

@@ -156,10 +156,12 @@ export interface SeoProjectSettings {
   sectionTitle:        string;
   name:                string;
   startDate:           string;
+  expectedEndDate?:    string | null;
   targetDomain:        string | null;
   description:         string;
   status:              string;
   statusLabel:         string;
+  isDraft?:            boolean;
   campaignType:        string;
   campaignTypeLabel:   string;
   githubLink?:              string | null;
@@ -175,10 +177,13 @@ export interface SeoProjectUpdatePayload {
   description?:             string;
   targetDomain?:            string | null;
   campaignType?:            string;
+  status?:                  string;
   startDate?:               string;
+  expectedEndDate?:         string | null;
   githubLink?:              string | null;
   driveLink?:               string | null;
   contractDurationMonths?:  number | null;
+  isDraft?:                 boolean;
 }
 
 export interface SeoActivityActor {
@@ -219,6 +224,13 @@ export const campaignApi = {
     return http.get<ApiResponse<SeoProjectSettings>>(`/v1/seo/projects/${id}/settings`);
   },
 
+  updateSettings(id: string | number, payload: SeoProjectUpdatePayload) {
+    return http.patch<ApiResponse<SeoProjectSettings>>(
+      `/v1/seo/projects/${id}/settings`,
+      payload,
+    );
+  },
+
   getActivity(id: string | number, page = 1, perPage = 20) {
     return http.get<ApiResponse<SeoActivityPage>>(
       `/v1/seo/projects/${id}/activity`,
@@ -247,6 +259,11 @@ export const campaignApi = {
 
   getCampaignTypes() {
     return http.get<CampaignLookupResponse>('/v1/seo/projects/lookups/campaign-types');
+  },
+
+  /** Preferred SEO project-type lookup (replaces legacy campaign-types). */
+  getProjectTypes() {
+    return http.get<CampaignLookupResponse>('/v1/seo/projects/lookups/types');
   },
 
   getStatuses() {

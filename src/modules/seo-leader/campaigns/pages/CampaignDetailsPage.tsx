@@ -1,11 +1,15 @@
 import { useState, useMemo, useEffect }     from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Plus }        from 'lucide-react';
-import { useQuery }               from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast }                  from 'sonner';
 import { useLang }                from '@/app/providers/LanguageProvider';
 import { Card }                   from '@/shared/components/ui/Card';
 import { Button }                 from '@/shared/components/ui/Button';
+import { Combobox }               from '@/shared/components/form/Combobox';
+import type { ComboboxItem }      from '@/shared/components/form/Combobox';
 import { ROUTES }                 from '@/app/router/routes';
+import { extractApiError }        from '@/shared/utils/error.utils';
 import { campaignApi }                       from '../api/campaign.api';
 import type { SeoTask }                      from '../api/campaign.api';
 import { SeoTaskDrawer }          from '../components/SeoTaskDrawer';
@@ -89,13 +93,6 @@ const TABS: { key: TabKey; ar: string; en: string }[] = [
   { key: 'settings', ar: 'الإعدادات', en: 'Settings' },
 ];
 
-const STATUS_BADGE: Record<string, string> = {
-  in_progress: 'bg-[#D8EBAE] text-[#709028] dark:bg-[#A0CD39]/20 dark:text-[#A0CD39]',
-  not_started: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-  completed:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  paused:      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-};
-
 /* ── Component ───────────────────────────────────────────────────────── */
 export function CampaignDetailsPage() {
   const { lang }    = useLang();
@@ -103,6 +100,7 @@ export function CampaignDetailsPage() {
   const navigate    = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   const tabParam = searchParams.get('tab');
   const initialTab: TabKey = tabParam === 'messages' ? 'messages' : 'tasks';
@@ -110,19 +108,26 @@ export function CampaignDetailsPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   // Keyed by task id → the real backend status key (not the coarse union).
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
+  const [changingStatus, setChangingStatus] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     if (tabParam === 'messages') setActiveTab('messages');
   }, [tabParam]);
 
   /* ── Campaign header ──────────────────────────────────────────────── */
-  const { data: campaign, isLoading: campaignLoading } = useQuery({
+  const { data: campaign, isLoading: campaignLoading, refetch: refetchCampaign } = useQuery({
     queryKey: ['campaign-detail', id],
     queryFn:  async () => (await campaignApi.getById(id)).data.data,
     enabled:   !!id,
     staleTime: 30_000,
   });
 
+  const { data: projectStatuses = [] } = useQuery({
+    queryKey: ['seo-project-statuses'],
+    queryFn:  () => campaignApi.getStatuses().then(r => r.data.data ?? []),
+    staleTime: 5 * 60 * 1000,
+  });
   /* ── Task statuses — admin-configured, drives the Kanban columns ───── */
   const { data: statusesRaw, isLoading: statusesLoading } = useSeoTaskStatusList();
   const statuses = useMemo(
@@ -171,6 +176,42 @@ export function CampaignDetailsPage() {
       .catch(console.error);
   }
 
+  async function handleStatusChange(nextStatus: string) {
+    if (!campaign || nextStatus === campaign.status || changingStatus) return;
+    setChangingStatus(true);
+    try {
+      await campaignApi.updateProjectStatus(id, nextStatus);
+      toast.success(isAr ? 'تم تحديث حالة المشروع' : 'Project status updated');
+      await refetchCampaign();
+      queryClient.invalidateQueries({ queryKey: ['seo-project-settings', id] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المشروع' : 'Failed to update status'));
+    } finally {
+      setChangingStatus(false);
+    }
+  }
+
+  async function handlePublish() {
+    if (!campaign?.isDraft || publishing) return;
+    setPublishing(true);
+    try {
+      await campaignApi.updateSettings(id, {
+        name:    campaign.name,
+        isDraft: false,
+      });
+      toast.success(isAr ? 'تم نشر المشروع' : 'Project published');
+      await refetchCampaign();
+      queryClient.invalidateQueries({ queryKey: ['seo-project-settings', id] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['my-projects'] });
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر نشر المشروع' : 'Failed to publish project'));
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   /* ── Loading ──────────────────────────────────────────────────────── */
   if (campaignLoading) {
     return (
@@ -183,7 +224,10 @@ export function CampaignDetailsPage() {
     );
   }
 
-  const badgeCls   = STATUS_BADGE[campaign?.status ?? ''] ?? 'bg-gray-100 text-gray-500';
+  const statusItems: ComboboxItem[] = projectStatuses.map(s => ({
+    id:    s.value,
+    label: translateProjectLookup(s.value, s.label, isAr),
+  }));
   const tasksTotal = tasks.length;
   const tasksDone  = tasks.filter(t => marksCompletedByKey[t.rawStatus]).length;
   const progress   = tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0;
@@ -204,7 +248,7 @@ export function CampaignDetailsPage() {
 
       {/* Header Card */}
       <Card className="p-6">
-        <div className="flex items-start justify-between gap-4 mb-5">
+        <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-snug">
               {campaign?.name ?? '—'}
@@ -213,11 +257,36 @@ export function CampaignDetailsPage() {
               {translateProjectLookup(campaign?.campaignType ?? '', campaign?.campaignTypeLabel ?? '', isAr)}
             </p>
           </div>
-          <span className={`shrink-0 text-xs font-medium px-3 py-1 rounded-full ${badgeCls}`}>
-            {translateProjectLookup(campaign?.status ?? '', campaign?.statusLabel ?? '', isAr)}
-          </span>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <div className="w-40">
+              <Combobox
+                items={statusItems}
+                value={campaign?.status ?? ''}
+                onChange={handleStatusChange}
+                disabled={changingStatus || statusItems.length === 0}
+                searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
+                noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+              />
+            </div>
+            {campaign?.isDraft && (
+              <>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                  {isAr ? 'مسودة' : 'Draft'}
+                </span>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={publishing}
+                  onClick={handlePublish}
+                >
+                  {publishing
+                    ? (isAr ? 'جاري النشر...' : 'Publishing…')
+                    : (isAr ? 'نشر المشروع' : 'Publish')}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-
         {/* Tasks count + progress */}
         <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
           <span>{isAr ? 'نسبة الإنجاز' : 'Progress'}</span>

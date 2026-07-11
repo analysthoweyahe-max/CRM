@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { PermissionChip } from './PermissionChip';
 import { PERMISSION_GROUPS } from '../types/adminRole.types';
 import { PANEL_PERMISSION_SLUGS } from '@/shared/permissions/panelPermissionCatalog';
+import { getPermissionLabel } from '@/shared/permissions/permissionLabel.utils';
 import { filterRegisteredPermissions, toPermissionNameSet } from '@/shared/permissions/permissionValidation.utils';
 import { usePermissionList } from '@/modules/admin/permissions/hooks/usePermissions';
 
@@ -75,7 +76,7 @@ export function PermissionGroupList({ selected, onToggle, isAr }: Props) {
             {otherSlugs.map((slug) => (
               <PermissionChip
                 key={slug}
-                label={slug}
+                label={getPermissionLabel(slug, isAr)}
                 active={visibleSelected.includes(slug)}
                 onToggle={() => onToggle(slug)}
               />

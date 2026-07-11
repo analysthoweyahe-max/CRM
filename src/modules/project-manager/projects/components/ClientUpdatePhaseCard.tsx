@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import {
-  ChevronLeft, ChevronDown, ChevronUp,
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   Paperclip, Send, Calendar, CheckCircle2, MessageSquare, ListChecks,
 } from 'lucide-react';
 import { Avatar } from '@/shared/components/ui/Avatar';
@@ -67,6 +67,13 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
         className="w-full flex items-center justify-between gap-3 px-5 py-4
                    hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
       >
+        <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-100">
+          {phase.name}
+          {isAr
+            ? <ChevronRight size={14} className="text-gray-400 shrink-0" />
+            : <ChevronLeft size={14} className="text-gray-400 shrink-0" />}
+        </div>
+
         <div className="flex items-center gap-2 shrink-0">
           <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full
                            ${STATUS_CLS[phase.approvalStatus] ?? STATUS_CLS.pending}`}>
@@ -76,15 +83,10 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
             ? <ChevronUp   size={15} className="text-gray-400" />
             : <ChevronDown size={15} className="text-gray-400" />}
         </div>
-
-        <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-100">
-          {phase.name}
-          <ChevronLeft size={14} className="text-gray-400 shrink-0" />
-        </div>
       </button>
 
       {!isOpen && phase.deliveryDate && (
-        <p className="px-5 pb-3 text-xs text-gray-400 dark:text-gray-500 text-end">
+        <p className="px-5 pb-3 text-xs text-gray-400 dark:text-gray-500 text-start">
           {isAr ? 'موعد التسليم:' : 'Due:'} {phase.deliveryDate}
         </p>
       )}
@@ -93,34 +95,34 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
         <div className="border-t border-gray-100 dark:border-gray-700 px-5 pb-5 pt-4 space-y-4">
 
           {phase.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-300 text-end leading-relaxed">
+            <p className="text-sm text-gray-600 dark:text-gray-300 text-start leading-relaxed">
               {phase.description}
             </p>
           )}
 
           {/* Dates + tasks count row */}
-          <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-1.5">
+          <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-1.5">
             <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-              <span>{phase.tasksCount} {isAr ? 'مهمة' : 'tasks'}</span>
               <ListChecks size={13} className="text-gray-400" />
+              <span>{phase.tasksCount} {isAr ? 'مهمة' : 'tasks'}</span>
             </div>
             {phase.deliveryDate && (
               <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                <span>{phase.deliveryDate}</span>
                 <Calendar size={13} className="text-gray-400" />
+                <span>{phase.deliveryDate}</span>
               </div>
             )}
             {phase.clientApprovedAt && (
               <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                <span>{phase.clientApprovedAt}</span>
                 <CheckCircle2 size={13} />
+                <span>{phase.clientApprovedAt}</span>
               </div>
             )}
           </div>
 
           {/* Attachments */}
           {phase.attachments.length > 0 && (
-            <div className="flex flex-col items-end gap-1.5">
+            <div className="flex flex-col items-start gap-1.5">
               {phase.attachments.map(att => (
                 <a
                   key={att.id}
@@ -129,8 +131,8 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
                   rel="noreferrer"
                   className="flex items-center gap-2 text-xs text-[#709028] dark:text-[#A0CD39] hover:underline"
                 >
-                  <span>{att.name ?? `#${att.id}`}</span>
                   <Paperclip size={13} />
+                  <span>{att.name ?? `#${att.id}`}</span>
                 </a>
               ))}
             </div>
@@ -138,13 +140,13 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
 
           {/* Client discussion */}
           <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="flex items-center justify-end gap-2 px-4 py-2.5
+            <div className="flex items-center justify-start gap-2 px-4 py-2.5
                             bg-gray-50 dark:bg-gray-700/40
                             border-b border-gray-100 dark:border-gray-700">
+              <MessageSquare size={14} className="text-gray-400" />
               <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
                 {isAr ? 'النقاش مع العميل' : 'Client Discussion'}
               </span>
-              <MessageSquare size={14} className="text-gray-400" />
             </div>
 
             <div className="px-4 py-3 space-y-3 bg-gray-50/60 dark:bg-gray-900/20
@@ -163,8 +165,8 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
                   return isOwn ? (
                     <div key={msg.id} className="flex flex-col items-end gap-1">
                       <span className="text-[10px] text-gray-400">{msg.sender.name}  {msg.createdAt}</span>
-                      <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-tr-sm
-                                      bg-[#A0CD39] text-white text-sm leading-relaxed shadow-sm">
+                      <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-se-sm
+                                      bg-[#A0CD39] text-white text-sm leading-relaxed shadow-sm text-start">
                         {msg.body}
                       </div>
                     </div>
@@ -175,9 +177,9 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
                         color={getAvatarColor(msg.sender.id)}
                         size="sm"
                       />
-                      <div className="space-y-0.5">
+                      <div className="space-y-0.5 text-start">
                         <span className="text-[10px] text-gray-400">{msg.sender.name}  {msg.createdAt}</span>
-                        <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-tl-sm
+                        <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-ss-sm
                                         bg-white dark:bg-gray-700
                                         border border-gray-100 dark:border-gray-600
                                         text-sm text-gray-800 dark:text-gray-200
@@ -214,7 +216,7 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
                 className="flex-1 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50
                            border border-gray-100 dark:border-gray-600
                            px-3 py-1.5 text-gray-700 dark:text-gray-300
-                           placeholder:text-gray-400 text-end
+                           placeholder:text-gray-400 text-start
                            focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50"
               />
 

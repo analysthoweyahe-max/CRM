@@ -61,8 +61,8 @@ export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageRe
   const listParams = useMemo(() => ({
     search:   config.canSearch && search.trim() ? search.trim() : undefined,
     status:   config.canFilterStatus && status ? status : undefined,
-    // Only request drafts when toggled on — omit otherwise (backend excludes drafts by default).
-    is_draft: config.canToggleDraft && showDrafts ? true : undefined,
+    // Explicit 0/1 — omitting the param was returning drafts anyway.
+    is_draft: config.canToggleDraft ? showDrafts : undefined,
     per_page: PER_PAGE,
     page,
   }), [config, search, status, showDrafts, page]);

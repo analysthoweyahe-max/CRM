@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
+import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { useDepartments, useJobTitles } from '@/modules/hr/employees/hooks/useLookups';
 import { RoleSelect }        from './RoleSelect';
 import { StatusSelect }      from './StatusSelect';
@@ -21,6 +23,11 @@ interface Props {
   disableEmail?:      boolean;
 }
 
+function titleDepartmentId(t: { departmentId?: unknown; department_id?: unknown }): string {
+  const raw = t.departmentId ?? t.department_id;
+  return raw == null || raw === '' ? '' : String(raw);
+}
+
 export function ManagerForm({
   mode,
   values,
@@ -34,17 +41,58 @@ export function ManagerForm({
   disableEmail = false,
 }: Props) {
   const { data: departments = [], isLoading: deptsLoading } = useDepartments();
-  const { data: jobTitles = [], isLoading: titlesLoading } = useJobTitles(values.departmentId || undefined);
+  const { data: allJobTitles = [], isLoading: titlesLoading } = useJobTitles();
+
+  const selectedDeptSet = useMemo(
+    () => new Set(values.departmentIds.map(String)),
+    [values.departmentIds],
+  );
+
+  const filteredTitles = useMemo(() => {
+    if (selectedDeptSet.size === 0) return [];
+    return allJobTitles.filter((t) => {
+      const deptId = titleDepartmentId(t);
+      // Titles without a department stay available; otherwise must match a selected dept
+      return !deptId || selectedDeptSet.has(deptId);
+    });
+  }, [allJobTitles, selectedDeptSet]);
 
   const deptItems = departments.map((d) => ({
     id:    String(d.id),
-    label: isAr ? (d.nameAr || d.name) : d.name,
+    label: isAr ? (d.nameAr || d.name_ar || d.name) : d.name,
   }));
 
-  const titleItems = jobTitles.map((t) => ({
+  const titleItems = filteredTitles.map((t) => ({
     id:    String(t.id),
-    label: isAr ? (t.nameAr || t.name) : t.name,
+    label: isAr ? (t.nameAr || t.name_ar || t.name) : t.name,
   }));
+
+  function handleDepartmentsChange(departmentIds: string[]) {
+    const nextSet = new Set(departmentIds.map(String));
+    const title = allJobTitles.find((t) => String(t.id) === values.jobTitleId);
+    const titleDept = title ? titleDepartmentId(title) : '';
+    const jobTitleStillValid = !values.jobTitleId
+      || !titleDept
+      || nextSet.has(titleDept);
+
+    onChange({
+      departmentIds,
+      ...(jobTitleStillValid ? {} : { jobTitleId: '' }),
+    });
+  }
+
+  function handleJobTitleChange(jobTitleId: string) {
+    const title = allJobTitles.find((t) => String(t.id) === jobTitleId);
+    const deptFromTitle = title ? titleDepartmentId(title) : '';
+    const patch: Partial<ManagerFormValues> = { jobTitleId };
+
+    // Ensure the title's department is among the selected departments
+    if (deptFromTitle && !selectedDeptSet.has(deptFromTitle)) {
+      patch.departmentIds = [...values.departmentIds, deptFromTitle];
+    }
+
+    onChange(patch);
+  }
 
   function togglePermission(slug: string) {
     onChange({
@@ -53,6 +101,8 @@ export function ManagerForm({
         : [...values.permissions, slug],
     });
   }
+
+  const deptError = errors.departmentIds || errors.department_ids || errors.departmentId || errors.department_id;
 
   return (
     <div className="space-y-5">
@@ -97,25 +147,44 @@ export function ManagerForm({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField label={isAr ? 'القسم' : 'Department'} required error={errors.departmentId}>
-          <Combobox
+        <FormField
+          label={isAr ? 'الأقسام' : 'Departments'}
+          required
+          error={deptError}
+        >
+          <MultiCombobox
             items={deptItems}
-            value={values.departmentId}
-            onChange={departmentId => onChange({ departmentId, jobTitleId: '' })}
+            values={values.departmentIds}
+            onChange={handleDepartmentsChange}
+            error={!!deptError}
+            placeholder={isAr ? 'اختر قسماً أو أكثر' : 'Select one or more departments'}
             searchPlaceholder={isAr ? 'ابحث عن قسم...' : 'Search department...'}
             noResultsText={isAr ? 'لا نتائج' : 'No results'}
             disabled={deptsLoading}
           />
         </FormField>
 
-        <FormField label={isAr ? 'المسمى الوظيفي' : 'Job Title'} required error={errors.jobTitleId}>
+        <FormField
+          label={isAr ? 'المسمى الوظيفي' : 'Job Title'}
+          required
+          error={errors.jobTitleId || errors.job_title_id}
+        >
           <Combobox
             items={titleItems}
             value={values.jobTitleId}
-            onChange={jobTitleId => onChange({ jobTitleId })}
+            onChange={handleJobTitleChange}
             searchPlaceholder={isAr ? 'ابحث عن مسمى...' : 'Search job title...'}
-            noResultsText={isAr ? 'لا نتائج' : 'No results'}
-            disabled={!values.departmentId || titlesLoading}
+            noResultsText={
+              values.departmentIds.length === 0
+                ? (isAr ? 'اختر قسماً أولاً' : 'Select a department first')
+                : (isAr ? 'لا نتائج' : 'No results')
+            }
+            disabled={titlesLoading || values.departmentIds.length === 0}
+            placeholder={
+              values.departmentIds.length === 0
+                ? (isAr ? 'اختر قسماً أولاً' : 'Select a department first')
+                : (isAr ? 'اختر المسمى' : 'Select job title')
+            }
           />
         </FormField>
       </div>
@@ -127,6 +196,7 @@ export function ManagerForm({
           isAr={isAr}
           availableRoles={availableRoles}
           allowedRoleNames={allowedRoleNames}
+          disabled={allowedRoleNames !== undefined && allowedRoleNames.length === 0}
         />
       </FormField>
 

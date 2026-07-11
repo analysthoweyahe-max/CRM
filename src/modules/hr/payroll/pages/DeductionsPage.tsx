@@ -43,7 +43,10 @@ export function DeductionsPage() {
 
   const typeItems   = useMemo<ComboboxItem[]>(() => [
     { id: '', label: isAr ? 'كل الأنواع'  : 'All types'   },
-    ...(typesRaw   ?? []).map((t) => ({ id: t.value, label: t.label })),
+    ...(typesRaw   ?? []).map((t) => ({
+      id:    t.code || t.value || t.id,
+      label: isAr ? (t.label || t.nameAr || t.name) : (t.name || t.label),
+    })),
   ], [typesRaw, isAr]);
 
   const sourceItems = useMemo<ComboboxItem[]>(() => [

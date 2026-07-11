@@ -1,4 +1,4 @@
-/* ── PM Project Templates (GET/POST/PUT/DELETE /v1/pm/project-templates) ──── */
+/* ── PM Project Templates (GET/POST/PUT/DELETE /v1/{pm|seo}/project-templates) ──── */
 
 export interface PmTemplateStep {
   id?:          number;

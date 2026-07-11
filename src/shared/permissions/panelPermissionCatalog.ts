@@ -56,6 +56,8 @@ export const PANEL_PERMISSION_GROUPS: PermissionGroup[] = [
 
       { slug: 'delete-permission', labelAr: 'حذف صلاحية',   labelEn: 'Delete Permission' },
 
+      { slug: 'custom-permission', labelAr: 'صلاحية مخصصة', labelEn: 'Custom Permission' },
+
     ],
 
   },

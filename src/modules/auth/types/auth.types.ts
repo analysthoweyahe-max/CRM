@@ -67,8 +67,7 @@ export interface AuthLoginResponse {
 }
 
 export type LoginResult =
-  | { status: 'success'; token: string; user: AuthUser; redirectPath?: string }
-  | { status: 'otp_required'; adminId: string; expiresAt: string; magicLinkRequired?: boolean };
+  | { status: 'success'; token: string; user: AuthUser; redirectPath?: string };
 
 export interface InviteTokenPayload {
   name:          string;
@@ -138,8 +137,10 @@ export interface LoginResponse {
 
 export interface AdminLoginApiResponse {
   data: {
+    actorType?:          'admin' | 'employee';
     accessToken?:        string;
     access_token?:       string;
+    tokenType?:          string;
     admin?:              AdminUser;
     employee?:           ApiEmployee;
     redirect_path?:      string;

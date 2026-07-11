@@ -19,8 +19,11 @@ import type {
 export const authApi = {
   // ── Admin / HR Manager ───────────────────────────────────────────────────
 
-  adminLogin(credentials: { admin_id: string; password: string }) {
-    return http.post<AdminLoginApiResponse>('/v1/admin/auth/login', credentials);
+  adminLogin(credentials: { admin_id: string | number; password: string }) {
+    return http.post<AdminLoginApiResponse>('/v1/admin/auth/login', {
+      admin_id: String(credentials.admin_id).trim(),
+      password: credentials.password,
+    });
   },
 
   // Exchanges the one-time magic-login token (from the super-admin email link)

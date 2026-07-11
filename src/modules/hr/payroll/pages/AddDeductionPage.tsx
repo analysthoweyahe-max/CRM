@@ -10,9 +10,10 @@ import { ROUTES }           from '@/app/router/routes';
 import { Card }             from '@/shared/components/ui/Card';
 import { PageHeader }       from '@/shared/components/ui/PageHeader';
 import { employeeApi }      from '@/modules/hr/employees/api/employee.api';
+import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
 import { makeDeductionSchema } from '../schemas/addDeduction.schema';
 import { useDeductionTypes, useCreateDeduction } from '../hooks/useDeductions';
-import { translateDeductionType } from '../utils/deductionType.i18n';
+import { payrollLookupLabel, payrollLookupSelectId } from '../utils/payrollType.utils';
 import { DeductionFormFields } from '../components/DeductionFormFields';
 import type { AddDeductionFormValues } from '../types/addDeduction.types';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
@@ -47,36 +48,55 @@ export function AddDeductionPage() {
     queryFn:  () => employeeApi.list({ per_page: 100 }).then((r) => r.data.data.data),
   });
 
-  const typeItems = useMemo<ComboboxItem[]>(() => [
-    { id: '', label: isAr ? 'اختر نوع الخصم...' : 'Select type...' },
-    ...(typesRaw ?? []).map((t) => ({ id: t.value, label: translateDeductionType(t.value, t.label, isAr) })),
-  ], [typesRaw, isAr]);
+  const typeItems = useMemo<ComboboxItem[]>(() =>
+    (typesRaw ?? []).map((t) => ({
+      id:    payrollLookupSelectId(t),
+      label: payrollLookupLabel(t, isAr),
+    })),
+  [typesRaw, isAr]);
 
-  const empItems = useMemo<ComboboxItem[]>(() => [
-    { id: '', label: isAr ? 'اختر موظفاً...' : 'Select employee...' },
-    ...(empList ?? []).map((e) => ({ id: e.employeeNumber ?? e.id, label: e.name })),
-  ], [empList, isAr]);
+  const empItems = useMemo<ComboboxItem[]>(() =>
+    (empList ?? []).map((e) => ({ id: e.employeeNumber ?? e.id, label: e.name })),
+  [empList]);
 
   const monthItems = useMemo(() => buildMonthItems(isAr), [isAr]);
   const createDeduction = useCreateDeduction();
 
-  const { register, control, handleSubmit, formState: { errors, isSubmitting } } =
+  const { register, control, handleSubmit, setError, formState: { errors, isSubmitting } } =
     useForm<AddDeductionFormValues>({
       resolver: (v, c, o) => zodResolver(makeDeductionSchema(isAr))(v, c, o),
-      defaultValues: { notes: '' },
+      defaultValues: { notes: '', deduction_type_id: '' },
     });
 
   async function onSubmit(values: AddDeductionFormValues) {
-    await createDeduction.mutateAsync({
-      employee_number: values.employee_id,
-      deduction_type:  values.deduction_type,
-      financial_month: values.financial_month,
-      amount:          Number(values.amount),
-      reason:          values.reason,
-      notes:           values.notes || undefined,
-    });
-    toast.success(isAr ? 'تم حفظ الخصم بنجاح' : 'Deduction saved successfully');
-    navigate(ROUTES.PAYROLL.DEDUCTIONS);
+    try {
+      await createDeduction.mutateAsync({
+        employee_number:    values.employee_id,
+        deduction_type_id:  values.deduction_type_id,
+        financial_month:    values.financial_month,
+        amount:             Number(values.amount),
+        reason:             values.reason,
+        notes:              values.notes || undefined,
+      });
+      toast.success(isAr ? 'تم حفظ الخصم بنجاح' : 'Deduction saved successfully');
+      navigate(ROUTES.PAYROLL.DEDUCTIONS);
+    } catch (err) {
+      const fieldErrors = extractApiFieldErrors(err);
+      let mapped = false;
+      for (const [key, message] of Object.entries(fieldErrors)) {
+        if (key === 'deduction_type_id' || key === 'deduction_type') {
+          setError('deduction_type_id', { message });
+          mapped = true;
+        } else if (key === 'employee_number') {
+          setError('employee_id', { message });
+          mapped = true;
+        } else if (key in values) {
+          setError(key as keyof AddDeductionFormValues, { message });
+          mapped = true;
+        }
+      }
+      if (!mapped) toast.error(extractApiError(err));
+    }
   }
 
   return (

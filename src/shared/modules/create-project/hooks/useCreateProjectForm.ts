@@ -12,6 +12,7 @@ import {
   optionalContractDurationMonths,
   validateProjectOptionalFields,
 } from '@/shared/utils/projectOptionalFields.utils';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { createProjectApi } from '../api/createProject.api';
 import { activeProjectTypes, projectTypeLabel } from '../utils/createProject.utils';
 import type {
@@ -43,6 +44,8 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
   const [contractDurationMonths, setContractDurationMonths] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [status, setStatus] = useState('not_started');
+  const [saveAsDraft, setSaveAsDraft] = useState(false);
   const [managerIds, setManagerIds] = useState<string[]>([]);
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
   const [managerSearch, setManagerSearch] = useState('');
@@ -70,6 +73,12 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
       : createProjectApi.projectTypes(module)),
     enabled:  !isAdmin || !!deptNum,
     staleTime: 60_000,
+  });
+
+  const statusesQ = useQuery({
+    queryKey: ['create-project', module, 'statuses'],
+    queryFn:  () => createProjectApi.statuses(module),
+    staleTime: 5 * 60 * 1000,
   });
 
   const employeesQ = useQuery({
@@ -104,6 +113,13 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
       label: projectTypeLabel(t, isAr),
     })),
   [projectTypes, isAr]);
+
+  const statusItems = useMemo(() =>
+    (statusesQ.data ?? []).map(s => ({
+      id:    s.value,
+      label: translateProjectLookup(s.value, s.label, isAr),
+    })),
+  [statusesQ.data, isAr]);
 
   const employeeItems = useMemo(() =>
     (employeesQ.data?.data ?? []).map(e => ({
@@ -141,6 +157,14 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     setEmployeeSearch('');
   }, [projectTypeId]);
 
+  useEffect(() => {
+    const options = statusesQ.data ?? [];
+    if (options.length === 0) return;
+    if (!options.some(s => s.value === status)) {
+      setStatus(options[0].value);
+    }
+  }, [statusesQ.data, status]);
+
   const validateOptionalFields = useCallback(() => {
     const optional = validateProjectOptionalFields(githubLink, driveLink, contractDurationMonths, isAr);
     setFieldErrors(prev => {
@@ -156,40 +180,46 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
   const createMutation = useMutation({
     mutationFn: async (asDraft: boolean) => {
       const common = {
-        name:                    name.trim(),
-        description:             description.trim() || null,
-        projectTypeId:           Number(projectTypeId),
-        githubLink:              optionalLink(githubLink),
-        driveLink:               optionalLink(driveLink),
-        contractDurationMonths:  optionalContractDurationMonths(contractDurationMonths),
-        employeeIds:             employeeIds.length ? employeeIds : undefined,
-        isDraft:                 asDraft,
-        start_date:              startDate || null,
+        name:                   name.trim(),
+        description:            description.trim() || null,
+        projectTypeId:          Number(projectTypeId),
+        githubLink:             optionalLink(githubLink),
+        driveLink:              optionalLink(driveLink),
+        contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
+        employeeIds:            employeeIds.length ? employeeIds : undefined,
+        status:                 status || 'not_started',
+        isDraft:                asDraft,
+        startDate:              startDate || null,
       };
 
       if (module === 'pm') {
         return createProjectApi.createPm({
           ...common,
-          deadline:    endDate || null,
-          status:      'not_started',
-          templateId:  templateId || null,
-          managerIds:  isAdmin ? managerIds : undefined,
+          deadline:   endDate || null,
+          templateId: templateId || null,
+          managerIds: isAdmin ? managerIds : undefined,
         }, attachment);
       }
 
       return createProjectApi.createSeo({
         ...common,
-        targetDomain:      targetDomain.trim() || null,
-        expected_end_date: endDate || null,
-        managerIds:        isAdmin ? managerIds : undefined,
+        targetDomain:     targetDomain.trim() || null,
+        expectedEndDate:  endDate || null,
+        managerIds:       isAdmin ? managerIds : undefined,
       }, attachment);
     },
     onSuccess: (res, asDraft) => {
-      const newId = res.data.data.id;
+      const newId = res.data?.data?.id;
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
       queryClient.invalidateQueries({ queryKey: module === 'pm' ? ['pm-dashboard'] : ['seo-leader', 'projects'] });
       setSavedAsDraft(asDraft);
       setSaved(true);
+      if (newId == null) {
+        toast.success(asDraft
+          ? (isAr ? 'تم حفظ المسودة' : 'Draft saved')
+          : (isAr ? 'تم إنشاء المشروع' : 'Project created'));
+        return;
+      }
       const path = module === 'pm'
         ? ROUTES.PROJECT_MANAGER.DETAILS(String(newId))
         : ROUTES.SEO_LEADER.DETAILS(String(newId));
@@ -199,6 +229,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
       const apiFieldErrors = extractApiFieldErrors(err);
       if (Object.keys(apiFieldErrors).length > 0) {
         setFieldErrors(prev => ({ ...prev, ...apiFieldErrors }));
+        toast.error(extractApiError(err) || (isAr ? 'راجع الحقول المطلوبة' : 'Please check the required fields'));
       } else {
         toast.error(extractApiError(err));
       }
@@ -239,14 +270,17 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
         : 'Assign at least one employee before publishing';
     }
 
-    setFieldErrors(prev => ({ ...prev, ...errors }));
+    setFieldErrors(errors);
     const optionalOk = validateOptionalFields();
     return Object.keys(errors).length === 0 && optionalOk;
   }
 
-  function handleSave(asDraft = false) {
+  function handleSave(asDraft = saveAsDraft) {
     if (createMutation.isPending) return;
-    if (!validate(asDraft)) return;
+    if (!validate(asDraft)) {
+      toast.error(isAr ? 'راجع الحقول المطلوبة قبل الإنشاء' : 'Please fill the required fields');
+      return;
+    }
     createMutation.mutate(asDraft);
   }
 
@@ -277,6 +311,8 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     contractDurationMonths, setContractDurationMonths,
     startDate, setStartDate,
     endDate, setEndDate,
+    status, setStatus,
+    saveAsDraft, setSaveAsDraft,
     managerIds, setManagerIds,
     managerSearch, setManagerSearch,
     employeeIds, setEmployeeIds,
@@ -286,9 +322,11 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     // lookups
     departmentItems,
     projectTypeItems,
+    statusItems,
     employeeItems,
     managerItems,
     typesLoading: typesQ.isLoading,
+    statusesLoading: statusesQ.isLoading,
     employeesLoading: employeesQ.isLoading,
     managersLoading: managersQ.isLoading,
     showDepartment: isAdmin,

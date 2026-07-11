@@ -91,11 +91,7 @@ export function useAdminOtp() {
     setInfo(null);
     setResending(true);
     try {
-      const fallback = stored
-        ? { identifier: stored.identifier, password: stored.password, rememberMe: stored.rememberMe }
-        : undefined;
-
-      const result = await authService.resendAdminOtp(adminId, fallback);
+      const result = await authService.resendAdminOtp(adminId);
       if (result.adminId && result.adminId !== adminId) {
         setAdminId(result.adminId);
       }

@@ -1,6 +1,6 @@
 import { useState }     from 'react';
 import {
-  ChevronLeft, ChevronDown, ChevronUp,
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   Paperclip, Plus, Send, Calendar, CheckCircle2, MessageSquare,
 } from 'lucide-react';
 import { Avatar }   from '@/shared/components/ui/Avatar';
@@ -130,7 +130,15 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
         className="w-full flex items-center justify-between gap-3 px-5 py-4
                    hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
       >
-        {/* Left: status badge + chevron */}
+        {/* Start (right in RTL): title */}
+        <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-100">
+          {m.title}
+          {isAr
+            ? <ChevronRight size={14} className="text-gray-400 shrink-0" />
+            : <ChevronLeft size={14} className="text-gray-400 shrink-0" />}
+        </div>
+
+        {/* End (left in RTL): status badge + chevron */}
         <div className="flex items-center gap-2 shrink-0">
           <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full
                            ${STATUS_CLS[m.status] ?? STATUS_CLS.pending}`}>
@@ -140,17 +148,11 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
             ? <ChevronUp   size={15} className="text-gray-400" />
             : <ChevronDown size={15} className="text-gray-400" />}
         </div>
-
-        {/* Right: title + breadcrumb arrow */}
-        <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-100">
-          {m.title}
-          <ChevronLeft size={14} className="text-gray-400 shrink-0" />
-        </div>
       </button>
 
       {/* Collapsed subtitle: delivery date */}
       {!isOpen && m.deliveryDate && (
-        <p className="px-5 pb-3 text-xs text-gray-400 dark:text-gray-500 text-end">
+        <p className="px-5 pb-3 text-xs text-gray-400 dark:text-gray-500 text-start">
           {isAr ? 'موعد التسليم:' : 'Due:'} {m.deliveryDate}
         </p>
       )}
@@ -161,30 +163,30 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
 
           {/* Description */}
           {m.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-300 text-end leading-relaxed">
+            <p className="text-sm text-gray-600 dark:text-gray-300 text-start leading-relaxed">
               {m.description}
             </p>
           )}
 
           {/* Dates row */}
-          <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-1.5">
+          <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-1.5">
             {m.deliveryDate && (
               <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                <span>{m.deliveryDate}</span>
                 <Calendar size={13} className="text-gray-400" />
+                <span>{m.deliveryDate}</span>
               </div>
             )}
             {m.approvedAt && (
               <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                <span>{m.approvedAt}</span>
                 <CheckCircle2 size={13} />
+                <span>{m.approvedAt}</span>
               </div>
             )}
           </div>
 
           {/* Attachments */}
           {m.attachments.length > 0 && (
-            <div className="flex flex-col items-end gap-1.5">
+            <div className="flex flex-col items-start gap-1.5">
               {m.attachments.map(att => (
                 <button
                   key={att.id}
@@ -192,8 +194,8 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
                   className="flex items-center gap-2 text-xs text-[#709028] dark:text-[#A0CD39]
                              hover:underline"
                 >
-                  <span>{att.name}</span>
                   <Paperclip size={13} />
+                  <span>{att.name}</span>
                 </button>
               ))}
             </div>
@@ -203,13 +205,13 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
           <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
 
             {/* Section header */}
-            <div className="flex items-center justify-end gap-2 px-4 py-2.5
+            <div className="flex items-center justify-start gap-2 px-4 py-2.5
                             bg-gray-50 dark:bg-gray-700/40
                             border-b border-gray-100 dark:border-gray-700">
+              <MessageSquare size={14} className="text-gray-400" />
               <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
                 {isAr ? 'النقاش مع العميل' : 'Client Discussion'}
               </span>
-              <MessageSquare size={14} className="text-gray-400" />
             </div>
 
             {/* Messages */}
@@ -224,8 +226,8 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
                   msg.isOwn ? (
                     <div key={msg.id} className="flex flex-col items-end gap-1">
                       <span className="text-[10px] text-gray-400">{msg.senderName}  {msg.sentAt}</span>
-                      <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-tr-sm
-                                      bg-[#A0CD39] text-white text-sm leading-relaxed shadow-sm">
+                      <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-se-sm
+                                      bg-[#A0CD39] text-white text-sm leading-relaxed shadow-sm text-start">
                         {msg.text}
                       </div>
                     </div>
@@ -236,9 +238,9 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
                         color={msg.senderColor}
                         size="sm"
                       />
-                      <div className="space-y-0.5">
+                      <div className="space-y-0.5 text-start">
                         <span className="text-[10px] text-gray-400">{msg.senderName}  {msg.sentAt}</span>
-                        <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-tl-sm
+                        <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-ss-sm
                                         bg-white dark:bg-gray-700
                                         border border-gray-100 dark:border-gray-600
                                         text-sm text-gray-800 dark:text-gray-200
@@ -274,7 +276,7 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
                 className="flex-1 text-sm rounded-xl bg-gray-50 dark:bg-gray-700/50
                            border border-gray-100 dark:border-gray-600
                            px-3 py-1.5 text-gray-700 dark:text-gray-300
-                           placeholder:text-gray-400 text-end
+                           placeholder:text-gray-400 text-start
                            focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50"
               />
 
@@ -316,7 +318,7 @@ function AddMilestoneModal({ open, onClose, onAdd, isAr }: AddModalProps) {
     >
       <div className="space-y-4 p-1">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 text-end">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 text-start">
             {isAr ? 'اسم المرحلة' : 'Milestone Title'}
           </label>
           <input
@@ -329,7 +331,7 @@ function AddMilestoneModal({ open, onClose, onAdd, isAr }: AddModalProps) {
             className="w-full rounded-xl border border-gray-200 dark:border-gray-600
                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                        px-4 py-2.5 text-sm placeholder:text-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-[#A0CD39] text-end"
+                       focus:outline-none focus:ring-2 focus:ring-[#A0CD39] text-start"
           />
         </div>
 

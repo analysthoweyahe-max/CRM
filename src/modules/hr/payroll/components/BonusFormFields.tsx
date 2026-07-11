@@ -32,10 +32,11 @@ export function BonusFormFields({ register, control, errors, empItems, typeItems
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <FormField label={isAr ? 'نوع المكافأة' : 'Bonus Type'} required
-          icon={<Gift size={15} className="text-gray-400" />} error={errors.adjustment_type?.message}>
-          <Controller name="adjustment_type" control={control} render={({ field }) => (
+          icon={<Gift size={15} className="text-gray-400" />} error={errors.bonus_type_id?.message}>
+          <Controller name="bonus_type_id" control={control} render={({ field }) => (
             <Combobox items={typeItems} value={field.value ?? ''} onChange={field.onChange}
-              error={!!errors.adjustment_type}
+              error={!!errors.bonus_type_id}
+              placeholder={isAr ? 'اختر نوع المكافأة...' : 'Select bonus type...'}
               searchPlaceholder={isAr ? 'ابحث...' : 'Search...'} noResultsText={isAr ? 'لا نتائج' : 'No results'} />
           )} />
         </FormField>

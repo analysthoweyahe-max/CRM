@@ -1,46 +1,35 @@
-import { KeyRound, Pencil, Trash2 } from 'lucide-react';
-import { Card }   from '@/shared/components/ui/Card';
-import { Button } from '@/shared/components/ui/Button';
-import type { ApiPermission } from '../types/adminPermission.types';
+import { KeyRound } from 'lucide-react';
+import { Card } from '@/shared/components/ui/Card';
+import { getPermissionLabel } from '@/shared/permissions/permissionLabel.utils';
 
 interface Props {
-  permission: ApiPermission;
-  isAr:       boolean;
-  isLocked:   boolean;
-  onEdit:     () => void;
-  onDelete:   () => void;
+  slug:  string;
+  isAr:  boolean;
+  /** Optional API id when the permission exists in the backend */
+  id?:   number | string;
 }
 
-export function PermissionCard({ permission, isAr, isLocked, onEdit, onDelete }: Props) {
+export function PermissionCard({ slug, isAr }: Props) {
+  const label = getPermissionLabel(slug, isAr);
+
   return (
     <Card padding="lg" className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="icon-danger"
-            aria-label={isAr ? 'حذف الصلاحية' : 'Delete permission'}
-            onClick={onDelete}
-            disabled={isLocked}
-          >
-            <Trash2 size={15} />
-          </Button>
-          <Button
-            variant="icon"
-            aria-label={isAr ? 'تعديل الصلاحية' : 'Edit permission'}
-            onClick={onEdit}
-            disabled={isLocked}
-          >
-            <Pencil size={15} />
-          </Button>
-        </div>
+      <div className="flex items-center justify-end">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]">
           <KeyRound size={16} />
         </div>
       </div>
 
-      <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 font-mono text-end break-all">
-        {permission.name}
-      </h3>
+      <div className="text-end space-y-0.5">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 break-words">
+          {label}
+        </h3>
+        {label !== slug && (
+          <p className="text-[11px] font-mono text-gray-400 dark:text-gray-500 break-all" dir="ltr">
+            {slug}
+          </p>
+        )}
+      </div>
     </Card>
   );
 }

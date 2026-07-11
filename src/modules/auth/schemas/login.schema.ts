@@ -1,22 +1,14 @@
 import { z } from 'zod';
 
-const emailSchema = z.string().email();
-const userIdSchema = z
-  .string()
-  .min(6)
-  .regex(/^[A-Za-z0-9_-]+$/);
-
+/** Unified login — admin_id + password only (no email). */
 export const loginSchema = z.object({
   adminId: z
     .string()
     .trim()
-    .min(1, 'adminIdRequired')
-    .refine((value) => {
-      const normalized = value.trim();
-      return emailSchema.safeParse(normalized).success
-        || userIdSchema.safeParse(normalized).success;
-    }, 'adminIdInvalid'),
-  password:   z.string().min(1, 'passwordRequired').min(6, 'loginPasswordMin'),
+    .min(1, 'adminIdRequired'),
+  password: z
+    .string()
+    .min(1, 'passwordRequired'),
   rememberMe: z.boolean().optional(),
 });
 

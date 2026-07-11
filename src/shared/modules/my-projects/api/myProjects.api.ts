@@ -19,12 +19,13 @@ export interface MyProjectsListParams {
   page?:     number;
 }
 
-/** Strip undefined/false draft flag — Laravel chokes on `is_draft=false` in query strings. */
+/** Use 0/1 for draft flag — Laravel treats the string "false" as truthy in query strings. */
 function buildListQueryParams(params: MyProjectsListParams): Record<string, string | number> {
   const query: Record<string, string | number> = {};
   if (params.search) query.search = params.search;
   if (params.status) query.status = params.status;
-  if (params.is_draft === true) query.is_draft = 1;
+  if (params.is_draft === true)  query.is_draft = 1;
+  if (params.is_draft === false) query.is_draft = 0;
   if (params.per_page != null) query.per_page = params.per_page;
   if (params.page != null) query.page = params.page;
   return query;

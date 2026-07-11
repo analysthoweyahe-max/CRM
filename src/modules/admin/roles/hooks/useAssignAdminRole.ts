@@ -17,6 +17,7 @@ export function useUpdateAdmin() {
     },
     onSuccess: async (_data, { id }) => {
       await qc.invalidateQueries({ queryKey: ['admin', 'managers'] });
+      await qc.invalidateQueries({ queryKey: ['admin', 'managers', 'detail', id] });
       if (user?.id === id) {
         await refreshUser();
       }

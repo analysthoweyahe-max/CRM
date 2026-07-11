@@ -9,11 +9,12 @@ import { DangerZoneCard }      from './DangerZoneCard';
 import { ApplyTemplateModal }  from '@/modules/project-manager/templates/components/ApplyTemplateModal';
 
 interface Props {
-  project: PmProjectDetails;
-  isAr:    boolean;
+  project:      PmProjectDetails;
+  isAr:         boolean;
+  onPublished?: () => void;
 }
 
-export function ProjectSettingsTab({ project, isAr }: Props) {
+export function ProjectSettingsTab({ project, isAr, onPublished }: Props) {
   const [showApply, setShowApply] = useState(false);
 
   return (
@@ -31,7 +32,7 @@ export function ProjectSettingsTab({ project, isAr }: Props) {
       </div>
 
       <PhasesManager      phases={project.phases} isAr={isAr} />
-      <ProjectActionsCard project={project} isAr={isAr} />
+      <ProjectActionsCard project={project} isAr={isAr} onPublished={onPublished} />
       <DangerZoneCard     projectId={String(project.id)} projectName={project.name} isAr={isAr} />
 
       <ApplyTemplateModal

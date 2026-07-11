@@ -49,12 +49,18 @@ function parseNotificationData(raw: unknown): Record<string, unknown> {
 }
 
 function normalizeNotification(raw: AppNotification & Record<string, unknown>): AppNotification {
+  const data = parseNotificationData(raw.data);
+  const dataType = typeof data.type === 'string' ? data.type : '';
+  const rawType = String(raw.type ?? '');
+  // Prefer payload type (e.g. pm_project_team_assigned) over class basename.
+  const type = dataType || rawType;
+
   return {
     id:        String(raw.id ?? ''),
-    type:      String(raw.type ?? ''),
-    title:     String(raw.title ?? ''),
-    body:      String(raw.body ?? raw.message ?? ''),
-    data:      parseNotificationData(raw.data),
+    type,
+    title:     String(raw.title ?? data.title ?? ''),
+    body:      String(raw.body ?? raw.message ?? data.body ?? ''),
+    data,
     readAt:    (raw.readAt ?? raw.read_at ?? null) as string | null,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ''),
   };

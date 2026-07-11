@@ -36,13 +36,16 @@ export function useAdminEmployees(isAr: boolean) {
 
   const filtered = useMemo(() => employees.filter(e => {
     if (search && !matchesSearch([e.name, e.email], search)) return false;
-    if (department && e.department !== department) return false;
+    if (department && !e.departments.includes(department) && e.department !== department) return false;
     if (role && !e.roles.includes(role)) return false;
     if (status && e.status !== status) return false;
     return true;
   }), [employees, search, department, role, status]);
 
-  const departmentOptions = useMemo(() => [...new Set(employees.map(e => e.department))], [employees]);
+  const departmentOptions = useMemo(
+    () => [...new Set(employees.flatMap(e => e.departments.length ? e.departments : [e.department]))].filter(Boolean),
+    [employees],
+  );
   const roleOptions       = useMemo(() => [...new Set(employees.flatMap(e => e.roles))], [employees]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));

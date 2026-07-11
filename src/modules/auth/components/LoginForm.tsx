@@ -56,7 +56,6 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -65,8 +64,6 @@ export function LoginForm() {
 
   const fieldErr = (msg: string | undefined) =>
     msg ? (v[msg as keyof typeof v] ?? msg) : undefined;
-
-  const adminIdDir = /[؀-ۿ]/.test(watch('adminId') ?? '') ? 'rtl' : 'ltr';
 
   if (magicToken && !magicFailed) {
     return (
@@ -108,22 +105,23 @@ export function LoginForm() {
       {/* Server error */}
       {submitError && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-          {lang === 'ar'
-            ? 'البريد الإلكتروني أو معرّف المستخدم أو كلمة المرور غير صحيحة'
-            : 'Invalid email, user ID, or password'}
+          {submitError === 'invalidCredentials'
+            ? t.login.invalidCredentials
+            : submitError}
         </div>
       )}
 
-      {/* User ID */}
+      {/* Admin ID */}
       <div className="flex flex-col gap-1">
         <label className="text-base font-medium text-gray-700">
           {t.login.adminId}
           <span className="text-red-500 ms-0.5">*</span>
         </label>
-        <div className="relative" dir={adminIdDir}>
+        <div className="relative" dir="ltr">
           <input
             {...register('adminId')}
             type="text"
+            inputMode="numeric"
             placeholder={t.login.adminIdPlaceholder}
             autoComplete="username"
             aria-invalid={!!errors.adminId}

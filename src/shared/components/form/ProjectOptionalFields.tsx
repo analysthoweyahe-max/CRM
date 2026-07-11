@@ -40,7 +40,7 @@ export function ProjectOptionalFields({
               value={githubLink}
               onChange={e => onGithubLinkChange(e.target.value)}
               placeholder="https://github.com/org/repo"
-              dir="ltr"
+              dir={isAr ? 'rtl' : 'ltr'}
               className={`${INPUT}${errors?.githubLink ? ` ${INPUT_ERROR}` : ''}`}
             />
             {errors?.githubLink && (
@@ -55,7 +55,7 @@ export function ProjectOptionalFields({
             value={driveLink}
             onChange={e => onDriveLinkChange(e.target.value)}
             placeholder="https://drive.google.com/drive/folders/..."
-            dir="ltr"
+            dir={isAr ? 'rtl' : 'ltr'}
             className={`${INPUT}${errors?.driveLink ? ` ${INPUT_ERROR}` : ''}`}
           />
           {errors?.driveLink && (
@@ -69,6 +69,7 @@ export function ProjectOptionalFields({
         <select
           value={contractDurationMonths}
           onChange={e => onContractMonthsChange(e.target.value)}
+          dir={isAr ? 'rtl' : 'ltr'}
           className={`${INPUT}${errors?.contractDurationMonths ? ` ${INPUT_ERROR}` : ''}`}
         >
           <option value="">{isAr ? '-- بدون --' : '-- None --'}</option>

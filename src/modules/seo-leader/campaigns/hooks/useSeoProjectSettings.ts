@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { campaignApi } from '../api/campaign.api';
 import type { SelectOption } from '../api/campaign.api';
-import { extractApiFieldErrors } from '@/shared/utils/error.utils';
+import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
 import {
   optionalLink,
   optionalContractDurationMonths,
@@ -12,6 +12,8 @@ import {
 import type { ProjectOptionalFieldErrors } from '@/shared/utils/projectOptionalFields.utils';
 
 export function useSeoProjectSettings(projectId: string, isAr: boolean) {
+  const queryClient = useQueryClient();
+
   const { data: settings, isLoading } = useQuery({
     queryKey:  ['seo-project-settings', projectId],
     queryFn:   () => campaignApi.getSettings(projectId).then(r => r.data.data),
@@ -21,6 +23,7 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
 
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState('');
+  const [expectedEndDate, setExpectedEndDate] = useState('');
   const [domain, setDomain] = useState('');
   const [desc, setDesc] = useState('');
   const [status, setStatus] = useState('');
@@ -36,6 +39,7 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
     if (!settings) return;
     setName(settings.name ?? '');
     setStartDate(settings.startDate ?? '');
+    setExpectedEndDate(settings.expectedEndDate ?? '');
     setDomain(settings.targetDomain ?? '');
     setDesc(settings.description ?? '');
     setStatus(settings.status ?? '');
@@ -59,30 +63,34 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
 
     setIsSaving(true);
     try {
-      await campaignApi.updateProject(projectId, {
+      await campaignApi.updateSettings(projectId, {
         name:         name.trim(),
         description:  desc.trim(),
         targetDomain: domain.trim() || null,
         campaignType: type,
+        status,
         startDate:    startDate || undefined,
+        expectedEndDate: expectedEndDate || null,
         githubLink:   optionalLink(githubLink),
         driveLink:    optionalLink(driveLink),
         contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
+        isDraft:      settings?.isDraft ?? false,
       });
-
-      if (status && status !== settings?.status) {
-        await campaignApi.updateProjectStatus(projectId, status);
-      }
 
       toast.success(isAr ? 'تم حفظ الإعدادات بنجاح' : 'Settings saved');
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      queryClient.invalidateQueries({ queryKey: ['seo-project-settings', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-detail', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['my-projects'] });
     } catch (err) {
       const apiFieldErrors = extractApiFieldErrors(err);
       if (Object.keys(apiFieldErrors).length > 0) {
         setOptionalFieldErrors((prev) => ({ ...prev, ...apiFieldErrors }));
+        toast.error(extractApiError(err) || (isAr ? 'راجع الحقول المطلوبة' : 'Please check the required fields'));
       } else {
-        toast.error(isAr ? 'فشل حفظ الإعدادات' : 'Failed to save settings');
+        toast.error(extractApiError(err) || (isAr ? 'فشل حفظ الإعدادات' : 'Failed to save settings'));
       }
     } finally {
       setIsSaving(false);
@@ -98,6 +106,7 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
     settings,
     name, setName,
     startDate, setStartDate,
+    expectedEndDate, setExpectedEndDate,
     domain, setDomain,
     desc, setDesc,
     status, setStatus,

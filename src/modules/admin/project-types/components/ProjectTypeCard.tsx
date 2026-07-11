@@ -14,6 +14,9 @@ interface Props {
 export function ProjectTypeCard({ type, isAr, onEdit, onDelete }: Props) {
   const linkedProjects = type.projectsCount ?? 0;
   const canDelete = linkedProjects === 0;
+  const categoryLabel = type.category === 'seo'
+    ? 'SEO'
+    : (isAr ? 'إدارة المشاريع' : 'PM');
 
   return (
     <Card padding="lg" className="space-y-3">
@@ -34,6 +37,12 @@ export function ProjectTypeCard({ type, isAr, onEdit, onDelete }: Props) {
       </div>
 
       <div className="text-end">
+        <div className="flex justify-end mb-1.5">
+          <Badge
+            label={type.sectionLabel || categoryLabel}
+            variant={type.category === 'seo' ? 'brand' : 'success'}
+          />
+        </div>
         <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 break-words">
           {isAr ? (type.nameAr || type.name) : type.name}
         </h3>

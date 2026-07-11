@@ -1,38 +1,17 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { Avatar } from '@/shared/components/ui/Avatar';
-import { Badge }  from '@/shared/components/ui/Badge';
+import { DayBadge } from './DayBadge';
+import { formatDate } from '../utils/printAttendance';
+import type { AttendanceLogRow, DayStatus } from '../types/attendance.types';
 
-export interface AttendanceLogRecord {
-  id:            string;
-  date:          string;
-  employeeId:    string;
-  name:          string;
-  initial:       string;
-  avatarColor:   string;
-  department:    string;
-  checkIn:       string;
-  checkOut:      string;
-  workedHours:   number;
-  lateMinutes:   number | null;
-  overtimeHours: number | null;
-  status:        'present' | 'late' | 'absent' | 'leave';
-}
-
-const STATUS_MAP = {
-  present: { ar: 'حاضر',  en: 'Present', variant: 'success' as const },
-  late:    { ar: 'متأخر', en: 'Late',    variant: 'warning' as const },
-  absent:  { ar: 'غائب',  en: 'Absent',  variant: 'error'   as const },
-  leave:   { ar: 'إجازة', en: 'Leave',   variant: 'brand'   as const },
-};
-
-export function getAttendanceLogColumns(isAr: boolean): ColumnDef<AttendanceLogRecord>[] {
+export function getAttendanceLogColumns(isAr: boolean): ColumnDef<AttendanceLogRow>[] {
   return [
     {
       accessorKey: 'date',
       header: isAr ? 'التاريخ' : 'Date',
       cell: ({ getValue }) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400 font-mono">
-          {getValue<string>()}
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 font-mono">
+          {formatDate(getValue<string>(), isAr)}
         </span>
       ),
     },
@@ -52,63 +31,57 @@ export function getAttendanceLogColumns(isAr: boolean): ColumnDef<AttendanceLogR
       accessorKey: 'department',
       header: isAr ? 'القسم' : 'Department',
       cell: ({ getValue }) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400">{getValue<string>()}</span>
-      ),
-    },
-    {
-      accessorKey: 'checkIn',
-      header: isAr ? 'الدخول' : 'Check In',
-      enableSorting: false,
-      cell: ({ getValue }) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">{getValue<string>() || '—'}</span>
-      ),
-    },
-    {
-      accessorKey: 'checkOut',
-      header: isAr ? 'الخروج' : 'Check Out',
-      enableSorting: false,
-      cell: ({ getValue }) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">{getValue<string>() || '—'}</span>
-      ),
-    },
-    {
-      accessorKey: 'workedHours',
-      header: isAr ? 'الساعات' : 'Hours',
-      cell: ({ getValue }) => (
-        <span className="text-sm font-medium text-brand-600 dark:text-brand-400">
-          {getValue<number>()} {isAr ? 'س' : 'h'}
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {getValue<string>() || '—'}
         </span>
       ),
     },
     {
-      accessorKey: 'lateMinutes',
-      header: isAr ? 'التأخير' : 'Late',
+      accessorKey: 'check_in',
+      header: isAr ? 'وقت الدخول' : 'Check In',
       enableSorting: false,
+      cell: ({ getValue }) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {getValue<string | null>() ?? '—'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'check_out',
+      header: isAr ? 'وقت الخروج' : 'Check Out',
+      enableSorting: false,
+      cell: ({ getValue }) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {getValue<string | null>() ?? '—'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'worked_hours',
+      header: isAr ? 'ساعات العمل' : 'Hours',
       cell: ({ getValue }) => {
-        const v = getValue<number | null>();
-        return v
-          ? <span className="text-sm font-medium text-red-500">{v} {isAr ? 'د' : 'm'}</span>
-          : <span className="text-sm text-gray-400">—</span>;
+        const v = getValue<number | null | undefined>();
+        if (v == null || Number.isNaN(v)) {
+          return <span className="text-sm text-gray-400">—</span>;
+        }
+        return (
+          <span className="text-sm font-medium text-[#709028] dark:text-[#A0CD39]">
+            {isAr ? `${v} س` : `${v}h`}
+          </span>
+        );
       },
     },
     {
-      accessorKey: 'overtimeHours',
-      header: isAr ? 'الإضافي' : 'Overtime',
-      enableSorting: false,
-      cell: ({ getValue }) => {
-        const v = getValue<number | null>();
-        return v
-          ? <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{v} {isAr ? 'س' : 'h'}</span>
-          : <span className="text-sm text-gray-400">—</span>;
-      },
-    },
-    {
-      accessorKey: 'status',
+      accessorKey: 'day_status',
       header: isAr ? 'الحالة' : 'Status',
-      cell: ({ getValue }) => {
-        const s = STATUS_MAP[getValue<AttendanceLogRecord['status']>()];
-        return <Badge label={isAr ? s.ar : s.en} variant={s.variant} />;
-      },
+      enableSorting: false,
+      cell: ({ row, getValue }) => (
+        <DayBadge
+          status={getValue<DayStatus | ''>()}
+          label={row.original.day_status_label}
+          isAr={isAr}
+        />
+      ),
     },
   ];
 }

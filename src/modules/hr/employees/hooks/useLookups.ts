@@ -1,29 +1,48 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { toApiArray } from '@/shared/utils/apiList.utils';
 import { employeeApi } from '../api/employee.api';
 import { useEmployeeList } from './useEmployeeList';
+import type { ApiLookup } from '../types/employee.types';
 
 export function useDepartments() {
   return useQuery({
     queryKey: ['lookups', 'departments'],
-    queryFn:  () => employeeApi.lookupDepartments().then((r) => r.data.data),
-    staleTime: 5 * 60 * 1000,
+    queryFn:  () => employeeApi.lookupDepartments().then((r) => toApiArray<ApiLookup>(r.data)),
+    staleTime: 5 * 60_000,
   });
 }
 
+/**
+ * Job-title lookup.
+ * - Pass `departmentId` to filter server-side (and client-side as a safety net).
+ * - Omit it to load every active title (manager forms that need the full list).
+ */
 export function useJobTitles(departmentId?: string) {
   return useQuery({
-    queryKey: ['lookups', 'job-titles', departmentId ?? ''],
-    queryFn:  () => employeeApi.lookupJobTitles(departmentId).then((r) => r.data.data),
-    staleTime: 5 * 60 * 1000,
+    queryKey: ['lookups', 'job-titles', departmentId ?? 'all'],
+    queryFn: async () => {
+      const list = await employeeApi
+        .lookupJobTitles(departmentId)
+        .then((r) => toApiArray<ApiLookup>(r.data));
+
+      if (!departmentId) return list;
+
+      // Client-side safety net if the API ignored department_id
+      return list.filter((t) => {
+        const dept = t.departmentId ?? t.department_id;
+        return dept == null || String(dept) === String(departmentId);
+      });
+    },
+    staleTime: 5 * 60_000,
   });
 }
 
 export function useEmploymentTypes() {
   return useQuery({
     queryKey: ['lookups', 'employment-types'],
-    queryFn:  () => employeeApi.lookupEmploymentTypes().then((r) => r.data.data),
-    staleTime: 5 * 60 * 1000,
+    queryFn:  () => employeeApi.lookupEmploymentTypes().then((r) => r.data.data ?? []),
+    staleTime: 5 * 60_000,
   });
 }
 

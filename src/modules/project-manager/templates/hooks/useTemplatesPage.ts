@@ -4,16 +4,21 @@ import { extractApiError } from '@/shared/utils/error.utils';
 import {
   useTemplateList, useCreateTemplate, useUpdateTemplate, useDeleteTemplate,
 } from './useProjectTemplates';
+import type { TemplateModule } from '../api/projectTemplate.api';
 import type { PmProjectTemplate, PmTemplatePayload } from '../types/template.types';
 
-export function useTemplatesPage(isAr: boolean) {
+export function useTemplatesPage(isAr: boolean, module: TemplateModule = 'pm') {
   const [search, setSearch] = useState('');
   const [page, setPage]     = useState(1);
 
-  const { data, isLoading } = useTemplateList({ search: search.trim() || undefined, page, per_page: 15 });
-  const { mutate: create, isPending: creating } = useCreateTemplate();
-  const { mutate: update, isPending: updating } = useUpdateTemplate();
-  const { mutate: remove, isPending: deleting } = useDeleteTemplate();
+  const { data, isLoading } = useTemplateList(module, {
+    search: search.trim() || undefined,
+    page,
+    per_page: 15,
+  });
+  const { mutate: create, isPending: creating } = useCreateTemplate(module);
+  const { mutate: update, isPending: updating } = useUpdateTemplate(module);
+  const { mutate: remove, isPending: deleting } = useDeleteTemplate(module);
 
   const [showAdd, setShowAdd]           = useState(false);
   const [editing, setEditing]           = useState<PmProjectTemplate | null>(null);

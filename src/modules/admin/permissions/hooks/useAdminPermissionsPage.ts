@@ -1,65 +1,47 @@
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { extractApiError } from '@/shared/utils/error.utils';
-import { PANEL_PERMISSION_SLUGS } from '@/shared/permissions/panelPermissionCatalog';
-import {
-  usePermissionList, useCreatePermission, useUpdatePermission, useDeletePermission,
-} from './usePermissions';
-import type { ApiPermission } from '../types/adminPermission.types';
+import { useMemo } from 'react';
+import { PANEL_PERMISSION_GROUPS, PANEL_PERMISSION_SLUGS } from '@/shared/permissions/panelPermissionCatalog';
+import { usePermissionList } from './usePermissions';
 
-const CORE_SLUGS = PANEL_PERMISSION_SLUGS;
+export interface PermissionCatalogGroup {
+  key:     string;
+  labelAr: string;
+  labelEn: string;
+  slugs:   string[];
+}
 
-export function useAdminPermissionsPage(isAr: boolean) {
-  const { data: permissions, isLoading } = usePermissionList();
-  const { mutate: create, isPending: creating } = useCreatePermission();
-  const { mutate: update, isPending: updating } = useUpdatePermission();
-  const { mutate: remove,  isPending: deleting } = useDeletePermission();
+export function useAdminPermissionsPage() {
+  const { data: apiPermissions, isLoading } = usePermissionList();
 
-  const [showAdd,           setShowAdd]           = useState(false);
-  const [editingPermission, setEditingPermission] = useState<ApiPermission | null>(null);
-  const [pendingDelete,     setPendingDelete]     = useState<ApiPermission | null>(null);
+  const groups = useMemo<PermissionCatalogGroup[]>(() => {
+    const catalogGroups: PermissionCatalogGroup[] = PANEL_PERMISSION_GROUPS.map((g) => ({
+      key:     g.key,
+      labelAr: g.labelAr,
+      labelEn: g.labelEn,
+      slugs:   g.slugs.map((s) => s.slug),
+    }));
 
-  function submitAdd(name: string) {
-    create({ name, guard_name: 'admin' }, {
-      onSuccess: () => {
-        toast.success(isAr ? 'تم إنشاء الصلاحية' : 'Permission created');
-        setShowAdd(false);
-      },
-      onError: (err) => toast.error(extractApiError(err)),
-    });
-  }
+    const otherSlugs = [...new Set(
+      (apiPermissions ?? [])
+        .map((p) => p.name)
+        .filter((name) => !PANEL_PERMISSION_SLUGS.has(name)),
+    )].sort();
 
-  function submitEdit(name: string) {
-    if (!editingPermission) return;
-    update({ id: editingPermission.id, payload: { name } }, {
-      onSuccess: () => {
-        toast.success(isAr ? 'تم تحديث الصلاحية' : 'Permission updated');
-        setEditingPermission(null);
-      },
-      onError: (err) => toast.error(extractApiError(err)),
-    });
-  }
+    if (otherSlugs.length > 0) {
+      catalogGroups.push({
+        key:     'other',
+        labelAr: 'صلاحيات أخرى',
+        labelEn: 'Other',
+        slugs:   otherSlugs,
+      });
+    }
 
-  function confirmDelete() {
-    if (!pendingDelete) return;
-    remove(pendingDelete.id, {
-      onSuccess: () => {
-        toast.success(isAr ? 'تم حذف الصلاحية' : 'Permission deleted');
-        setPendingDelete(null);
-      },
-      onError: (err) => toast.error(extractApiError(err)),
-    });
-  }
+    return catalogGroups;
+  }, [apiPermissions]);
 
-  return {
-    permissions: permissions ?? [],
-    isLoading,
-    isLocked: (p: ApiPermission) => CORE_SLUGS.has(p.name),
-    showAdd, openAdd: () => setShowAdd(true), closeAdd: () => setShowAdd(false),
-    submitAdd, creating,
-    editingPermission, openEdit: setEditingPermission, closeEdit: () => setEditingPermission(null),
-    submitEdit, updating,
-    pendingDelete, askDelete: setPendingDelete, cancelDelete: () => setPendingDelete(null),
-    confirmDelete, deleting,
-  };
+  const totalCount = useMemo(
+    () => groups.reduce((sum, g) => sum + g.slugs.length, 0),
+    [groups],
+  );
+
+  return { groups, totalCount, isLoading };
 }

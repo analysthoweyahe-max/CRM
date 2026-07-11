@@ -5,6 +5,7 @@ import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
+import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { useEditEmployeeModal } from './useEditEmployeeModal';
 import type { EditEmployeeModalProps } from './EditEmployeeModal.types';
 
@@ -37,6 +38,7 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
   const {
     register, control, handleSubmit, mutation, onboardingLocked,
     deptItems, jTitleItems, empTypeItems, managerItems, cbProps,
+    selectedDeptIds, titlesLoading, handleDepartmentsChange, handleJobTitleChange,
   } = useEditEmployeeModal(props);
 
   return (
@@ -53,7 +55,12 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
           </Button>
           <Button
             isLoading={mutation.isPending}
-            onClick={handleSubmit((d) => mutation.mutate(d))}
+            onClick={handleSubmit((d) => {
+              if (d.departmentIds.length === 0) {
+                return;
+              }
+              mutation.mutate(d);
+            })}
           >
             {isAr ? 'حفظ التعديلات' : 'Save Changes'}
           </Button>
@@ -75,17 +82,38 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
           <Input {...register('phone')} type="tel" dir={isAr ? 'rtl' : 'ltr'} endIcon={<Phone size={15} />} placeholder="01xxxxxxxx" />
         </FormField>
 
-        <FormField label={isAr ? 'القسم' : 'Department'} icon={<Building2 size={15} className="text-gray-400" />}>
-          <Controller name="department" control={control} render={({ field }) => (
-            <Combobox items={deptItems} value={field.value ?? ''} onChange={field.onChange}
-              placeholder={isAr ? 'اختر القسم' : 'Select department'} {...cbProps} />
+        <FormField
+          label={isAr ? 'الأقسام' : 'Departments'}
+          required
+          icon={<Building2 size={15} className="text-gray-400" />}
+          error={selectedDeptIds.length === 0 ? (isAr ? 'اختر قسماً واحداً على الأقل' : 'Select at least one department') : undefined}
+        >
+          <Controller name="departmentIds" control={control} render={({ field }) => (
+            <MultiCombobox
+              items={deptItems}
+              values={field.value ?? []}
+              onChange={(ids) => handleDepartmentsChange(ids, field.onChange)}
+              error={selectedDeptIds.length === 0}
+              placeholder={isAr ? 'اختر قسماً أو أكثر' : 'Select one or more departments'}
+              {...cbProps}
+            />
           )} />
         </FormField>
 
         <FormField label={isAr ? 'المسمى الوظيفي' : 'Job Title'} icon={<Briefcase size={15} className="text-gray-400" />}>
           <Controller name="jobTitle" control={control} render={({ field }) => (
-            <Combobox items={jTitleItems} value={field.value ?? ''} onChange={field.onChange}
-              placeholder={isAr ? 'اختر المسمى' : 'Select job title'} {...cbProps} />
+            <Combobox
+              items={jTitleItems}
+              value={field.value ?? ''}
+              onChange={(id) => handleJobTitleChange(id, field.onChange)}
+              disabled={titlesLoading || selectedDeptIds.length === 0}
+              placeholder={
+                selectedDeptIds.length === 0
+                  ? (isAr ? 'اختر القسم أولاً' : 'Select department first')
+                  : (isAr ? 'اختر المسمى' : 'Select job title')
+              }
+              {...cbProps}
+            />
           )} />
         </FormField>
 

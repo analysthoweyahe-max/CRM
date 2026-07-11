@@ -33,15 +33,15 @@ export const EMPLOYMENT_TYPE_DESCRIPTIONS: Record<string, { ar: string; en: stri
 
 export function makeStep1Schema(ar: boolean) {
   return z.object({
-    fullName:   z.string().min(1, ar ? 'الاسم الكامل مطلوب'         : 'Full name is required'),
-    email:      z.string()
-                  .min(1,        ar ? 'البريد الإلكتروني مطلوب'    : 'Email is required')
-                  .email(        ar ? 'البريد الإلكتروني غير صحيح' : 'Invalid email'),
-    phone:      z.string().optional(),
-    department: z.string().min(1, ar ? 'القسم مطلوب'                : 'Department is required'),
-    jobTitle:   z.string().min(1, ar ? 'المسمى الوظيفي مطلوب'      : 'Job title is required'),
-    hireDate:   z.string().min(1, ar ? 'تاريخ الالتحاق مطلوب'      : 'Hire date is required'),
-    managerId:  z.string().optional(),
+    fullName:      z.string().min(1, ar ? 'الاسم الكامل مطلوب'         : 'Full name is required'),
+    email:         z.string()
+                     .min(1,        ar ? 'البريد الإلكتروني مطلوب'    : 'Email is required')
+                     .email(        ar ? 'البريد الإلكتروني غير صحيح' : 'Invalid email'),
+    phone:         z.string().optional(),
+    departmentIds: z.array(z.string()).min(1, ar ? 'اختر قسماً واحداً على الأقل' : 'Select at least one department'),
+    jobTitle:      z.string().min(1, ar ? 'المسمى الوظيفي مطلوب'      : 'Job title is required'),
+    hireDate:      z.string().min(1, ar ? 'تاريخ الالتحاق مطلوب'      : 'Hire date is required'),
+    managerId:     z.string().optional(),
   });
 }
 
@@ -67,22 +67,22 @@ export type Step4Values = z.infer<typeof step4Schema>;
 
 export function makeAllDataSchema(ar: boolean, _defaultDailyHours = 8) {
   return z.object({
-    fullName:   z.string().min(1, ar ? 'الاسم الكامل مطلوب'          : 'Full name is required'),
-    email:      z.string()
-                  .min(1,  ar ? 'البريد الإلكتروني مطلوب'            : 'Email is required')
-                  .email(  ar ? 'البريد الإلكتروني غير صحيح'         : 'Invalid email'),
-    phone:      z.string().min(1, ar ? 'رقم الهاتف مطلوب'            : 'Phone is required'),
-    department: z.string().min(1, ar ? 'القسم مطلوب'                  : 'Department is required'),
-    jobTitle:   z.string().min(1, ar ? 'المسمى الوظيفي مطلوب'        : 'Job title is required'),
-    hireDate:   z.string().min(1, ar ? 'تاريخ الالتحاق مطلوب'        : 'Hire date is required'),
-    managerId:  z.string().optional(),
-    jobType:    z.string().min(1, ar ? 'نوع التوظيف مطلوب' : 'Job type is required'),
-    salary:     z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
-                  .min(1, ar ? 'الراتب يجب أن يكون أكبر من صفر' : 'Salary must be > 0')
-                  .optional(),
-    currency:     z.string().min(1),
-    workingHours: z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
-                    .min(1, ar ? 'عدد الساعات يجب أن يكون أكبر من صفر' : 'Working hours must be > 0'),
+    fullName:      z.string().min(1, ar ? 'الاسم الكامل مطلوب'          : 'Full name is required'),
+    email:         z.string()
+                     .min(1,  ar ? 'البريد الإلكتروني مطلوب'            : 'Email is required')
+                     .email(  ar ? 'البريد الإلكتروني غير صحيح'         : 'Invalid email'),
+    phone:         z.string().min(1, ar ? 'رقم الهاتف مطلوب'            : 'Phone is required'),
+    departmentIds: z.array(z.string()).min(1, ar ? 'اختر قسماً واحداً على الأقل' : 'Select at least one department'),
+    jobTitle:      z.string().min(1, ar ? 'المسمى الوظيفي مطلوب'        : 'Job title is required'),
+    hireDate:      z.string().min(1, ar ? 'تاريخ الالتحاق مطلوب'        : 'Hire date is required'),
+    managerId:     z.string().optional(),
+    jobType:       z.string().min(1, ar ? 'نوع التوظيف مطلوب' : 'Job type is required'),
+    salary:        z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
+                     .min(1, ar ? 'الراتب يجب أن يكون أكبر من صفر' : 'Salary must be > 0')
+                     .optional(),
+    currency:      z.string().min(1),
+    workingHours:  z.number({ message: ar ? 'أدخل قيمة صحيحة' : 'Enter a valid number' })
+                     .min(1, ar ? 'عدد الساعات يجب أن يكون أكبر من صفر' : 'Working hours must be > 0'),
   });
 }
 

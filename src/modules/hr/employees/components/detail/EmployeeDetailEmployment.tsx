@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { Briefcase, Clock, Wallet, CalendarDays, Building2, SquarePen } from 'lucide-react';
 import type { ApiEmployee } from '../../types/employee.types';
-import { mapEmploymentType } from '../../types/employee.types';
+import {
+  mapEmploymentType,
+  employeeDepartmentsList,
+  resolveDisplayText,
+} from '../../types/employee.types';
+import { Badge } from '@/shared/components/ui/Badge';
 import { EditEmploymentTypeModal } from '../edit-modals/EditEmploymentTypeModal';
 import { EditSalaryModal }         from '../edit-modals/EditSalaryModal';
 import { EditWorkScheduleModal }   from '../edit-modals/EditWorkScheduleModal';
@@ -13,6 +18,7 @@ interface Props { emp: ApiEmployee; isAr: boolean }
 
 export function EmployeeDetailEmployment({ emp, isAr }: Props) {
   const [openModal, setOpenModal] = useState<ModalKey>(null);
+  const depts = employeeDepartmentsList(emp);
 
   return (
     <>
@@ -49,11 +55,25 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
         </Section>
 
         <Section
-          title={isAr ? 'القسم' : 'Department'}
+          title={isAr ? 'الأقسام' : 'Departments'}
           onEdit={() => setOpenModal('department')}
         >
-          <Field icon={<Building2 size={15} />} label={isAr ? 'القسم الحالي' : 'Current Department'}>
-            {emp.department?.name ?? '–'}
+          <Field icon={<Building2 size={15} />} label={isAr ? 'الأقسام المعينة' : 'Assigned Departments'}>
+            {depts.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 mt-0.5">
+                {depts.map((d, i) => (
+                  <Badge
+                    key={String(d.id)}
+                    label={
+                      i === 0
+                        ? `${resolveDisplayText(d, isAr) || String(d.id)}${isAr ? ' (أساسي)' : ' (primary)'}`
+                        : (resolveDisplayText(d, isAr) || String(d.id))
+                    }
+                    variant={i === 0 ? 'brand' : 'gray'}
+                  />
+                ))}
+              </div>
+            ) : '–'}
           </Field>
         </Section>
       </div>
@@ -92,7 +112,7 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
         open={openModal === 'department'}
         onClose={() => setOpenModal(null)}
         employeeId={emp.id}
-        current={emp.department}
+        employee={emp}
         isAr={isAr}
       />
     </>
@@ -128,7 +148,7 @@ function Field({ icon, label, children }: { icon: React.ReactNode; label: string
       </div>
       <div className="min-w-0">
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{label}</p>
-        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{children}</p>
+        <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">{children}</div>
       </div>
     </div>
   );

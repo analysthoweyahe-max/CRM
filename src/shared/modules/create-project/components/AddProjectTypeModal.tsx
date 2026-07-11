@@ -16,11 +16,11 @@ interface Props {
 }
 
 const EMPTY = (departmentId: number): CreateProjectTypePayload => ({
-  name:          '',
-  name_ar:       '',
-  department_id: departmentId,
-  is_active:     true,
-  sort_order:    0,
+  name:         '',
+  nameAr:       '',
+  departmentId: departmentId > 0 ? departmentId : null,
+  isActive:     true,
+  sortOrder:    0,
 });
 
 export function AddProjectTypeModal({ open, onClose, onSubmit, departmentId, isLoading, isAr }: Props) {
@@ -34,7 +34,7 @@ export function AddProjectTypeModal({ open, onClose, onSubmit, departmentId, isL
     setForm(prev => ({ ...prev, [key]: value }));
   }
 
-  const isValid = !!form.name.trim() && departmentId > 0;
+  const isValid = !!form.name.trim();
 
   return (
     <Modal
@@ -56,14 +56,14 @@ export function AddProjectTypeModal({ open, onClose, onSubmit, departmentId, isL
             <Input value={form.name} onChange={e => set('name', e.target.value)} dir="ltr" />
           </FormField>
           <FormField label={isAr ? 'الاسم بالعربي' : 'Arabic Name'}>
-            <Input value={form.name_ar ?? ''} onChange={e => set('name_ar', e.target.value)} />
+            <Input value={form.nameAr ?? ''} onChange={e => set('nameAr', e.target.value)} />
           </FormField>
         </div>
         <FormField label={isAr ? 'ترتيب الفرز' : 'Sort Order'}>
-          <Input type="number" value={form.sort_order ?? 0} onChange={e => set('sort_order', Number(e.target.value))} />
+          <Input type="number" value={form.sortOrder ?? 0} onChange={e => set('sortOrder', Number(e.target.value))} />
         </FormField>
         <label className="flex items-center gap-2.5 cursor-pointer">
-          <Switch checked={form.is_active ?? true} onChange={() => set('is_active', !form.is_active)} />
+          <Switch checked={form.isActive ?? true} onChange={() => set('isActive', !form.isActive)} />
           <span className="text-sm text-gray-600 dark:text-gray-400">{isAr ? 'نشط' : 'Active'}</span>
         </label>
       </div>

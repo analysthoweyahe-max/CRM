@@ -17,6 +17,10 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 text-end';
 
+function inputDir(isAr: boolean) {
+  return isAr ? 'rtl' : 'ltr';
+}
+
 function toComboboxItems(opts: SelectOption[], isAr: boolean): ComboboxItem[] {
   return opts.map(o => ({
     id:    o.value,
@@ -71,22 +75,22 @@ export function SeoProjectInfoForm({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>{isAr ? 'اسم المشروع' : 'Project Name'}</label>
-          <input type="text" value={name} onChange={e => onChangeName(e.target.value)} className={INPUT} />
+          <input type="text" value={name} onChange={e => onChangeName(e.target.value)} className={INPUT} dir={inputDir(isAr)} />
         </div>
         <div>
           <label className={LABEL}>{isAr ? 'تاريخ البدء' : 'Start Date'}</label>
-          <input type="date" value={startDate} onChange={e => onChangeStartDate(e.target.value)} className={INPUT} />
+          <input type="date" value={startDate} onChange={e => onChangeStartDate(e.target.value)} className={INPUT} dir={inputDir(isAr)} />
         </div>
       </div>
 
       <div>
         <label className={LABEL}>{isAr ? 'الدومين المستهدف' : 'Target Domain'}</label>
-        <input type="text" value={domain} onChange={e => onChangeDomain(e.target.value)} placeholder="example.com" className={INPUT} dir="ltr" />
+        <input type="text" value={domain} onChange={e => onChangeDomain(e.target.value)} placeholder="example.com" className={INPUT} dir={inputDir(isAr)} />
       </div>
 
       <div>
         <label className={LABEL}>{isAr ? 'الوصف' : 'Description'}</label>
-        <textarea rows={3} value={desc} onChange={e => onChangeDesc(e.target.value)} className={`${INPUT} resize-none`} />
+        <textarea rows={3} value={desc} onChange={e => onChangeDesc(e.target.value)} className={`${INPUT} resize-none`} dir={inputDir(isAr)} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

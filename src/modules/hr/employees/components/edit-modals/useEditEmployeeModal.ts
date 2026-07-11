@@ -1,22 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { employeeApi } from '../../api/employee.api';
 import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../../hooks/useLookups';
-import type { EmploymentType } from '../../types/employee.types';
+import {
+  employeeDepartmentIds,
+  titleDepartmentId,
+  toDepartmentIds,
+  type EmploymentType,
+} from '../../types/employee.types';
+import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
 import type { FormValues, EditEmployeeModalProps } from './EditEmployeeModal.types';
-
-function apiErrMsg(err: unknown): string | null {
-  return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? null;
-}
 
 function formDefaults(emp: EditEmployeeModalProps['emp']): FormValues {
   return {
     fullName:       emp.name,
     email:          emp.email,
     phone:          emp.phone ?? '',
-    department:     String(emp.department?.id ?? ''),
+    departmentIds:  employeeDepartmentIds(emp),
     jobTitle:       String(emp.jobTitle?.id ?? ''),
     employmentType: emp.employmentType ?? '',
     salary:         String(emp.salary ?? ''),
@@ -31,21 +33,35 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
   // Onboarding step 5 = submitted — step-specific POST endpoints are locked by the API
   const onboardingLocked = (emp.onboardingStep ?? 0) >= 5;
 
-  const { register, control, handleSubmit, reset } = useForm<FormValues>({
+  const { register, control, handleSubmit, reset, setValue } = useForm<FormValues>({
     defaultValues: formDefaults(emp),
   });
 
   useEffect(() => {
     if (open) reset(formDefaults(emp));
-  }, [open]);
+  }, [open, emp, reset]);
 
   const { data: departments = [] }      = useDepartments();
-  const selectedDept                    = useWatch({ control, name: 'department' });
-  const { data: jobTitles = [] }        = useJobTitles(selectedDept || undefined);
+  const selectedDeptIds                 = useWatch({ control, name: 'departmentIds' }) ?? [];
+  const selectedJobTitle                = useWatch({ control, name: 'jobTitle' }) ?? '';
+  const { data: allJobTitles = [], isLoading: titlesLoading } = useJobTitles();
   const { data: employmentTypes = [] }  = useEmploymentTypes();
 
+  const selectedDeptSet = useMemo(
+    () => new Set(selectedDeptIds.map(String)),
+    [selectedDeptIds],
+  );
+
+  const filteredTitles = useMemo(() => {
+    if (selectedDeptSet.size === 0) return [];
+    return allJobTitles.filter((t) => {
+      const deptId = titleDepartmentId(t);
+      return !deptId || selectedDeptSet.has(deptId);
+    });
+  }, [allJobTitles, selectedDeptSet]);
+
   const deptItems    = departments.map((d) => ({ id: String(d.id), label: isAr ? (d.nameAr || d.name) : d.name }));
-  const jTitleItems  = jobTitles.map((j)   => ({ id: String(j.id), label: isAr ? (j.nameAr || j.name) : j.name }));
+  const jTitleItems  = filteredTitles.map((j) => ({ id: String(j.id), label: isAr ? (j.nameAr || j.name) : j.name }));
   const empTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
   const { items: managerItems } = useManagerOptions(isAr, emp.id);
 
@@ -53,13 +69,32 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
     ? { searchPlaceholder: 'ابحث...', noResultsText: 'لا نتائج' }
     : { searchPlaceholder: 'Search...', noResultsText: 'No results' };
 
+  function handleDepartmentsChange(departmentIds: string[], onChange: (ids: string[]) => void) {
+    onChange(departmentIds);
+    const nextSet = new Set(departmentIds.map(String));
+    const title = allJobTitles.find((t) => String(t.id) === selectedJobTitle);
+    const titleDept = title ? titleDepartmentId(title) : '';
+    if (selectedJobTitle && titleDept && !nextSet.has(titleDept)) {
+      setValue('jobTitle', '');
+    }
+  }
+
+  function handleJobTitleChange(jobTitleId: string, onChange: (id: string) => void) {
+    onChange(jobTitleId);
+    const title = allJobTitles.find((t) => String(t.id) === jobTitleId);
+    const deptFromTitle = title ? titleDepartmentId(title) : '';
+    if (deptFromTitle && !selectedDeptSet.has(deptFromTitle)) {
+      setValue('departmentIds', [...selectedDeptIds, deptFromTitle]);
+    }
+  }
+
   const mutation = useMutation({
     mutationFn: (data: FormValues) =>
       employeeApi.update(emp.id, {
         name:            data.fullName,
         email:           data.email,
         phone:           data.phone,
-        department_id:   Number(data.department),
+        department_ids:  toDepartmentIds(data.departmentIds),
         job_title_id:    Number(data.jobTitle),
         manager_id:      data.managerId === 'none' ? null : data.managerId,
         /* Employment type / salary / schedule are locked once onboarding is submitted. */
@@ -78,8 +113,9 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
     },
 
     onError: (err: unknown) => {
-      console.error('[EditEmployeeModal]', (err as { response?: { data?: unknown } })?.response?.data);
-      toast.error(apiErrMsg(err) || (isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes'));
+      const fieldErrors = extractApiFieldErrors(err);
+      const deptErr = fieldErrors.departmentIds || fieldErrors.jobTitleId || fieldErrors.job_title_id;
+      toast.error(deptErr || extractApiError(err) || (isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes'));
     },
   });
 
@@ -94,5 +130,9 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
     empTypeItems,
     managerItems,
     cbProps,
+    selectedDeptIds,
+    titlesLoading,
+    handleDepartmentsChange,
+    handleJobTitleChange,
   };
 }

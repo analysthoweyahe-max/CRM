@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useParams, useNavigate }      from 'react-router-dom';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { ArrowRight, ArrowLeft, Check, Mail, Phone, User, Briefcase, DollarSign, Wallet, Activity, Clock } from 'lucide-react';
@@ -8,12 +9,20 @@ import { ROUTES }        from '@/app/router/routes';
 import { Card }          from '@/shared/components/ui/Card';
 import { FormField }     from '@/shared/components/form/FormField';
 import { Combobox }      from '@/shared/components/form/Combobox';
+import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { Input }         from '@/shared/components/ui/Input';
 import { Button }        from '@/shared/components/ui/Button';
 import { useEmployee }   from '../hooks/useEmployee';
 import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../hooks/useLookups';
 import { employeeApi }   from '../api/employee.api';
-import type { EmploymentType, EmployeeStatus } from '../types/employee.types';
+import {
+  employeeDepartmentIds,
+  titleDepartmentId,
+  toDepartmentIds,
+  type EmploymentType,
+  type EmployeeStatus,
+} from '../types/employee.types';
+import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
 
 /* ── form values ──────────────────────────────────────── */
 
@@ -21,7 +30,7 @@ interface EditFormValues {
   fullName:       string;
   email:          string;
   phone:          string;
-  department:     string;
+  departmentIds:  string[];
   jobTitle:       string;
   employmentType: string;
   basicSalary:    string;
@@ -41,13 +50,14 @@ export function EmployeeEditPage() {
 
   const { data: emp, isLoading } = useEmployee(id);
   const { data: departments = [] } = useDepartments();
+  const { data: allJobTitles = [], isLoading: titlesLoading } = useJobTitles();
 
-  const { register, control, handleSubmit, formState: { isSubmitting } } = useForm<EditFormValues>({
+  const { register, control, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<EditFormValues>({
     values: emp ? {
       fullName:       emp.name,
       email:          emp.email,
       phone:          emp.phone ?? '',
-      department:     String(emp.department?.id ?? ''),
+      departmentIds:  employeeDepartmentIds(emp),
       jobTitle:       String(emp.jobTitle?.id ?? ''),
       employmentType: emp.employmentType ?? '',
       basicSalary:    String(emp.salary ?? ''),
@@ -57,12 +67,25 @@ export function EmployeeEditPage() {
     } : undefined,
   });
 
-  const selectedDept                   = useWatch({ control, name: 'department' });
-  const { data: jobTitles = [] }       = useJobTitles(selectedDept || undefined);
+  const selectedDeptIds                = useWatch({ control, name: 'departmentIds' }) ?? [];
+  const selectedJobTitle               = useWatch({ control, name: 'jobTitle' }) ?? '';
   const { data: employmentTypes = [] } = useEmploymentTypes();
 
+  const selectedDeptSet = useMemo(
+    () => new Set(selectedDeptIds.map(String)),
+    [selectedDeptIds],
+  );
+
+  const filteredTitles = useMemo(() => {
+    if (selectedDeptSet.size === 0) return [];
+    return allJobTitles.filter((t) => {
+      const deptId = titleDepartmentId(t);
+      return !deptId || selectedDeptSet.has(deptId);
+    });
+  }, [allJobTitles, selectedDeptSet]);
+
   const deptItems    = departments.map((d) => ({ id: String(d.id), label: isAr ? (d.nameAr || d.name) : d.name }));
-  const jTitleItems  = jobTitles.map((j)   => ({ id: String(j.id), label: isAr ? (j.nameAr || j.name) : j.name }));
+  const jTitleItems  = filteredTitles.map((j) => ({ id: String(j.id), label: isAr ? (j.nameAr || j.name) : j.name }));
   const empTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
   const { items: managerItems } = useManagerOptions(isAr, id);
 
@@ -76,13 +99,32 @@ export function EmployeeEditPage() {
     ? { searchPlaceholder: 'ابحث...', noResultsText: 'لا نتائج' }
     : { searchPlaceholder: 'Search...', noResultsText: 'No results' };
 
+  function handleDepartmentsChange(departmentIds: string[], onChange: (ids: string[]) => void) {
+    onChange(departmentIds);
+    const nextSet = new Set(departmentIds.map(String));
+    const title = allJobTitles.find((t) => String(t.id) === selectedJobTitle);
+    const titleDept = title ? titleDepartmentId(title) : '';
+    if (selectedJobTitle && titleDept && !nextSet.has(titleDept)) {
+      setValue('jobTitle', '');
+    }
+  }
+
+  function handleJobTitleChange(jobTitleId: string, onChange: (id: string) => void) {
+    onChange(jobTitleId);
+    const title = allJobTitles.find((t) => String(t.id) === jobTitleId);
+    const deptFromTitle = title ? titleDepartmentId(title) : '';
+    if (deptFromTitle && !selectedDeptSet.has(deptFromTitle)) {
+      setValue('departmentIds', [...selectedDeptIds, deptFromTitle]);
+    }
+  }
+
   const mutation = useMutation({
     mutationFn: (data: EditFormValues) =>
       employeeApi.update(id!, {
         name:            data.fullName,
         email:           data.email,
         phone:           data.phone,
-        department_id:   Number(data.department),
+        department_ids:  toDepartmentIds(data.departmentIds),
         job_title_id:    Number(data.jobTitle),
         manager_id:      data.managerId === 'none' ? null : data.managerId,
         joining_date:    emp?.joiningDate ?? undefined,
@@ -100,13 +142,15 @@ export function EmployeeEditPage() {
     },
 
     onError: (err: unknown) => {
-      const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
-      console.error('[EmployeeEditPage]', data);
-      toast.error(data?.message || (isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes'));
+      const fieldErrors = extractApiFieldErrors(err);
+      const deptErr = fieldErrors.departmentIds || fieldErrors.jobTitleId || fieldErrors.job_title_id;
+      toast.error(deptErr || extractApiError(err) || (isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes'));
     },
   });
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+  const deptError = errors.departmentIds?.message
+    || (selectedDeptIds.length === 0 ? (isAr ? 'اختر قسماً واحداً على الأقل' : 'Select at least one department') : undefined);
 
   if (isLoading) {
     return (
@@ -145,7 +189,13 @@ export function EmployeeEditPage() {
       </div>
 
       {/* ── Form ─────────────────────────────────────── */}
-      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} noValidate>
+      <form
+        onSubmit={handleSubmit((d) => {
+          if (d.departmentIds.length === 0) return;
+          mutation.mutate(d);
+        })}
+        noValidate
+      >
         <Card padding="lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
@@ -164,19 +214,40 @@ export function EmployeeEditPage() {
               <Input {...register('phone')} type="tel" dir={isAr ? 'rtl' : 'ltr'} endIcon={<Phone size={15} />} placeholder="01xxxxxxxx" />
             </FormField>
 
-            {/* Department */}
-            <FormField label={isAr ? 'القسم' : 'Department'} icon={<Briefcase size={15} className="text-gray-400" />}>
-              <Controller name="department" control={control} render={({ field }) => (
-                <Combobox items={deptItems} value={field.value ?? ''} onChange={field.onChange}
-                  placeholder={isAr ? 'اختر القسم' : 'Select department'} {...cbProps} />
+            {/* Departments */}
+            <FormField
+              label={isAr ? 'الأقسام' : 'Departments'}
+              required
+              icon={<Briefcase size={15} className="text-gray-400" />}
+              error={deptError}
+            >
+              <Controller name="departmentIds" control={control} render={({ field }) => (
+                <MultiCombobox
+                  items={deptItems}
+                  values={field.value ?? []}
+                  onChange={(ids) => handleDepartmentsChange(ids, field.onChange)}
+                  error={!!deptError && selectedDeptIds.length === 0}
+                  placeholder={isAr ? 'اختر قسماً أو أكثر' : 'Select one or more departments'}
+                  {...cbProps}
+                />
               )} />
             </FormField>
 
             {/* Job title */}
             <FormField label={isAr ? 'المسمى الوظيفي' : 'Job Title'} icon={<Briefcase size={15} className="text-gray-400" />}>
               <Controller name="jobTitle" control={control} render={({ field }) => (
-                <Combobox items={jTitleItems} value={field.value ?? ''} onChange={field.onChange}
-                  placeholder={isAr ? 'اختر المسمى' : 'Select job title'} {...cbProps} />
+                <Combobox
+                  items={jTitleItems}
+                  value={field.value ?? ''}
+                  onChange={(id) => handleJobTitleChange(id, field.onChange)}
+                  disabled={titlesLoading || selectedDeptIds.length === 0}
+                  placeholder={
+                    selectedDeptIds.length === 0
+                      ? (isAr ? 'اختر القسم أولاً' : 'Select department first')
+                      : (isAr ? 'اختر المسمى' : 'Select job title')
+                  }
+                  {...cbProps}
+                />
               )} />
             </FormField>
 

@@ -95,6 +95,7 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
       <SeoActionsCard
         campaignId={campaignId}
         campaignName={settings?.name ?? name}
+        isDraft={settings?.isDraft === true}
         exportData={exportData}
         isAr={isAr}
       />

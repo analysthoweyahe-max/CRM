@@ -51,6 +51,7 @@ export interface PmProjectListItem {
   createdBy:        PmProjectCreator;
   createdAt:        string;
   updatedAt:        string;
+  statusOptions?:   PmLookupItem[];
 }
 
 export interface PmProjectTeamMember {
@@ -125,13 +126,23 @@ export interface PmProjectPayload {
   status?:                 string;
   isDraft?:                boolean;
   is_draft?:               boolean;
+  startDate?:              string | null;
   start_date?:             string | null;
   deadline?:               string | null;
   templateId?:             string | null;
   manager_id?:             string;
+  managerId?:              string;
 }
 
 /* ── Project types CRUD (admin-managed lookup) ──────────────────────────── */
+
+export type ProjectTypeCategory = 'pm' | 'seo';
+
+export interface PmProjectTypeDepartment {
+  id:     number;
+  name:   string;
+  nameAr?: string | null;
+}
 
 export interface PmProjectTypeItem {
   id:             number;
@@ -139,6 +150,12 @@ export interface PmProjectTypeItem {
   nameAr:         string | null;
   slug:           string;
   label?:         string;
+  /** Always "pm" | "seo" in UI state — API returns null; set after fetch. */
+  category:       ProjectTypeCategory;
+  section?:       ProjectTypeCategory | null;
+  sectionLabel?:  string | null;
+  departmentId?:  number | null;
+  department?:    PmProjectTypeDepartment | null;
   isActive:       boolean;
   sortOrder:      number;
   projectsCount?: number;
@@ -159,12 +176,12 @@ export interface PmProjectTypeApiResponse {
 }
 
 export interface PmProjectTypePayload {
-  name:          string;
-  name_ar?:      string | null;
-  slug?:         string;
-  department_id?: number;
-  is_active?:    boolean;
-  sort_order?:   number;
+  name:           string;
+  nameAr?:        string | null;
+  slug?:          string;
+  departmentId?:  number | null;
+  isActive?:      boolean;
+  sortOrder?:     number;
 }
 
 /* ── Per-project team management (available / members / add / remove) ──── */

@@ -28,6 +28,10 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
+function inputDir(isAr: boolean) {
+  return isAr ? 'rtl' : 'ltr';
+}
+
 function lookupLabel(l: PmLookupItem, isAr: boolean): string {
   if (isAr && l.labelAr) return l.labelAr;
   return translateProjectLookup(l.value, l.label, isAr, l.labelAr);
@@ -51,6 +55,9 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
   const { settings, isLoading, save } = useProjectSettings(projectId);
   const { statuses, types, managers } = usePmProjectLookups({ includeManagers: isAdmin });
 
+  const statusLookupItems = settings?.statusOptions?.length
+    ? settings.statusOptions
+    : statuses;
   const [name, setName] = useState('');
   const [description, setDesc] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -95,15 +102,15 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
       await save({
         name:            name.trim(),
         description:     description.trim(),
-        project_type_id: Number(projectType),
+        projectTypeId:   Number(projectType),
         status,
-        is_draft:        settings?.isDraft ?? false,
-        start_date:      startDate,
-        deadline,
+        isDraft:         settings?.isDraft ?? false,
+        startDate:       startDate || null,
+        deadline:        deadline || null,
         githubLink:      optionalLink(githubLink),
         driveLink:       optionalLink(driveLink),
         contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
-        ...(isAdmin && managerId ? { manager_id: managerId } : {}),
+        ...(isAdmin && managerId ? { managerId } : {}),
       });
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
     } catch (err) {
@@ -139,11 +146,11 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={LABEL}>{isAr ? 'اسم المشروع' : 'Project Name'}</label>
-          <input type="text" value={name} onChange={e => setName(e.target.value)} className={INPUT} />
+          <input type="text" value={name} onChange={e => setName(e.target.value)} className={INPUT} dir={inputDir(isAr)} />
         </div>
         <div>
           <label className={LABEL}>{isAr ? 'تاريخ البدء' : 'Start Date'}</label>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={INPUT} />
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={INPUT} dir={inputDir(isAr)} />
         </div>
       </div>
 
@@ -155,6 +162,7 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
           onChange={e => setDesc(e.target.value)}
           placeholder={isAr ? 'وصف المشروع وأهدافه...' : 'Project description and goals…'}
           className={`${INPUT} resize-none`}
+          dir={inputDir(isAr)}
         />
       </div>
 
@@ -162,7 +170,7 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         <div>
           <label className={LABEL}>{isAr ? 'الحالة' : 'Status'}</label>
           <Combobox
-            items={toComboboxItems(statuses, isAr)}
+            items={toComboboxItems(statusLookupItems, isAr)}
             value={status}
             onChange={setStatus}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
@@ -217,7 +225,7 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
 
       <div>
         <label className={LABEL}>{isAr ? 'الموعد النهائي' : 'Deadline'}</label>
-        <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className={INPUT} />
+        <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className={INPUT} dir={inputDir(isAr)} />
       </div>
 
       <Button

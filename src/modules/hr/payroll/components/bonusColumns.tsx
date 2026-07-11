@@ -31,7 +31,11 @@ export function getBonusColumns(isAr: boolean) {
     col.accessor('adjustmentTypeLabel', {
       id:     'adjustmentTypeLabel',
       header: isAr ? 'نوع المكافأة' : 'Type',
-      cell:   (i) => <span className="text-sm text-gray-700 dark:text-gray-300">{i.getValue()}</span>,
+      cell:   ({ row }) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {row.original.type?.label || row.original.adjustmentTypeLabel || '—'}
+        </span>
+      ),
     }),
     col.accessor('amount', {
       id:     'amount',

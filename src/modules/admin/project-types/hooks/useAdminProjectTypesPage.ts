@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
 import {
   useProjectTypeList, useCreateProjectType, useUpdateProjectType, useDeleteProjectType,
 } from './useProjectTypes';
-import type { PmProjectTypeItem, PmProjectTypePayload } from '@/modules/project-manager/projects/types/project.types';
+import type {
+  PmProjectTypeItem,
+  PmProjectTypePayload,
+  ProjectTypeCategory,
+} from '@/modules/project-manager/projects/types/project.types';
+
+export type ProjectTypeFilter = 'all' | ProjectTypeCategory;
 
 export function useAdminProjectTypesPage(isAr: boolean) {
   const { data: types, isLoading } = useProjectTypeList();
@@ -12,12 +18,20 @@ export function useAdminProjectTypesPage(isAr: boolean) {
   const { mutate: update, isPending: updating } = useUpdateProjectType();
   const { mutate: remove, isPending: deleting }  = useDeleteProjectType();
 
-  const [showAdd,      setShowAdd]      = useState(false);
-  const [editingType,  setEditingType]  = useState<PmProjectTypeItem | null>(null);
+  const [filter, setFilter] = useState<ProjectTypeFilter>('all');
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingType, setEditingType] = useState<PmProjectTypeItem | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PmProjectTypeItem | null>(null);
 
-  function submitAdd(payload: PmProjectTypePayload) {
-    create(payload, {
+  const filteredTypes = useMemo(() => {
+    const list = types ?? [];
+    if (filter === 'all') return list;
+    return list.filter((t) => t.category === filter);
+  }, [types, filter]);
+
+  function submitAdd(payload: PmProjectTypePayload & { category: ProjectTypeCategory }) {
+    const { category, ...body } = payload;
+    create({ category, payload: body }, {
       onSuccess: () => {
         toast.success(isAr ? 'تم إنشاء النوع' : 'Project type created');
         setShowAdd(false);
@@ -26,9 +40,11 @@ export function useAdminProjectTypesPage(isAr: boolean) {
     });
   }
 
-  function submitEdit(payload: PmProjectTypePayload) {
+  function submitEdit(payload: PmProjectTypePayload & { category?: ProjectTypeCategory }) {
     if (!editingType) return;
-    update({ id: editingType.id, payload }, {
+    const { category, ...body } = payload;
+    void category;
+    update({ category: editingType.category, id: editingType.id, payload: body }, {
       onSuccess: () => {
         toast.success(isAr ? 'تم تحديث النوع' : 'Project type updated');
         setEditingType(null);
@@ -39,7 +55,7 @@ export function useAdminProjectTypesPage(isAr: boolean) {
 
   function confirmDelete() {
     if (!pendingDelete) return;
-    remove(pendingDelete.id, {
+    remove({ category: pendingDelete.category, id: pendingDelete.id }, {
       onSuccess: () => {
         toast.success(isAr ? 'تم حذف النوع' : 'Project type deleted');
         setPendingDelete(null);
@@ -49,8 +65,9 @@ export function useAdminProjectTypesPage(isAr: boolean) {
   }
 
   return {
-    types: types ?? [],
+    types: filteredTypes,
     isLoading,
+    filter, setFilter,
     showAdd, openAdd: () => setShowAdd(true), closeAdd: () => setShowAdd(false),
     submitAdd, creating,
     editingType, openEdit: setEditingType, closeEdit: () => setEditingType(null),

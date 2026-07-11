@@ -11,8 +11,8 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { ROUTES }     from '@/app/router/routes';
 import { useProjectDetails }   from '../hooks/useProjectDetails';
 import { usePmTaskLookups }    from '../hooks/usePmTaskLookups';
-import { pmProjectLookupsApi, pmProjectTeamApi, pmProjectsApi } from '../api/project.api';
-import type { PmAvailableMember, PmProjectTeamMember, PmProjectPhase } from '../types/project.types';
+import { pmProjectTeamApi, pmProjectsApi } from '../api/project.api';
+import type { PmProjectTeamMember, PmProjectPhase } from '../types/project.types';
 import { pmTaskApi, normalizePmTaskPriority } from '../../tasks/api/task.api';
 import { useInvalidateProjectTasks } from '../../tasks/store/taskStore';
 import { PmTaskFormFields, type PmTaskFormState } from '../components/PmTaskFormFields';
@@ -35,18 +35,7 @@ export function AddPmTaskPage() {
   const { statuses, priorities } = usePmTaskLookups();
   const invalidateTasks = useInvalidateProjectTasks(id);
 
-  const projectTypeId = project?.projectTypeId;
-
-  const { data: assignees = [] } = useQuery({
-    queryKey: ['pm-project-lookups', 'employees', projectTypeId],
-    queryFn: async () => {
-      const res = await pmProjectLookupsApi.employees({ project_type_id: projectTypeId! });
-      return toApiArray<PmAvailableMember>(res.data.data);
-    },
-    enabled: !!projectTypeId,
-  });
-
-  const { data: teamMembers = [] } = useQuery({
+  const { data: teamMembers = [], isLoading: teamLoading } = useQuery({
     queryKey: ['pm-project', id, 'team'],
     queryFn: async () => {
       const res = await pmProjectTeamApi.list(id, { per_page: 100 });
@@ -71,11 +60,12 @@ export function AddPmTaskPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phasesError]);
 
-  const teamMemberIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const member of teamMembers) ids.add(member.id);
-    for (const member of project?.teamMembers ?? []) ids.add(member.id);
-    return ids;
+  /** Assignees = project team only (never the full employee directory). */
+  const assignees = useMemo(() => {
+    const byId = new Map<string, PmProjectTeamMember>();
+    for (const member of project?.teamMembers ?? []) byId.set(member.id, member);
+    for (const member of teamMembers) byId.set(member.id, member);
+    return [...byId.values()];
   }, [teamMembers, project?.teamMembers]);
 
   const [form, setForm]         = useState<PmTaskFormState>(INITIAL);
@@ -91,10 +81,23 @@ export function AddPmTaskPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [priorities, statuses]);
 
+  // Drop selection if assignee left the team.
+  useEffect(() => {
+    if (!form.assigneeId) return;
+    if (!assignees.some(m => m.id === form.assigneeId)) {
+      set('assigneeId', '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignees, form.assigneeId]);
+
   const goBack = () => navigate(ROUTES.PROJECT_MANAGER.DETAILS(id));
   const BackIcon = isAr ? ArrowRight : ArrowLeft;
 
-  const teamItems:     ComboboxItem[] = assignees.map(m => ({ id: m.id, label: m.name, detail: m.jobTitle }));
+  const teamItems: ComboboxItem[] = assignees.map(m => ({
+    id:     m.id,
+    label:  m.name,
+    detail: m.jobTitle || m.projectRole || undefined,
+  }));
   const phases = projectPhases.length > 0 ? projectPhases : (project?.phases ?? []);
   const phaseItems:    ComboboxItem[] = phases.map(p => ({ id: String(p.id), label: p.name }));
   const priorityItems: ComboboxItem[] = priorities.map(p => ({
@@ -108,24 +111,14 @@ export function AddPmTaskPage() {
 
   const isValid = !!(form.title.trim() && form.assigneeId && form.priority && form.status && form.dueDate && form.phaseId);
 
-  async function ensureAssigneeOnTeam(assigneeId: string) {
-    if (teamMemberIds.has(assigneeId)) return;
-
-    const selected = assignees.find(m => m.id === assigneeId);
-    const projectRole =
-      selected?.jobTitle?.trim()
-      || selected?.projectRole?.trim()
-      || (isAr ? 'عضو الفريق' : 'Team Member');
-
-    await pmProjectTeamApi.addMember(id, { employee_id: assigneeId, project_role: projectRole });
-  }
-
   async function handleAdd() {
     if (!isValid || submitting) return;
+    if (!assignees.some(m => m.id === form.assigneeId)) {
+      toast.error(isAr ? 'اختر عضواً من فريق المشروع' : 'Pick a member from the project team');
+      return;
+    }
     setSubmitting(true);
     try {
-      await ensureAssigneeOnTeam(form.assigneeId);
-
       await pmTaskApi.create(id, {
         title:           form.title.trim(),
         description:     form.description.trim() || undefined,
@@ -146,7 +139,7 @@ export function AddPmTaskPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || teamLoading) {
     return (
       <div className="space-y-5 animate-pulse">
         <div className="h-10 w-48 rounded-lg bg-gray-100 dark:bg-gray-800" />
@@ -188,6 +181,14 @@ export function AddPmTaskPage() {
           statusItems={statusItems}
           isAr={isAr}
         />
+
+        {assignees.length === 0 && (
+          <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+            {isAr
+              ? 'لا يوجد أعضاء في فريق المشروع — أضف أعضاء من تبويب الفريق أولاً'
+              : 'No project team members yet — add members from the Team tab first'}
+          </p>
+        )}
 
         <div className="flex items-center gap-3 pt-6 mt-2 border-t border-gray-100 dark:border-gray-700/60">
           <Button

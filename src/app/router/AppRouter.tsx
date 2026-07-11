@@ -62,7 +62,8 @@ const DeductionsPage     = lazyImport(() => import('@/modules/hr/payroll/pages/D
 const AddDeductionPage   = lazyImport(() => import('@/modules/hr/payroll/pages/AddDeductionPage')           .then(m => ({ default: m.AddDeductionPage })));
 const BonusesPage        = lazyImport(() => import('@/modules/hr/payroll/pages/BonusesPage')                .then(m => ({ default: m.BonusesPage })));
 const AddBonusPage       = lazyImport(() => import('@/modules/hr/payroll/pages/AddBonusPage')               .then(m => ({ default: m.AddBonusPage })));
-const MessagesPage       = lazyImport(() => import('@/modules/hr/messages/pages/MessagesPage')              .then(m => ({ default: m.MessagesPage })));
+const PayrollTypesPage   = lazyImport(() => import('@/modules/hr/payroll/pages/PayrollTypesPage')           .then(m => ({ default: m.PayrollTypesPage })));
+const SalarySheetPage    = lazyImport(() => import('@/modules/hr/payroll/pages/SalarySheetPage')            .then(m => ({ default: m.SalarySheetPage })));
 const SettingsPage       = lazyImport(() => import('@/modules/admin/settings/pages/SettingsPage')           .then(m => ({ default: m.SettingsPage })));
 
 const MyProjectsPage = lazyImport(() => import('@/shared/modules/my-projects/pages/MyProjectsPage').then(m => ({ default: m.MyProjectsPage })));
@@ -100,15 +101,20 @@ const SeoMemberProfilePage       = lazyImport(() => import('@/modules/seo-member
 
 /* ── Employee ─────────────────────────────────────────────────────── */
 const EmployeeDashboardPage    = lazyImport(() => import('@/modules/employee/dashboard/pages/EmployeeDashboardPage')       .then(m => ({ default: m.EmployeeDashboardPage })));
-const EmployeeMessagesPage     = lazyImport(() => import('@/modules/employee/messages/pages/EmployeeMessagesPage')         .then(m => ({ default: m.EmployeeMessagesPage })));
 const EmployeeRequestsPage     = lazyImport(() => import('@/modules/employee/requests/pages/EmployeeRequestsPage')         .then(m => ({ default: m.EmployeeRequestsPage })));
 const EmployeeReportsPage      = lazyImport(() => import('@/modules/employee/reports/pages/EmployeeReportsPage')           .then(m => ({ default: m.EmployeeReportsPage })));
 const AttendanceTimerPage      = lazyImport(() => import('@/shared/modules/attendance/pages/AttendanceTimerPage')           .then(m => ({ default: m.AttendanceTimerPage })));
+const WorkOverviewPage         = lazyImport(() => import('@/shared/modules/work-overview/pages/WorkOverviewPage')           .then(m => ({ default: m.WorkOverviewPage })));
+const PersonalDeductionsPage   = lazyImport(() => import('@/shared/modules/work-overview/pages/PersonalDeductionsPage')     .then(m => ({ default: m.PersonalDeductionsPage })));
+const PersonalDeductionDetailPage = lazyImport(() => import('@/shared/modules/work-overview/pages/PersonalDeductionDetailPage').then(m => ({ default: m.PersonalDeductionDetailPage })));
+const PersonalBonusesPage      = lazyImport(() => import('@/shared/modules/work-overview/pages/PersonalBonusesPage')        .then(m => ({ default: m.PersonalBonusesPage })));
+const PersonalBonusDetailPage  = lazyImport(() => import('@/shared/modules/work-overview/pages/PersonalBonusDetailPage')    .then(m => ({ default: m.PersonalBonusDetailPage })));
 const EmployeeAttendanceExceptionsPage = lazyImport(() => import('@/modules/employee/attendance-exceptions/pages/EmployeeAttendanceExceptionsPage').then(m => ({ default: m.EmployeeAttendanceExceptionsPage })));
 const EmployeeTaskDetailPage   = lazyImport(() => import('@/modules/employee/tasks/pages/TaskDetailPage')                  .then(m => ({ default: m.TaskDetailPage })));
 const EmployeeDailyReportsPage = lazyImport(() => import('@/modules/employee/daily-reports/pages/EmployeeDailyReportsPage').then(m => ({ default: m.EmployeeDailyReportsPage })));
 const EmployeeProfilePage      = lazyImport(() => import('@/modules/employee/profile/pages/EmployeeProfilePage')           .then(m => ({ default: m.EmployeeProfilePage })));
 const EmployeeProjectMessagesPage = lazyImport(() => import('@/modules/employee/projects/pages/ProjectMessagesPage')        .then(m => ({ default: m.ProjectMessagesPage })));
+const EmployeeMessagesPage     = lazyImport(() => import('@/modules/employee/messages/pages/EmployeeMessagesPage')         .then(m => ({ default: m.EmployeeMessagesPage })));
 const EmployeeAlertsPage       = lazyImport(() => import('@/modules/employee/alerts/pages/EmployeeAlertsPage')              .then(m => ({ default: m.EmployeeAlertsPage })));
 const AlertDetailPage          = lazyImport(() => import('@/modules/employee/alerts/pages/AlertDetailPage')                 .then(m => ({ default: m.AlertDetailPage })));
 
@@ -164,6 +170,8 @@ export function AppRouter() {
                   <Route element={<PermissionGuard role="super-admin" />}>
                     <Route path={ROUTES.ADMIN.SEO_TASK_STATUSES} element={<AdminSeoTaskStatusesPage />} />
                     <Route path={ROUTES.ADMIN.PROJECT_TYPES}    element={<AdminProjectTypesPage />} />
+                    <Route path={ROUTES.ADMIN.PROJECT_TEMPLATES} element={<TemplatesPage module="pm" />} />
+                    <Route path={ROUTES.ADMIN.SEO_PROJECT_TEMPLATES} element={<TemplatesPage module="seo" />} />
                     <Route path={ROUTES.ADMIN.SETTINGS}         element={<OrgSettingsPage />} />
                   </Route>
 
@@ -192,15 +200,17 @@ export function AppRouter() {
                     <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
                   </Route>
 
-                  <Route element={<PermissionGuard permission="view-payroll" />}>
+                  <Route element={<PermissionGuard permission={['view-payroll', 'manage-payroll']} />}>
+                    <Route path={ROUTES.PAYROLL.SALARY_SHEET}   element={<SalarySheetPage />} />
                     <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
                     <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
                     <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
                     <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
+                    <Route path={ROUTES.PAYROLL.TYPES}          element={<PayrollTypesPage />} />
                   </Route>
 
                   <Route path={ROUTES.PROFILE}                element={<ProfilePage />} />
-                  <Route path={ROUTES.MESSAGES}               element={<MessagesPage />} />
+                  <Route path={ROUTES.MESSAGES}               element={<SeoMemberMessagesPage />} />
                   <Route path={ROUTES.SETTINGS}               element={<SettingsPage />} />
                 </Route>
               </Route>
@@ -209,6 +219,7 @@ export function AppRouter() {
                 <Route element={<ProjectManagerLayout />}>
                   <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
                   <Route path={ROUTES.PROJECT_MANAGER.TASKS}        element={<MyTasksPage />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.MESSAGES}     element={<SeoMemberMessagesPage />} />
                   <Route element={<PermissionGuard permission="view-pm-projects" />}>
                     <Route path={ROUTES.PROJECT_MANAGER.MY_PROJECTS} element={<MyProjectsPage module="pm" />} />
                     <Route path={ROUTES.PROJECT_MANAGER.ADD_TASK()} element={<AddPmTaskPage />} />
@@ -224,10 +235,15 @@ export function AppRouter() {
                   </Route>
                   <Route element={<PermissionGuard permission={['view-pm-reports', 'view-pm-projects']} />}>
                     <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
-                  <Route path={ROUTES.PROJECT_MANAGER.ATTENDANCE} element={<AttendanceTimerPage layoutScope="pm" />} />
                   </Route>
+                  <Route path={ROUTES.PROJECT_MANAGER.WORK_OVERVIEW} element={<WorkOverviewPage layoutScope="pm" />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.ATTENDANCE} element={<AttendanceTimerPage layoutScope="pm" />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.DEDUCTIONS} element={<PersonalDeductionsPage layoutScope="pm" />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.DEDUCTION_DETAIL()} element={<PersonalDeductionDetailPage layoutScope="pm" />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.BONUSES} element={<PersonalBonusesPage layoutScope="pm" />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.BONUS_DETAIL()} element={<PersonalBonusDetailPage layoutScope="pm" />} />
                   <Route element={<PermissionGuard permission="edit-pm-project" />}>
-                    <Route path={ROUTES.PROJECT_MANAGER.TEMPLATES} element={<TemplatesPage />} />
+                    <Route path={ROUTES.PROJECT_MANAGER.TEMPLATES} element={<TemplatesPage module="pm" />} />
                   </Route>
                   <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
 
@@ -249,10 +265,12 @@ export function AppRouter() {
                     <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission={['view-payroll', 'manage-payroll']} />}>
+                    <Route path={ROUTES.PAYROLL.SALARY_SHEET}   element={<SalarySheetPage />} />
                     <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
                     <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
                     <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
                     <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
+                    <Route path={ROUTES.PAYROLL.TYPES}          element={<PayrollTypesPage />} />
                   </Route>
                 </Route>
               </Route>
@@ -261,11 +279,17 @@ export function AppRouter() {
                 <Route element={<EmployeeLayout />}>
                   <Route path={ROUTES.EMPLOYEE.DASHBOARD}     element={<EmployeeDashboardPage />} />
                   <Route path={ROUTES.EMPLOYEE.MY_PROJECTS}   element={<MyProjectsPage module="pm" />} />
-                  <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<EmployeeMessagesPage />} />
+                  <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<SeoMemberMessagesPage />} />
+                  <Route path={ROUTES.EMPLOYEE.HR_MESSAGES}   element={<EmployeeMessagesPage />} />
                   <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
                   <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
+                  <Route path={ROUTES.EMPLOYEE.WORK_OVERVIEW}          element={<WorkOverviewPage layoutScope="employee" />} />
                   <Route path={ROUTES.EMPLOYEE.ATTENDANCE}             element={<AttendanceTimerPage layoutScope="employee" />} />
                   <Route path={ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS} element={<EmployeeAttendanceExceptionsPage />} />
+                  <Route path={ROUTES.EMPLOYEE.DEDUCTIONS}             element={<PersonalDeductionsPage layoutScope="employee" />} />
+                  <Route path={ROUTES.EMPLOYEE.DEDUCTION_DETAIL()}     element={<PersonalDeductionDetailPage layoutScope="employee" />} />
+                  <Route path={ROUTES.EMPLOYEE.BONUSES}                element={<PersonalBonusesPage layoutScope="employee" />} />
+                  <Route path={ROUTES.EMPLOYEE.BONUS_DETAIL()}         element={<PersonalBonusDetailPage layoutScope="employee" />} />
                   <Route path={ROUTES.EMPLOYEE.TASKS}         element={<MyTasksPage />} />
                   <Route path={ROUTES.EMPLOYEE.PROJECT_TASKS()} element={<MyTasksPage />} />
                   <Route path={ROUTES.EMPLOYEE.TASK_DETAIL()} element={<EmployeeTaskDetailPage />} />
@@ -297,6 +321,16 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission="view-seo-projects" />}>
                     <Route path={ROUTES.SEO_LEADER.REPORTS}   element={<SeoReportsPage />} />
                   </Route>
+                  <Route element={<PermissionGuard permission="edit-seo-project" />}>
+                    <Route path={ROUTES.SEO_LEADER.TEMPLATES} element={<TemplatesPage module="seo" />} />
+                  </Route>
+                  <Route path={ROUTES.SEO_LEADER.WORK_OVERVIEW} element={<WorkOverviewPage layoutScope="seo" seoRouteVariant="leader" />} />
+                  <Route path={ROUTES.SEO_LEADER.ATTENDANCE} element={<AttendanceTimerPage layoutScope="seo" />} />
+                  <Route path={ROUTES.SEO_LEADER.DEDUCTIONS} element={<PersonalDeductionsPage layoutScope="seo" seoRouteVariant="leader" />} />
+                  <Route path={ROUTES.SEO_LEADER.DEDUCTION_DETAIL()} element={<PersonalDeductionDetailPage layoutScope="seo" seoRouteVariant="leader" />} />
+                  <Route path={ROUTES.SEO_LEADER.BONUSES} element={<PersonalBonusesPage layoutScope="seo" seoRouteVariant="leader" />} />
+                  <Route path={ROUTES.SEO_LEADER.BONUS_DETAIL()} element={<PersonalBonusDetailPage layoutScope="seo" seoRouteVariant="leader" />} />
+                  <Route path={ROUTES.SEO_LEADER.MESSAGES}  element={<SeoMemberMessagesPage />} />
                   <Route path={ROUTES.SEO_LEADER.PROFILE}   element={<SeoProfilePage />} />
 
                   <Route element={<PermissionGuard permission="view-employees" />}>
@@ -317,10 +351,12 @@ export function AppRouter() {
                     <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission={['view-payroll', 'manage-payroll']} />}>
+                    <Route path={ROUTES.PAYROLL.SALARY_SHEET}   element={<SalarySheetPage />} />
                     <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
                     <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
                     <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
                     <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
+                    <Route path={ROUTES.PAYROLL.TYPES}          element={<PayrollTypesPage />} />
                   </Route>
                 </Route>
               </Route>
@@ -337,7 +373,12 @@ export function AppRouter() {
                   <Route path={ROUTES.SEO_MEMBER.MESSAGES}      element={<SeoMemberMessagesPage />} />
                   <Route path={ROUTES.SEO_MEMBER.REQUESTS}      element={<SeoMemberRequestsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.REPORTS}       element={<SeoMemberReportsPage />} />
+                  <Route path={ROUTES.SEO_MEMBER.WORK_OVERVIEW} element={<WorkOverviewPage layoutScope="seo" seoRouteVariant="member" />} />
                   <Route path={ROUTES.SEO_MEMBER.ATTENDANCE}    element={<AttendanceTimerPage layoutScope="seo" />} />
+                  <Route path={ROUTES.SEO_MEMBER.DEDUCTIONS}    element={<PersonalDeductionsPage layoutScope="seo" seoRouteVariant="member" />} />
+                  <Route path={ROUTES.SEO_MEMBER.DEDUCTION_DETAIL()} element={<PersonalDeductionDetailPage layoutScope="seo" seoRouteVariant="member" />} />
+                  <Route path={ROUTES.SEO_MEMBER.BONUSES}       element={<PersonalBonusesPage layoutScope="seo" seoRouteVariant="member" />} />
+                  <Route path={ROUTES.SEO_MEMBER.BONUS_DETAIL()} element={<PersonalBonusDetailPage layoutScope="seo" seoRouteVariant="member" />} />
                   <Route path={ROUTES.SEO_MEMBER.DAILY_REPORTS} element={<SeoMemberDailyReportsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.PROFILE}       element={<SeoMemberProfilePage />} />
                 </Route>

@@ -85,7 +85,7 @@ export function AdminEmployeeTable({
           </button>
         ),
       }),
-      col.accessor('department', { header: isAr ? 'القسم' : 'Department' }),
+      col.accessor('department', { header: isAr ? 'الأقسام' : 'Departments' }),
       col.accessor('jobTitle',   { header: isAr ? 'المسمى الوظيفي' : 'Job Title' }),
       col.accessor('role', {
         header: isAr ? 'الدور' : 'Role',

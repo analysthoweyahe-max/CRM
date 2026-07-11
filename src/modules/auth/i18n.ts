@@ -21,8 +21,8 @@ export const authTranslations = {
     login: {
       title:                 'تسجيل الدخول',
       subtitle:              'أدخل بياناتك للوصول إلى لوحة التحكم',
-      adminId:            'البريد الإلكتروني أو معرّف المستخدم',
-      adminIdPlaceholder: 'أدخل البريد الإلكتروني أو معرّف المستخدم',
+      adminId:            'المعرّف',
+      adminIdPlaceholder: 'معرف الأدمن',
       password:              'كلمة المرور',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'نسيت كلمة المرور؟',
@@ -32,6 +32,7 @@ export const authTranslations = {
       activationAction:      'تفعيل الحساب',
       activatedSuccess:      'تم تفعيل حسابك بنجاح. يمكنك الآن تسجيل الدخول.',
       resetSuccess:          'تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.',
+      invalidCredentials:    'بيانات الدخول غير متطابقة مع سجلاتنا.',
     },
 
     setPassword: {
@@ -131,10 +132,10 @@ export const authTranslations = {
     },
 
     validation: {
-      adminIdRequired: 'البريد الإلكتروني أو معرّف المستخدم مطلوب',
-      adminIdInvalid:  'أدخل بريداً إلكترونياً أو معرّف مستخدم صحيحاً',
+      adminIdRequired: 'المعرّف مطلوب',
+      adminIdInvalid:  'أدخل معرّفاً صحيحاً',
       passwordRequired:   'كلمة المرور مطلوبة',
-      loginPasswordMin:   'كلمة المرور يجب أن تكون 6 أحرف أو أرقام على الأقل',
+      loginPasswordMin:   'كلمة المرور مطلوبة',
       passwordMin:        'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
       passwordMin6:       'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
       passwordUppercase:  'يجب أن تحتوي على حرف كبير واحد على الأقل',
@@ -167,8 +168,8 @@ export const authTranslations = {
     login: {
       title:                 'Sign In',
       subtitle:              'Enter your credentials to access the dashboard',
-      adminId:            'Email or User ID',
-      adminIdPlaceholder: 'Enter your email or user ID',
+      adminId:            'ID',
+      adminIdPlaceholder: 'Admin ID',
       password:              'Password',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'Forgot password?',
@@ -178,6 +179,7 @@ export const authTranslations = {
       activationAction:      'Activate account',
       activatedSuccess:      'Your account has been activated. You can now sign in.',
       resetSuccess:          'Your password has been changed. You can now sign in.',
+      invalidCredentials:    'These credentials do not match our records.',
     },
 
     setPassword: {
@@ -277,10 +279,10 @@ export const authTranslations = {
     },
 
     validation: {
-      adminIdRequired: 'Email or user ID is required',
-      adminIdInvalid:  'Enter a valid email or user ID',
+      adminIdRequired: 'ID is required',
+      adminIdInvalid:  'Enter a valid ID',
       passwordRequired:   'Password is required',
-      loginPasswordMin:   'Password must be at least 6 characters',
+      loginPasswordMin:   'Password is required',
       passwordMin:        'Password must be at least 8 characters',
       passwordMin6:       'Password must be at least 6 characters',
       passwordUppercase:  'Must contain at least one uppercase letter',

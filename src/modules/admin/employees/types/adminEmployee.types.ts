@@ -1,6 +1,12 @@
 import type { PermissionAction } from '../../roles/types/adminRole.types';
 import type { ApiEmployee } from '@/modules/hr/employees/types/employee.types';
-import { mapEmploymentType, resolveDisplayText, resolveIdentifier } from '@/modules/hr/employees/types/employee.types';
+import {
+  mapEmploymentType,
+  resolveDisplayText,
+  resolveIdentifier,
+  formatEmployeeDepartments,
+  employeeDepartmentsList,
+} from '@/modules/hr/employees/types/employee.types';
 import { getAvatarColor, getInitial } from '@/shared/utils/avatar.utils';
 
 export type AdminEmployeeStatus = 'active' | 'inactive' | 'pending';
@@ -12,12 +18,13 @@ const STATUS_LABEL: Record<AdminEmployeeStatus, { ar: string; en: string }> = {
 };
 
 const ROLE_LABEL: Record<string, { ar: string; en: string }> = {
-  'hr-manager':      { ar: 'مدير موارد بشرية',   en: 'HR Manager'         },
+  'hr-manager':      { ar: 'مدير الموارد البشرية', en: 'HR Manager'         },
   'pm-employee':     { ar: 'موظف مشاريع',         en: 'PM Employee'       },
-  'project-manager': { ar: 'مدير مشاريع',         en: 'Project Manager'   },
+  'project-manager': { ar: 'مدير المشاريع',       en: 'Project Manager'   },
   'seo-employee':    { ar: 'موظف SEO',            en: 'SEO Employee'      },
   'seo-leader':      { ar: 'قائد SEO',             en: 'SEO Leader'        },
   'seo-manager':     { ar: 'مدير SEO',            en: 'SEO Manager'       },
+  'super-admin':     { ar: 'مشرف عام',            en: 'Super Admin'       },
   admin:             { ar: 'مدير عام',            en: 'Admin'             },
 };
 
@@ -33,7 +40,10 @@ export interface AdminEmployee {
   email:          string;
   avatarInitial:  string;
   avatarColor:    string;
+  /** Joined display string of all departments. */
   department:     string;
+  /** Individual department labels for filtering. */
+  departments:    string[];
   jobTitle:       string;
   roles:          string[];
   role:           string;
@@ -88,6 +98,9 @@ export function toAdminEmployee(emp: ApiEmployee): AdminEmployee {
     emp.userId ?? emp.user_id ?? emp.employeeNumber ?? emp.id,
     String(emp.employeeNumber ?? emp.id ?? '—'),
   );
+  const departments = employeeDepartmentsList(emp)
+    .map((d) => resolveDisplayText(d, true))
+    .filter(Boolean);
 
   return {
     id:             emp.id,
@@ -97,7 +110,8 @@ export function toAdminEmployee(emp: ApiEmployee): AdminEmployee {
     email:          emp.email,
     avatarInitial:  getInitial(emp.name),
     avatarColor:    getAvatarColor(emp.name),
-    department:     resolveDisplayText(emp.department, true) || '—',
+    department:     formatEmployeeDepartments(emp, true) || '—',
+    departments,
     jobTitle:       resolveDisplayText(emp.jobTitle, true) || '—',
     roles,
     role:           roles.length ? roles.map(r => getRoleLabel(r, true)).join('، ') : '—',

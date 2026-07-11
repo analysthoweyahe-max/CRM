@@ -1,15 +1,32 @@
-import { useState, Suspense } from 'react';
-import { Outlet }   from 'react-router-dom';
-import { useAuth }    from '@/modules/auth/context/AuthContext';
+import { useState, Suspense, useEffect, useRef } from 'react';
+import { Outlet } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useAuth } from '@/modules/auth/context/AuthContext';
+import { useLang } from '@/app/providers/LanguageProvider';
 import { AppSidebar } from './components/AppSidebar';
-import { Topbar }     from './components/Topbar';
+import { Topbar } from './components/Topbar';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
-import { ROUTES }     from '@/app/router/routes';
+import { AttendanceWidget } from './components/AttendanceWidget';
+import { useAttendanceWidget } from './components/useAttendanceWidget';
+import { ROUTES } from '@/app/router/routes';
 
 export function SeoLeaderLayout() {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
+  const { lang } = useLang();
+  const isAr = lang === 'ar';
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [collapsed,   setCollapsed]   = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  const attendance = useAttendanceWidget('seo');
+  const prevCollapsed = useRef(collapsed);
+
+  useEffect(() => {
+    if (isSuperAdmin) return;
+    if (prevCollapsed.current && !collapsed && attendance.isActiveDay) {
+      toast.success(isAr ? 'جلسة العمل نشطة' : 'Work session active');
+    }
+    prevCollapsed.current = collapsed;
+  }, [collapsed, attendance.isActiveDay, isAr, isSuperAdmin]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -19,6 +36,8 @@ export function SeoLeaderLayout() {
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(p => !p)}
+        isCheckedIn={!isSuperAdmin && attendance.isActiveDay}
+        footerWidget={isSuperAdmin ? undefined : <AttendanceWidget layoutScope="seo" />}
       />
 
       <div className={[

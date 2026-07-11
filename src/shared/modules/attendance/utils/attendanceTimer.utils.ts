@@ -41,12 +41,129 @@ export function attendanceTodayPath(scope: AttendanceScope): string {
   return `${SCOPE_PREFIX[scope]}/today`;
 }
 
+export function attendanceCheckInPath(scope: AttendanceScope): string {
+  return `${SCOPE_PREFIX[scope]}/check-in`;
+}
+
+export function attendanceCheckOutPath(scope: AttendanceScope): string {
+  return `${SCOPE_PREFIX[scope]}/check-out`;
+}
+
+export function attendancePausePath(scope: AttendanceScope): string {
+  return `${SCOPE_PREFIX[scope]}/pause`;
+}
+
+export function attendanceResumePath(scope: AttendanceScope): string {
+  return `${SCOPE_PREFIX[scope]}/resume`;
+}
+
 export function attendanceHistoryPath(scope: AttendanceScope): string {
   return `${SCOPE_PREFIX[scope]}/history`;
 }
 
 export function attendanceSummaryPath(scope: AttendanceScope): string {
   return `${SCOPE_PREFIX[scope]}/summary`;
+}
+
+function hasCheckedOut(today: AttendanceTodayData): boolean {
+  return Boolean(today.record?.checkOutTime ?? today.checkOutTime);
+}
+
+function hasCheckedIn(today: AttendanceTodayData): boolean {
+  return Boolean(today.record?.checkInTime ?? today.checkInTime);
+}
+
+function isInWorkSession(today: AttendanceTodayData): boolean {
+  return (
+    today.isWorking === true
+    || today.isPaused === true
+    || today.workStatus === 'currently_working'
+    || today.workStatus === 'on_break'
+  );
+}
+
+/** Parse "HH:MM" / "HH:MM:SS" as today's local Date. */
+function clockTimeToday(time: string): Date | null {
+  const parts = time.split(':').map(Number);
+  if (parts.length < 2 || parts.some(n => Number.isNaN(n))) return null;
+  const [h, m, s = 0] = parts;
+  const d = new Date();
+  d.setHours(h, m, s, 0);
+  return d;
+}
+
+/**
+ * Derive decimal hours from check-in / check-out clock times when the API
+ * omits workingHours (common after early leave / inconsistent today payloads).
+ */
+export function deriveWorkingHours(today: AttendanceTodayData | null): number | null {
+  if (!today) return null;
+  const reported = today.workingHours ?? today.record?.workingHours ?? null;
+  if (reported != null && reported > 0) return reported;
+
+  const inTime  = today.record?.checkInTime  ?? today.checkInTime  ?? null;
+  const outTime = today.record?.checkOutTime ?? today.checkOutTime ?? null;
+  if (!inTime) return reported;
+
+  const start = clockTimeToday(inTime);
+  if (!start) return reported;
+
+  const end = outTime ? clockTimeToday(outTime) : new Date();
+  if (!end) return reported;
+
+  const hours = (end.getTime() - start.getTime()) / 3_600_000;
+  return hours > 0 ? hours : reported;
+}
+
+/**
+ * Check-in is always available outside an active session.
+ * Ignores API canCheckIn flags that may be gated by shift hours.
+ */
+export function canOfferCheckIn(today: AttendanceTodayData | null): boolean {
+  if (!today) return true;
+  if (hasCheckedOut(today)) return false;
+  if (isInWorkSession(today)) return false;
+  return true;
+}
+
+/**
+ * Check-out is always available during an active session (or after check-in).
+ * Ignores API canCheckOut flags that may be gated by shift hours.
+ */
+export function canOfferCheckOut(today: AttendanceTodayData | null): boolean {
+  if (!today) return false;
+  if (hasCheckedOut(today)) return false;
+  if (isInWorkSession(today)) return true;
+  return hasCheckedIn(today);
+}
+
+/** Pause — trust GET .../today canPause while still in an open session. */
+export function canOfferPause(today: AttendanceTodayData | null): boolean {
+  if (!today || hasCheckedOut(today)) return false;
+  if (today.canPause === true) return true;
+  return isInWorkSession(today) && !today.isPaused && today.workStatus !== 'on_break';
+}
+
+/**
+ * Resume — available when paused, or after check-out to continue the work day.
+ * Prefers API canResume; falls back to paused / checked-out session state.
+ */
+export function canOfferResume(today: AttendanceTodayData | null): boolean {
+  if (!today) return false;
+  if (today.canResume === true) return true;
+  if (today.isPaused || today.workStatus === 'on_break') return true;
+  // After check-out, resume is still a normal action to continue work
+  if (hasCheckedOut(today) && hasCheckedIn(today)) return true;
+  return false;
+}
+
+/** Patch today payload so UI actions are not blocked by shift-hour API flags. */
+export function withAnytimeAttendanceActions(today: AttendanceTodayData): AttendanceTodayData {
+  return {
+    ...today,
+    canCheckIn:  canOfferCheckIn(today),
+    canCheckOut: canOfferCheckOut(today),
+  };
 }
 
 /** Decimal hours → HH:MM:SS */
@@ -142,7 +259,9 @@ export function normalizeTodayPayload(data: unknown): AttendanceTodayData | null
 
 export function isActiveWorkDay(today: AttendanceTodayData | null): boolean {
   if (!today) return false;
-  return today.workStatus !== 'offline' && !today.record?.checkOutTime;
+  if (hasCheckedOut(today)) return false;
+  // Prefer check-in presence over workStatus — backend sometimes returns offline while still checked in
+  return hasCheckedIn(today) || isInWorkSession(today);
 }
 
 export function mergeDashboardCheckIn(
@@ -158,7 +277,7 @@ export function mergeDashboardCheckIn(
     breakMinutes:         checkIn.breakMinutes ?? 0,
     isPaused:             checkIn.isPaused ?? false,
     isWorking:            checkIn.isWorking ?? false,
-    canCheckIn:           checkIn.canCheckIn ?? false,
+    canCheckIn:           checkIn.canCheckIn ?? (checkIn.workStatus === 'offline' || checkIn.workStatus == null),
     canCheckOut:          checkIn.canCheckOut ?? false,
     canPause:             checkIn.canPause ?? false,
     canResume:            checkIn.canResume ?? false,

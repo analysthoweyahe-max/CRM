@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarCheck, MessageSquare, Wallet, AtSign, Megaphone, Bell, ClipboardList } from 'lucide-react';
+import { CalendarCheck, MessageSquare, Wallet, AtSign, Megaphone, Bell, ClipboardList, FolderKanban } from 'lucide-react';
 import type { AppNotification } from '@/shared/types/notification.types';
 import { formatNotificationDateTime } from '@/shared/utils/date.utils';
 
@@ -25,9 +25,16 @@ const TYPE_ICON: Record<string, React.ReactNode> = {
   seo_task_status_changed:<ClipboardList size={14} />,
   seo_mention:            <AtSign size={14} />,
   pm_task_assigned:       <ClipboardList size={14} />,
+  pm_project_team_assigned:    <FolderKanban size={14} />,
+  pm_project_manager_assigned: <FolderKanban size={14} />,
+  seo_project_team_assigned:   <FolderKanban size={14} />,
+  seo_project_manager_assigned:<FolderKanban size={14} />,
   hr_leave_submitted:     <CalendarCheck size={14} />,
   pm_project_message:     <MessageSquare size={14} />,
+  pm_client_update:       <MessageSquare size={14} />,
   seo_project_message:    <MessageSquare size={14} />,
+  seo_client_update:      <MessageSquare size={14} />,
+  seo_direct_message:     <MessageSquare size={14} />,
   hr_message:             <MessageSquare size={14} />,
 };
 
@@ -43,9 +50,16 @@ const TYPE_ICON_BG: Record<string, string> = {
   seo_task_status_changed:'bg-[#D8EBAE] text-[#709028]',
   seo_mention:            'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
   pm_task_assigned:       'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  pm_project_team_assigned:    'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  pm_project_manager_assigned: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  seo_project_team_assigned:   'bg-[#D8EBAE] text-[#709028]',
+  seo_project_manager_assigned:'bg-[#D8EBAE] text-[#709028]',
   hr_leave_submitted:     'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
   pm_project_message:     'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  pm_client_update:       'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
   seo_project_message:    'bg-[#D8EBAE] text-[#709028]',
+  seo_client_update:      'bg-[#D8EBAE] text-[#709028]',
+  seo_direct_message:     'bg-[#D8EBAE] text-[#709028]',
   hr_message:             'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
 };
 

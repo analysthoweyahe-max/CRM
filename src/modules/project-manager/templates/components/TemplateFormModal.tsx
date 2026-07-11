@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Modal }     from '@/shared/components/ui/Modal';
 import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
@@ -7,8 +8,11 @@ import { Combobox }  from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { FormField } from '@/shared/components/form/FormField';
 import { usePmProjectLookups } from '@/modules/project-manager/projects/hooks/usePmProjectLookups';
+import { createProjectApi } from '@/shared/modules/create-project/api/createProject.api';
+import { projectTypeLabel } from '@/shared/modules/create-project/utils/createProject.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { TemplateStepsEditor } from './TemplateStepsEditor';
+import type { TemplateModule } from '../api/projectTemplate.api';
 import type {
   PmProjectTemplate,
   PmTemplatePayload,
@@ -22,6 +26,7 @@ interface Props {
   initial?:  PmProjectTemplate | null;
   isLoading: boolean;
   isAr:      boolean;
+  module?:   TemplateModule;
 }
 
 const TEXTAREA = [
@@ -31,8 +36,16 @@ const TEXTAREA = [
   'focus:outline-none focus:ring-2 focus:ring-[#A0CD39] focus:border-transparent resize-none',
 ].join(' ');
 
-export function TemplateFormModal({ open, onClose, onSubmit, initial, isLoading, isAr }: Props) {
-  const { types } = usePmProjectLookups();
+export function TemplateFormModal({
+  open, onClose, onSubmit, initial, isLoading, isAr, module = 'pm',
+}: Props) {
+  const pmLookups = usePmProjectLookups();
+  const seoTypesQ = useQuery({
+    queryKey: ['create-project', 'seo', 'types', 'template-form'],
+    queryFn:  () => createProjectApi.projectTypes('seo'),
+    enabled:  open && module === 'seo',
+    staleTime: 60_000,
+  });
 
   const [name, setName]           = useState('');
   const [description, setDesc]    = useState('');
@@ -56,10 +69,21 @@ export function TemplateFormModal({ open, onClose, onSubmit, initial, isLoading,
   const validSteps = steps.filter((s) => s.title.trim());
   const isValid = !!name.trim() && validSteps.length > 0;
 
-  const typeItems: ComboboxItem[] = [
-    { id: '', label: isAr ? 'كل الأنواع (عام)' : 'All types (global)' },
-    ...types.map((t) => ({ id: t.value, label: translateProjectLookup(t.value, t.label, isAr, t.labelAr) })),
-  ];
+  const typeItems: ComboboxItem[] = module === 'seo'
+    ? [
+        { id: '', label: isAr ? 'كل الأنواع (عام)' : 'All types (global)' },
+        ...(seoTypesQ.data ?? []).map((t) => ({
+          id:    String(t.id),
+          label: projectTypeLabel(t, isAr),
+        })),
+      ]
+    : [
+        { id: '', label: isAr ? 'كل الأنواع (عام)' : 'All types (global)' },
+        ...pmLookups.types.map((t) => ({
+          id: t.value,
+          label: translateProjectLookup(t.value, t.label, isAr, t.labelAr),
+        })),
+      ];
 
   function handleSubmit() {
     if (!isValid) return;
@@ -99,7 +123,9 @@ export function TemplateFormModal({ open, onClose, onSubmit, initial, isLoading,
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField label={isAr ? 'اسم القالب' : 'Template Name'} required>
             <Input value={name} onChange={(e) => setName(e.target.value)}
-              placeholder={isAr ? 'مثال: قالب تطوير ويب' : 'e.g. Web Development Template'} />
+              placeholder={isAr
+                ? (module === 'seo' ? 'مثال: قالب حملة SEO' : 'مثال: قالب تطوير ويب')
+                : (module === 'seo' ? 'e.g. SEO Campaign Template' : 'e.g. Web Development Template')} />
           </FormField>
           <FormField
             label={isAr ? 'نوع المشروع' : 'Project Type'}

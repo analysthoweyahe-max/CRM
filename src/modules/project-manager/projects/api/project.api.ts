@@ -44,6 +44,10 @@ export const pmProjectsApi = {
     return http.get<PmProjectApiResponse>(`/v1/pm/projects/${id}/settings`);
   },
 
+  updateSettings(id: number | string, payload: PmProjectPayload) {
+    return http.put<PmProjectApiResponse>(`/v1/pm/projects/${id}/settings`, payload);
+  },
+
   update(id: number | string, payload: PmProjectPayload) {
     return http.put<PmProjectDetailsApiResponse>(`/v1/pm/projects/${id}`, payload);
   },
@@ -103,6 +107,7 @@ export const pmProjectLookupsApi = {
 };
 
 /* ── Project types CRUD (super-admin managed) ───────────────────────────── */
+/** Prefer `pmAdminProjectTypesApi` from admin/project-types for UI (normalizes category). */
 export const pmProjectTypesApi = {
   list(params?: { department_id?: number }) {
     return http.get<PmProjectTypeListApiResponse>('/v1/pm/project-types', { params });

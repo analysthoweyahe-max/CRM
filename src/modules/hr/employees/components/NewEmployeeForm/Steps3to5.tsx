@@ -29,11 +29,16 @@ export function Step2Review({ isAr, isRTL, formData, onBack, onSubmit }: Step2Pr
   const s1 = formData.step1;
 
   const { data: departments = [] } = useDepartments();
-  const { data: jobTitles   = [] } = useJobTitles(s1?.department || undefined);
+  const { data: jobTitles   = [] } = useJobTitles();
   const { items: managerItems }    = useManagerOptions(isAr);
 
-  const deptLabel    = departments.find((d) => String(d.id) === s1?.department)
-    ?.[isAr ? 'nameAr' : 'name'] || s1?.department || '—';
+  const deptLabel = (s1?.departmentIds ?? [])
+    .map((id) => {
+      const d = departments.find((x) => String(x.id) === id);
+      return d ? (isAr ? (d.nameAr || d.name) : d.name) : id;
+    })
+    .filter(Boolean)
+    .join(isAr ? '، ' : ', ') || '—';
   const titleLabel   = jobTitles.find((t) => String(t.id) === s1?.jobTitle)
     ?.[isAr ? 'nameAr' : 'name'] || s1?.jobTitle || '—';
   const managerLabel = !s1?.managerId || s1.managerId === 'none'
@@ -59,7 +64,7 @@ export function Step2Review({ isAr, isRTL, formData, onBack, onSubmit }: Step2Pr
             <ReviewField label={isAr ? 'الاسم الكامل'      : 'Full Name'}   value={s1?.fullName  ?? ''} />
             <ReviewField label={isAr ? 'البريد الإلكتروني' : 'Email'}       value={s1?.email     ?? ''} />
             <ReviewField label={isAr ? 'الهاتف'            : 'Phone'}       value={s1?.phone     ?? '—'} />
-            <ReviewField label={isAr ? 'القسم'             : 'Department'}  value={deptLabel} />
+            <ReviewField label={isAr ? 'الأقسام' : 'Departments'}  value={deptLabel} />
             <ReviewField label={isAr ? 'المسمى الوظيفي'    : 'Job Title'}   value={titleLabel} />
             <ReviewField label={isAr ? 'تاريخ الالتحاق'    : 'Hire Date'}   value={s1?.hireDate  ?? ''} />
             <ReviewField label={isAr ? 'المدير المباشر'     : 'Manager'}     value={managerLabel} />

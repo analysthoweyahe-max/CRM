@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Send, Paperclip, AtSign, FileText } from 'lucide-react';
 import { useAuth }           from '@/modules/auth/context/AuthContext';
+import { setOpenConversation } from '@/shared/realtime-messages';
 import { useEmpMessages, useEmpSendMessage, useEmpSendMedia, useEmpMarkRead } from '../hooks/useEmployeeMessages';
 import type { EmpConversation, EmpMessage } from '../types/messages.types';
 
@@ -32,6 +33,11 @@ export function EmpChatWindow({ conversation, isAr }: Props) {
   const { mutate: sendText,  isPending: sending  } = useEmpSendMessage(conversation.id);
   const { mutate: sendMedia, isPending: uploading } = useEmpSendMedia(conversation.id);
   const { mutate: markRead }                        = useEmpMarkRead();
+
+  useEffect(() => {
+    setOpenConversation(conversation.id, 'hr');
+    return () => setOpenConversation(null);
+  }, [conversation.id]);
 
   // mark as read when conversation opens
   useEffect(() => {

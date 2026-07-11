@@ -61,18 +61,15 @@ export function classifyNow(config?: AttendanceWindowConfig | null): CheckInTimi
   return 'normal';
 }
 
-/** Expected end = effective start (max(checkIn, windowFrom)) + working hours. */
+/** Expected end = check-in time + working hours (timer starts immediately on check-in). */
 export function calcExpectedEnd(
   checkInTime: string | null | undefined,
   workingHours: number,
-  config?: AttendanceWindowConfig | null,
+  _config?: AttendanceWindowConfig | null,
 ): string | null {
   const checkInMins = timeToMinutes(checkInTime);
   if (checkInMins == null || workingHours <= 0) return null;
-  const { windowFrom } = resolveWindowConfig(config);
-  const fromMins = timeToMinutes(windowFrom)!;
-  const effectiveStart = Math.max(checkInMins, fromMins);
-  return minutesToHHMM(effectiveStart + Math.round(workingHours * 60));
+  return minutesToHHMM(checkInMins + Math.round(workingHours * 60));
 }
 
 /** True when worked hours are within 30 minutes of expected daily hours. */

@@ -3,10 +3,13 @@ export type EmploymentType  = 'full_time' | 'part_time' | 'contract' | 'remote' 
 
 // ── Lookup shape used inside employee objects ─────────────────────────────────
 export interface ApiLookup {
-  id:          number | string;   // API returns integer IDs
-  name:        string;
-  nameAr?:     string | null;
-  isActive?:   boolean;
+  id:            number | string;
+  name:          string;
+  nameAr?:       string | null;
+  name_ar?:      string | null;
+  isActive?:     boolean;
+  departmentId?: number | string | null;
+  department_id?: number | string | null;
 }
 
 // ── Employee as returned by the API (camelCase) ───────────────────────────────
@@ -20,7 +23,12 @@ export interface ApiEmployee {
   phone:               string | null;
   status:              EmployeeStatus;
   pendingActivation?:  boolean;
+  /** Primary department (first in departmentIds). */
   department:          ApiLookup | null;
+  /** All assigned departments. */
+  departments?:        ApiLookup[];
+  section?:            string | null;
+  sectionLabel?:       string | null;
   jobTitle:            ApiLookup | null;
   joiningDate:         string | null;
   employmentType?:     EmploymentType | null;
@@ -74,19 +82,25 @@ export interface EmploymentTypeLookupResponse {
 
 // ── Request payloads ──────────────────────────────────────────────────────────
 export interface CreateEmployeePayload {
-  name:           string;
-  email:          string;
-  phone:          string;
-  department_id:  string;   // UUID — backend lookup returns UUIDs
-  job_title_id:   string;   // UUID — backend lookup returns UUIDs
-  joining_date:   string;
-  manager_id?:    string | null;
+  name:             string;
+  email:            string;
+  phone:            string;
+  /** Preferred — at least one required. First id = primary. */
+  department_ids:   number[];
+  /** Legacy single-dept form (backend converts to department_ids). */
+  department_id?:   number | string;
+  job_title_id:     number | string;
+  joining_date:     string;
+  manager_id?:      string | null;
 }
 
 export interface UpdateEmployeePayload {
   name?:            string;
   email?:           string;
   phone?:           string;
+  /** Preferred multi-dept update. First id = primary. */
+  department_ids?:  number[];
+  /** Legacy single-dept form. */
   department_id?:   number;
   job_title_id?:    number;
   manager_id?:      string | null;
@@ -133,7 +147,59 @@ export function getInitial(name: string): string {
 
 export function getLookupLabel(lookup: ApiLookup | null | undefined, isAr: boolean): string {
   if (!lookup) return '–';
-  return isAr ? (lookup.nameAr || lookup.name) : lookup.name;
+  return isAr ? (lookup.nameAr || lookup.name_ar || lookup.name) : lookup.name;
+}
+
+export function employeeLookupId(lookup?: ApiLookup | null): string {
+  if (lookup?.id == null) return '';
+  return String(lookup.id);
+}
+
+/** Prefill department multi-select from API (departments[] with department fallback). */
+export function employeeDepartmentIds(raw: {
+  departments?: ApiLookup[] | null;
+  department?:  ApiLookup | null;
+}): string[] {
+  if (raw.departments?.length) {
+    return raw.departments
+      .map((d) => employeeLookupId(d))
+      .filter(Boolean);
+  }
+  const single = employeeLookupId(raw.department);
+  return single ? [single] : [];
+}
+
+/** All departments for display — departments[] with department fallback. */
+export function employeeDepartmentsList(raw: {
+  departments?: ApiLookup[] | null;
+  department?:  ApiLookup | null;
+}): ApiLookup[] {
+  if (raw.departments?.length) return raw.departments;
+  return raw.department ? [raw.department] : [];
+}
+
+export function formatEmployeeDepartments(
+  raw: { departments?: ApiLookup[] | null; department?: ApiLookup | null },
+  isAr: boolean,
+): string {
+  const list = employeeDepartmentsList(raw);
+  if (!list.length) return '—';
+  return list
+    .map((d) => resolveDisplayText(d, isAr))
+    .filter(Boolean)
+    .join(isAr ? '، ' : ', ');
+}
+
+export function toDepartmentIds(ids: string[]): number[] {
+  return ids.map((id) => Number(id)).filter((n) => !Number.isNaN(n));
+}
+
+export function titleDepartmentId(t: {
+  departmentId?: unknown;
+  department_id?: unknown;
+}): string {
+  const raw = t.departmentId ?? t.department_id;
+  return raw == null || raw === '' ? '' : String(raw);
 }
 
 /** Coerce API lookup / string / object fields to a display string. */

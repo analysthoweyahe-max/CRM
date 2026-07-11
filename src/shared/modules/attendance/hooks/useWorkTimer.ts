@@ -4,10 +4,21 @@ import { useAuth } from '@/modules/auth/context/AuthContext';
 import { attendanceTimerApi } from '../api/attendanceTimer.api';
 import type { AttendanceScope, AttendanceTimer, AttendanceTodayData } from '../types/attendanceTimer.types';
 import {
+  attendanceCheckInPath,
+  attendanceCheckOutPath,
+  attendancePausePath,
+  attendanceResumePath,
+  breakElapsedSeconds,
+  canOfferCheckIn,
+  canOfferCheckOut,
+  canOfferPause,
+  canOfferResume,
+  deriveWorkingHours,
   isActiveWorkDay,
   mergeDashboardCheckIn,
   normalizeTodayPayload,
   resolveAttendanceScope,
+  withAnytimeAttendanceActions,
 } from '../utils/attendanceTimer.utils';
 
 const POLL_MS = 45_000;
@@ -29,6 +40,10 @@ export interface UseWorkTimerResult {
   breakElapsed:     number;
   isLoading:        boolean;
   isActiveDay:      boolean;
+  offerCheckIn:     boolean;
+  offerCheckOut:    boolean;
+  offerPause:       boolean;
+  offerResume:      boolean;
   isCheckingIn:     boolean;
   isCheckingOut:    boolean;
   isPausing:        boolean;
@@ -53,7 +68,7 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
 
   const applyToday = useCallback((data: AttendanceTodayData | null) => {
     if (!data) return;
-    const hours = data.workingHours ?? 0;
+    const hours = deriveWorkingHours(data) ?? data.workingHours ?? 0;
     baseHoursRef.current = hours;
     syncedAtRef.current = Date.now();
     setDisplayHours(hours);
@@ -63,31 +78,54 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
     queryKey: queryKey(scope),
     queryFn: async () => {
       const res = await attendanceTimerApi.today(scope);
-      return res.data.data;
+      const raw = res.data.data;
+      return raw ? withAnytimeAttendanceActions(raw) : raw;
     },
     staleTime: 30_000,
     retry: 1,
     enabled,
-    placeholderData: () => mergeDashboardCheckIn(null, options.initialData) ?? undefined,
+    placeholderData: () => {
+      const merged = mergeDashboardCheckIn(null, options.initialData);
+      return merged ? withAnytimeAttendanceActions(merged) : undefined;
+    },
   });
 
   useEffect(() => {
     if (today) applyToday(today);
   }, [today, applyToday]);
 
-  const shouldPoll = enabled && (today?.isWorking === true);
+  const invalidate = () => qc.invalidateQueries({ queryKey: queryKey(scope) });
+
+  const actionMutation = useMutation({
+    mutationFn: (url: string) => attendanceTimerApi.action(url),
+    onSuccess: (res) => {
+      const normalized = normalizeTodayPayload(res.data.data) ?? res.data.data;
+      const patched = normalized ? withAnytimeAttendanceActions(normalized) : normalized;
+      qc.setQueryData(queryKey(scope), patched);
+      applyToday(patched);
+      invalidate();
+    },
+  });
+
+  const shouldPoll = enabled && isActiveWorkDay(today ?? null);
   useEffect(() => {
     if (!shouldPoll) return;
     const id = setInterval(() => { refetch(); }, POLL_MS);
     return () => clearInterval(id);
   }, [shouldPoll, refetch]);
 
-  // Smooth local tick while working (not paused)
+  const isPaused = Boolean(today?.isPaused || today?.workStatus === 'on_break');
+
+  // Smooth local tick while working; freeze while paused
   useEffect(() => {
-    if (!today?.isWorking || today.isPaused) return;
+    if (!isActiveWorkDay(today ?? null)) return;
+    if (isPaused) {
+      setDisplayHours(baseHoursRef.current ?? deriveWorkingHours(today ?? null) ?? today?.workingHours ?? 0);
+      return;
+    }
 
     const tick = () => {
-      const base = baseHoursRef.current ?? today.workingHours ?? 0;
+      const base = baseHoursRef.current ?? deriveWorkingHours(today ?? null) ?? today?.workingHours ?? 0;
       const synced = syncedAtRef.current ?? Date.now();
       const extra = (Date.now() - synced) / 3_600_000;
       setDisplayHours(base + extra);
@@ -96,35 +134,19 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [today?.isWorking, today?.isPaused, today?.workingHours]);
+  }, [today, today?.workingHours, today?.isWorking, isPaused, today?.workStatus]);
 
-  // Break elapsed counter
+  // Live break elapsed while paused
   useEffect(() => {
-    if (!today?.isPaused || !today.activeBreakStartedAt) {
+    if (!isPaused) {
       setBreakElapsed(0);
       return;
     }
-    const started = today.activeBreakStartedAt;
-    const tick = () => {
-      const normalized = started.includes('T') ? started : started.replace(' ', 'T');
-      setBreakElapsed(Math.max(0, Math.floor((Date.now() - new Date(normalized).getTime()) / 1000)));
-    };
+    const tick = () => setBreakElapsed(breakElapsedSeconds(today?.activeBreakStartedAt ?? null));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [today?.isPaused, today?.activeBreakStartedAt]);
-
-  const invalidate = () => qc.invalidateQueries({ queryKey: queryKey(scope) });
-
-  const actionMutation = useMutation({
-    mutationFn: (url: string) => attendanceTimerApi.action(url),
-    onSuccess: (res) => {
-      const normalized = normalizeTodayPayload(res.data.data) ?? res.data.data;
-      qc.setQueryData(queryKey(scope), normalized);
-      applyToday(normalized);
-      invalidate();
-    },
-  });
+  }, [isPaused, today?.activeBreakStartedAt]);
 
   function runAction(
     url: string | undefined,
@@ -141,21 +163,32 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
   const pending = actionMutation.isPending;
   const pendingAction = actionMutation.variables;
 
+  const checkInUrl  = today?.checkInUrl  ?? attendanceCheckInPath(scope);
+  const checkOutUrl = today?.checkOutUrl ?? attendanceCheckOutPath(scope);
+  const pauseUrl    = today?.pauseUrl    ?? attendancePausePath(scope);
+  const resumeUrl   = today?.resumeUrl   ?? attendanceResumePath(scope);
+
+  const todayData = today ?? null;
+
   return {
     scope,
-    today: today ?? null,
+    today: todayData,
     displayHours,
     breakElapsed,
     isLoading,
-    isActiveDay: isActiveWorkDay(today ?? null),
-    isCheckingIn:  pending && pendingAction === today?.checkInUrl,
-    isCheckingOut: pending && pendingAction === today?.checkOutUrl,
-    isPausing:     pending && pendingAction === today?.pauseUrl,
-    isResuming:    pending && pendingAction === today?.resumeUrl,
-    checkIn:  (onSuccess, onError) => runAction(today?.checkInUrl, onSuccess, onError),
-    checkOut: (onSuccess, onError) => runAction(today?.checkOutUrl, onSuccess, onError),
-    pause:    (onSuccess, onError) => runAction(today?.pauseUrl, onSuccess, onError),
-    resume:   (onSuccess, onError) => runAction(today?.resumeUrl, onSuccess, onError),
+    isActiveDay: isActiveWorkDay(todayData),
+    offerCheckIn:  canOfferCheckIn(todayData),
+    offerCheckOut: canOfferCheckOut(todayData),
+    offerPause:    canOfferPause(todayData),
+    offerResume:   canOfferResume(todayData),
+    isCheckingIn:  pending && pendingAction === checkInUrl,
+    isCheckingOut: pending && pendingAction === checkOutUrl,
+    isPausing:     pending && pendingAction === pauseUrl,
+    isResuming:    pending && pendingAction === resumeUrl,
+    checkIn:  (onSuccess, onError) => runAction(checkInUrl, onSuccess, onError),
+    checkOut: (onSuccess, onError) => runAction(checkOutUrl, onSuccess, onError),
+    pause:    (onSuccess, onError) => runAction(pauseUrl, onSuccess, onError),
+    resume:   (onSuccess, onError) => runAction(resumeUrl, onSuccess, onError),
     refetch:  () => { invalidate(); },
   };
 }

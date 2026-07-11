@@ -66,12 +66,17 @@ export interface DailyAttendanceParams {
 
 /* ── API: employee attendance record ── */
 export interface ApiEmployeeAttendanceRecord {
-  id:           string | number;
-  date:         string;
-  check_in:     string | null;
-  check_out:    string | null;
-  worked_hours: number | null;
-  day_status:   DayStatus;
+  id:              string | number;
+  date:            string;
+  check_in?:       string | null;
+  check_out?:      string | null;
+  checkInTime?:    string | null;
+  checkOutTime?:   string | null;
+  worked_hours?:   number | null;
+  workingHours?:   number | null;
+  day_status?:     DayStatus;
+  dayStatus?:      DayStatus;
+  dayStatusLabel?: string;
 }
 
 export interface AttendanceRecentResponse {
@@ -98,6 +103,22 @@ export interface AttendanceHistoryParams {
   date_to?:   string;
   per_page?:  number;
   page?:      number;
+}
+
+/** Row shown in the multi-employee attendance log table */
+export interface AttendanceLogRow {
+  id:              string;
+  date:            string;
+  employeeId:      string;
+  name:            string;
+  initial:         string;
+  avatarColor:     string;
+  department:      string;
+  check_in:        string | null;
+  check_out:       string | null;
+  worked_hours:    number | null;
+  day_status:      DayStatus | '';
+  day_status_label?: string;
 }
 
 /* ── Employee self-service attendance ── */

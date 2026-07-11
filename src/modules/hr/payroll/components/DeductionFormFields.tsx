@@ -31,10 +31,11 @@ export function DeductionFormFields({ register, control, errors, empItems, typeI
       </FormField>
 
       <FormField label={isAr ? 'نوع الخصم' : 'Deduction Type'} required
-        icon={<Tag size={15} className="text-gray-400" />} error={errors.deduction_type?.message}>
-        <Controller name="deduction_type" control={control} render={({ field }) => (
+        icon={<Tag size={15} className="text-gray-400" />} error={errors.deduction_type_id?.message}>
+        <Controller name="deduction_type_id" control={control} render={({ field }) => (
           <Combobox items={typeItems} value={field.value ?? ''} onChange={field.onChange}
-            error={!!errors.deduction_type}
+            error={!!errors.deduction_type_id}
+            placeholder={isAr ? 'اختر نوع الخصم...' : 'Select deduction type...'}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search...'} noResultsText={isAr ? 'لا نتائج' : 'No results'} />
         )} />
       </FormField>

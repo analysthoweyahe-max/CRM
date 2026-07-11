@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, LogIn, LogOut, Pause, Play, AlertTriangle, Info, FileText } from 'lucide-react';
+import { Clock, LogIn, LogOut, AlertTriangle, FileText, Pause, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLang } from '@/app/providers/LanguageProvider';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 import { ROUTES } from '@/app/router/routes';
 import { Button } from '@/shared/components/ui/Button';
 import { Modal } from '@/shared/components/ui/Modal';
@@ -12,7 +13,6 @@ import {
   calcExpectedEnd,
   classifyCheckIn,
   classifyNow,
-  isNearDailyLimit,
   resolveWindowConfig,
 } from '@/shared/utils/attendanceWindow.utils';
 import { AttendanceExceptionRequestModal } from './AttendanceExceptionRequestModal';
@@ -34,13 +34,6 @@ export interface WorkTimerCardProps extends UseWorkTimerOptions {
   showExceptionLink?: boolean;
 }
 
-function formatElapsed(seconds: number): string {
-  const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-  const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
-  return `${h}:${m}:${s}`;
-}
-
 export function WorkTimerCard({
   variant = 'card',
   className = '',
@@ -49,19 +42,25 @@ export function WorkTimerCard({
 }: WorkTimerCardProps) {
   const { lang } = useLang();
   const isAr = lang === 'ar';
+  const { isSuperAdmin } = useAuth();
   const { data: orgSettings } = useOrgSettingsData();
   const windowConfig = useMemo(() => ({
     normalStartWindowFrom: orgSettings?.normalStartWindowFrom ?? orgSettings?.workStartTime,
-    normalStartWindowTo:   orgSettings?.normalStartWindowTo   ?? orgSettings?.workEndTime,
+    // Start window end — do NOT fall back to workEndTime (that would stretch "normal" all day)
+    normalStartWindowTo:   orgSettings?.normalStartWindowTo,
     dailyWorkHours:        orgSettings?.dailyWorkHours,
     lateAllowanceMinutes:  orgSettings?.lateAllowanceMinutes,
   }), [orgSettings]);
 
   const { dailyHours } = resolveWindowConfig(windowConfig);
 
-  const timer = useWorkTimer(timerOptions);
+  const timer = useWorkTimer({
+    ...timerOptions,
+    enabled: (timerOptions.enabled ?? true) && !isSuperAdmin,
+  });
   const {
     today, displayHours, breakElapsed, isLoading, isActiveDay,
+    offerCheckIn, offerCheckOut, offerPause, offerResume,
     isCheckingIn, isCheckingOut, isPausing, isResuming,
     checkIn, checkOut, pause, resume,
   } = timer;
@@ -72,23 +71,30 @@ export function WorkTimerCard({
     type: 'early_start',
   });
 
+  // Super admin does not check in / out
+  if (isSuperAdmin) return null;
+
   if (isLoading && !today) {
     return (
       <div className={`animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800 ${variant === 'compact' ? 'h-32 mx-3 mb-3' : 'h-48'} ${className}`} />
     );
   }
 
-  const status = today?.workStatus ?? 'offline';
+  const isPaused = Boolean(today?.isPaused || today?.workStatus === 'on_break');
+  const status = isPaused ? 'on_break' : (today?.workStatus ?? 'offline');
   const style  = workStatusStyle(status);
-  const statusLabel = today?.workStatusLabel
-    ?? (status === 'currently_working'
-      ? (isAr ? 'يعمل حاليًا' : 'Currently working')
-      : status === 'on_break'
-        ? (isAr ? 'في استراحة' : 'On break')
-        : (isAr ? 'غير متصل' : 'Offline'));
+  const statusLabel = isPaused
+    ? (isAr ? 'متوقف' : 'Paused')
+    : today?.workStatusLabel && today.workStatus !== 'offline'
+      ? today.workStatusLabel
+      : (isAr ? 'يعمل حاليًا' : 'Currently working');
 
   const checkInTime = today?.record?.checkInTime ?? today?.checkInTime ?? null;
+  const checkOutTime = today?.record?.checkOutTime ?? today?.checkOutTime ?? null;
   const breakMinutes = today?.breakMinutes ?? 0;
+  const liveBreakMinutes = isPaused && breakElapsed > 0
+    ? Math.max(breakMinutes, Math.floor(breakElapsed / 60))
+    : breakMinutes;
   const timerText = formatWorkingHours(displayHours ?? today?.workingHours ?? null);
   const isCompact = variant === 'compact';
 
@@ -97,11 +103,10 @@ export function WorkTimerCard({
 
   const checkInTiming = checkInTime
     ? classifyCheckIn(checkInTime, windowConfig)
-    : (today?.canCheckIn ? classifyNow(windowConfig) : 'unknown');
+    : (offerCheckIn ? classifyNow(windowConfig) : 'unknown');
 
-  const showEarlyWarning = checkInTiming === 'early' && (today?.canCheckIn || isActiveDay);
-  const showLateWarning  = checkInTiming === 'late'  && (today?.canCheckIn || isActiveDay);
-  const showOvertimeHint = isActiveDay && isNearDailyLimit(displayHours ?? today?.workingHours, expectedHours);
+  // Late is informational only — timer always starts on check-in at any time
+  const showLateWarning = checkInTiming === 'late' && (offerCheckIn || isActiveDay);
 
   function openException(type: ExceptionRequestType) {
     setExceptionModal({ open: true, type });
@@ -132,14 +137,14 @@ export function WorkTimerCard({
         break;
       case 'pause':
         pause(
-          () => handleSuccess('تم إيقاف المؤقت مؤقتاً', 'Timer paused'),
-          (err) => handleError(err, 'فشل الإيقاف المؤقت', 'Pause failed'),
+          () => handleSuccess('تم إيقاف العمل', 'Work paused'),
+          (err) => handleError(err, 'فشل إيقاف العمل', 'Pause failed'),
         );
         break;
       case 'resume':
         resume(
-          () => handleSuccess('تم استئناف العمل', 'Work resumed'),
-          (err) => handleError(err, 'فشل الاستئناف', 'Resume failed'),
+          () => handleSuccess('تم استكمال العمل', 'Work resumed'),
+          (err) => handleError(err, 'فشل استكمال العمل', 'Resume failed'),
         );
         break;
     }
@@ -152,15 +157,15 @@ export function WorkTimerCard({
   const confirmTitles: Record<ConfirmAction, { ar: string; en: string }> = {
     'check-in':  { ar: 'تسجيل الحضور', en: 'Check In' },
     'check-out': { ar: 'تسجيل الانصراف', en: 'Check Out' },
-    'pause':     { ar: 'إيقاف مؤقت', en: 'Pause' },
-    'resume':    { ar: 'استئناف العمل', en: 'Resume' },
+    pause:       { ar: 'إيقاف العمل', en: 'Pause Work' },
+    resume:      { ar: 'استكمال العمل', en: 'Resume Work' },
   };
 
   const confirmDesc: Record<ConfirmAction, { ar: string; en: string }> = {
-    'check-in':  { ar: 'هل تريد بدء يوم العمل الآن؟', en: 'Start your work day now?' },
+    'check-in':  { ar: 'هل تريد بدء يوم العمل الآن؟ المؤقت سيبدأ فوراً ويمكنك إيقافه مؤقتاً أو الانصراف لاحقاً.', en: 'Start your work day now? The timer starts immediately — you can pause or check out later.' },
     'check-out': { ar: 'هل تريد تسجيل الانصراف الآن؟', en: 'Check out now?' },
-    'pause':     { ar: 'هل تريد إيقاف المؤقت مؤقتاً؟', en: 'Pause the timer?' },
-    'resume':    { ar: 'هل تريد استئناف العد؟', en: 'Resume counting?' },
+    pause:       { ar: 'هل تريد إيقاف العمل مؤقتاً؟ سيتوقف المؤقت حتى الاستكمال.', en: 'Pause work now? The timer will stop until you resume.' },
+    resume:      { ar: 'هل تريد استكمال العمل الآن؟', en: 'Resume work now?' },
   };
 
   const isPending = isCheckingIn || isCheckingOut || isPausing || isResuming;
@@ -174,40 +179,16 @@ export function WorkTimerCard({
         </span>
       </div>
 
-      {/* Contextual warnings */}
-      {showEarlyWarning && (
-        <Banner
-          variant="warning"
-          icon={<AlertTriangle size={14} />}
-          message={isAr
-            ? 'تسجيلك قبل 10:00 ص لن يُحسب ضمن ساعات العمل إلا بعد موافقة المدير على طلب بدء مبكر.'
-            : 'Check-in before 10:00 AM will not count toward work hours unless an early start request is approved.'}
-          cta={isAr ? 'طلب بدء مبكر' : 'Request Early Start'}
-          onCta={() => openException('early_start')}
-          compact={isCompact}
-        />
-      )}
+      {/* Late is informational only — work is allowed anytime/anywhere */}
       {showLateWarning && (
         <Banner
           variant="warning"
           icon={<AlertTriangle size={14} />}
           message={isAr
-            ? 'تسجيلك بعد 12:00 ظ يُعتبر تأخيراً. يمكنك تقديم طلب بدء متأخر.'
-            : 'Check-in after 12:00 PM is considered late. You may submit a late start request.'}
+            ? 'تسجيلك بعد نافذة الحضور الطبيعي يُسجَّل كتأخير، لكن المؤقت يبدأ فوراً من لحظة الحضور.'
+            : 'Check-in after the normal window is marked late, but the timer starts immediately from check-in.'}
           cta={isAr ? 'طلب بدء متأخر' : 'Request Late Start'}
           onCta={() => openException('late_start')}
-          compact={isCompact}
-        />
-      )}
-      {showOvertimeHint && today?.canCheckOut && (
-        <Banner
-          variant="info"
-          icon={<Info size={14} />}
-          message={isAr
-            ? 'العمل الإضافي يحتاج موافقة مسبقة من المدير.'
-            : 'Overtime requires prior manager approval.'}
-          cta={isAr ? 'طلب أوفر تايم' : 'Request Overtime'}
-          onCta={() => openException('overtime')}
           compact={isCompact}
         />
       )}
@@ -216,30 +197,34 @@ export function WorkTimerCard({
         <p className={`font-mono font-bold text-gray-900 dark:text-gray-100 tracking-widest tabular-nums ${isCompact ? 'text-[17px]' : 'text-3xl'}`}>
           {timerText}
         </p>
-        <div className={`inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${style.badge}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-          {statusLabel}
-        </div>
-        {today?.isPaused && breakElapsed > 0 && (
-          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
-            {isAr ? `مدة الاستراحة: ${formatElapsed(breakElapsed)}` : `Break: ${formatElapsed(breakElapsed)}`}
-          </p>
+        {isActiveDay && (
+          <div className={`inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${style.badge}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+            {statusLabel}
+          </div>
         )}
       </div>
 
-      {(isActiveDay || today?.record?.checkOutTime) && (
+      {(isActiveDay || checkInTime) && (
         <div className={`flex flex-col gap-1 text-gray-500 dark:text-gray-400 ${isCompact ? 'text-[11px]' : 'text-xs'}`}>
           <div className="flex items-center justify-between gap-3">
             <span>
               {isAr ? 'حضور:' : 'In:'}{' '}
               <span className="font-mono">{formatClockTime(checkInTime, isAr)}</span>
             </span>
-            <span>
-              {isAr ? 'استراحة:' : 'Break:'}{' '}
-              <span className="font-medium">{formatBreakMinutes(breakMinutes, isAr)}</span>
-            </span>
+            {checkOutTime ? (
+              <span>
+                {isAr ? 'انصراف:' : 'Out:'}{' '}
+                <span className="font-mono">{formatClockTime(checkOutTime, isAr)}</span>
+              </span>
+            ) : (
+              <span>
+                {isAr ? 'استراحة:' : 'Break:'}{' '}
+                <span className="font-medium">{formatBreakMinutes(liveBreakMinutes, isAr)}</span>
+              </span>
+            )}
           </div>
-          {expectedEnd && isActiveDay && (
+          {expectedEnd && isActiveDay && !isPaused && (
             <p className="text-center text-[#709028] dark:text-[#A0CD39]">
               {isAr ? `الانصراف المتوقع: ${expectedEnd}` : `Expected end: ${expectedEnd}`}
               {' · '}
@@ -250,25 +235,25 @@ export function WorkTimerCard({
       )}
 
       <div className={`flex gap-2 ${isCompact ? 'flex-col' : 'flex-wrap'}`}>
-        {today?.canCheckIn && (
+        {offerCheckIn && (
           <Button size="sm" fullWidth startIcon={<LogIn size={13} />}
             onClick={() => setConfirmAction('check-in')} isLoading={isCheckingIn}>
             {isAr ? 'تسجيل حضور' : 'Check In'}
           </Button>
         )}
-        {today?.canPause && (
+        {offerPause && (
           <Button size="sm" fullWidth variant="secondary" startIcon={<Pause size={13} />}
             onClick={() => setConfirmAction('pause')} isLoading={isPausing}>
-            {isAr ? 'إيقاف مؤقت' : 'Pause'}
+            {isAr ? 'إيقاف' : 'Pause'}
           </Button>
         )}
-        {today?.canResume && (
-          <Button size="sm" fullWidth variant="secondary" startIcon={<Play size={13} />}
+        {offerResume && (
+          <Button size="sm" fullWidth startIcon={<Play size={13} />}
             onClick={() => setConfirmAction('resume')} isLoading={isResuming}>
-            {isAr ? 'استئناف' : 'Resume'}
+            {isAr ? 'استكمال' : 'Resume'}
           </Button>
         )}
-        {today?.canCheckOut && (
+        {offerCheckOut && (
           <Button size="sm" fullWidth variant="danger" startIcon={<LogOut size={13} />}
             onClick={() => setConfirmAction('check-out')} isLoading={isCheckingOut}>
             {isAr ? 'انصراف' : 'Check Out'}

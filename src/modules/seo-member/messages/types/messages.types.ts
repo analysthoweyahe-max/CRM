@@ -1,8 +1,26 @@
+export type SeoConversationType = 'direct' | 'group';
+export type SeoParticipantType = 'employee' | 'admin';
+
+export interface SeoParticipant {
+  id:             string;
+  name:           string;
+  type:           SeoParticipantType;
+  avatarUrl?:     string | null;
+  avatarInitial?: string;
+}
+
 export interface SeoConversation {
-  id:            string;
-  name?:         string;
-  last_message?: { body?: string; created_at?: string };
-  unread_count?: number;
+  id:                string;
+  type:              SeoConversationType;
+  name?:             string | null;
+  lastMessage?:      string | null;
+  lastMessageAt?:    string | null;
+  unreadCount?:      number;
+  participantCount?: number;
+  /** Other party for direct chats */
+  participant?:      SeoParticipant | null;
+  /** Members for group chats */
+  participants?:     SeoParticipant[] | null;
 }
 
 export interface SeoConversationListResponse {
@@ -14,6 +32,12 @@ export interface SeoConversationListResponse {
     last_page:    number;
     total:        number;
   };
+}
+
+export interface SeoConversationSingleResponse {
+  status:  string;
+  message: string;
+  data:    SeoConversation;
 }
 
 export interface SeoMessageSender {
@@ -33,10 +57,6 @@ export interface SeoMessageAttachment {
   url?:       string;
 }
 
-/* Backend has been consistent elsewhere with {sender, isMine, sentAt, sentTime}
- * for /v1/seo/* message endpoints — but this specific conversation-messages
- * response was never confirmed with a live sample, so every field here is
- * treated as optional and mapped defensively (see toChatMessage in the hook). */
 export interface SeoMessage {
   id:          number | string;
   body:        string | null;
@@ -67,10 +87,12 @@ export interface SeoMessageSendResponse {
 }
 
 export interface SeoMentionable {
-  id:            string;
-  name:          string;
-  type?:         string;
-  avatarUrl?:    string | null;
+  id:             string;
+  name:           string;
+  type:           SeoParticipantType;
+  role?:          string | null;
+  department?:    string | null;
+  avatarUrl?:     string | null;
   avatarInitial?: string;
 }
 
@@ -78,13 +100,34 @@ export interface SeoMentionablesResponse {
   status:  string;
   message: string;
   data: {
-    data:  SeoMentionable[];
+    data:   SeoMentionable[];
     total?: number;
   };
+}
+
+export interface SeoGroupMemberRef {
+  type: SeoParticipantType;
+  id:   string;
 }
 
 export interface CreateSeoConversationPayload {
   recipient_type: string;
   recipient_id:   string;
-  message:        string;
+  message?:       string;
+}
+
+export interface CreateSeoGroupPayload {
+  name:     string;
+  members:  SeoGroupMemberRef[];
+  message?: string;
+}
+
+export interface ManageSeoGroupMembersPayload {
+  members: SeoGroupMemberRef[];
+}
+
+export interface SeoConversationListParams {
+  search?:   string;
+  type?:     SeoConversationType;
+  per_page?: number;
 }

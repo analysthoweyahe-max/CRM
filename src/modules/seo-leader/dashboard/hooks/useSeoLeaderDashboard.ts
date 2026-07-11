@@ -11,6 +11,7 @@ export interface CampaignViewModel {
   campaignTypeLabel: string;
   status:            string;
   statusLabel:       string;
+  isDraft:           boolean;
   startDate:         string;
   expectedEndDate:   string | null;
   progress:          number;
@@ -29,6 +30,7 @@ function toCampaignVM(c: SeoCampaign): CampaignViewModel {
     campaignTypeLabel: c.campaignTypeLabel,
     status:            c.status,
     statusLabel:       c.statusLabel,
+    isDraft:           c.isDraft === true,
     startDate:         c.startDate,
     expectedEndDate:   c.expectedEndDate,
     progress:          0,

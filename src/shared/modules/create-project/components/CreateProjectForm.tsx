@@ -36,14 +36,16 @@ export function CreateProjectForm({ form }: Props) {
     contractDurationMonths, setContractDurationMonths,
     startDate, setStartDate,
     endDate, setEndDate,
+    status, setStatus,
+    saveAsDraft, setSaveAsDraft,
     managerIds, setManagerIds,
     managerSearch, setManagerSearch,
     employeeIds, setEmployeeIds,
     employeeSearch, setEmployeeSearch,
     attachment, setAttachment,
     fieldErrors,
-    departmentItems, projectTypeItems, employeeItems, managerItems,
-    typesLoading, employeesLoading, managersLoading,
+    departmentItems, projectTypeItems, statusItems, employeeItems, managerItems,
+    typesLoading, statusesLoading, employeesLoading, managersLoading,
     showDepartment, showManagers,
     showAddType, setShowAddType,
     submitAddType, addingType, selectedDepartmentId,
@@ -229,6 +231,38 @@ export function CreateProjectForm({ form }: Props) {
         <div>
           <label className={LABEL}>{endLabel}</label>
           <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={INPUT} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={LABEL}>{isAr ? 'الحالة' : 'Status'}</label>
+          <Combobox
+            items={statusItems}
+            value={status}
+            onChange={setStatus}
+            placeholder={
+              statusesLoading
+                ? (isAr ? 'جاري التحميل...' : 'Loading...')
+                : (isAr ? '-- اختر الحالة --' : '-- Select Status --')
+            }
+            searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
+            noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+            disabled={statusesLoading || statusItems.length === 0}
+          />
+        </div>
+        <div className="flex items-end">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none pb-2.5">
+            <input
+              type="checkbox"
+              checked={saveAsDraft}
+              onChange={e => setSaveAsDraft(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-[#A0CD39] focus:ring-[#A0CD39]"
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {isAr ? 'حفظ كمسودة' : 'Save as draft'}
+            </span>
+          </label>
         </div>
       </div>
 

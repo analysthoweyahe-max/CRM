@@ -10,7 +10,7 @@ import { useLang }    from '@/app/providers/LanguageProvider';
 import { ROUTES }     from '@/app/router/routes';
 import { Button }     from '@/shared/components/ui/Button';
 import { STATUS_STYLES } from '../data/employeeData';
-import { getAvatarColor, getInitial, mapEmploymentType } from '../types/employee.types';
+import { getAvatarColor, getInitial, mapEmploymentType, formatEmployeeDepartments } from '../types/employee.types';
 import { useEmployee } from '../hooks/useEmployee';
 import { EmployeeDetailEmployment } from '../components/detail/EmployeeDetailEmployment';
 import { EmployeeDetailPayroll }    from '../components/detail/EmployeeDetailPayroll';
@@ -54,7 +54,7 @@ export function EmployeeDetailPage() {
     { label: isAr ? 'الاسم الكامل'      : 'Full Name',       icon: <User size={15} />,         value: emp.name                          },
     { label: isAr ? 'رقم الهاتف'        : 'Phone',           icon: <Phone size={15} />,        value: emp.phone ?? '–'                  },
     { label: isAr ? 'البريد الإلكتروني' : 'Email',           icon: <Mail size={15} />,         value: emp.email                         },
-    { label: isAr ? 'القسم'             : 'Department',      icon: <Building2 size={15} />,    value: emp.department?.name ?? '–'       },
+    { label: isAr ? 'الأقسام'           : 'Departments',     icon: <Building2 size={15} />,    value: formatEmployeeDepartments(emp, isAr) },
     { label: isAr ? 'المسمى الوظيفي'   : 'Job Title',       icon: <Briefcase size={15} />,    value: emp.jobTitle?.name ?? '–'         },
     { label: isAr ? 'المدير المباشر'   : 'Direct Manager',  icon: <User size={15} />,         value: emp.manager?.name ?? (isAr ? 'غير محدد' : 'N/A') },
     { label: isAr ? 'معرف الموظف'      : 'Employee ID',     icon: <Hash size={15} />,         value: emp.employeeNumber ?? emp.id       },
@@ -129,7 +129,7 @@ export function EmployeeDetailPage() {
                 </span>
               </div>
               <p className="text-sm mt-0.5 text-gray-500 dark:text-gray-400">
-                {emp.jobTitle?.name ?? '–'} · {emp.department?.name ?? '–'}
+                {emp.jobTitle?.name ?? '–'} · {formatEmployeeDepartments(emp, isAr)}
               </p>
             </div>
 

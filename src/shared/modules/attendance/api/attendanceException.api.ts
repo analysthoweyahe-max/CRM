@@ -4,6 +4,7 @@ import type {
   ExceptionListParams,
   ExceptionListResponse,
   ExceptionSingleResponse,
+  HrCreateExceptionPayload,
   RejectExceptionPayload,
 } from '../types/attendanceException.types';
 
@@ -11,6 +12,11 @@ export const attendanceExceptionApi = {
   /** Employee — submit */
   create(payload: CreateExceptionPayload) {
     return http.post<ExceptionSingleResponse>('/v1/employee/attendance/exceptions', payload);
+  },
+
+  /** HR / super-admin — create on behalf of an employee */
+  hrCreate(payload: HrCreateExceptionPayload) {
+    return http.post<ExceptionSingleResponse>('/v1/hr/attendance/exceptions', payload);
   },
 
   /** Employee — list own */

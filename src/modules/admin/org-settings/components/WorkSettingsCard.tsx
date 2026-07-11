@@ -11,7 +11,7 @@ interface Props {
 
 export function WorkSettingsCard({ settings, onChange, isAr }: Props) {
   const windowFrom = settings.normalStartWindowFrom ?? settings.workStartTime ?? '10:00';
-  const windowTo   = settings.normalStartWindowTo   ?? settings.workEndTime   ?? '12:00';
+  const windowTo   = settings.normalStartWindowTo   ?? '12:00';
 
   return (
     <Card padding="lg" className="space-y-5">
@@ -35,8 +35,8 @@ export function WorkSettingsCard({ settings, onChange, isAr }: Props) {
         </div>
         <p className="text-xs text-gray-400 mt-1.5">
           {isAr
-            ? 'أقرب وأبعد وقت لتسجيل حضور عادي (مثال: 10:00 – 12:00)'
-            : 'Earliest and latest normal check-in times (e.g. 10:00 – 12:00)'}
+            ? 'تُستخدم لتصنيف الحضور (عادي / متأخر). الموظف يمكنه التسجيل في أي وقت والمؤقت يبدأ فوراً.'
+            : 'Used to classify check-in (normal / late). Employees may check in anytime; the timer starts immediately.'}
         </p>
       </FormField>
 

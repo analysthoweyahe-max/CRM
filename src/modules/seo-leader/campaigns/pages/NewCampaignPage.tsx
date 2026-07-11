@@ -47,16 +47,14 @@ export function NewCampaignPage() {
       )}
 
       <div className="flex items-center justify-center gap-3 flex-wrap pb-4">
-        <Button variant="primary" onClick={() => form.handleSave(false)} disabled={!form.isValid || form.saved || form.isSaving}>
-          {isAr ? 'إنشاء المشروع' : 'Create Project'}
-        </Button>
         <Button
-          variant="secondary"
-          onClick={() => form.handleSave(true)}
-          disabled={!form.name.trim() || form.saved || form.isSaving}
-          className="border-[#A0CD39] text-[#709028] dark:text-[#A0CD39] hover:bg-[#D8EBAE] dark:hover:bg-[#A0CD39]/10"
+          variant="primary"
+          onClick={() => form.handleSave()}
+          disabled={(!form.saveAsDraft && !form.isValid) || (form.saveAsDraft && !form.name.trim()) || form.saved || form.isSaving}
         >
-          {isAr ? 'حفظ كمسودة' : 'Save as Draft'}
+          {form.saveAsDraft
+            ? (isAr ? 'حفظ كمسودة' : 'Save as Draft')
+            : (isAr ? 'إنشاء المشروع' : 'Create Project')}
         </Button>
         <Button variant="ghost" onClick={() => navigate(form.cancelPath)} disabled={form.saved || form.isSaving}>
           {isAr ? 'إلغاء' : 'Cancel'}

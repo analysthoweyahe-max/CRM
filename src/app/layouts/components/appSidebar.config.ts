@@ -6,7 +6,7 @@ import {
 
   FilePlus2, ClipboardList, CheckSquare, BarChart2, Building2, Briefcase, Tags,
 
-  UserCog, FolderKanban, Megaphone, MessagesSquare, ListChecks,
+  UserCog, FolderKanban, Megaphone, MessagesSquare, ListChecks, Layers, Wallet,
 
 } from 'lucide-react';
 
@@ -112,17 +112,19 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
         children: [
 
+          { key: 'hr-salary-sheet', labelAr: 'كشف الرواتب', labelEn: 'Salary Sheet', path: ROUTES.PAYROLL.SALARY_SHEET, icon: Wallet, permissions: ['view-payroll', 'manage-payroll'] },
+
           { key: 'hr-deductions', labelAr: 'الخصومات',          labelEn: 'Deductions', path: ROUTES.PAYROLL.DEDUCTIONS, icon: TrendingDown, permission: 'view-payroll' },
 
           { key: 'hr-bonuses',    labelAr: 'المكافآت والحوافز', labelEn: 'Bonuses',    path: ROUTES.PAYROLL.BONUSES,    icon: Gift,         permission: 'view-payroll' },
+
+          { key: 'hr-payroll-types', labelAr: 'أنواع المكافآت والخصومات', labelEn: 'Bonus & Deduction Types', path: ROUTES.PAYROLL.TYPES, icon: Layers, permission: 'view-payroll' },
 
         ],
 
       },
 
       { key: 'hr-messages', labelAr: 'الرسائل',    labelEn: 'Messages', icon: MessageSquare, path: ROUTES.MESSAGES },
-
-      { key: 'hr-settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: Settings,      path: ROUTES.SETTINGS },
 
     ],
 
@@ -142,13 +144,15 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
       { key: 'pm-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',        icon: FolderKanban,    path: ROUTES.PROJECT_MANAGER.MY_PROJECTS, permission: 'view-pm-projects' },
 
+      { key: 'pm-messages', labelAr: 'الرسائل',                  labelEn: 'Messages',           icon: MessageSquare,   path: ROUTES.PROJECT_MANAGER.MESSAGES },
+
       { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',         icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW,      permission: 'create-pm-project' },
 
       { key: 'pm-team',    labelAr: 'فريق العمل',                labelEn: 'Team',                 icon: Users,           path: ROUTES.PROJECT_MANAGER.TEAM,     permissions: ['view-pm-team', 'view-pm-projects'] },
 
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests',   icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS,  permissions: ['view-pm-reports', 'view-pm-projects'] },
 
-      { key: 'pm-templates', labelAr: 'قوالب المشاريع', labelEn: 'Project Templates', icon: ListChecks, path: ROUTES.PROJECT_MANAGER.TEMPLATES, permission: 'edit-pm-project' },
+      { key: 'pm-templates', labelAr: 'قوالب مشاريع PM', labelEn: 'PM Project Templates', icon: ListChecks, path: ROUTES.ADMIN.PROJECT_TEMPLATES, role: 'super-admin' },
 
       { key: 'admin-project-types', labelAr: 'أنواع المشاريع', labelEn: 'Project Types', icon: FolderKanban, path: ROUTES.ADMIN.PROJECT_TYPES, role: 'super-admin' },
 
@@ -170,11 +174,15 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
       { key: 'seo-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',         icon: FolderKanban,    path: ROUTES.SEO_LEADER.MY_PROJECTS,    permission: 'view-seo-projects' },
 
+      { key: 'seo-messages', labelAr: 'الرسائل',                  labelEn: 'Messages',            icon: MessageSquare,   path: ROUTES.SEO_LEADER.MESSAGES },
+
       { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',          icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW,           permission: 'create-seo-project' },
 
       { key: 'seo-team',    labelAr: 'فريق العمل',                labelEn: 'Team',                  icon: Users,           path: ROUTES.SEO_LEADER.TEAM,          permission: 'view-seo-projects' },
 
       { key: 'seo-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests',    icon: ClipboardList,   path: ROUTES.SEO_LEADER.REPORTS,       permission: 'view-seo-projects' },
+
+      { key: 'seo-templates', labelAr: 'قوالب مشاريع SEO', labelEn: 'SEO Project Templates', icon: ListChecks, path: ROUTES.ADMIN.SEO_PROJECT_TEMPLATES, role: 'super-admin' },
 
       { key: 'admin-seo-task-statuses', labelAr: 'حالات مهام SEO', labelEn: 'SEO Task Statuses', icon: Tags,            path: ROUTES.ADMIN.SEO_TASK_STATUSES, role: 'super-admin' },
 
@@ -248,9 +256,13 @@ export const HR_NAV: NavSectionDef[] = [
 
         children: [
 
+          { key: 'salary-sheet', labelAr: 'كشف الرواتب', labelEn: 'Salary Sheet', path: ROUTES.PAYROLL.SALARY_SHEET, icon: Wallet, permissions: ['view-payroll', 'manage-payroll'] },
+
           { key: 'deductions', labelAr: 'الخصومات',          labelEn: 'Deductions', path: ROUTES.PAYROLL.DEDUCTIONS, icon: TrendingDown, permission: 'view-payroll' },
 
           { key: 'bonuses',    labelAr: 'المكافآت والحوافز', labelEn: 'Bonuses',    path: ROUTES.PAYROLL.BONUSES,    icon: Gift,         permission: 'view-payroll' },
+
+          { key: 'payroll-types', labelAr: 'أنواع المكافآت والخصومات', labelEn: 'Bonus & Deduction Types', path: ROUTES.PAYROLL.TYPES, icon: Layers, permission: 'view-payroll' },
 
         ],
 
@@ -317,8 +329,10 @@ const HR_OPERATIONS_ITEMS: NavSectionDef['items'] = [
     key: 'payroll', labelAr: 'الرواتب', labelEn: 'Payroll', icon: Banknote,
     permissions: ['view-payroll', 'manage-payroll'],
     children: [
+      { key: 'salary-sheet', labelAr: 'كشف الرواتب', labelEn: 'Salary Sheet', path: ROUTES.PAYROLL.SALARY_SHEET, icon: Wallet, permission: ['view-payroll', 'manage-payroll'] },
       { key: 'deductions', labelAr: 'الخصومات',          labelEn: 'Deductions', path: ROUTES.PAYROLL.DEDUCTIONS, icon: TrendingDown, permission: ['view-payroll', 'manage-payroll'] },
       { key: 'bonuses',    labelAr: 'المكافآت والحوافز', labelEn: 'Bonuses',    path: ROUTES.PAYROLL.BONUSES,    icon: Gift,         permission: ['view-payroll', 'manage-payroll'] },
+      { key: 'payroll-types', labelAr: 'أنواع المكافآت والخصومات', labelEn: 'Bonus & Deduction Types', path: ROUTES.PAYROLL.TYPES, icon: Layers, permission: ['view-payroll', 'manage-payroll'] },
     ],
   },
 ];
@@ -343,8 +357,17 @@ export const PM_NAV: NavSectionDef[] = [
       { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',        labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW,      permission: 'create-pm-project' },
       { key: 'pm-team',    labelAr: 'فريق العمل',               labelEn: 'Team',               icon: Users,           path: ROUTES.PROJECT_MANAGER.TEAM,     permissions: ['view-pm-team', 'view-pm-projects'] },
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات',labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS,  permissions: ['view-pm-reports', 'view-pm-projects'] },
-      { key: 'pm-attendance', labelAr: 'الحضور والانصراف', labelEn: 'Attendance', icon: Clock, path: ROUTES.PROJECT_MANAGER.ATTENDANCE },
       { key: 'pm-templates', labelAr: 'قوالب المشاريع', labelEn: 'Project Templates', icon: ListChecks, path: ROUTES.PROJECT_MANAGER.TEMPLATES, permission: 'edit-pm-project' },
+    ],
+  },
+  {
+    sectionAr: 'حضوري / راتبي',
+    sectionEn: 'My Work & Pay',
+    items: [
+      { key: 'work_overview', labelAr: 'نظرة عامة على العمل', labelEn: 'Work Overview', icon: BarChart2,     path: ROUTES.PROJECT_MANAGER.WORK_OVERVIEW },
+      { key: 'attendance',    labelAr: 'الحضور والانصراف',   labelEn: 'Attendance',    icon: Clock,        path: ROUTES.PROJECT_MANAGER.ATTENDANCE },
+      { key: 'deductions',    labelAr: 'خصوماتي',            labelEn: 'My Deductions', icon: TrendingDown, path: ROUTES.PROJECT_MANAGER.DEDUCTIONS },
+      { key: 'bonuses',       labelAr: 'مكافآتي',            labelEn: 'My Bonuses',    icon: Gift,         path: ROUTES.PROJECT_MANAGER.BONUSES },
     ],
   },
   HR_OPERATIONS_SECTION,
@@ -374,12 +397,21 @@ export const EMPLOYEE_NAV: NavSectionDef[] = [
 
       { key: 'emp-req',     labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS      },
 
-      { key: 'emp-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.EMPLOYEE.ATTENDANCE       },
-
       { key: 'emp-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.EMPLOYEE.DAILY_REPORTS },
 
     ],
 
+  },
+
+  {
+    sectionAr: 'حضوري / راتبي',
+    sectionEn: 'My Work & Pay',
+    items: [
+      { key: 'work_overview', labelAr: 'نظرة عامة على العمل', labelEn: 'Work Overview', icon: BarChart2,     path: ROUTES.EMPLOYEE.WORK_OVERVIEW },
+      { key: 'attendance',    labelAr: 'الحضور والانصراف',   labelEn: 'Attendance',    icon: Clock,        path: ROUTES.EMPLOYEE.ATTENDANCE },
+      { key: 'deductions',    labelAr: 'خصوماتي',            labelEn: 'My Deductions', icon: TrendingDown, path: ROUTES.EMPLOYEE.DEDUCTIONS },
+      { key: 'bonuses',       labelAr: 'مكافآتي',            labelEn: 'My Bonuses',    icon: Gift,         path: ROUTES.EMPLOYEE.BONUSES },
+    ],
   },
 
 ];
@@ -401,6 +433,17 @@ export const SEO_NAV: NavSectionDef[] = [
       { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW,      permission: 'create-seo-project' },
       { key: 'seo-team',    labelAr: 'فريق العمل',                labelEn: 'Team',               icon: Users,           path: ROUTES.SEO_LEADER.TEAM,     permission: 'view-seo-projects' },
       { key: 'seo-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.SEO_LEADER.REPORTS,  permission: 'view-seo-projects' },
+      { key: 'seo-templates', labelAr: 'قوالب مشاريع SEO', labelEn: 'SEO Project Templates', icon: ListChecks, path: ROUTES.SEO_LEADER.TEMPLATES, permission: 'edit-seo-project' },
+    ],
+  },
+  {
+    sectionAr: 'حضوري / راتبي',
+    sectionEn: 'My Work & Pay',
+    items: [
+      { key: 'work_overview', labelAr: 'نظرة عامة على العمل', labelEn: 'Work Overview', icon: BarChart2,     path: ROUTES.SEO_LEADER.WORK_OVERVIEW },
+      { key: 'attendance',    labelAr: 'الحضور والانصراف',   labelEn: 'Attendance',    icon: Clock,        path: ROUTES.SEO_LEADER.ATTENDANCE },
+      { key: 'deductions',    labelAr: 'خصوماتي',            labelEn: 'My Deductions', icon: TrendingDown, path: ROUTES.SEO_LEADER.DEDUCTIONS },
+      { key: 'bonuses',       labelAr: 'مكافآتي',            labelEn: 'My Bonuses',    icon: Gift,         path: ROUTES.SEO_LEADER.BONUSES },
     ],
   },
   HR_OPERATIONS_SECTION,
@@ -428,12 +471,21 @@ export const SEO_MEMBER_NAV: NavSectionDef[] = [
 
       { key: 'seo-m-requests',labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.SEO_MEMBER.REQUESTS      },
 
-      { key: 'seo-m-reports', labelAr: 'سجل الحضور',        labelEn: 'Attendance',     icon: ClipboardList,   path: ROUTES.SEO_MEMBER.ATTENDANCE       },
-
       { key: 'seo-m-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.SEO_MEMBER.DAILY_REPORTS },
 
     ],
 
+  },
+
+  {
+    sectionAr: 'حضوري / راتبي',
+    sectionEn: 'My Work & Pay',
+    items: [
+      { key: 'work_overview', labelAr: 'نظرة عامة على العمل', labelEn: 'Work Overview', icon: BarChart2,     path: ROUTES.SEO_MEMBER.WORK_OVERVIEW },
+      { key: 'attendance',    labelAr: 'الحضور والانصراف',   labelEn: 'Attendance',    icon: Clock,        path: ROUTES.SEO_MEMBER.ATTENDANCE },
+      { key: 'deductions',    labelAr: 'خصوماتي',            labelEn: 'My Deductions', icon: TrendingDown, path: ROUTES.SEO_MEMBER.DEDUCTIONS },
+      { key: 'bonuses',       labelAr: 'مكافآتي',            labelEn: 'My Bonuses',    icon: Gift,         path: ROUTES.SEO_MEMBER.BONUSES },
+    ],
   },
 
 ];

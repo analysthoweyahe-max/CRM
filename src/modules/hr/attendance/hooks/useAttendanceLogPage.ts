@@ -3,64 +3,62 @@ import { useQuery } from '@tanstack/react-query';
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState } from '@tanstack/react-table';
 import { useLang } from '@/app/providers/LanguageProvider';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
-import { employeeApi } from '@/modules/hr/employees/api/employee.api';
-import { useEmployeeAttendanceHistory } from './useEmployeeAttendanceHistory';
-import { getAttendanceColumns } from '../components/attendanceColumns';
+import { useEmployeeList } from '@/modules/hr/employees/hooks/useEmployeeList';
+import { getAttendanceLogColumns } from '../components/attendanceLogColumns';
+import { fetchAttendanceLog } from '../utils/fetchAttendanceLog';
+import { exportAttendanceExcel } from '../utils/exportAttendanceExcel';
 
 const PER_PAGE = 15;
 
-function buildMonthItems(isAr: boolean): ComboboxItem[] {
-  const items: ComboboxItem[] = [{ id: '', label: isAr ? 'كل الشهور' : 'All months' }];
+function toIsoDate(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function defaultDateRange() {
   const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const d   = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    items.push({
-      id:    val,
-      label: d.toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long' }),
-    });
-  }
-  return items;
+  return {
+    dateFrom: toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1)),
+    dateTo:   toIsoDate(now),
+  };
 }
 
 export function useAttendanceLogPage() {
   const { lang } = useLang();
   const isAr = lang === 'ar';
+  const defaults = defaultDateRange();
 
   const [sorting,    setSorting]    = useState<SortingState>([{ id: 'date', desc: true }]);
   const [selectedId, setSelectedId] = useState('');
-  const [month,      setMonth]      = useState('');
+  const [dateFrom,   setDateFrom]   = useState(defaults.dateFrom);
+  const [dateTo,     setDateTo]     = useState(defaults.dateTo);
   const [page,       setPage]       = useState(1);
 
-  const { data: empList } = useQuery({
-    queryKey: ['employees', 'list-all'],
-    queryFn:  () => employeeApi.list({ per_page: 100 }).then((r) => r.data.data.data),
-  });
+  const { data: empList = [], isLoading: empsLoading } = useEmployeeList();
 
   const empItems: ComboboxItem[] = useMemo(() => [
-    { id: '', label: isAr ? 'اختر موظفاً...' : 'Select employee...' },
-    ...(empList ?? []).map((e) => ({ id: e.id, label: e.name })),
+    { id: '', label: isAr ? 'كل الموظفين' : 'All employees' },
+    ...empList.map((e) => ({ id: e.id, label: e.name })),
   ], [empList, isAr]);
 
-  const monthItems = useMemo(() => buildMonthItems(isAr), [isAr]);
+  const rangeValid = Boolean(dateFrom && dateTo && dateFrom <= dateTo);
 
-  const selectedEmp = useMemo(
-    () => (empList ?? []).find((e) => e.id === selectedId),
-    [empList, selectedId],
-  );
+  const { data: allRows = [], isFetching } = useQuery({
+    queryKey: ['attendance', 'log', selectedId || 'all', dateFrom, dateTo, empList.length],
+    queryFn:  () => fetchAttendanceLog(empList, dateFrom, dateTo, selectedId || undefined),
+    enabled:  rangeValid && empList.length > 0,
+  });
 
-  const { data: histPage, isFetching } = useEmployeeAttendanceHistory(
-    selectedId || undefined,
-    { month: month || undefined, per_page: PER_PAGE, page },
-  );
+  const total    = allRows.length;
+  const lastPage = Math.max(1, Math.ceil(total / PER_PAGE));
+  const safePage = Math.min(page, lastPage);
+  const records  = allRows.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+  const firstRow = total === 0 ? 0 : (safePage - 1) * PER_PAGE + 1;
+  const lastRow  = Math.min(safePage * PER_PAGE, total);
 
-  const records  = histPage?.data      ?? [];
-  const lastPage = histPage?.last_page ?? 1;
-  const total    = histPage?.total     ?? 0;
-  const firstRow = total === 0 ? 0 : (page - 1) * PER_PAGE + 1;
-  const lastRow  = Math.min(page * PER_PAGE, total);
-
-  const columns = useMemo(() => getAttendanceColumns(isAr), [isAr]);
+  const columns = useMemo(() => getAttendanceLogColumns(isAr), [isAr]);
 
   const table = useReactTable({
     data:              records,
@@ -73,12 +71,24 @@ export function useAttendanceLogPage() {
     pageCount:         lastPage,
   });
 
+  function handleExport() {
+    if (allRows.length === 0) return;
+    exportAttendanceExcel(allRows, dateFrom, dateTo, isAr);
+  }
+
   return {
-    isAr, selectedId, setSelectedId,
-    month, setMonth, page, setPage,
-    empItems, monthItems, selectedEmp,
-    records, isFetching,
+    isAr,
+    selectedId, setSelectedId,
+    dateFrom, setDateFrom,
+    dateTo, setDateTo,
+    page: safePage, setPage,
+    empItems,
+    records,
+    isFetching: isFetching || empsLoading,
+    rangeValid,
     total, lastPage, firstRow, lastRow,
     table,
+    handleExport,
+    canExport: allRows.length > 0 && !isFetching,
   };
 }

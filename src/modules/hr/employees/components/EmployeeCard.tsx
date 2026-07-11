@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { Mail, Phone, Building2, Briefcase, CalendarDays, Eye, SquarePen, XCircle } from 'lucide-react';
 import type { ApiEmployee } from '../types/employee.types';
-import { getAvatarColor, getInitial } from '../types/employee.types';
+import {
+  getAvatarColor,
+  getInitial,
+  formatEmployeeDepartments,
+  employeeDepartmentsList,
+  resolveDisplayText,
+} from '../types/employee.types';
 import { STATUS_STYLES } from '../data/employeeData';
 import { Button }  from '@/shared/components/ui/Button';
 import { Input }   from '@/shared/components/ui/Input';
 import { Modal }   from '@/shared/components/ui/Modal';
+import { Badge }   from '@/shared/components/ui/Badge';
 
 const DELETE_CONFIRM_WORD = { ar: 'حذف', en: 'delete' } as const;
 
@@ -28,6 +35,9 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
   const canDelete   = confirmText.trim() === confirmWord
     || (!isAr && confirmText.trim().toLowerCase() === confirmWord);
 
+  const depts = employeeDepartmentsList(emp);
+  const deptSummary = formatEmployeeDepartments(emp, isAr);
+
   function closeDeleteModal() {
     setShowDelete(false);
     setConfirmText('');
@@ -36,7 +46,7 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
   const fields = [
     { icon: <Mail size={18} />,         text: emp.email                },
     { icon: <Phone size={18} />,        text: emp.phone ?? '–'         },
-    { icon: <Building2 size={18} />,    text: emp.department?.name ?? '–' },
+    { icon: <Building2 size={18} />,    text: deptSummary              },
     { icon: <Briefcase size={18} />,    text: emp.jobTitle?.name ?? '–'   },
     { icon: <CalendarDays size={18} />, text: emp.joiningDate ?? '–'   },
   ];
@@ -49,8 +59,6 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
                    hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-lg
                    ${selected ? 'border-[#A0CD39] ring-2 ring-[#A0CD39]/20' : 'border-[#F1F5F9] dark:border-gray-700'}`}
       >
-        {/* ── Selection checkbox (kept outside the clickable body — an
-             <input> nested inside a <button> is invalid HTML) ────────── */}
         {onToggleSelect && (
           <div className="flex items-center px-4 pt-4">
             <input
@@ -63,13 +71,11 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
           </div>
         )}
 
-        {/* ── Clickable body ────────────────────────────── */}
         <button
           type="button"
           onClick={() => onView(emp.id)}
           className="flex flex-col text-start flex-1 cursor-pointer"
         >
-          {/* Header */}
           <div className={`flex items-center justify-between gap-3 p-4 ${onToggleSelect ? 'pt-2' : ''}`}>
             <div className="flex items-center gap-2.5 min-w-0">
               <div
@@ -82,9 +88,18 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
                 <p className="text-base font-bold truncate text-gray-800 dark:text-gray-100">
                   {emp.name}
                 </p>
-                <p className="text-sm truncate mt-0.5 text-gray-500 dark:text-gray-400">
-                  {emp.department?.name ?? '–'}
-                </p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {depts.length > 0 ? depts.map((d, i) => (
+                    <Badge
+                      key={String(d.id)}
+                      label={resolveDisplayText(d, isAr) || String(d.id)}
+                      variant={i === 0 ? 'brand' : 'gray'}
+                      className="!text-[10px]"
+                    />
+                  )) : (
+                    <p className="text-sm truncate text-gray-500 dark:text-gray-400">–</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -98,10 +113,8 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
             </span>
           </div>
 
-          {/* Separator */}
           <div className="h-px mx-4 bg-[#D8EBAE] dark:bg-gray-700" />
 
-          {/* Fields */}
           <div className="px-4 py-3.5 space-y-3 flex-1">
             {fields.map(({ icon, text }, i) => (
               <div key={i} className="flex items-center justify-between gap-2 text-sm">
@@ -112,10 +125,8 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
           </div>
         </button>
 
-        {/* ── Separator ─────────────────────────────────── */}
         <div className="h-px mx-4 bg-[#D8EBAE] dark:bg-gray-700" />
 
-        {/* ── Actions ───────────────────────────────────── */}
         <div className="flex items-center gap-1.5 px-4 py-3.5">
           <Button
             variant="icon-brand"
@@ -151,7 +162,6 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
         </div>
       </div>
 
-      {/* Delete modal */}
       <Modal
         open={showDelete}
         onClose={closeDeleteModal}

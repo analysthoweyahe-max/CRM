@@ -7,8 +7,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useLang }       from '@/app/providers/LanguageProvider';
 import { ROUTES }        from '@/app/router/routes';
 import { employeeApi }   from '@/modules/hr/employees/api/employee.api';
+import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
 import { makeBonusSchema } from '../schemas/addBonus.schema';
 import { useBonusTypes, useCreateBonus } from './useBonuses';
+import { payrollLookupLabel, payrollLookupSelectId } from '../utils/payrollType.utils';
 import type { AddBonusFormValues } from '../types/addBonus.types';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 
@@ -35,11 +37,14 @@ export function useAddBonusPage() {
     queryFn:  () => employeeApi.list({ per_page: 100 }).then((r) => r.data.data.data),
   });
 
-  const typeItems  = useMemo(() =>
-    (typesRaw ?? []).map((t) => ({ id: t.value, label: t.label })),
-  [typesRaw]);
+  const typeItems = useMemo(() =>
+    (typesRaw ?? []).map((t) => ({
+      id:    payrollLookupSelectId(t),
+      label: payrollLookupLabel(t, isAr),
+    })),
+  [typesRaw, isAr]);
 
-  const empItems   = useMemo(() =>
+  const empItems = useMemo(() =>
     (empList ?? []).map((e) => ({ id: e.employeeNumber ?? e.id, label: e.name })),
   [empList]);
 
@@ -47,20 +52,36 @@ export function useAddBonusPage() {
 
   const form = useForm<AddBonusFormValues>({
     resolver: (v, ctx, opts) => zodResolver(makeBonusSchema(isAr))(v, ctx, opts),
-    defaultValues: { notes: '' },
+    defaultValues: { notes: '', bonus_type_id: '' },
   });
 
   async function onSubmit(values: AddBonusFormValues) {
-    await createBonus({
-      employee_number: values.employee_id,
-      adjustment_type: values.adjustment_type,
-      financial_month: values.financial_month,
-      amount:          Number(values.amount),
-      reason:          values.reason,
-      notes:           values.notes,
-    });
-    toast.success(isAr ? 'تم حفظ المكافأة بنجاح' : 'Bonus saved successfully');
-    navigate(ROUTES.PAYROLL.BONUSES);
+    try {
+      await createBonus({
+        employee_number: values.employee_id,
+        bonus_type_id:   values.bonus_type_id,
+        financial_month: values.financial_month,
+        amount:          Number(values.amount),
+        reason:          values.reason,
+        notes:           values.notes,
+      });
+      toast.success(isAr ? 'تم حفظ المكافأة بنجاح' : 'Bonus saved successfully');
+      navigate(ROUTES.PAYROLL.BONUSES);
+    } catch (err) {
+      const fieldErrors = extractApiFieldErrors(err);
+      let mapped = false;
+      for (const [key, message] of Object.entries(fieldErrors)) {
+        if (key === 'bonus_type_id' || key === 'adjustment_type') {
+          form.setError('bonus_type_id', { message });
+          mapped = true;
+        } else if (key in values || key === 'employee_number') {
+          const field = key === 'employee_number' ? 'employee_id' : key;
+          form.setError(field as keyof AddBonusFormValues, { message });
+          mapped = true;
+        }
+      }
+      if (!mapped) toast.error(extractApiError(err));
+    }
   }
 
   return { isAr, isRTL, form, empItems, typeItems, monthItems, onSubmit };

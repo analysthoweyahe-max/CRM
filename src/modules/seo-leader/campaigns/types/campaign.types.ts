@@ -14,6 +14,11 @@ export interface CreateCampaignPayload {
   contractDurationMonths?: number | null;
 }
 
+export interface CampaignLookupItem {
+  value: string;
+  label: string;
+}
+
 export interface CampaignLookupResponse {
-  data: unknown[];
+  data: CampaignLookupItem[];
 }

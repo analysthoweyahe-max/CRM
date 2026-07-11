@@ -5,7 +5,7 @@ export const makeDeductionSchema = (isAr: boolean) =>
     employee_id: z.string().min(1,
       isAr ? 'يرجى اختيار الموظف' : 'Please select an employee'),
 
-    deduction_type: z.string().min(1,
+    deduction_type_id: z.string().min(1,
       isAr ? 'يرجى اختيار نوع الخصم' : 'Please select a deduction type'),
 
     financial_month: z.string().min(1,

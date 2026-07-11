@@ -9,10 +9,16 @@ import { TemplateCard }       from '../components/TemplateCard';
 import { TemplateFormModal }  from '../components/TemplateFormModal';
 import { DeleteTemplateModal } from '../components/DeleteTemplateModal';
 import { useTemplatesPage }   from '../hooks/useTemplatesPage';
+import type { TemplateModule } from '../api/projectTemplate.api';
 
-export function TemplatesPage() {
+interface Props {
+  module?: TemplateModule;
+}
+
+export function TemplatesPage({ module = 'pm' }: Props) {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
+  const isSeo    = module === 'seo';
 
   const {
     search, setSearch,
@@ -21,7 +27,7 @@ export function TemplatesPage() {
     showAdd, openAdd, closeAdd, submitAdd, creating,
     editing, openEdit, closeEdit, submitEdit, updating,
     pendingDelete, askDelete, cancelDelete, confirmDelete, deleting,
-  } = useTemplatesPage(isAr);
+  } = useTemplatesPage(isAr, module);
 
   const perPage  = 15;
   const firstRow = total === 0 ? 0 : (page - 1) * perPage + 1;
@@ -31,8 +37,12 @@ export function TemplatesPage() {
     <div className="space-y-5">
 
       <PageHeader
-        title={isAr ? 'قوالب المشاريع' : 'Project Templates'}
-        subtitle={isAr ? 'قوالب مراحل قابلة لإعادة الاستخدام حسب نوع المشروع' : 'Reusable phase templates per project type'}
+        title={isSeo
+          ? (isAr ? 'قوالب مشاريع SEO' : 'SEO Project Templates')
+          : (isAr ? 'قوالب المشاريع' : 'Project Templates')}
+        subtitle={isSeo
+          ? (isAr ? 'قوالب مراحل خاصة بمشاريع SEO' : 'Reusable phase templates for SEO projects')
+          : (isAr ? 'قوالب مراحل قابلة لإعادة الاستخدام حسب نوع المشروع' : 'Reusable phase templates per project type')}
         actions={
           <Button variant="primary" startIcon={<Plus size={15} />} onClick={openAdd}>
             {isAr ? 'إضافة قالب' : 'Add Template'}
@@ -95,6 +105,7 @@ export function TemplatesPage() {
         onSubmit={submitAdd}
         isLoading={creating}
         isAr={isAr}
+        module={module}
       />
 
       <TemplateFormModal
@@ -104,6 +115,7 @@ export function TemplatesPage() {
         initial={editing}
         isLoading={updating}
         isAr={isAr}
+        module={module}
       />
 
       <DeleteTemplateModal

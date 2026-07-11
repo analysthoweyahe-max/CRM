@@ -38,6 +38,7 @@ export function ProjectTeamMemberPage() {
     : [];
 
   const dash = isAr ? '—' : '—';
+  const profilePath = member ? ROUTES.PROJECT_MANAGER.TEAM_MEMBER(member.id) : '';
   const details = member
     ? [
         { label: isAr ? 'المعرّف' : 'ID', value: member.id || dash },
@@ -49,9 +50,9 @@ export function ProjectTeamMemberPage() {
         { label: isAr ? 'المشاريع النشطة' : 'Active Projects', value: String(member.activeProjectsCount ?? dash) },
         {
           label: isAr ? 'رابط الملف' : 'Profile URL',
-          value: member.profileUrl
-            ? <a href={member.profileUrl} target="_blank" rel="noreferrer"
-                 className="text-[#709028] dark:text-[#A0CD39] hover:underline">{member.profileUrl}</a>
+          value: profilePath
+            ? <a href={profilePath}
+                 className="text-[#709028] dark:text-[#A0CD39] hover:underline">{profilePath}</a>
             : dash,
         },
       ]

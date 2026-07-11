@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 import { Card } from '@/shared/components/ui/Card';
+import { Button } from '@/shared/components/ui/Button';
 import { SearchInput } from '@/shared/components/form/SearchInput';
 import { Combobox } from '@/shared/components/form/Combobox';
 import { TablePagination } from '@/shared/components/tables/TablePagination';
+import { AttendanceExceptionRequestModal } from '@/shared/modules/attendance/components/AttendanceExceptionRequestModal';
 import { ApproveModal, RejectModal } from '../components/AttendanceExceptionActionModals';
 import {
   useHrAttendanceExceptions,
@@ -32,11 +36,13 @@ const STATUS_TABS: { key: ExceptionStatus | 'all'; ar: string; en: string }[] = 
 export function AttendanceExceptionsPage() {
   const { lang } = useLang();
   const isAr = lang === 'ar';
+  const { isSuperAdmin } = useAuth();
 
   const [statusFilter, setStatusFilter] = useState<ExceptionStatus | 'all'>('pending');
   const [typeFilter, setTypeFilter]     = useState<ExceptionRequestType | ''>('');
   const [search, setSearch]             = useState('');
   const [page, setPage]                 = useState(1);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [approveTarget, setApproveTarget] = useState<AttendanceException | null>(null);
   const [rejectTarget, setRejectTarget]   = useState<AttendanceException | null>(null);
@@ -96,13 +102,20 @@ export function AttendanceExceptionsPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-          {isAr ? 'طلبات استثناء الحضور' : 'Attendance Exception Requests'}
-        </h1>
-        <p className="text-sm mt-0.5 text-gray-500">
-          {isAr ? 'مراجعة طلبات البدء المبكر والتأخر والعمل الإضافي' : 'Review early start, late start, and overtime requests'}
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+            {isAr ? 'طلبات استثناء الحضور' : 'Attendance Exception Requests'}
+          </h1>
+          <p className="text-sm mt-0.5 text-gray-500">
+            {isAr ? 'مراجعة طلبات البدء المبكر والتأخر والعمل الإضافي' : 'Review early start, late start, and overtime requests'}
+          </p>
+        </div>
+        {isSuperAdmin && (
+          <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => setShowCreateModal(true)}>
+            {isAr ? 'طلب جديد' : 'New Request'}
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -234,6 +247,15 @@ export function AttendanceExceptionsPage() {
         isPending={rejectMutation.isPending}
         isAr={isAr}
       />
+
+      {isSuperAdmin && (
+        <AttendanceExceptionRequestModal
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          isAr={isAr}
+          forEmployee
+        />
+      )}
     </div>
   );
 }

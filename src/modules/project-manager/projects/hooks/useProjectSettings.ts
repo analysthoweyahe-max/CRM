@@ -11,9 +11,11 @@ export function useProjectSettings(id: string) {
   });
 
   async function save(payload: PmProjectPayload) {
-    const res = await pmProjectsApi.update(id, payload);
+    const res = await pmProjectsApi.updateSettings(id, payload);
     queryClient.invalidateQueries({ queryKey: ['pm-project-settings', id] });
     queryClient.invalidateQueries({ queryKey: ['pm-project', id] });
+    queryClient.invalidateQueries({ queryKey: ['my-projects'] });
+    queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
     return res.data.data;
   }
 

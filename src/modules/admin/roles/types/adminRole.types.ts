@@ -68,15 +68,34 @@ export interface PermissionGroup {
 
 export { PANEL_PERMISSION_GROUPS as PERMISSION_GROUPS } from '@/shared/permissions/panelPermissionCatalog';
 
+/** Display labels only — never send these as `role` in create/update payloads. */
 const ROLE_NAME_LABEL: Record<string, { ar: string; en: string }> = {
-  'super-admin':     { ar: 'مشرف عام',         en: 'Super Admin'     },
-  'hr-manager':      { ar: 'مدير موارد بشرية', en: 'HR Manager'      },
-  'project-manager': { ar: 'مدير مشاريع',      en: 'Project Manager' },
-  'seo-manager':     { ar: 'مدير SEO',         en: 'SEO Manager'     },
-  'pm-employee':     { ar: 'موظف مشاريع',     en: 'PM Employee'     },
-  'seo-employee':    { ar: 'موظف SEO',         en: 'SEO Employee'    },
+  'super-admin':     { ar: 'مشرف عام',              en: 'Super Admin'     },
+  'hr-manager':      { ar: 'مدير الموارد البشرية',  en: 'HR Manager'      },
+  'project-manager': { ar: 'مدير المشاريع',         en: 'Project Manager' },
+  'seo-manager':     { ar: 'مدير SEO',              en: 'SEO Manager'     },
+  'pm-employee':     { ar: 'موظف مشاريع',           en: 'PM Employee'     },
+  'seo-employee':    { ar: 'موظف SEO',              en: 'SEO Employee'    },
+};
+
+/** Extra historical / alternate labels that may appear in API payloads. */
+const ROLE_LABEL_ALIASES: Record<string, string> = {
+  'مدير موارد بشرية': 'hr-manager',
+  'مدير مشاريع':      'project-manager',
+  'الإدارة':          'hr-manager',
+  Administration:     'hr-manager',
 };
 
 export function getRoleNameLabel(name: string, isAr: boolean): string {
   return ROLE_NAME_LABEL[name]?.[isAr ? 'ar' : 'en'] ?? name;
+}
+
+/** Reverse-map a display label (ar/en) back to the English role slug. */
+export function roleSlugFromLabel(label: string): string | null {
+  const trimmed = label.trim();
+  if (!trimmed) return null;
+  for (const [slug, labels] of Object.entries(ROLE_NAME_LABEL)) {
+    if (labels.ar === trimmed || labels.en === trimmed) return slug;
+  }
+  return ROLE_LABEL_ALIASES[trimmed] ?? null;
 }

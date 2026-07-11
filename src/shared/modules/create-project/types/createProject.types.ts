@@ -2,6 +2,15 @@ import type { ApiLookup } from '@/modules/hr/employees/types/employee.types';
 
 export type CreateProjectModule = 'pm' | 'seo';
 
+/** Client-side module tag — API always returns `category: null`; set after fetch. */
+export type ProjectTypeCategory = CreateProjectModule;
+
+export type ProjectStatus =
+  | 'not_started'
+  | 'in_progress'
+  | 'on_hold'
+  | 'completed';
+
 export interface DepartmentLookup {
   id:     number;
   name:   string;
@@ -14,9 +23,14 @@ export interface ProjectType {
   nameAr:         string | null;
   slug:           string;
   label:          string;
-  departmentId:   number;
+  /** Always "pm" | "seo" in UI state — never null. */
+  category:       ProjectTypeCategory;
+  section?:       ProjectTypeCategory | null;
+  sectionLabel?:  string | null;
+  departmentId:   number | null;
   departmentName?: string;
   isActive:       boolean;
+  sortOrder?:     number;
 }
 
 export interface EmployeeLookup {
@@ -34,6 +48,11 @@ export interface ManagerLookup {
   email: string;
 }
 
+export interface StatusLookup {
+  value: string;
+  label: string;
+}
+
 export interface CreatePmProjectPayload {
   name:                    string;
   description?:            string | null;
@@ -43,9 +62,9 @@ export interface CreatePmProjectPayload {
   contractDurationMonths?: number | null;
   managerIds?:             string[];
   employeeIds?:            string[];
-  status?:                 string;
+  status?:                 ProjectStatus | string;
   isDraft?:                boolean;
-  start_date?:             string | null;
+  startDate?:              string | null;
   deadline?:               string | null;
   templateId?:             string | null;
 }
@@ -60,17 +79,19 @@ export interface CreateSeoProjectPayload {
   contractDurationMonths?: number | null;
   managerIds?:             string[];
   employeeIds?:            string[];
+  status?:                 ProjectStatus | string;
   isDraft?:                boolean;
-  start_date?:             string | null;
-  expected_end_date?:      string | null;
+  startDate?:              string | null;
+  expectedEndDate?:        string | null;
 }
 
 export interface CreateProjectTypePayload {
   name:          string;
-  name_ar?:      string | null;
-  department_id: number;
-  is_active?:    boolean;
-  sort_order?:   number;
+  nameAr?:       string | null;
+  slug?:         string;
+  departmentId?: number | null;
+  isActive?:     boolean;
+  sortOrder?:    number;
 }
 
 export type CreateProjectFieldErrors = {
@@ -85,4 +106,5 @@ export type CreateProjectFieldErrors = {
   employeeIds?:            string;
   startDate?:              string;
   endDate?:                string;
+  status?:                 string;
 };

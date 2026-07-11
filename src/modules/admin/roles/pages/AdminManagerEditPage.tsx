@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
@@ -14,10 +14,10 @@ import { ManagerForm } from '../components/ManagerForm';
 import { useAdminManagerDetail } from '../hooks/useAdminManagerDetail';
 import { useUpdateAdmin } from '../hooks/useAssignAdminRole';
 import { useRoleList } from '../hooks/useRoles';
-import { assignableRoles, permissionsForRole } from '../utils/role.utils';
+import { assignableRoles, permissionsForRole, resolveAssignableRoleName, extractRoleSlug } from '../utils/role.utils';
 import { canEditManager, editableRoleNames } from '../utils/managerAccess.utils';
 import type { ApiAdminManager, ManagerFormValues, ManagerStatus, UpdateAdminPayload } from '../types/adminManager.types';
-import { managerLookupId } from '../types/adminManager.types';
+import { managerDepartmentIds, managerLookupId } from '../types/adminManager.types';
 
 const DANGER_STATUSES: ManagerStatus[] = ['suspended', 'banned'];
 
@@ -28,18 +28,24 @@ function toOrgId(value: string): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+function toDeptIds(ids: string[]): number[] {
+  return ids
+    .map((id) => Number(id))
+    .filter((n) => !Number.isNaN(n));
+}
+
 function toFormValues(raw: ApiAdminManager, registered: Set<string>): ManagerFormValues {
-  const role = raw.roles?.[0] ?? '';
+  const role = extractRoleSlug(raw.roles?.[0]) ?? '';
   const perms = raw.permissions ?? [];
   return {
-    name:         raw.name ?? '',
-    email:        raw.email ?? '',
-    phone:        raw.phone ?? '',
-    departmentId: managerLookupId(raw.department),
-    jobTitleId:   managerLookupId(raw.jobTitle),
-    status:       (raw.status as ManagerStatus) || 'active',
+    name:          raw.name ?? '',
+    email:         raw.email ?? '',
+    phone:         raw.phone ?? '',
+    departmentIds: managerDepartmentIds(raw),
+    jobTitleId:    managerLookupId(raw.jobTitle),
+    status:        (raw.status as ManagerStatus) || 'active',
     role,
-    permissions:  filterRegisteredPermissions(perms, registered),
+    permissions:   filterRegisteredPermissions(perms, registered),
   };
 }
 
@@ -47,6 +53,13 @@ function arraysEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
   const sa = [...a].sort();
   const sb = [...b].sort();
+  return sa.every((v, i) => v === sb[i]);
+}
+
+function numbersEqual(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort((x, y) => x - y);
+  const sb = [...b].sort((x, y) => x - y);
   return sa.every((v, i) => v === sb[i]);
 }
 
@@ -70,11 +83,14 @@ function buildPartialPayload(
   }
 
   if (current.status !== initial.status) payload.status = current.status;
-  if (current.role !== initial.role) payload.role = current.role;
 
-  const departmentId = toOrgId(current.departmentId);
-  const initialDept  = toOrgId(initial.departmentId);
-  if (departmentId !== initialDept) payload.department_id = departmentId;
+  const nextRole = resolveAssignableRoleName(current.role);
+  const prevRole = resolveAssignableRoleName(initial.role) ?? initial.role;
+  if (nextRole && nextRole !== prevRole) payload.role = nextRole;
+
+  const nextDepts = toDeptIds(current.departmentIds);
+  const prevDepts = toDeptIds(initial.departmentIds);
+  if (!numbersEqual(nextDepts, prevDepts)) payload.department_ids = nextDepts;
 
   const jobTitleId = toOrgId(current.jobTitleId);
   const initialTitle = toOrgId(initial.jobTitleId);
@@ -83,6 +99,7 @@ function buildPartialPayload(
   if (includePermissions) {
     const next = filterRegisteredPermissions(current.permissions, registered);
     const prev = filterRegisteredPermissions(initial.permissions, registered);
+    // Always send when the set changed — including clearing extras / toggling role defaults.
     if (!arraysEqual(next, prev)) payload.permissions = next;
   }
 
@@ -108,7 +125,7 @@ export function AdminManagerEditPage() {
   const { data: allPermissions } = usePermissionList();
   const registered = useMemo(() => toPermissionNameSet(allPermissions), [allPermissions]);
 
-  const managerRoles = assignableRoles(allRoles);
+  const managerRoles = useMemo(() => assignableRoles(allRoles), [allRoles]);
   const roleNames = isSuperAdmin
     ? undefined
     : editableRoleNames({ isSuperAdmin, roles: user?.roles });
@@ -116,9 +133,13 @@ export function AdminManagerEditPage() {
   const [values, setValues] = useState<ManagerFormValues | null>(null);
   const [initial, setInitial] = useState<ManagerFormValues | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** When true, role-default effect must not overwrite manual permission toggles. */
   const [preserveCustomPerms, setPreserveCustomPerms] = useState(false);
+  const lastRoleForDefaults = useRef<string | null>(null);
 
-  const targetRoles = raw?.roles ?? [];
+  const targetRoles = (raw?.roles ?? [])
+    .map((r) => extractRoleSlug(r) ?? (typeof r === 'string' ? r : ''))
+    .filter(Boolean);
   const mayEdit = canCreate && raw && canEditManager({ isSuperAdmin, roles: user?.roles }, targetRoles);
 
   useEffect(() => {
@@ -126,7 +147,8 @@ export function AdminManagerEditPage() {
     const form = toFormValues(raw, registered);
     setValues(form);
     setInitial(form);
-    setPreserveCustomPerms(!!form.permissions.length);
+    setPreserveCustomPerms(true);
+    lastRoleForDefaults.current = form.role || null;
     setErrors({});
   }, [raw, registered, allPermissions]);
 
@@ -142,8 +164,11 @@ export function AdminManagerEditPage() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [isDirty]);
 
+  // Apply role default permissions only when the role actually changes (not on every render).
   useEffect(() => {
-    if (!values || preserveCustomPerms || !values.role) return;
+    if (!values?.role || preserveCustomPerms) return;
+    if (lastRoleForDefaults.current === values.role) return;
+    lastRoleForDefaults.current = values.role;
     const defaults = filterRegisteredPermissions(
       permissionsForRole(managerRoles, values.role),
       registered,
@@ -152,7 +177,16 @@ export function AdminManagerEditPage() {
   }, [values?.role, managerRoles, registered, preserveCustomPerms]);
 
   function handleChange(patch: Partial<ManagerFormValues>) {
-    if (patch.role !== undefined) setPreserveCustomPerms(false);
+    if (patch.role !== undefined) {
+      setPreserveCustomPerms(false);
+      // Allow the role-defaults effect to run for the new role.
+      if (patch.role !== lastRoleForDefaults.current) {
+        lastRoleForDefaults.current = null;
+      }
+    }
+    if (patch.permissions !== undefined) {
+      setPreserveCustomPerms(true);
+    }
     setValues(v => v ? { ...v, ...patch } : v);
     setErrors(prev => {
       const next = { ...prev };
@@ -176,7 +210,17 @@ export function AdminManagerEditPage() {
   function handleSave() {
     if (!values || !initial || !id || !mayEdit) return;
 
-    if (values.role !== initial.role) {
+    const nextRoleSlug = resolveAssignableRoleName(values.role, managerRoles);
+    if (values.role && !nextRoleSlug) {
+      setErrors((prev) => ({
+        ...prev,
+        role: isAr ? 'دور غير صالح للتعيين' : 'Invalid role for assignment',
+      }));
+      toast.error(isAr ? 'اختر دوراً صالحاً' : 'Please select a valid role');
+      return;
+    }
+
+    if (nextRoleSlug && nextRoleSlug !== (resolveAssignableRoleName(initial.role, managerRoles) ?? initial.role)) {
       const ok = window.confirm(isAr
         ? 'تغيير الدور سيحدّث صلاحيات الوصول للوحدة. هل تريد المتابعة؟'
         : 'Changing role will update module access. Continue?');
@@ -204,7 +248,7 @@ export function AdminManagerEditPage() {
             || (isAr ? 'تم تحديث المدير بنجاح' : 'Manager updated successfully.');
           toast.success(message);
           if (isSuperAdmin) {
-            navigate(ROUTES.ADMIN.MANAGERS);
+            navigate(ROUTES.ADMIN.MANAGER_DETAIL(id));
           } else {
             navigate(ROUTES.ADMIN.MANAGERS, { replace: true });
           }
@@ -276,7 +320,7 @@ export function AdminManagerEditPage() {
   const isValid = !!(
     values.name.trim()
     && values.email.trim()
-    && values.departmentId
+    && values.departmentIds.length > 0
     && values.jobTitleId
     && values.role
   );

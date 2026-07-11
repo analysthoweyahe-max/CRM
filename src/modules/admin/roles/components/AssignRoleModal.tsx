@@ -4,7 +4,7 @@ import { Button }    from '@/shared/components/ui/Button';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
 import { PermissionGroupList } from './PermissionGroupList';
-import { permissionsForRole } from '../utils/role.utils';
+import { permissionsForRole, resolveAssignableRoleName } from '../utils/role.utils';
 import { getRoleNameLabel } from '../types/adminRole.types';
 import type { ApiRole } from '../types/adminRole.types';
 
@@ -52,7 +52,9 @@ export function AssignRoleModal({
 
   useEffect(() => {
     if (!open) return;
-    const first = initialRole ?? selectableRoles[0]?.name ?? '';
+    const first = resolveAssignableRoleName(initialRole, selectableRoles)
+      ?? selectableRoles[0]?.name
+      ?? '';
     const hasCustom = !!(initialPermissions?.length);
     setRole(first);
     setPreserveCustom(hasCustom);
@@ -70,7 +72,7 @@ export function AssignRoleModal({
 
   function handleRoleChange(nextRole: string) {
     setPreserveCustom(false);
-    setRole(nextRole);
+    setRole(resolveAssignableRoleName(nextRole, selectableRoles) ?? nextRole);
   }
 
   function toggle(slug: string) {
@@ -81,11 +83,13 @@ export function AssignRoleModal({
 
   function handleSubmit() {
     if (!isValid) return;
-    onSubmit({ role, permissions });
+    const slug = resolveAssignableRoleName(role, selectableRoles);
+    if (!slug) return;
+    onSubmit({ role: slug, permissions });
   }
 
   const roleItems = selectableRoles.map((r) => ({
-    id:    r.name,
+    id:    r.name, // English slug
     label: getRoleNameLabel(r.name, isAr),
   }));
 

@@ -12,11 +12,19 @@ import type {
   BonusListResponse,
   BonusSingleResponse,
   BonusLookupResponse,
+  PayrollTypeLookupResponse,
   OvertimeSettingsResponse,
   UpdateOvertimeSettingsPayload,
   OvertimeProcessResponse,
   CreateBonusPayload,
   EmployeeBonusListResponse,
+  PayrollTypeListResponse,
+  PayrollTypeSingleResponse,
+  CreatePayrollTypePayload,
+  UpdatePayrollTypePayload,
+  SalaryListParams,
+  SalaryListResponse,
+  SalarySummaryResponse,
 } from '../types/payroll.types';
 
 export const deductionsApi = {
@@ -37,7 +45,7 @@ export const deductionsApi = {
   },
 
   lookupTypes() {
-    return http.get<DeductionLookupResponse>('/v1/payroll/deductions/lookups/types');
+    return http.get<PayrollTypeLookupResponse>('/v1/payroll/deductions/lookups/types');
   },
 
   lookupSources() {
@@ -102,5 +110,68 @@ export const bonusesApi = {
 
   employeeBonuses(employeeId: string) {
     return http.get<EmployeeBonusListResponse>(`/v1/payroll/employees/${employeeId}/bonuses`);
+  },
+};
+
+/* ── Bonus / Deduction Types CRUD ───────────────────────────── */
+
+export const bonusTypesApi = {
+  list() {
+    return http.get<PayrollTypeListResponse>('/v1/payroll/bonus-types');
+  },
+
+  create(payload: CreatePayrollTypePayload) {
+    return http.post<PayrollTypeSingleResponse>('/v1/payroll/bonus-types', payload);
+  },
+
+  update(uuid: string, payload: UpdatePayrollTypePayload) {
+    return http.put<PayrollTypeSingleResponse>(`/v1/payroll/bonus-types/${uuid}`, payload);
+  },
+
+  remove(uuid: string) {
+    return http.delete<{ status: string; message: string }>(`/v1/payroll/bonus-types/${uuid}`);
+  },
+};
+
+export const deductionTypesApi = {
+  list() {
+    return http.get<PayrollTypeListResponse>('/v1/payroll/deduction-types');
+  },
+
+  create(payload: CreatePayrollTypePayload) {
+    return http.post<PayrollTypeSingleResponse>('/v1/payroll/deduction-types', payload);
+  },
+
+  update(uuid: string, payload: UpdatePayrollTypePayload) {
+    return http.put<PayrollTypeSingleResponse>(`/v1/payroll/deduction-types/${uuid}`, payload);
+  },
+
+  remove(uuid: string) {
+    return http.delete<{ status: string; message: string }>(`/v1/payroll/deduction-types/${uuid}`);
+  },
+};
+
+/* ── Salary Sheet ───────────────────────────────────────────── */
+
+function salaryListParams(params?: SalaryListParams) {
+  if (!params) return undefined;
+  const { employee_ids, ...rest } = params;
+  return {
+    ...rest,
+    ...(employee_ids?.length ? { 'employee_ids[]': employee_ids } : {}),
+  };
+}
+
+export const salariesApi = {
+  list(params?: SalaryListParams) {
+    return http.get<SalaryListResponse>('/v1/payroll/salaries', {
+      params: salaryListParams(params),
+    });
+  },
+
+  summary(params?: Pick<SalaryListParams, 'financial_month' | 'department_id' | 'search' | 'employee_ids'>) {
+    return http.get<SalarySummaryResponse>('/v1/payroll/salaries/summary', {
+      params: salaryListParams(params),
+    });
   },
 };

@@ -15,33 +15,13 @@ import type {
 } from '@/modules/auth/types/auth.types';
 import { mapRolesToAppRole } from '@/shared/types/role.types';
 import { resetFcmRegistration } from '@/shared/services/fcm.service';
+import { disconnectEcho } from '@/shared/realtime-messages';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function isEmail(value: string): boolean {
-  return EMAIL_RE.test(value);
-}
 
 type AccountType = 'employee' | 'admin';
 
-function getCachedAccountType(identifier: string): AccountType | null {
-  const value = localStorage.getItem(ACCOUNT_TYPE_KEY + identifier);
-  return value === 'employee' || value === 'admin' ? value : null;
-}
-
 function setCachedAccountType(identifier: string, type: AccountType): void {
   localStorage.setItem(ACCOUNT_TYPE_KEY + identifier, type);
-}
-
-/** 422 with invalid identifier — wrong guard, not wrong password. */
-function isWrongAccountTypeError(err: unknown, idField: string): boolean {
-  const resp = (err as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } })?.response;
-  if (resp?.status !== 422) return false;
-  const fieldErrors = resp.data?.errors?.[idField];
-  return Array.isArray(fieldErrors) && fieldErrors.some((msg) =>
-    /is invalid/i.test(msg) || /غير صالح/i.test(msg) || /غير صحيح/i.test(msg),
-  );
 }
 
 /** Backend may return permission slugs as strings or `{ name: string }` objects. */
@@ -249,24 +229,6 @@ function readAccessToken(payload: Record<string, unknown>): string | undefined {
   return typeof token === 'string' ? token : undefined;
 }
 
-function readOtpChallenge(payload: Record<string, unknown>, fallbackAdminId: string) {
-  const otpRequired = payload.otpRequired === true || payload.otp_required === true;
-  const magicLinkRequired = payload.magicLinkRequired === true || payload.magic_link_required === true;
-
-  const nestedAdmin = payload.admin && typeof payload.admin === 'object' && !Array.isArray(payload.admin)
-    ? payload.admin as Record<string, unknown>
-    : null;
-
-  const adminId = String(
-    payload.adminId ?? payload.admin_id
-    ?? nestedAdmin?.id ?? nestedAdmin?.admin_id
-    ?? fallbackAdminId,
-  ).trim();
-
-  const expiresAt = String(payload.expiresAt ?? payload.expires_at ?? '');
-  return { otpRequired, magicLinkRequired, adminId, expiresAt };
-}
-
 function unwrapLoginPayload(response: unknown): Record<string, unknown> {
   const root = response as Record<string, unknown>;
   const inner = root.data;
@@ -345,9 +307,12 @@ function parseLoginProfile(payload: Record<string, unknown>): { admin?: ApiAdmin
 function profileFetchOrder(payload: Record<string, unknown>): AuthActor[] {
   const actor = readActorHint(payload);
   const redirect = typeof payload.redirect_path === 'string' ? payload.redirect_path : '';
-  if (actor === 'employee' || /\/employee(?:\/|$)/i.test(redirect)) return ['employee', 'admin'];
   if (actor === 'admin' || /\/admin(?:\/|$)/i.test(redirect)) return ['admin', 'employee'];
-  return ['employee', 'admin'];
+  if (actor === 'employee' || /\/employee(?:\/|$)/i.test(redirect)) return ['employee', 'admin'];
+  // Prefer admin when nested admin profile is present
+  if (payload.admin) return ['admin', 'employee'];
+  if (payload.employee) return ['employee', 'admin'];
+  return ['admin', 'employee'];
 }
 
 async function resolveLoginUser(
@@ -355,7 +320,11 @@ async function resolveLoginUser(
   payload: Record<string, unknown>,
   rememberMe: boolean,
 ): Promise<AuthUser> {
+  const actorHint = readActorHint(payload);
   const { admin, employee } = parseLoginProfile(payload);
+
+  if (actorHint === 'employee' && employee) return buildEmployeeUser(employee);
+  if (actorHint === 'admin' && admin) return buildAdminUser(admin);
   if (employee) return buildEmployeeUser(employee);
   if (admin) return buildAdminUser(admin);
 
@@ -432,90 +401,33 @@ async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
 
 // ── Auth operations ───────────────────────────────────────────────────────────
 
-async function loginAsEmployee(
-  identifier: string,
-  password: string,
-  rememberMe: boolean,
-): Promise<LoginResult> {
-  const employeePayload = isEmail(identifier)
-    ? { email: identifier, password }
-    : { employee_id: identifier, password };
-  const { data } = await authApi.employeeLogin(employeePayload);
-  const payload = unwrapLoginPayload(data);
-  const accessToken = readAccessToken(payload);
-  if (!accessToken) {
-    throw new Error('Invalid employee login response');
-  }
-
-  const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
-  const user = await resolveLoginUser(accessToken, payload, rememberMe);
-  storeAuth(accessToken, user, rememberMe);
-  setCachedAccountType(identifier, 'employee');
-  return {
-    status:       'success',
-    token:        accessToken,
-    user,
-    redirectPath: redirect_path,
-  };
-}
-
-async function loginAsAdmin(
-  identifier: string,
-  password: string,
-  rememberMe: boolean,
-): Promise<LoginResult> {
-  const { data } = await authApi.adminLogin({ admin_id: identifier, password });
-  const payload = unwrapLoginPayload(data);
-
-  const challenge = readOtpChallenge(payload, identifier);
-  if (challenge.otpRequired || challenge.magicLinkRequired) {
-    setCachedAccountType(identifier, 'admin');
-    return {
-      status:            'otp_required',
-      adminId:           challenge.adminId,
-      expiresAt:         challenge.expiresAt,
-      magicLinkRequired: challenge.magicLinkRequired,
-    };
-  }
-
-  const accessToken = readAccessToken(payload);
-  if (!accessToken) {
-    throw new Error('Invalid admin login response');
-  }
-
-  const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
-  const user = await resolveLoginUser(accessToken, payload, rememberMe);
-  storeAuth(accessToken, user, rememberMe);
-  setCachedAccountType(identifier, 'admin');
-  return {
-    status:       'success',
-    token:        accessToken,
-    user,
-    redirectPath: redirect_path,
-  };
-}
-
+/**
+ * Unified login — POST /v1/admin/auth/login with { admin_id, password } only.
+ * Backend returns actorType admin | employee; no OTP step.
+ */
 async function login(credentials: LoginCredentials): Promise<LoginResult> {
-  const { password, rememberMe = false } = credentials;
-  const identifier = credentials.adminId.trim();
-  const cachedType = getCachedAccountType(identifier);
-  const employeeIdField = isEmail(identifier) ? 'email' : 'employee_id';
+  const password = credentials.password;
+  const adminId = String(credentials.adminId).trim();
 
-  if (cachedType === 'admin') {
-    try {
-      return await loginAsAdmin(identifier, password, rememberMe);
-    } catch (err) {
-      if (!isWrongAccountTypeError(err, 'admin_id')) throw err;
-      return await loginAsEmployee(identifier, password, rememberMe);
-    }
+  const { data } = await authApi.adminLogin({ admin_id: adminId, password });
+  const payload = unwrapLoginPayload(data);
+
+  const accessToken = readAccessToken(payload);
+  if (!accessToken) {
+    throw new Error('Invalid login response');
   }
 
-  try {
-    return await loginAsEmployee(identifier, password, rememberMe);
-  } catch (err) {
-    if (!isWrongAccountTypeError(err, employeeIdField)) throw err;
-    return await loginAsAdmin(identifier, password, rememberMe);
-  }
+  const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
+  const user = await resolveLoginUser(accessToken, payload, credentials.rememberMe ?? false);
+  storeAuth(accessToken, user, credentials.rememberMe ?? false);
+  setCachedAccountType(adminId, user.actor === 'employee' ? 'employee' : 'admin');
+
+  return {
+    status:       'success',
+    token:        accessToken,
+    user,
+    redirectPath: redirect_path,
+  };
 }
 
 async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false): Promise<AuthLoginResponse> {
@@ -524,7 +436,6 @@ async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false):
     adminId,
     code:     otp,
     otp,
-    ...(adminId.includes('@') ? { email: adminId } : {}),
   });
   const payload = unwrapLoginPayload(data);
   const { accessToken, admin, redirect_path } = readAdminAuthSuccess(payload);
@@ -539,27 +450,15 @@ async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false):
 
 async function resendAdminOtp(
   adminId: string,
-  fallback?: { identifier: string; password: string; rememberMe: boolean },
 ): Promise<{ expiresAt: string; adminId: string }> {
-  try {
-    const { data } = await authApi.adminResendOtp({
-      admin_id: adminId,
-      adminId,
-      ...(adminId.includes('@') ? { email: adminId } : {}),
-    });
-    const payload = unwrapLoginPayload(data);
-    const expiresAt = String(payload.expiresAt ?? payload.expires_at ?? '');
-    const nextAdminId = String(payload.adminId ?? payload.admin_id ?? adminId).trim() || adminId;
-    return { expiresAt, adminId: nextAdminId };
-  } catch (primaryErr) {
-    if (!fallback) throw primaryErr;
-
-    const result = await loginAsAdmin(fallback.identifier, fallback.password, fallback.rememberMe);
-    if (result.status !== 'otp_required') {
-      throw primaryErr;
-    }
-    return { expiresAt: result.expiresAt, adminId: result.adminId };
-  }
+  const { data } = await authApi.adminResendOtp({
+    admin_id: adminId,
+    adminId,
+  });
+  const payload = unwrapLoginPayload(data);
+  const expiresAt = String(payload.expiresAt ?? payload.expires_at ?? '');
+  const nextAdminId = String(payload.adminId ?? payload.admin_id ?? adminId).trim() || adminId;
+  return { expiresAt, adminId: nextAdminId };
 }
 
 async function completeMagicLogin(token: string, rememberMe = true): Promise<AuthUser> {
@@ -769,6 +668,7 @@ async function logout(): Promise<void> {
   } finally {
     clearAuth();
     resetFcmRegistration();
+    disconnectEcho();
   }
 }
 

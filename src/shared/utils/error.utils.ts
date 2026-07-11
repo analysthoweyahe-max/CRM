@@ -6,12 +6,19 @@ const FIELD_ALIASES: Record<string, string> = {
   contract_duration_months: 'contractDurationMonths',
   manager_ids:              'managerIds',
   employee_ids:             'employeeIds',
+  department_ids:           'departmentIds',
+  department_id:            'departmentIds',
+  job_title_id:             'jobTitleId',
   project_type_id:          'projectTypeId',
   target_domain:            'targetDomain',
   expected_end_date:        'endDate',
   start_date:               'startDate',
   is_draft:                 'isDraft',
   password_confirmation:    'confirmPassword',
+  bonus_type_id:            'bonus_type_id',
+  adjustment_type:          'bonus_type_id',
+  deduction_type_id:        'deduction_type_id',
+  deduction_type:           'deduction_type_id',
 };
 
 export function extractApiFieldErrors(error: unknown): Record<string, string> {
