@@ -64,6 +64,37 @@ export function parseBackendTimestamp(raw: string): Date {
   ));
 }
 
+/**
+ * Attendance check-in/out clocks from the API are UTC "HH:MM" / "HH:MM:SS"
+ * with no timezone marker. Convert to the viewer's local clock for display
+ * and shift-window checks (e.g. 06:14 UTC → 09:14 in Egypt UTC+3).
+ */
+export function utcClockToLocal(time: string | null | undefined): string | null {
+  if (!time) return null;
+  const trimmed = time.trim();
+  const parts = trimmed.split(':');
+  if (parts.length < 2) return trimmed;
+
+  const h = Number(parts[0]);
+  const m = Number(parts[1]);
+  const s = parts.length >= 3 ? Number(String(parts[2]).slice(0, 2)) : 0;
+  if ([h, m, s].some(n => Number.isNaN(n))) return trimmed;
+
+  const now = new Date();
+  const local = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    h, m, s,
+  ));
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  if (parts.length >= 3) {
+    return `${pad(local.getHours())}:${pad(local.getMinutes())}:${pad(local.getSeconds())}`;
+  }
+  return `${pad(local.getHours())}:${pad(local.getMinutes())}`;
+}
+
 /** Relative "time ago" label — used in notification lists */
 export function formatTimeAgo(raw: string | null | undefined, isAr: boolean): string {
   if (!raw) return '—';

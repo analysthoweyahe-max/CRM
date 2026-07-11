@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Pencil } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { Card } from '@/shared/components/ui/Card';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button } from '@/shared/components/ui/Button';
 import { ROUTES } from '@/app/router/routes';
+import { resourceKey } from '@/shared/utils/resourceKey.utils';
 import { useProjectDetails } from '../hooks/useProjectDetails';
 import { ProjectDetailsContent } from '../components/ProjectDetailsContent';
 import { ProjectDetailsSkeleton } from '../components/ProjectDetailsSkeleton';
@@ -27,6 +28,8 @@ export function ProjectInfoPage() {
     return null;
   }
 
+  const projectId = resourceKey(project) || id;
+
   return (
     <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
       <PageHeader
@@ -35,6 +38,15 @@ export function ProjectInfoPage() {
         start={
           <Button variant="ghost" startIcon={<BackIcon size={15} />} onClick={goBack}>
             {isAr ? 'العودة' : 'Back'}
+          </Button>
+        }
+        actions={
+          <Button
+            variant="primary"
+            startIcon={<Pencil size={15} />}
+            onClick={() => navigate(`${ROUTES.PROJECT_MANAGER.DETAILS(projectId)}?tab=settings`)}
+          >
+            {isAr ? 'تعديل' : 'Edit'}
           </Button>
         }
       />

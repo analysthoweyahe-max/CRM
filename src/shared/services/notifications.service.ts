@@ -71,13 +71,17 @@ function prefixFor(role: Role | undefined): string {
 }
 
 export const notificationsApi = {
-  async list(role: Role | undefined, params?: { per_page?: number; page?: number }) {
+  async list(
+    role: Role | undefined,
+    params?: { per_page?: number; page?: number },
+    actor?: 'admin' | 'employee',
+  ) {
     const res = await http.get<ApiEnvelope<NotificationsPage>>(prefixFor(role), { params });
     const page = res.data.data;
     const normalized = (page.data ?? []).map((item) =>
       normalizeNotification(item as AppNotification & Record<string, unknown>),
     );
-    const data = filterNotificationsForRole(normalized, role);
+    const data = filterNotificationsForRole(normalized, role, actor);
     const unreadCount = data.filter((n) => !n.readAt).length;
 
     return {

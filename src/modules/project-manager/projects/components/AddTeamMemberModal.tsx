@@ -1,34 +1,33 @@
-import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { Modal }               from '@/shared/components/ui/Modal';
 import { Button }              from '@/shared/components/ui/Button';
 import { SearchInput }         from '@/shared/components/form/SearchInput';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
-import { matchesSearch }       from '@/shared/utils/search.utils';
 import type { ComboboxItem }   from '@/shared/components/form/Combobox';
 
 interface Props {
-  open:        boolean;
-  onClose:     () => void;
-  isAr:        boolean;
-  available:   ComboboxItem[];
-  selectedIds: string[];
-  projectRole: string;
-  onToggle:    (id: string) => void;
-  onSetRole:   (v: string) => void;
-  canAdd:      boolean;
-  onConfirm:   () => void;
+  open:               boolean;
+  onClose:            () => void;
+  isAr:               boolean;
+  available:          ComboboxItem[];
+  search:             string;
+  onSearchChange:     (value: string) => void;
+  isLoadingAvailable: boolean;
+  selectedIds:        string[];
+  projectRole:        string;
+  onToggle:           (id: string) => void;
+  onSetRole:          (v: string) => void;
+  canAdd:             boolean;
+  onConfirm:          () => void;
 }
 
 export function AddTeamMemberModal({
   open, onClose, isAr,
-  available, selectedIds, projectRole,
+  available, search, onSearchChange, isLoadingAvailable,
+  selectedIds, projectRole,
   onToggle, onSetRole,
   canAdd, onConfirm,
 }: Props) {
-  const [search, setSearch] = useState('');
-  const filtered = available.filter(m => matchesSearch([m.label, m.detail], search));
-
   return (
     <Modal
       open={open}
@@ -51,14 +50,19 @@ export function AddTeamMemberModal({
       <div className="space-y-4 py-1">
 
         <FormField label={isAr ? 'اختر أعضاء من الفريق' : 'Select team members'} required>
-          <SearchInput value={search} onChange={setSearch} isAr={isAr} />
+          <SearchInput value={search} onChange={onSearchChange} isAr={isAr} delay={300} />
           <div className="mt-2 max-h-56 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-700">
-            {filtered.length === 0 && (
+            {isLoadingAvailable && (
+              <div className="flex justify-center py-6">
+                <div className="w-5 h-5 border-2 border-[#A0CD39] border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            {!isLoadingAvailable && available.length === 0 && (
               <p className="p-3 text-sm text-gray-400 text-center">
                 {isAr ? 'لا توجد نتائج' : 'No results'}
               </p>
             )}
-            {filtered.map(m => {
+            {!isLoadingAvailable && available.map(m => {
               const checked = selectedIds.includes(String(m.id));
               return (
                 <button

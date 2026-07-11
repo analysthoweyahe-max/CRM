@@ -14,10 +14,10 @@ export interface ProjectMemberCardData {
 }
 
 interface Props {
-  member:   ProjectMemberCardData;
-  onRemove: (id: string) => void;
-  onView:   (id: string) => void;
-  isAr:     boolean;
+  member:    ProjectMemberCardData;
+  onRemove?: (id: string) => void;
+  onView:    (id: string) => void;
+  isAr:      boolean;
 }
 
 export function ProjectMemberCard({ member, onRemove, onView, isAr }: Props) {
@@ -65,9 +65,11 @@ export function ProjectMemberCard({ member, onRemove, onView, isAr }: Props) {
       {/* Footer */}
       <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-700">
         <div className="flex items-center gap-1">
-          <Button variant="icon-danger" onClick={() => onRemove(member.id)}>
-            <Trash2 size={14} />
-          </Button>
+          {onRemove && (
+            <Button variant="icon-danger" onClick={() => onRemove(member.id)}>
+              <Trash2 size={14} />
+            </Button>
+          )}
           <Button variant="icon-brand" onClick={() => onView(member.id)}>
             <Eye size={14} />
           </Button>

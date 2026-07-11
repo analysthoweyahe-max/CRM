@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
@@ -6,7 +6,12 @@ import { useSeoMemberDashboard } from '../../dashboard/hooks/useSeoMemberDashboa
 import { seoTaskDetailApi } from '../api/seoTaskDetail.api';
 import type { CreateSelfSeoTaskPayload, SeoTaskPriority } from '../types/seoTask.types';
 
-export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
+interface Options {
+  initialProjectId?: string;
+  lockProject?:      boolean;
+}
+
+export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: Options = {}) {
   /* Projects come from the dashboard's "my projects" list — not derived from
      existing tasks, since a member with zero tasks would otherwise never
      see any project to pick from. */
@@ -20,10 +25,11 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
       qc.invalidateQueries({ queryKey: ['my-tasks'] });
+      qc.invalidateQueries({ queryKey: ['seo-member-project-tasks'] });
     },
   });
 
-  const [projectId,      setProjectId]      = useState('');
+  const [projectId,      setProjectId]      = useState(options.initialProjectId ?? '');
   const [title,          setTitle]          = useState('');
   const [phase,          setPhase]          = useState('');
   const [description,    setDescription]    = useState('');
@@ -33,8 +39,13 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
   const [files,          setFiles]          = useState<File[]>([]);
   const [fileError,      setFileError]      = useState<string | null>(null);
 
+  useEffect(() => {
+    if (options.initialProjectId) setProjectId(options.initialProjectId);
+  }, [options.initialProjectId]);
+
   function reset() {
-    setProjectId(''); setTitle(''); setPhase(''); setDescription('');
+    setProjectId(options.lockProject ? (options.initialProjectId ?? '') : '');
+    setTitle(''); setPhase(''); setDescription('');
     setPriority('normal'); setDueDate(''); setEstimatedHours('');
     setFiles([]); setFileError(null);
   }
@@ -80,6 +91,7 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean) {
 
   return {
     projectId, setProjectId, projectItems,
+    lockProject: Boolean(options.lockProject),
     title, setTitle,
     phase, setPhase,
     description, setDescription,

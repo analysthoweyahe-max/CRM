@@ -49,13 +49,9 @@ export function useSeoTaskModal(
       title:           title.trim(),
       description:     description.trim() || undefined,
       priority,
-      /* TODO: confirm real field name for updating a task's phase via this endpoint
-         (was sending `stage`, which doesn't exist in the confirmed create/list schema). */
       status,
-      due_date:        dueDate         || undefined,
-      estimated_hours: estimatedHours  ? Number(estimatedHours) : undefined,
-      target_keyword:  targetKeyword.trim() || undefined,
-      target_url:      targetUrl.trim()     || undefined,
+      dueDate:         dueDate || undefined,
+      estimatedHours:  estimatedHours ? Number(estimatedHours) : undefined,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });

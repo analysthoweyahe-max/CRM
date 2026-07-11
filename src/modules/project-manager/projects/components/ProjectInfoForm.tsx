@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { Button } from '@/shared/components/ui/Button';
 import { Combobox } from '@/shared/components/form/Combobox';
@@ -8,7 +9,8 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { ProjectOptionalFields } from '@/shared/components/form/ProjectOptionalFields';
 import { useProjectSettings } from '../hooks/useProjectSettings';
 import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
-import type { PmLookupItem } from '../types/project.types';
+import { pmProjectsApi } from '../api/project.api';
+import type { PmLookupItem, PmProjectPayload } from '../types/project.types';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
 import {
@@ -52,7 +54,8 @@ interface Props {
 export function ProjectInfoForm({ projectId, isAr }: Props) {
   const { user } = useAuth();
   const isAdmin  = user?.role === 'admin';
-  const { settings, isLoading, save } = useProjectSettings(projectId);
+  const queryClient = useQueryClient();
+  const { settings, isLoading } = useProjectSettings(projectId);
   const { statuses, types, managers } = usePmProjectLookups({ includeManagers: isAdmin });
 
   const statusLookupItems = settings?.statusOptions?.length
@@ -94,33 +97,66 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
   }
 
   async function handleSave() {
-    if (!name.trim() || saving) return;
+    if (!name.trim() || saving || !settings) return;
     if (!validateOptionalFields()) return;
 
     setSaving(true);
     try {
-      await save({
+      const next = {
         name:            name.trim(),
         description:     description.trim(),
-        projectTypeId:   Number(projectType),
+        projectTypeId:   Number(projectType) || undefined,
         status,
-        isDraft:         settings?.isDraft ?? false,
+        isDraft:         settings.isDraft ?? false,
         startDate:       startDate || null,
         deadline:        deadline || null,
         githubLink:      optionalLink(githubLink),
         driveLink:       optionalLink(driveLink),
         contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
-        ...(isAdmin && managerId ? { managerId } : {}),
-      });
+        ...(isAdmin && managerId ? { managerIds: [managerId] as string[] } : {}),
+      };
+
+      const baseline = {
+        name:            settings.name,
+        description:     settings.description ?? '',
+        projectTypeId:   settings.projectTypeId ?? undefined,
+        status:          settings.status,
+        isDraft:         settings.isDraft ?? false,
+        startDate:       settings.startDate || null,
+        deadline:        settings.deadline || null,
+        githubLink:      settings.githubLink ?? null,
+        driveLink:       settings.driveLink ?? null,
+        contractDurationMonths: settings.contractDurationMonths ?? null,
+        ...(isAdmin ? { managerIds: settings.manager?.id ? [settings.manager.id] : [] } : {}),
+      };
+
+      const payload = Object.fromEntries(
+        Object.entries(next).filter(([key, value]) => {
+          const prev = baseline[key as keyof typeof baseline];
+          if (Array.isArray(value) && Array.isArray(prev)) {
+            return value.join() !== prev.join();
+          }
+          return value !== prev;
+        }),
+      ) as Partial<PmProjectPayload>;
+
+      if (Object.keys(payload).length === 0) {
+        toast.success(isAr ? 'لا توجد تغييرات' : 'No changes');
+        return;
+      }
+
+      await pmProjectsApi.update(projectId, payload);
+      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['pm-project'] });
+      queryClient.invalidateQueries({ queryKey: ['my-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
     } catch (err) {
       const apiFieldErrors = extractApiFieldErrors(err);
       if (Object.keys(apiFieldErrors).length > 0) {
         setOptionalFieldErrors((prev) => ({ ...prev, ...apiFieldErrors }));
       } else {
-        const fallback = isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes';
-        const message  = extractApiError(err);
-        toast.error(message && message !== 'An unexpected error occurred.' ? message : fallback);
+        toast.error(extractApiError(err) || (isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes'));
       }
     } finally {
       setSaving(false);

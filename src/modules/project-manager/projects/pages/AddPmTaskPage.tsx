@@ -123,6 +123,7 @@ export function AddPmTaskPage() {
         title:           form.title.trim(),
         description:     form.description.trim() || undefined,
         employeeId:      form.assigneeId,
+        employee_id:     form.assigneeId,
         priority:        normalizePmTaskPriority(form.priority),
         dueDate:         form.dueDate,
         estimatedHours:  form.estimatedHours ? Number(form.estimatedHours) : undefined,

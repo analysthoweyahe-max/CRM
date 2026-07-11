@@ -48,7 +48,7 @@ export const pmProjectsApi = {
     return http.put<PmProjectApiResponse>(`/v1/pm/projects/${id}/settings`, payload);
   },
 
-  update(id: number | string, payload: PmProjectPayload) {
+  update(id: number | string, payload: Partial<PmProjectPayload>) {
     return http.put<PmProjectDetailsApiResponse>(`/v1/pm/projects/${id}`, payload);
   },
 

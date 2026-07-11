@@ -14,8 +14,7 @@ export function isHrLeaveSubmittedNotification(notification: AppNotification): b
   return notification.type === 'hr_leave_submitted';
 }
 
-/**
- * Personal "assigned to you" alerts — for the assignee employee only.
+/** Personal "assigned to you" alerts — for the assignee employee only.
  * Super-admin / admin mirrors must not show these as if they were the recipient.
  */
 export function isPersonalAssigneeNotification(notification: AppNotification): boolean {
@@ -26,6 +25,7 @@ export function isPersonalAssigneeNotification(notification: AppNotification): b
     || type === 'bonus_applied'
     || type === 'deduction_applied'
     || type === 'leave'
+    || /TaskAssignedNotification$/i.test(type)
   );
 }
 
@@ -36,18 +36,20 @@ const EMPLOYEE_ROLES = new Set<Role>(['employee', 'seo-member']);
 export function filterNotificationsForRole(
   items: AppNotification[],
   role: Role | undefined,
+  actor?: 'admin' | 'employee',
 ): AppNotification[] {
   if (!role) return items;
+
+  // Employee accounts always keep assignment / payroll alerts for themselves.
+  if (actor === 'employee' || EMPLOYEE_ROLES.has(role)) {
+    return items.filter((n) => !isHrLeaveSubmittedNotification(n));
+  }
 
   if (REVIEWER_ROLES.has(role)) {
     return items.filter((n) =>
       !isEmployeeLeaveStatusNotification(n)
       && !isPersonalAssigneeNotification(n),
     );
-  }
-
-  if (EMPLOYEE_ROLES.has(role)) {
-    return items.filter((n) => !isHrLeaveSubmittedNotification(n));
   }
 
   return items;

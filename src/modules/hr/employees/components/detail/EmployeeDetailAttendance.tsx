@@ -85,7 +85,7 @@ export function EmployeeDetailAttendance({ employeeId, isAr }: Props) {
                       : '—'}
                   </td>
                   <td className="px-4 py-3.5">
-                    <DayBadge status={row.day_status} isAr={isAr} />
+                    <DayBadge status={row.day_status ?? row.dayStatus ?? ''} isAr={isAr} />
                   </td>
                 </tr>
               ))}

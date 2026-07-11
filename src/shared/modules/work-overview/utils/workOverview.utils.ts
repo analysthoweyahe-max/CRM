@@ -1,5 +1,6 @@
 import { ROUTES } from '@/app/router/routes';
 import { resolveAttendanceScope } from '@/shared/modules/attendance/utils/attendanceTimer.utils';
+import { utcClockToLocal } from '@/shared/utils/date.utils';
 import type { Role } from '@/shared/types/role.types';
 import type { WorkAppRoutes, WorkScope } from '../types/workOverview.types';
 
@@ -35,10 +36,11 @@ export function personalBonusPath(scope: WorkScope, id: string): string {
   return `${SCOPE_BASE[scope]}/bonuses/${id}`;
 }
 
-/** API may return HH:mm:ss — show HH:mm in UI. */
+/** API may return UTC HH:mm:ss — show local HH:mm in UI. */
 export function formatTimeHHmm(time: string | null | undefined): string {
-  if (!time) return '--:--';
-  const [h, m] = time.split(':');
+  const local = utcClockToLocal(time);
+  if (!local) return '--:--';
+  const [h, m] = local.split(':');
   if (h == null || m == null || Number.isNaN(Number(h))) return '--:--';
   return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
 }

@@ -1,6 +1,7 @@
 ﻿import { type ColumnDef } from '@tanstack/react-table';
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge }  from '@/shared/components/ui/Badge';
+import { utcClockToLocal } from '@/shared/utils/date.utils';
 import type { AttendanceRecord, DayStatus, WorkStatus } from '@/modules/hr/attendance/types/attendance.types';
 
 const DAY_STATUS_MAP: Record<string, { ar: string; en: string; variant: 'success' | 'warning' | 'error' | 'brand' }> = {
@@ -57,7 +58,7 @@ export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>
       header: isAr ? 'الدخول' : 'Check In',
       enableSorting: false,
       cell: ({ getValue }) => {
-        const v = getValue<string | null>();
+        const v = utcClockToLocal(getValue<string | null>())?.slice(0, 5);
         return <span className="text-sm text-gray-700 dark:text-gray-300">{v ?? '—'}</span>;
       },
     },
@@ -66,7 +67,7 @@ export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>
       header: isAr ? 'الخروج' : 'Check Out',
       enableSorting: false,
       cell: ({ getValue }) => {
-        const v = getValue<string | null>();
+        const v = utcClockToLocal(getValue<string | null>())?.slice(0, 5);
         return <span className="text-sm text-gray-700 dark:text-gray-300">{v ?? '—'}</span>;
       },
     },

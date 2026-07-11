@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast }        from 'sonner';
 import { getAvatarColor } from '@/shared/utils';
+import { extractApiError } from '@/shared/utils/error.utils';
+import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import { useRemoveTaskLocally, useInvalidateProjectTasks } from '../store/taskStore';
 import { pmTaskApi } from '../api/task.api';
 import type { RawPmComment, RawPmTaskAttachment } from '../api/task.api';
@@ -51,12 +53,13 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   const queryClient = useQueryClient();
   const invalidateProjectTasks = useInvalidateProjectTasks(projectId);
   const removeTaskLocally      = useRemoveTaskLocally(projectId);
+  const taskKey = task ? taskResourceKey(task) : '';
 
-  const detailKey = ['pm-task-detail', projectId, task?.id];
+  const detailKey = ['pm-task-detail', projectId, taskKey];
   const { data: detail, isLoading: detailLoading } = useQuery({
     queryKey: detailKey,
-    queryFn:  () => pmTaskApi.get(projectId, task!.id).then(r => r.data.data),
-    enabled:  !!task,
+    queryFn:  () => pmTaskApi.get(projectId, taskKey).then(r => r.data.data),
+    enabled:  !!task && !!taskKey,
   });
 
   function invalidateDetail() {
@@ -78,10 +81,10 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
 
   const [loggingTime, setLoggingTime] = useState(false);
   async function addTimeLog(payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) {
-    if (!task || loggingTime) return;
+    if (!task || !taskKey || loggingTime) return;
     setLoggingTime(true);
     try {
-      await pmTaskApi.addTimeLog(projectId, task.id, {
+      await pmTaskApi.addTimeLog(projectId, taskKey, {
         work_date:  payload.workDate,
         started_at: payload.startedAt,
         ended_at:   payload.endedAt,
@@ -89,28 +92,28 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
       });
       invalidateDetail();
       toast.success(isAr ? 'تم تسجيل الوقت' : 'Time logged');
-    } catch {
-      toast.error(isAr ? 'تعذر تسجيل الوقت' : 'Failed to log time');
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر تسجيل الوقت' : 'Failed to log time'));
     } finally {
       setLoggingTime(false);
     }
   }
 
   /* ── Comments ── */
-  const commentsKey = ['pm-task-comments', projectId, task?.id];
+  const commentsKey = ['pm-task-comments', projectId, taskKey];
   const { data: comments = [] } = useQuery({
     queryKey: commentsKey,
-    queryFn:  () => pmTaskApi.getComments(projectId, task!.id).then(r => r.data.data.data.map(toComment)),
-    enabled:  !!task,
+    queryFn:  () => pmTaskApi.getComments(projectId, taskKey).then(r => r.data.data.data.map(toComment)),
+    enabled:  !!task && !!taskKey,
   });
 
   const commentMutation = useMutation({
-    mutationFn: (body: string) => pmTaskApi.createComment(projectId, task!.id, body),
+    mutationFn: (body: string) => pmTaskApi.createComment(projectId, taskKey, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentsKey });
       invalidateDetail();
     },
-    onError: () => toast.error(isAr ? 'تعذر إرسال التعليق' : 'Failed to send comment'),
+    onError: (err) => toast.error(extractApiError(err) || (isAr ? 'تعذر إرسال التعليق' : 'Failed to send comment')),
   });
 
   function addComment() {
@@ -124,20 +127,20 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   const attachments: TaskAttachment[] = (detail?.task.attachments ?? []).map(toAttachment);
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => pmTaskApi.uploadAttachment(projectId, task!.id, file),
+    mutationFn: (file: File) => pmTaskApi.uploadAttachment(projectId, taskKey, file),
     onSuccess:  () => invalidateDetail(),
-    onError:    () => toast.error(isAr ? 'تعذر رفع الملف' : 'Failed to upload file'),
+    onError:    (err) => toast.error(extractApiError(err) || (isAr ? 'تعذر رفع الملف' : 'Failed to upload file')),
   });
 
   function addAttachment(file: File) {
-    if (!task) return;
+    if (!task || !taskKey) return;
     uploadMutation.mutate(file);
   }
 
   const removeAttachmentMutation = useMutation({
-    mutationFn: (attachmentId: string) => pmTaskApi.deleteAttachment(projectId, task!.id, attachmentId),
+    mutationFn: (attachmentId: string) => pmTaskApi.deleteAttachment(projectId, taskKey, attachmentId),
     onSuccess:  () => invalidateDetail(),
-    onError:    () => toast.error(isAr ? 'تعذر حذف الملف' : 'Failed to remove file'),
+    onError:    (err) => toast.error(extractApiError(err) || (isAr ? 'تعذر حذف الملف' : 'Failed to remove file')),
   });
 
   function removeAttachment(id: string) {
@@ -170,21 +173,35 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   function closeEdit() { setIsEditOpen(false); }
 
   async function saveEdit() {
-    if (!task || !editTitle.trim() || savingEdit) return;
+    if (!task || !taskKey || !editTitle.trim() || savingEdit) return;
     setSavingEdit(true);
     try {
-      await pmTaskApi.update(projectId, task.id, {
-        title:            editTitle.trim(),
-        priority:         editPriority,
-        due_date:         editDueDate,
-        estimated_hours:  editEstHours ? Number(editEstHours) : undefined,
-      });
+      const next = {
+        title:           editTitle.trim(),
+        priority:        editPriority || undefined,
+        dueDate:         editDueDate || undefined,
+        estimatedHours:  editEstHours ? Number(editEstHours) : undefined,
+      };
+      const baseline = {
+        title:           task.title,
+        priority:        task.priority,
+        dueDate:         task.dueDate || undefined,
+        estimatedHours:  task.estimatedHours,
+      };
+      const payload = Object.fromEntries(
+        Object.entries(next).filter(([key, value]) => value !== undefined && value !== baseline[key as keyof typeof baseline]),
+      );
+      if (Object.keys(payload).length === 0) {
+        closeEdit();
+        return;
+      }
+      await pmTaskApi.update(projectId, taskKey, payload);
       invalidateProjectTasks();
       invalidateDetail();
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
       closeEdit();
-    } catch {
-      toast.error(isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes');
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes'));
     } finally {
       setSavingEdit(false);
     }
@@ -193,15 +210,15 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   /* ── Status change (Info tab) ── */
   const [changingStatus, setChangingStatus] = useState(false);
   async function changeStatus(status: string) {
-    if (!task || status === task.status || changingStatus) return;
+    if (!task || !taskKey || status === task.status || changingStatus) return;
     setChangingStatus(true);
     try {
-      await pmTaskApi.updateStatus(projectId, task.id, status);
+      await pmTaskApi.updateStatus(projectId, taskKey, status);
       invalidateProjectTasks();
       invalidateDetail();
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
-    } catch {
-      toast.error(isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status');
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));
     } finally {
       setChangingStatus(false);
     }

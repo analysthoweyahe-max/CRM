@@ -5,18 +5,20 @@ import type { RawPmTask } from '../api/task.api';
 import type { Task, TaskPriority, TaskStatus } from '../types/task.types';
 
 export function queryKey(projectId: string) {
-  return ['pm-project-tasks', projectId] as const;
+  return ['pm-project-tasks', projectId, 'all'] as const;
 }
 
 export function toTask(raw: RawPmTask, projectId: string): Task {
   return {
     id:              String(raw.id),
+    uuid:            raw.uuid || undefined,
     projectId,
     title:           raw.title,
     description:     raw.description ?? undefined,
     phaseId:         raw.phase?.id,
     phaseName:       raw.phase?.name,
     priority:        raw.priority as TaskPriority,
+    assigneeId:      raw.assignee?.id,
     assigneeName:    raw.assignee?.name ?? '',
     assigneeInitial: raw.assignee?.avatarInitial ?? '',
     assigneeColor:   getAvatarColor(raw.assignee?.name ?? raw.title),
@@ -30,7 +32,7 @@ export function toTask(raw: RawPmTask, projectId: string): Task {
 export function useProjectTasks(projectId: string): Task[] {
   const { data } = useQuery({
     queryKey: queryKey(projectId),
-    queryFn:  () => pmTaskApi.list(projectId).then(r =>
+    queryFn:  () => pmTaskApi.list(projectId, { mine: false }).then(r =>
       r.data.data.columns.flatMap(c => c.tasks.map(t => toTask(t, projectId))),
     ),
     enabled: !!projectId,

@@ -8,6 +8,7 @@ import { ROUTES } from '@/app/router/routes';
 import { Button } from '@/shared/components/ui/Button';
 import { Modal } from '@/shared/components/ui/Modal';
 import { extractApiError } from '@/shared/utils/error.utils';
+import { utcClockToLocal } from '@/shared/utils/date.utils';
 import { useOrgSettingsData } from '@/modules/admin/org-settings/hooks/useOrgSettings';
 import {
   calcExpectedEnd,
@@ -89,8 +90,10 @@ export function WorkTimerCard({
       ? today.workStatusLabel
       : (isAr ? 'يعمل حاليًا' : 'Currently working');
 
-  const checkInTime = today?.record?.checkInTime ?? today?.checkInTime ?? null;
-  const checkOutTime = today?.record?.checkOutTime ?? today?.checkOutTime ?? null;
+  const checkInTimeRaw = today?.record?.checkInTime ?? today?.checkInTime ?? null;
+  const checkOutTimeRaw = today?.record?.checkOutTime ?? today?.checkOutTime ?? null;
+  // API clocks are UTC — convert for window checks / expected end (display converts in formatClockTime)
+  const checkInTime = utcClockToLocal(checkInTimeRaw);
   const breakMinutes = today?.breakMinutes ?? 0;
   const liveBreakMinutes = isPaused && breakElapsed > 0
     ? Math.max(breakMinutes, Math.floor(breakElapsed / 60))
@@ -205,17 +208,17 @@ export function WorkTimerCard({
         )}
       </div>
 
-      {(isActiveDay || checkInTime) && (
+      {(isActiveDay || checkInTimeRaw) && (
         <div className={`flex flex-col gap-1 text-gray-500 dark:text-gray-400 ${isCompact ? 'text-[11px]' : 'text-xs'}`}>
           <div className="flex items-center justify-between gap-3">
             <span>
               {isAr ? 'حضور:' : 'In:'}{' '}
-              <span className="font-mono">{formatClockTime(checkInTime, isAr)}</span>
+              <span className="font-mono">{formatClockTime(checkInTimeRaw, isAr)}</span>
             </span>
-            {checkOutTime ? (
+            {checkOutTimeRaw ? (
               <span>
                 {isAr ? 'انصراف:' : 'Out:'}{' '}
-                <span className="font-mono">{formatClockTime(checkOutTime, isAr)}</span>
+                <span className="font-mono">{formatClockTime(checkOutTimeRaw, isAr)}</span>
               </span>
             ) : (
               <span>

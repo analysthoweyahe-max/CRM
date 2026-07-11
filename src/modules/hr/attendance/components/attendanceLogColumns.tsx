@@ -1,9 +1,13 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { Avatar } from '@/shared/components/ui/Avatar';
+import { utcClockToLocal } from '@/shared/utils/date.utils';
 import { DayBadge } from './DayBadge';
 import { formatDate } from '../utils/printAttendance';
 import type { AttendanceLogRow, DayStatus } from '../types/attendance.types';
 
+function formatAttendanceClock(time: string | null | undefined): string {
+  return utcClockToLocal(time)?.slice(0, 5) ?? '—';
+}
 export function getAttendanceLogColumns(isAr: boolean): ColumnDef<AttendanceLogRow>[] {
   return [
     {
@@ -42,7 +46,7 @@ export function getAttendanceLogColumns(isAr: boolean): ColumnDef<AttendanceLogR
       enableSorting: false,
       cell: ({ getValue }) => (
         <span className="text-sm text-gray-700 dark:text-gray-300">
-          {getValue<string | null>() ?? '—'}
+          {formatAttendanceClock(getValue<string | null>())}
         </span>
       ),
     },
@@ -52,7 +56,7 @@ export function getAttendanceLogColumns(isAr: boolean): ColumnDef<AttendanceLogR
       enableSorting: false,
       cell: ({ getValue }) => (
         <span className="text-sm text-gray-700 dark:text-gray-300">
-          {getValue<string | null>() ?? '—'}
+          {formatAttendanceClock(getValue<string | null>())}
         </span>
       ),
     },

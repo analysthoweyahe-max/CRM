@@ -94,7 +94,7 @@ function resolveSeoTaskPath(
   }
 
   if (taskUuid || taskId) return ROUTES.SEO_MEMBER.TASK_DETAIL(pid, String(taskUuid ?? taskId));
-  return ROUTES.SEO_MEMBER.PROJECT_TASKS(pid);
+  return ROUTES.SEO_MEMBER.DETAILS(pid);
 }
 
 function resolvePmTaskPath(
@@ -178,7 +178,7 @@ function resolveSeoProjectPath(
   }
   const pid = String(projectId);
   if (user?.role === 'seo-leader') return ROUTES.SEO_LEADER.DETAILS(pid);
-  return ROUTES.SEO_MEMBER.PROJECT_TASKS(pid);
+  return ROUTES.SEO_MEMBER.DETAILS(pid);
 }
 
 /** Resolve in-app path when a notification is clicked. */
@@ -298,7 +298,7 @@ export function resolveNotificationPath(
   if (projectId && isTaskNotification(notification)) {
     const pid = String(projectId);
     return seo
-      ? (user?.role === 'seo-leader' ? ROUTES.SEO_LEADER.DETAILS(pid) : ROUTES.SEO_MEMBER.PROJECT_TASKS(pid))
+      ? (user?.role === 'seo-leader' ? ROUTES.SEO_LEADER.DETAILS(pid) : ROUTES.SEO_MEMBER.DETAILS(pid))
       : ROUTES.EMPLOYEE.PROJECT_TASKS(pid);
   }
 

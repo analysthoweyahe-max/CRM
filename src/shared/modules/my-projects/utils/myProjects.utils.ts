@@ -7,6 +7,7 @@ import type {
   PmProject,
   ProjectSection,
   ProjectStatus,
+  SeoProject,
 } from '../types/myProjects.types';
 
 export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): MyProjectsPageConfig {
@@ -25,8 +26,8 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
       showManager:     false,
       showTasksButton: true,
       createPath:      ROUTES.SEO_LEADER.NEW,
-      workspacePath:   (id) => ROUTES.SEO_MEMBER.PROJECT_TASKS(id),
-      tasksPath:       (id) => ROUTES.SEO_MEMBER.PROJECT_TASKS(id),
+      workspacePath:   (id) => ROUTES.SEO_MEMBER.DETAILS(id),
+      tasksPath:       (id) => ROUTES.SEO_MEMBER.DETAILS(id),
     };
   }
 
@@ -141,4 +142,58 @@ export function groupProjectsIntoSections(projects: PmProject[], isAr: boolean):
       })),
     };
   });
+}
+
+/** Same section grouping for SEO employee projects from `/v1/seo/employee/projects`. */
+export function groupSeoProjectsIntoSections(projects: SeoProject[], isAr: boolean): ProjectSection[] {
+  const known = projects.filter(p => SECTION_ORDER.includes(p.status));
+  const unknown = projects.filter(p => !SECTION_ORDER.includes(p.status));
+
+  const sections = SECTION_ORDER.map((key) => {
+    const inSection = known.filter(p => p.status === key);
+    const label = inSection[0]?.statusLabel || SECTION_LABEL_FALLBACK[key][isAr ? 'ar' : 'en'];
+
+    return {
+      key,
+      label,
+      defaultExpanded: key === 'in_progress',
+      total: inSection.length,
+      projects: inSection.map((p): DashboardProjectCard => ({
+        id:              p.id,
+        name:            p.name,
+        clientName:      p.campaignTypeLabel || undefined,
+        status:          p.status,
+        statusLabel:     p.statusLabel,
+        workspaceUrl:    p.workspaceUrl ?? '',
+        tasksUrl:        p.tasksUrl ?? undefined,
+        progressPercent: p.progressPercent,
+        tasksAssigned:   p.tasksAssigned,
+        tasksCompleted:  p.tasksCompleted,
+        tasksInProgress: p.tasksInProgress,
+      })),
+    };
+  });
+
+  // Projects with missing/unknown status still need to appear for the member.
+  if (unknown.length > 0) {
+    const fallback = sections.find(s => s.key === 'in_progress') ?? sections[0];
+    if (fallback) {
+      fallback.projects.push(...unknown.map((p): DashboardProjectCard => ({
+        id:              p.id,
+        name:            p.name,
+        clientName:      p.campaignTypeLabel || undefined,
+        status:          'in_progress',
+        statusLabel:     p.statusLabel || SECTION_LABEL_FALLBACK.in_progress[isAr ? 'ar' : 'en'],
+        workspaceUrl:    p.workspaceUrl ?? '',
+        tasksUrl:        p.tasksUrl ?? undefined,
+        progressPercent: p.progressPercent,
+        tasksAssigned:   p.tasksAssigned,
+        tasksCompleted:  p.tasksCompleted,
+        tasksInProgress: p.tasksInProgress,
+      })));
+      fallback.total = fallback.projects.length;
+    }
+  }
+
+  return sections.filter(s => s.total > 0);
 }

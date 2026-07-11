@@ -10,9 +10,11 @@ import { useSeoProjectTeam }           from '../hooks/useSeoProjectTeam';
 interface Props {
   projectId: string;
   isAr:      boolean;
+  /** Hide add/invite/remove controls for SEO members viewing the project. */
+  readOnly?: boolean;
 }
 
-export function SeoProjectTeamTab({ projectId, isAr }: Props) {
+export function SeoProjectTeamTab({ projectId, isAr, readOnly = false }: Props) {
   const {
     members, isLoading,
     showModal, openModal, closeModal,
@@ -36,14 +38,16 @@ export function SeoProjectTeamTab({ projectId, isAr }: Props) {
     <div className="space-y-4">
 
       {/* Add / Invite buttons */}
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" startIcon={<Mail size={15} />} onClick={openInviteModal}>
-          {isAr ? 'دعوة عضو جديد' : 'Invite New Member'}
-        </Button>
-        <Button variant="primary" startIcon={<UserPlus size={15} />} onClick={openModal}>
-          {isAr ? 'إضافة عضو جديد' : 'Add New Member'}
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" startIcon={<Mail size={15} />} onClick={openInviteModal}>
+            {isAr ? 'دعوة عضو جديد' : 'Invite New Member'}
+          </Button>
+          <Button variant="primary" startIcon={<UserPlus size={15} />} onClick={openModal}>
+            {isAr ? 'إضافة عضو جديد' : 'Add New Member'}
+          </Button>
+        </div>
+      )}
 
       {/* Loading */}
       {isLoading && (
@@ -66,7 +70,7 @@ export function SeoProjectTeamTab({ projectId, isAr }: Props) {
             <ProjectMemberCard
               key={member.id}
               member={member}
-              onRemove={requestRemove}
+              onRemove={readOnly ? undefined : requestRemove}
               onView={requestView}
               isAr={isAr}
             />

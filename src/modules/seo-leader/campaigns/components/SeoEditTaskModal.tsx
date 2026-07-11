@@ -6,6 +6,9 @@ import { Combobox }                     from '@/shared/components/form/Combobox'
 import type { ComboboxItem }            from '@/shared/components/form/Combobox';
 import { campaignApi }                  from '../api/campaign.api';
 import type { SeoTaskFull }             from './SeoTaskModal.types';
+import { taskResourceKey }              from '@/shared/utils/resourceKey.utils';
+import { extractApiError }              from '@/shared/utils/error.utils';
+import { toast }                        from 'sonner';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -43,17 +46,22 @@ export function SeoEditTaskModal({ task, projectId, isAr, onClose }: Props) {
     setDueDate(task.dueDate   ?? '');
   }, [task]);
 
+  const taskKey = taskResourceKey(task);
+
   const mutation = useMutation({
     mutationFn: () =>
-      campaignApi.updateTask(projectId, String(task.id), {
+      campaignApi.updateTask(projectId, taskKey, {
         title:    title.trim() || undefined,
         priority: priority     || undefined,
-        due_date: dueDate      || undefined,
+        dueDate:  dueDate      || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, String(task.id)] });
+      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskKey] });
       queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
       onClose();
+    },
+    onError: (err) => {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes'));
     },
   });
 

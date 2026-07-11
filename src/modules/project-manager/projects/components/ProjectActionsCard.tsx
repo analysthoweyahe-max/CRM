@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast }    from 'sonner';
 import { Button }   from '@/shared/components/ui/Button';
 import { extractApiError } from '@/shared/utils/error.utils';
+import { resourceKey } from '@/shared/utils/resourceKey.utils';
 import { pmProjectsApi } from '../api/project.api';
 import type { PmProjectDetails } from '../types/project.types';
 
@@ -16,20 +17,21 @@ interface Props {
 export function ProjectActionsCard({ project, isAr, onPublished }: Props) {
   const [publishing, setPublishing] = useState(false);
   const queryClient = useQueryClient();
+  const projectId = resourceKey(project);
 
   async function handlePublish() {
     if (!project.isDraft || publishing) return;
     setPublishing(true);
     try {
-      await pmProjectsApi.updateSettings(project.id, {
+      await pmProjectsApi.updateSettings(projectId, {
         name:    project.name,
         isDraft: false,
       });
       toast.success(isAr ? 'تم نشر المشروع' : 'Project published');
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
       queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['pm-project', String(project.id)] });
-      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', String(project.id)] });
+      queryClient.invalidateQueries({ queryKey: ['pm-project'] });
+      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', projectId] });
       onPublished?.();
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر نشر المشروع' : 'Failed to publish project'));

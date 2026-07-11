@@ -2,6 +2,7 @@ import type { SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
 
 export interface SeoTaskFull {
   id:               number;
+  uuid?:            string;
   taskNumber:       number;
   phase:            string;
   title:            string;

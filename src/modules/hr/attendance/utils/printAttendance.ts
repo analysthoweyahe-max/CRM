@@ -33,7 +33,7 @@ export function printAttendance(
       <td>${r.check_in  ?? '—'}</td>
       <td>${r.check_out ?? '—'}</td>
       <td>${r.worked_hours !== null ? (isAr ? `${r.worked_hours} س` : `${r.worked_hours}h`) : '—'}</td>
-      <td><span class="badge badge-${r.day_status}">${LABELS[r.day_status] ?? r.day_status}</span></td>
+      <td><span class="badge badge-${r.day_status ?? ''}">${(r.day_status ? LABELS[r.day_status] : undefined) ?? r.day_status ?? '—'}</span></td>
     </tr>`).join('');
   win.document.write(`<!DOCTYPE html>
 <html dir="${dir}" lang="${isAr ? 'ar' : 'en'}">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LayoutTemplate } from 'lucide-react';
 import { Button }              from '@/shared/components/ui/Button';
+import { resourceKey }         from '@/shared/utils/resourceKey.utils';
 import type { PmProjectDetails } from '../types/project.types';
 import { ProjectInfoForm }     from './ProjectInfoForm';
 import { PhasesManager }       from './PhasesManager';
@@ -16,10 +17,11 @@ interface Props {
 
 export function ProjectSettingsTab({ project, isAr, onPublished }: Props) {
   const [showApply, setShowApply] = useState(false);
+  const projectId = resourceKey(project);
 
   return (
     <div className="space-y-6 pb-10">
-      <ProjectInfoForm projectId={String(project.id)} isAr={isAr} />
+      <ProjectInfoForm projectId={projectId} isAr={isAr} />
 
       <div className="flex justify-end">
         <Button
@@ -33,12 +35,12 @@ export function ProjectSettingsTab({ project, isAr, onPublished }: Props) {
 
       <PhasesManager      phases={project.phases} isAr={isAr} />
       <ProjectActionsCard project={project} isAr={isAr} onPublished={onPublished} />
-      <DangerZoneCard     projectId={String(project.id)} projectName={project.name} isAr={isAr} />
+      <DangerZoneCard     projectId={projectId} projectName={project.name} isAr={isAr} />
 
       <ApplyTemplateModal
         open={showApply}
         onClose={() => setShowApply(false)}
-        projectId={String(project.id)}
+        projectId={projectId}
         projectTypeId={project.projectTypeId ?? null}
         isAr={isAr}
       />

@@ -1,4 +1,5 @@
 import type { Role } from '@/shared/types/role.types';
+import { utcClockToLocal } from '@/shared/utils/date.utils';
 import type {
   AttendanceScope,
   AttendanceTodayData,
@@ -82,13 +83,13 @@ function isInWorkSession(today: AttendanceTodayData): boolean {
   );
 }
 
-/** Parse "HH:MM" / "HH:MM:SS" as today's local Date. */
-function clockTimeToday(time: string): Date | null {
+/** Parse UTC "HH:MM" / "HH:MM:SS" as today's Date (UTC clock → absolute instant). */
+function utcClockTimeToday(time: string): Date | null {
   const parts = time.split(':').map(Number);
   if (parts.length < 2 || parts.some(n => Number.isNaN(n))) return null;
   const [h, m, s = 0] = parts;
   const d = new Date();
-  d.setHours(h, m, s, 0);
+  d.setUTCHours(h, m, s, 0);
   return d;
 }
 
@@ -105,10 +106,10 @@ export function deriveWorkingHours(today: AttendanceTodayData | null): number | 
   const outTime = today.record?.checkOutTime ?? today.checkOutTime ?? null;
   if (!inTime) return reported;
 
-  const start = clockTimeToday(inTime);
+  const start = utcClockTimeToday(inTime);
   if (!start) return reported;
 
-  const end = outTime ? clockTimeToday(outTime) : new Date();
+  const end = outTime ? utcClockTimeToday(outTime) : new Date();
   if (!end) return reported;
 
   const hours = (end.getTime() - start.getTime()) / 3_600_000;
@@ -181,10 +182,11 @@ export function formatBreakMinutes(minutes: number, isAr: boolean): string {
   return isAr ? `${minutes} د` : `${minutes}m`;
 }
 
-/** Bare "HH:MM:SS" → 12h display */
+/** Bare UTC "HH:MM:SS" → local 12h display */
 export function formatClockTime(time: string | null | undefined, isAr: boolean): string {
-  if (!time) return '--:--';
-  const [hStr, mStr] = time.split(':');
+  const local = utcClockToLocal(time);
+  if (!local) return '--:--';
+  const [hStr, mStr] = local.split(':');
   const h24 = parseInt(hStr, 10);
   if (Number.isNaN(h24)) return '--:--';
   const period = h24 >= 12 ? (isAr ? 'م' : 'PM') : (isAr ? 'ص' : 'AM');

@@ -28,26 +28,27 @@ export function useNotifications() {
   const { user, hasPermission } = useAuth();
   const { lang } = useLang();
   const role = user?.role;
+  const actor = user?.actor;
   const isAr = lang === 'ar';
-  const queryKey = ['notifications', role] as const;
+  const queryKey = ['notifications', role, actor] as const;
 
   const shouldMergeHrNotifications =
     role === 'admin' && hasPermission('view-leave');
 
   const { data, isLoading } = useQuery({
     queryKey,
-    queryFn:  () => notificationsApi.list(role, { per_page: 15 }).then((r) => r.data.data),
-    staleTime: 30_000,
+    queryFn:  () => notificationsApi.list(role, { per_page: 15 }, actor).then((r) => r.data.data),
+    staleTime: 15_000,
     /* Polling fallback when FCM is unavailable — keeps badge close to real-time. */
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
   });
 
   const { data: hrNotificationsPage } = useQuery({
     queryKey: ['notifications', 'hr', 'admin-merge'],
-    queryFn:  () => notificationsApi.list('hr', { per_page: 15 }).then((r) => r.data.data),
+    queryFn:  () => notificationsApi.list('hr', { per_page: 15 }, 'admin').then((r) => r.data.data),
     enabled:  shouldMergeHrNotifications,
-    staleTime: 30_000,
-    refetchInterval: 30_000,
+    staleTime: 15_000,
+    refetchInterval: 15_000,
   });
 
   const notifications = useMemo(

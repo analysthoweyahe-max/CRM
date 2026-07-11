@@ -97,7 +97,7 @@ export function AttendanceHistoryTable({ records, isLoading, isAr }: AttendanceH
     col.accessor('day_status', {
       header: isAr ? 'الحالة' : 'Status',
       cell:   info => {
-        const cfg = getStatusCfg(info.getValue());
+        const cfg = getStatusCfg(info.getValue() ?? '');
         return <Badge label={isAr ? cfg.ar : cfg.en} variant={cfg.variant} />;
       },
     }),

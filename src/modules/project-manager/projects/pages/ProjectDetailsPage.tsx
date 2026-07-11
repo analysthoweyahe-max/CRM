@@ -44,14 +44,27 @@ export function ProjectDetailsPage() {
 
   const { project, isLoading, isError, refetch } = useProjectDetails(id);
   const { statuses }                              = usePmProjectLookups();
-  const tasks = useProjectTasks(id ?? '');
+  const projectKey = project
+    ? (project.uuid || String(project.id))
+    : (id ?? '');
+  const tasks = useProjectTasks(projectKey);
 
   const tabParam = searchParams.get('tab');
-  const initialTab: TabKey = tabParam === 'messages' ? 'messages' : 'tasks';
+  const initialTab: TabKey =
+    tabParam === 'messages' ? 'messages'
+    : tabParam === 'settings' ? 'settings'
+    : tabParam === 'team' ? 'team'
+    : tabParam === 'client' ? 'client'
+    : tabParam === 'progress' ? 'progress'
+    : 'tasks';
   const [activeTab,      setActiveTab]      = useState<TabKey>(initialTab);
 
   useEffect(() => {
     if (tabParam === 'messages') setActiveTab('messages');
+    else if (tabParam === 'settings') setActiveTab('settings');
+    else if (tabParam === 'team') setActiveTab('team');
+    else if (tabParam === 'client') setActiveTab('client');
+    else if (tabParam === 'progress') setActiveTab('progress');
   }, [tabParam]);
   const [changingStatus, setChangingStatus] = useState(false);
   const [publishing, setPublishing]         = useState(false);
@@ -66,10 +79,10 @@ export function ProjectDetailsPage() {
     if (status === project!.status || changingStatus) return;
     setChangingStatus(true);
     try {
-      await pmProjectsApi.updateStatus(project!.id, status);
+      await pmProjectsApi.updateStatus(projectKey, status);
       toast.success(isAr ? 'تم تحديث حالة المشروع' : 'Project status updated');
       await refetch();
-      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', String(project!.id)] });
+      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', projectKey] });
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المشروع' : 'Failed to update status'));
     } finally {
@@ -81,7 +94,7 @@ export function ProjectDetailsPage() {
     if (!project!.isDraft || publishing) return;
     setPublishing(true);
     try {
-      await pmProjectsApi.updateSettings(project!.id, {
+      await pmProjectsApi.updateSettings(projectKey, {
         name:    project!.name,
         isDraft: false,
       });
@@ -89,7 +102,7 @@ export function ProjectDetailsPage() {
       await refetch();
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
       queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', String(project!.id)] });
+      queryClient.invalidateQueries({ queryKey: ['pm-project-settings', projectKey] });
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر نشر المشروع' : 'Failed to publish project'));
     } finally {
@@ -273,13 +286,21 @@ export function ProjectDetailsPage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'tasks'    && <KanbanBoard projectId={String(project.id)} tasks={tasks} isAr={isAr} />}
-      {activeTab === 'client'   && <ProjectClientUpdatesTab projectId={String(project.id)} isAr={isAr} />}
-      {activeTab === 'team'     && <ProjectTeamTab projectId={String(project.id)} isAr={isAr} />}
+      {activeTab === 'tasks'    && (
+        <KanbanBoard
+          projectId={projectKey}
+          tasks={tasks}
+          isAr={isAr}
+          phases={project.phases}
+          teamMembers={project.teamMembers}
+        />
+      )}
+      {activeTab === 'client'   && <ProjectClientUpdatesTab projectId={projectKey} isAr={isAr} />}
+      {activeTab === 'team'     && <ProjectTeamTab projectId={projectKey} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && (
         <ProjectSettingsTab project={project} isAr={isAr} onPublished={refetch} />
       )}
-      {activeTab === 'messages' && <ProjectMessagesTab projectId={String(project.id)} isAr={isAr} />}
+      {activeTab === 'messages' && <ProjectMessagesTab projectId={projectKey} isAr={isAr} />}
     </div>  );
 }

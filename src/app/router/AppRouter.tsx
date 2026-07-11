@@ -92,6 +92,7 @@ const SeoProfilePage         = lazyImport(() => import('@/modules/seo-leader/pro
 
 /* ── SEO Member ──────────────────────────────────────────────────── */
 const SeoMemberDashboardPage     = lazyImport(() => import('@/modules/seo-member/dashboard/pages/SeoMemberDashboardPage')         .then(m => ({ default: m.SeoMemberDashboardPage })));
+const SeoMemberProjectDetailsPage = lazyImport(() => import('@/modules/seo-member/projects/pages/SeoMemberProjectDetailsPage')   .then(m => ({ default: m.SeoMemberProjectDetailsPage })));
 const SeoTaskDetailPage          = lazyImport(() => import('@/modules/seo-member/tasks/pages/SeoTaskDetailPage')                  .then(m => ({ default: m.SeoTaskDetailPage })));
 const SeoMemberMessagesPage      = lazyImport(() => import('@/modules/seo-member/messages/pages/SeoMemberMessagesPage')           .then(m => ({ default: m.SeoMemberMessagesPage })));
 const SeoMemberRequestsPage      = lazyImport(() => import('@/modules/seo-member/requests/pages/SeoMemberRequestsPage')           .then(m => ({ default: m.SeoMemberRequestsPage })));
@@ -365,6 +366,7 @@ export function AppRouter() {
                 <Route element={<SeoMemberLayout />}>
                   <Route path={ROUTES.SEO_MEMBER.DASHBOARD}        element={<SeoMemberDashboardPage />} />
                   <Route path={ROUTES.SEO_MEMBER.MY_PROJECTS}      element={<MyProjectsPage module="seo" />} />
+                  <Route path={ROUTES.SEO_MEMBER.DETAILS()}        element={<SeoMemberProjectDetailsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.TASKS}            element={<MyTasksPage />} />
                   <Route path={ROUTES.SEO_MEMBER.PROJECT_TASKS()} element={<MyTasksPage />} />
                   <Route path={ROUTES.SEO_MEMBER.TASK_DETAIL()}    element={<SeoTaskDetailPage />} />

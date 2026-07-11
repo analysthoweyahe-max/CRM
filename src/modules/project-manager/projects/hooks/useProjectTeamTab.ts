@@ -7,6 +7,7 @@ import type { PmProjectTeamListMember, PmAvailableMember } from '../types/projec
 import type { ProjectMemberCardData } from '@/shared/modules/team/components/ProjectMemberCard';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { toApiArray } from '@/shared/utils/apiList.utils';
+import { extractApiError } from '@/shared/utils/error.utils';
 
 function toCardData(m: PmProjectTeamListMember): ProjectMemberCardData {
   return {
@@ -21,6 +22,14 @@ function toCardData(m: PmProjectTeamListMember): ProjectMemberCardData {
   };
 }
 
+function mapAvailable(members: PmAvailableMember[]): ComboboxItem[] {
+  return members.map(m => ({
+    id: m.id,
+    label: m.name,
+    detail: typeof m.jobTitle === 'string' ? m.jobTitle : undefined,
+  }));
+}
+
 export function useProjectTeamTab(projectId: string, isAr: boolean) {
   const [members,      setMembers]      = useState<PmProjectTeamListMember[]>([]);
   const [isLoading,    setIsLoading]    = useState(true);
@@ -28,6 +37,8 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
   const [viewTarget,   setViewTarget]   = useState<PmProjectTeamListMember | null>(null);
   const [showModal,    setShowModal]    = useState(false);
   const [available,    setAvailable]    = useState<ComboboxItem[]>([]);
+  const [availableSearch, setAvailableSearch] = useState('');
+  const [isLoadingAvailable, setIsLoadingAvailable] = useState(false);
   const [selectedIds,  setSelectedIds]  = useState<string[]>([]);
   const [projectRole,  setProjectRole]  = useState('');
 
@@ -55,15 +66,29 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
 
   useEffect(() => { fetchTeam(); }, [fetchTeam]);
 
-  /* ── Fetch available members when the add modal opens ──────────────── */
+  /* ── Fetch available members when the add modal opens / search changes ─ */
   useEffect(() => {
-    if (!showModal) return;
-    pmProjectTeamApi.available(projectId)
-      .then(res => setAvailable(
-        toApiArray<PmAvailableMember>(res.data.data).map(m => ({ id: m.id, label: m.name, detail: m.jobTitle }))
-      ))
-      .catch(() => setAvailable([]));
-  }, [showModal, projectId]);
+    if (!showModal || !projectId) return;
+    let cancelled = false;
+    setIsLoadingAvailable(true);
+    pmProjectTeamApi.available(projectId, availableSearch.trim() || undefined)
+      .then(res => {
+        if (cancelled) return;
+        setAvailable(mapAvailable(toApiArray<PmAvailableMember>(res.data.data)));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setAvailable([]);
+        const detail = extractApiError(err);
+        toast.error(isAr
+          ? `فشل تحميل الموظفين المتاحين${detail ? `: ${detail}` : ''}`
+          : `Failed to load available employees${detail ? `: ${detail}` : ''}`);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingAvailable(false);
+      });
+    return () => { cancelled = true; };
+  }, [showModal, projectId, availableSearch, isAr]);
 
   /* ── Fetch departments when the invite modal opens ──────────────────── */
   useEffect(() => {
@@ -121,6 +146,8 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
     setShowModal(false);
     setSelectedIds([]);
     setProjectRole('');
+    setAvailableSearch('');
+    setAvailable([]);
   }
 
   function handleCloseInviteModal() {
@@ -160,6 +187,9 @@ export function useProjectTeamTab(projectId: string, isAr: boolean) {
     openModal:  () => setShowModal(true),
     closeModal: handleCloseModal,
     available,
+    availableSearch,
+    setAvailableSearch,
+    isLoadingAvailable,
     selectedIds, toggleSelected,
     projectRole, setProjectRole,
     canAdd: selectedIds.length > 0 && !!projectRole.trim(),

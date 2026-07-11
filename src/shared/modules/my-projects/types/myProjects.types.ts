@@ -28,7 +28,7 @@ export interface PmProject {
 }
 
 export interface SeoProject {
-  id:                     number;
+  id:                     number | string;
   name:                   string;
   targetDomain:           string | null;
   campaignType:           string;
@@ -57,7 +57,7 @@ export interface PaginatedProjectsResponse<T = PmProject | SeoProject> {
 }
 
 export interface DashboardProjectCard {
-  id:               number;
+  id:               number | string;
   name:             string;
   clientName?:      string;
   status:           ProjectStatus;
@@ -96,8 +96,8 @@ export interface MyProjectsPageConfig {
   showManager:      boolean;
   showTasksButton:  boolean;
   createPath:       string;
-  workspacePath:    (projectId: number) => string;
-  tasksPath:        (projectId: number) => string;
+  workspacePath:    (projectId: number | string) => string;
+  tasksPath:        (projectId: number | string) => string;
 }
 
 export type MyProjectListItem =

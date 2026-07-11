@@ -16,7 +16,8 @@ export function ProjectTeamTab({ projectId, isAr }: Props) {
   const {
     members, isLoading,
     showModal, openModal, closeModal,
-    available, selectedIds, toggleSelected,
+    available, availableSearch, setAvailableSearch, isLoadingAvailable,
+    selectedIds, toggleSelected,
     projectRole, setProjectRole,
     canAdd, handleAddExisting,
     showInviteModal, openInviteModal, closeInviteModal,
@@ -79,6 +80,9 @@ export function ProjectTeamTab({ projectId, isAr }: Props) {
         onClose={closeModal}
         isAr={isAr}
         available={available}
+        search={availableSearch}
+        onSearchChange={setAvailableSearch}
+        isLoadingAvailable={isLoadingAvailable}
         selectedIds={selectedIds}
         projectRole={projectRole}
         onToggle={toggleSelected}

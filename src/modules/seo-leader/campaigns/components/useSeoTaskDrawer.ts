@@ -121,25 +121,40 @@ export function useSeoTaskDrawer(
 
   /* ── Save task ──────────────────────────────────────────────────────── */
   const saveMutation = useMutation({
-    mutationFn: () => campaignApi.updateTask(projectId, taskId!, {
-      description:        description.trim()        || undefined,
-      /* TODO: confirm real field name for updating a task's phase via this endpoint
-         (was sending `task_type`, which doesn't exist in the confirmed create/list schema). */
-      priority,
-      status,
-      start_date:         startDate                 || undefined,
-      due_date:           dueDate                   || undefined,
-      target_url:         targetUrl.trim()          || undefined,
-      target_keyword:     targetKeyword.trim()      || undefined,
-      search_intent:      searchIntent              || undefined,
-      search_volume:      searchVolume       ? Number(searchVolume)       : undefined,
-      keyword_difficulty: keywordDifficulty  ? Number(keywordDifficulty)  : undefined,
-      meta_title:         metaTitle.trim()          || undefined,
-      meta_description:   metaDescription.trim()    || undefined,
-      site_links:         siteLinks.filter(Boolean),
-      reference_links:    referenceLinks.filter(Boolean),
-      notes:              notes.trim()              || undefined,
-    }),
+    mutationFn: () => {
+      const next = {
+        description:     description.trim() || undefined,
+        taskType:        taskType || undefined,
+        priority,
+        status,
+        startDate:       startDate || undefined,
+        dueDate:         dueDate || undefined,
+        siteLinks:       siteLinks.filter(Boolean),
+        referenceLinks:  referenceLinks.filter(Boolean),
+        notes:           notes.trim() || undefined,
+      };
+      const baseline = {
+        description:     task?.description ?? undefined,
+        taskType:        task?.taskType ?? undefined,
+        priority:        task?.priority,
+        status:          task?.status,
+        startDate:       task?.startDate ?? undefined,
+        dueDate:         task?.dueDate ?? undefined,
+        siteLinks:       task?.siteLinks ?? [],
+        referenceLinks:  task?.referenceLinks ?? [],
+        notes:           task?.notes ?? undefined,
+      };
+      const payload = Object.fromEntries(
+        Object.entries(next).filter(([key, value]) => {
+          const prev = baseline[key as keyof typeof baseline];
+          if (Array.isArray(value) && Array.isArray(prev)) {
+            return JSON.stringify(value) !== JSON.stringify(prev);
+          }
+          return value !== prev;
+        }),
+      );
+      return campaignApi.updateTask(projectId, taskId!, payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
       queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });

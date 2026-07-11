@@ -51,7 +51,7 @@ export function resolveMyTasksConfig(tasksRole: TasksApiRole): MyTasksPageConfig
         canDragStatus:   true,
         showProjectName: true,
         taskDetailPath:  ROUTES.SEO_MEMBER.TASK_DETAIL,
-        projectPath:     (_projectId) => ROUTES.SEO_MEMBER.MY_PROJECTS,
+        projectPath:     (projectId) => ROUTES.SEO_MEMBER.DETAILS(String(projectId)),
       };
     case 'project-manager':
       return {
@@ -120,7 +120,9 @@ export function getTasksQueryParams(
   if (projectId && !endpoint.includes(`/${projectId}/`)) {
     params.project_id = projectId;
   }
-  if (tasksRole === 'pm-employee') {
+  // "My Tasks" page: only tasks assigned to the current user.
+  // Project Kanban uses pmTaskApi.list(..., { mine: false }) separately.
+  if (tasksRole === 'pm-employee' || tasksRole === 'project-manager') {
     params.mine = 1;
   }
   return params;

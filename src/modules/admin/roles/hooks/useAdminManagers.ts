@@ -20,6 +20,12 @@ function toStatus(status?: string): ManagerStatus {
 export function toManagerVM(m: ApiAdminManager, isAr = true): AdminEmployee {
   const status = toStatus(m.status);
   const roles  = m.roles ?? [];
+  const deptList = m.departments?.length
+    ? m.departments
+    : (m.department ? [m.department] : []);
+  const departments = deptList
+    .map((d) => resolveDisplayText(d, isAr))
+    .filter(Boolean);
 
   return {
     id:             m.id,
@@ -30,6 +36,7 @@ export function toManagerVM(m: ApiAdminManager, isAr = true): AdminEmployee {
     avatarInitial:  getInitial(m.name),
     avatarColor:    getAvatarColor(m.name),
     department:     formatManagerDepartments(m, isAr),
+    departments,
     jobTitle:       resolveDisplayText(m.jobTitle, isAr) || '—',
     roles,
     role:           roles.length ? roles.map(r => getRoleLabel(r, isAr)).join(isAr ? '، ' : ', ') : '—',

@@ -32,6 +32,7 @@ export interface PmProjectCreator {
 
 export interface PmProjectListItem {
   id:               number;
+  uuid?:            string;
   name:             string;
   description:      string;
   projectTypeId?:   number;

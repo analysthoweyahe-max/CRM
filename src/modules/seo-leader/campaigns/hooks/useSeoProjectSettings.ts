@@ -63,7 +63,7 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
 
     setIsSaving(true);
     try {
-      await campaignApi.updateSettings(projectId, {
+      const next = {
         name:         name.trim(),
         description:  desc.trim(),
         targetDomain: domain.trim() || null,
@@ -75,13 +75,40 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
         driveLink:    optionalLink(driveLink),
         contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
         isDraft:      settings?.isDraft ?? false,
-      });
+      };
+      const baseline = {
+        name:         settings?.name ?? '',
+        description:  settings?.description ?? '',
+        targetDomain: settings?.targetDomain ?? null,
+        campaignType: settings?.campaignType ?? '',
+        status:       settings?.status ?? '',
+        startDate:    settings?.startDate || undefined,
+        expectedEndDate: settings?.expectedEndDate ?? null,
+        githubLink:   settings?.githubLink ?? null,
+        driveLink:    settings?.driveLink ?? null,
+        contractDurationMonths: settings?.contractDurationMonths ?? null,
+        isDraft:      settings?.isDraft ?? false,
+      };
+      const payload = Object.fromEntries(
+        Object.entries(next).filter(([key, value]) => value !== baseline[key as keyof typeof baseline]),
+      );
+
+      if (Object.keys(payload).length === 0) {
+        toast.success(isAr ? 'لا توجد تغييرات' : 'No changes');
+        return;
+      }
+
+      if ('name' in payload || 'campaignType' in payload || 'targetDomain' in payload) {
+        await campaignApi.updateProject(projectId, payload);
+      } else {
+        await campaignApi.updateSettings(projectId, payload);
+      }
 
       toast.success(isAr ? 'تم حفظ الإعدادات بنجاح' : 'Settings saved');
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       queryClient.invalidateQueries({ queryKey: ['seo-project-settings', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['campaign-detail', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-detail'] });
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
     } catch (err) {

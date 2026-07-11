@@ -53,7 +53,8 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
 
   const {
     showModal, openModal, closeModal,
-    available, selectedIds, toggleSelected,
+    available, availableSearch, setAvailableSearch, isLoadingAvailable,
+    selectedIds, toggleSelected,
     projectRole, setProjectRole,
     canAdd, handleAddExisting,
   } = useProjectTeamTab(projectId, isAr);
@@ -238,6 +239,9 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
         onClose={closeModal}
         isAr={isAr}
         available={available}
+        search={availableSearch}
+        onSearchChange={setAvailableSearch}
+        isLoadingAvailable={isLoadingAvailable}
         selectedIds={selectedIds}
         projectRole={projectRole}
         onToggle={toggleSelected}

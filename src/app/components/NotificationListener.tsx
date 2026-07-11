@@ -50,6 +50,10 @@ export function NotificationListener() {
   const lastRealtimeRef = useRef<{ key: string; at: number } | null>(null);
 
   function shouldShowForRole(notification: AppNotification): boolean {
+    // Employee sessions always receive personal assignment alerts.
+    if (user?.actor === 'employee') {
+      return !isHrLeaveSubmittedNotification(notification);
+    }
     const role = user?.role;
     if (!role) return true;
     if (role === 'admin' || role === 'hr' || role === 'manager' || role === 'seo-leader') {

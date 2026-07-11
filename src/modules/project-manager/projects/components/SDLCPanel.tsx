@@ -50,7 +50,7 @@ export function SDLCPanel({
 
 }: Props) {
 
-  const { data: template, isLoading: isLoadingTemplate } = useTemplate(templateId || undefined);
+  const { data: template, isLoading: isLoadingTemplate } = useTemplate('pm', templateId || undefined);
 
 
 

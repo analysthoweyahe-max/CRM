@@ -6,6 +6,7 @@ import { myProjectsApi } from '../api/myProjects.api';
 import {
   PER_PAGE,
   groupProjectsIntoSections,
+  groupSeoProjectsIntoSections,
   resolveMyProjectsConfig,
 } from '../utils/myProjects.utils';
 import type {
@@ -95,8 +96,9 @@ export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageRe
         const projects = await myProjectsApi.listEmployeeProjects();
         return groupProjectsIntoSections(projects, isAr);
       }
-      const res = await myProjectsApi.getSeoEmployeeDashboard();
-      return res.data.data.myProjects?.sections ?? [];
+      // SEO dashboard sections are unreliable — use employee projects list.
+      const projects = await myProjectsApi.listSeoEmployeeProjects();
+      return groupSeoProjectsIntoSections(projects, isAr);
     },
     enabled:  config.viewMode === 'sections',
     staleTime: 30_000,

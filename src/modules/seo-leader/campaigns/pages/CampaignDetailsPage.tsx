@@ -21,6 +21,7 @@ import { SeoClientUpdatesTab }    from '../components/SeoClientUpdatesTab';
 import { SeoStatusColumn }        from '../components/SeoStatusColumn';
 import { useSeoTaskStatusList }   from '@/modules/admin/seo-task-statuses/hooks/useSeoTaskStatuses';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { resourceKey, taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
 
 /* Task.status is typed as the PM's fixed 4-value union, but the real set of
@@ -66,6 +67,7 @@ function toLocalTask(t: SeoTask, projectId: string, marksCompletedByKey: Record<
   const assignee = t.assignees?.[0]?.name ?? '';
   return {
     id:              String(t.id),
+    uuid:            t.uuid || undefined,
     projectId,
     title:           t.title,
     description:     t.description ?? '',
@@ -123,6 +125,8 @@ export function CampaignDetailsPage() {
     staleTime: 30_000,
   });
 
+  const projectKey = campaign ? resourceKey(campaign) : id;
+
   const { data: projectStatuses = [] } = useQuery({
     queryKey: ['seo-project-statuses'],
     queryFn:  () => campaignApi.getStatuses().then(r => r.data.data ?? []),
@@ -144,19 +148,19 @@ export function CampaignDetailsPage() {
      nested /v1/seo/manager/projects/{id}/tasks one — confirmed the nested
      endpoint doesn't reliably reflect newly created tasks, the flat one does. */
   const { data: rawTasks, isLoading: tasksLoading } = useQuery({
-    queryKey: ['campaign-tasks', id],
+    queryKey: ['campaign-tasks', projectKey],
     queryFn:  async () => {
-      const r = await campaignApi.listAllTasks({ project_id: id, per_page: 100 });
+      const r = await campaignApi.listAllTasks({ project_id: projectKey, per_page: 100 });
       return (r.data.data.phases ?? []).flatMap(p => p.tasks);
     },
-    enabled:   !!id,
+    enabled:   !!projectKey,
     staleTime: 30_000,
   });
 
   /* ── Derive tasks — no setState inside effect ─────────────────────── */
   const baseTasks = useMemo(
-    () => (rawTasks ?? []).map(t => toLocalTask(t, id, marksCompletedByKey)),
-    [rawTasks, id, marksCompletedByKey],
+    () => (rawTasks ?? []).map(t => toLocalTask(t, projectKey, marksCompletedByKey)),
+    [rawTasks, projectKey, marksCompletedByKey],
   );
 
   const tasks = useMemo(
@@ -170,20 +174,24 @@ export function CampaignDetailsPage() {
 
   /* ── Drag-drop: optimistic status override + API call ─────────────── */
   function handleDrop(taskId: string, toStatusKey: string) {
+    const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
     setStatusOverrides(prev => ({ ...prev, [taskId]: toStatusKey }));
     campaignApi
-      .updateTaskStatus(id, taskId, toStatusKey)
-      .catch(console.error);
+      .updateTaskStatus(projectKey, task ? taskResourceKey(task) : taskId, toStatusKey)
+      .catch((err) => {
+        console.error(err);
+        toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));
+      });
   }
 
   async function handleStatusChange(nextStatus: string) {
     if (!campaign || nextStatus === campaign.status || changingStatus) return;
     setChangingStatus(true);
     try {
-      await campaignApi.updateProjectStatus(id, nextStatus);
+      await campaignApi.updateProjectStatus(projectKey, nextStatus);
       toast.success(isAr ? 'تم تحديث حالة المشروع' : 'Project status updated');
       await refetchCampaign();
-      queryClient.invalidateQueries({ queryKey: ['seo-project-settings', id] });
+      queryClient.invalidateQueries({ queryKey: ['seo-project-settings', projectKey] });
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المشروع' : 'Failed to update status'));
@@ -196,13 +204,13 @@ export function CampaignDetailsPage() {
     if (!campaign?.isDraft || publishing) return;
     setPublishing(true);
     try {
-      await campaignApi.updateSettings(id, {
+      await campaignApi.updateSettings(projectKey, {
         name:    campaign.name,
         isDraft: false,
       });
       toast.success(isAr ? 'تم نشر المشروع' : 'Project published');
       await refetchCampaign();
-      queryClient.invalidateQueries({ queryKey: ['seo-project-settings', id] });
+      queryClient.invalidateQueries({ queryKey: ['seo-project-settings', projectKey] });
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
     } catch (err) {
@@ -330,7 +338,7 @@ export function CampaignDetailsPage() {
           <Button
             variant="primary"
             startIcon={<Plus size={16} />}
-            onClick={() => navigate(ROUTES.SEO_LEADER.ADD_TASK(id))}
+            onClick={() => navigate(ROUTES.SEO_LEADER.ADD_TASK(projectKey))}
           >
             {isAr ? 'مهمة جديدة' : 'New Task'}
           </Button>
@@ -354,7 +362,7 @@ export function CampaignDetailsPage() {
                 tasks={tasks.filter(t => t.rawStatus === status.key)}
                 isAr={isAr}
                 onDrop={handleDrop}
-                onOpen={t => setSelectedTaskId(t.id)}
+                onOpen={t => setSelectedTaskId(taskResourceKey(t))}
               />
             ))}
           </div>
@@ -362,14 +370,14 @@ export function CampaignDetailsPage() {
       ) : activeTab === 'client' ? (
         <SeoClientUpdatesTab isAr={isAr} />
       ) : activeTab === 'messages' ? (
-        <ProjectMessages projectId={id} isAr={isAr} />
+        <ProjectMessages projectId={projectKey} isAr={isAr} />
       ) : activeTab === 'team' ? (
-        <SeoProjectTeamTab projectId={id} isAr={isAr} />
+        <SeoProjectTeamTab projectId={projectKey} isAr={isAr} />
       ) : activeTab === 'progress' ? (
-        <SeoProgressTab projectId={id} tasks={tasks} isAr={isAr} />
+        <SeoProgressTab projectId={projectKey} tasks={tasks} isAr={isAr} />
       ) : activeTab === 'settings' ? (
         <SeoProjectSettingsTab
-          campaignId={id}
+          campaignId={projectKey}
           isAr={isAr}
         />
       ) : (
@@ -383,7 +391,7 @@ export function CampaignDetailsPage() {
       {/* SEO Task Detail Drawer */}
       <SeoTaskDrawer
         taskId={selectedTaskId}
-        projectId={id}
+        projectId={projectKey}
         onClose={() => setSelectedTaskId(null)}
         isAr={isAr}
       />

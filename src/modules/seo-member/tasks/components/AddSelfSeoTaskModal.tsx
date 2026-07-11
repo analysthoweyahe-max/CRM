@@ -8,14 +8,23 @@ import { SeoTaskFilesInput }   from '@/modules/seo-leader/campaigns/components/S
 import { useAddSelfSeoTask }   from './useAddSelfSeoTask';
 
 interface Props {
-  open:    boolean;
-  onClose: () => void;
-  isAr:    boolean;
+  open:              boolean;
+  onClose:           () => void;
+  isAr:              boolean;
+  initialProjectId?: string;
+  lockProject?:      boolean;
 }
 
-export function AddSelfSeoTaskModal({ open, onClose, isAr }: Props) {
+export function AddSelfSeoTaskModal({
+  open,
+  onClose,
+  isAr,
+  initialProjectId,
+  lockProject,
+}: Props) {
   const {
     projectId, setProjectId, projectItems,
+    lockProject: projectLocked,
     title, setTitle,
     phase, setPhase,
     description, setDescription,
@@ -25,9 +34,12 @@ export function AddSelfSeoTaskModal({ open, onClose, isAr }: Props) {
     files, setFiles, fileError, setFileError,
     isValid, creating,
     handleSubmit, handleClose,
-  } = useAddSelfSeoTask(onClose, isAr);
+  } = useAddSelfSeoTask(onClose, isAr, { initialProjectId, lockProject });
 
   if (!open) return null;
+
+  const lockedProjectLabel = projectItems.find(p => p.id === projectId)?.label
+    ?? projectId;
 
   return (
     <Modal
@@ -48,14 +60,20 @@ export function AddSelfSeoTaskModal({ open, onClose, isAr }: Props) {
       <div className="space-y-4 pt-1">
 
         <FormField label={isAr ? 'المشروع' : 'Project'} required>
-          <Combobox
-            items={projectItems}
-            value={projectId}
-            onChange={setProjectId}
-            placeholder={isAr ? 'اختر المشروع' : 'Select project'}
-            searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
-            noResultsText={isAr ? 'لا توجد مشاريع' : 'No projects'}
-          />
+          {projectLocked ? (
+            <div className={`${inputCls(false)} bg-gray-50 dark:bg-gray-800/60 text-gray-700 dark:text-gray-200`}>
+              {lockedProjectLabel || '—'}
+            </div>
+          ) : (
+            <Combobox
+              items={projectItems}
+              value={projectId}
+              onChange={setProjectId}
+              placeholder={isAr ? 'اختر المشروع' : 'Select project'}
+              searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
+              noResultsText={isAr ? 'لا توجد مشاريع' : 'No projects'}
+            />
+          )}
         </FormField>
 
         <FormField label={isAr ? 'العنوان' : 'Title'} required>

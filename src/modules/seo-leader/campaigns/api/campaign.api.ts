@@ -21,6 +21,7 @@ export interface SeoTaskAssignee {
 
 export interface SeoTask {
   id:              number;
+  uuid?:           string;
   taskNumber:      number;
   phase:           string | null;
   title:           string;
@@ -153,6 +154,7 @@ export interface SelectOption {
 
 export interface SeoProjectSettings {
   id:                  number;
+  uuid?:               string;
   sectionTitle:        string;
   name:                string;
   startDate:           string;
@@ -176,6 +178,7 @@ export interface SeoProjectUpdatePayload {
   name?:                    string;
   description?:             string;
   targetDomain?:            string | null;
+  projectTypeId?:           number;
   campaignType?:            string;
   status?:                  string;
   startDate?:               string;
@@ -184,6 +187,38 @@ export interface SeoProjectUpdatePayload {
   driveLink?:               string | null;
   contractDurationMonths?:  number | null;
   isDraft?:                 boolean;
+  targetKeywords?:          string[];
+  referenceLinks?:          string[];
+  managerIds?:              string[];
+  employeeIds?:             string[];
+}
+
+/** PUT/PATCH /v1/seo/manager/projects/{uuid}/tasks/{taskUuid} */
+export interface SeoUpdateTaskPayload {
+  title?:            string;
+  description?:      string;
+  taskType?:         string;
+  status?:           string;
+  priority?:         string;
+  startDate?:        string;
+  dueDate?:          string;
+  estimatedHours?:   number;
+  siteLinks?:        string[];
+  notes?:            string;
+  referenceLinks?:   string[];
+  /* snake_case aliases still accepted by backend */
+  start_date?:       string;
+  due_date?:         string;
+  estimated_hours?:  number;
+  site_links?:       string[];
+  reference_links?:  string[];
+  target_keyword?:   string;
+  target_url?:       string;
+  search_intent?:    string;
+  search_volume?:    number;
+  keyword_difficulty?: number;
+  meta_title?:       string;
+  meta_description?: string;
 }
 
 export interface SeoActivityActor {
@@ -225,7 +260,7 @@ export const campaignApi = {
   },
 
   updateSettings(id: string | number, payload: SeoProjectUpdatePayload) {
-    return http.patch<ApiResponse<SeoProjectSettings>>(
+    return http.put<ApiResponse<SeoProjectSettings>>(
       `/v1/seo/projects/${id}/settings`,
       payload,
     );
@@ -239,17 +274,13 @@ export const campaignApi = {
   },
 
   updateProject(id: string | number, payload: SeoProjectUpdatePayload) {
-    /* Server returns 405 for PATCH from browser — use POST with _method spoofing */
-    return http.post<ApiResponse<SeoCampaign>>(
-      `/v1/seo/projects/${id}`,
-      { ...payload, _method: 'PATCH' }
-    );
+    return http.put<ApiResponse<SeoCampaign>>(`/v1/seo/projects/${id}`, payload);
   },
 
   updateProjectStatus(id: string | number, status: string) {
-    return http.post<ApiResponse<SeoCampaign>>(
+    return http.patch<ApiResponse<SeoCampaign>>(
       `/v1/seo/projects/${id}/status`,
-      { status, _method: 'PATCH' }
+      { status },
     );
   },
 
@@ -300,7 +331,7 @@ export const campaignApi = {
       const fd = new FormData();
       fd.append('title', payload.title);
       fd.append('phase', payload.phase);
-      payload.employee_ids.forEach(id => fd.append('employee_ids[]', id));
+      payload.employee_ids.forEach((id, i) => fd.append(`employee_ids[${i}]`, id));
       if (payload.description)      fd.append('description', payload.description);
       if (payload.priority)         fd.append('priority', payload.priority);
       if (payload.due_date)         fd.append('due_date', payload.due_date);
@@ -318,7 +349,7 @@ export const campaignApi = {
     );
   },
 
-  updateTask(projectId: string | number, taskId: string | number, payload: Partial<CreateSeoTaskPayload>) {
+  updateTask(projectId: string | number, taskId: string | number, payload: SeoUpdateTaskPayload) {
     return http.put<ApiResponse<SeoTaskDetail>>(
       `/v1/seo/manager/projects/${projectId}/tasks/${taskId}`, payload
     );
@@ -332,7 +363,8 @@ export const campaignApi = {
 
   updateAssignees(projectId: string | number, taskId: string | number, assigneeIds: string[]) {
     return http.put<ApiResponse<SeoTask>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/assignees`, { employee_ids: assigneeIds }
+      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/assignees`,
+      { employee_ids: assigneeIds, employeeIds: assigneeIds },
     );
   },
 

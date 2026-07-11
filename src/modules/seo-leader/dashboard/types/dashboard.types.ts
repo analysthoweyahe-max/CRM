@@ -1,5 +1,6 @@
 export interface SeoCampaign {
   id:               number;
+  uuid?:            string;
   name:             string;
   description:      string;
   targetDomain:     string | null;

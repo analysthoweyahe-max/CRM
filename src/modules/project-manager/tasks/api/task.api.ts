@@ -5,6 +5,8 @@ export interface PmCreateTaskPayload {
   title:            string;
   description?:     string;
   employeeId?:      string;
+  /** Snake_case alias — some backends only read employee_id. */
+  employee_id?:     string;
   priority?:        string;
   dueDate?:         string;
   estimatedHours?:  number;
@@ -41,9 +43,17 @@ export function normalizePmTaskPriority(value: string): string {
 
 export interface PmUpdateTaskPayload {
   title?:           string;
+  description?:     string;
+  employeeId?:      string;
+  employee_id?:     string;
   priority?:        string;
+  dueDate?:         string;
   due_date?:        string;
+  estimatedHours?:  number;
   estimated_hours?: number;
+  phaseId?:         number;
+  phase_id?:        number;
+  status?:          string;
 }
 
 export interface PmTaskApiResponse {
@@ -193,8 +203,11 @@ export interface PmCommentCreateResponse {
 }
 
 export const pmTaskApi = {
-  list(projectId: number | string) {
-    return http.get<PmTaskListResponse>(`/v1/pm/projects/${projectId}/tasks`);
+  /** PM/super-admin: all project tasks. Pass `{ mine: true }` only for assignee-scoped views. */
+  list(projectId: number | string, params?: { mine?: boolean }) {
+    return http.get<PmTaskListResponse>(`/v1/pm/projects/${projectId}/tasks`, {
+      params: params?.mine === undefined ? undefined : { mine: params.mine ? 1 : 0 },
+    });
   },
 
   get(projectId: number | string, taskId: string) {
