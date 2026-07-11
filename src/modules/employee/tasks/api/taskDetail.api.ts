@@ -21,7 +21,7 @@ interface RawPmTaskDetail {
 interface RawTaskDetailResponse {
   status:  string;
   message: string;
-  data:    RawPmTaskDetail;
+  data:    { task: RawPmTaskDetail };
 }
 
 const STATUS_MAP: Record<string, EmpTaskStatus> = {
@@ -153,7 +153,7 @@ function toComment(raw: RawComment, currentUserId: string | undefined): TaskComm
 export const taskDetailApi = {
   async get(projectId: string, taskId: string): Promise<{ data: TaskDetail }> {
     const res = await http.get<RawTaskDetailResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}`);
-    return { data: toTaskDetail(res.data.data, projectId) };
+    return { data: toTaskDetail(res.data.data.task, projectId) };
   },
 
   async updateStatus(projectId: string, taskId: string, status: EmpTaskStatus): Promise<{ data: TaskDetail }> {
@@ -161,7 +161,7 @@ export const taskDetailApi = {
       `/v1/pm/projects/${projectId}/tasks/${taskId}/status`,
       { status: REVERSE_STATUS_MAP[status] },
     );
-    return { data: toTaskDetail(res.data.data, projectId) };
+    return { data: toTaskDetail(res.data.data.task, projectId) };
   },
 
   async update(projectId: string, taskId: string, payload: UpdateTaskPayload): Promise<{ data: TaskDetail }> {
@@ -172,7 +172,7 @@ export const taskDetailApi = {
       due_date:        payload.deadline,
       estimated_hours: payload.allocatedHours,
     });
-    return { data: toTaskDetail(res.data.data, projectId) };
+    return { data: toTaskDetail(res.data.data.task, projectId) };
   },
 
   async getComments(projectId: string, taskId: string, currentUserId: string | undefined): Promise<{ data: TaskComment[] }> {
