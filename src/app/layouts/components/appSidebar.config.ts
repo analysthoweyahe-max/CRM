@@ -8,6 +8,8 @@ import {
 
   UserCog, FolderKanban, Megaphone, MessagesSquare, ListChecks, Layers, Wallet,
 
+  GitBranch, Receipt, FileSignature, Package, Target, Percent,
+
 } from 'lucide-react';
 
 import { ROUTES } from '@/app/router/routes';
@@ -496,11 +498,38 @@ export const SEO_MEMBER_NAV: NavSectionDef[] = [
 
 
 
+// ── Sales ─────────────────────────────────────────────────────────────────────
+
+export const SALES_NAV: NavSectionDef[] = [
+  {
+    sectionAr: 'المبيعات',
+    sectionEn: 'Sales',
+    items: [
+      { key: 'sales-dash',        labelAr: 'لوحة التحكم',           labelEn: 'Dashboard',          icon: LayoutDashboard, path: ROUTES.SALES.DASHBOARD },
+      { key: 'sales-leads',       labelAr: 'العملاء المحتملون',      labelEn: 'Leads',              icon: UserPlus,        path: ROUTES.SALES.LEADS },
+      { key: 'sales-customers',   labelAr: 'العملاء',               labelEn: 'Customers',          icon: Users,           path: ROUTES.SALES.CUSTOMERS },
+      { key: 'sales-pipeline',    labelAr: 'مسار المبيعات',         labelEn: 'Sales Pipeline',     icon: GitBranch,       path: ROUTES.SALES.PIPELINE },
+      { key: 'sales-quotes',      labelAr: 'عروض الأسعار',          labelEn: 'Price Quotes',       icon: FileText,        path: ROUTES.SALES.QUOTES },
+      { key: 'sales-invoices',    labelAr: 'الفواتير',              labelEn: 'Invoices',           icon: Receipt,         path: ROUTES.SALES.INVOICES },
+      { key: 'sales-payments',    labelAr: 'المدفوعات',             labelEn: 'Payments',           icon: Wallet,          path: ROUTES.SALES.PAYMENTS },
+      { key: 'sales-contracts',   labelAr: 'العقود',                labelEn: 'Contracts',          icon: FileSignature,  path: ROUTES.SALES.CONTRACTS },
+      { key: 'sales-calendar',    labelAr: 'التقويم',               labelEn: 'Calendar',           icon: CalendarDays,   path: ROUTES.SALES.CALENDAR },
+      { key: 'sales-tasks',       labelAr: 'المهام',                labelEn: 'Tasks',              icon: ListChecks,      path: ROUTES.SALES.TASKS },
+      { key: 'sales-products',    labelAr: 'المنتجات والخدمات',     labelEn: 'Products & Services',icon: Package,         path: ROUTES.SALES.PRODUCTS },
+      { key: 'sales-employees',   labelAr: 'الموظفون',              labelEn: 'Employees',          icon: UserCog,         path: ROUTES.SALES.EMPLOYEES },
+      { key: 'sales-goals',       labelAr: 'الأهداف',               labelEn: 'Goals',              icon: Target,          path: ROUTES.SALES.GOALS },
+      { key: 'sales-commissions', labelAr: 'العمولات',              labelEn: 'Commissions',        icon: Percent,         path: ROUTES.SALES.COMMISSIONS },
+      { key: 'sales-reports',     labelAr: 'التقارير',              labelEn: 'Reports',            icon: BarChart2,       path: ROUTES.SALES.REPORTS },
+      { key: 'sales-settings',    labelAr: 'الإعدادات',             labelEn: 'Settings',           icon: Settings,        path: ROUTES.SALES.SETTINGS },
+    ],
+  },
+];
+
 // ── Lookup maps ───────────────────────────────────────────────────────────────
 
 
 
-export const NAV_BY_VARIANT: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', NavSectionDef[]> = {
+export const NAV_BY_VARIANT: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member' | 'sales', NavSectionDef[]> = {
 
   admin:       ADMIN_NAV,
 
@@ -514,11 +543,13 @@ export const NAV_BY_VARIANT: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' |
 
   'seo-member': SEO_MEMBER_NAV,
 
+  sales:       SALES_NAV,
+
 };
 
 
 
-export const SUBTITLE: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', { ar: string; en: string }> = {
+export const SUBTITLE: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member' | 'sales', { ar: string; en: string }> = {
 
   admin:        { ar: 'لوحة المشرف العام',    en: 'Admin Panel'     },
 
@@ -532,11 +563,13 @@ export const SUBTITLE: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-
 
   'seo-member': { ar: 'موظف SEO',             en: 'SEO Member'      },
 
+  sales:        { ar: 'منصة المبيعات',        en: 'Sales Platform'  },
+
 };
 
 
 
-export const BRAND_NAME: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member', string> = {
+export const BRAND_NAME: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'seo-member' | 'sales', string> = {
 
   admin:        '',
 
@@ -549,6 +582,8 @@ export const BRAND_NAME: Record<'admin' | 'hr' | 'pm' | 'employee' | 'seo' | 'se
   seo:          'Howeyah HR',
 
   'seo-member': 'Howeyah HR',
+
+  sales:        'Howeyah Sales',
 
 };
 

@@ -11,6 +11,7 @@ import { ProjectManagerLayout }  from '@/app/layouts/ProjectManagerLayout';
 import { EmployeeLayout }        from '@/app/layouts/EmployeeLayout';
 import { SeoLeaderLayout }       from '@/app/layouts/SeoLeaderLayout';
 import { SeoMemberLayout }       from '@/app/layouts/SeoMemberLayout';
+import { SalesLayout }           from '@/app/layouts/SalesLayout';
 import { GuestGuard }            from '@/app/guards/GuestGuard';
 import { AuthGuard }             from '@/app/guards/AuthGuard';
 import { RoleGuard }             from '@/app/guards/RoleGuard';
@@ -118,6 +119,24 @@ const EmployeeProjectMessagesPage = lazyImport(() => import('@/modules/employee/
 const EmployeeMessagesPage     = lazyImport(() => import('@/modules/employee/messages/pages/EmployeeMessagesPage')         .then(m => ({ default: m.EmployeeMessagesPage })));
 const EmployeeAlertsPage       = lazyImport(() => import('@/modules/employee/alerts/pages/EmployeeAlertsPage')              .then(m => ({ default: m.EmployeeAlertsPage })));
 const AlertDetailPage          = lazyImport(() => import('@/modules/employee/alerts/pages/AlertDetailPage')                 .then(m => ({ default: m.AlertDetailPage })));
+
+/* ── Sales ────────────────────────────────────────────────────────── */
+const SalesDashboardPage   = lazyImport(() => import('@/modules/sales/dashboard/pages/SalesDashboardPage')    .then(m => ({ default: m.SalesDashboardPage })));
+const SalesLeadsPage       = lazyImport(() => import('@/modules/sales/leads/pages/SalesLeadsPage')            .then(m => ({ default: m.SalesLeadsPage })));
+const SalesCustomersPage   = lazyImport(() => import('@/modules/sales/customers/pages/SalesCustomersPage')    .then(m => ({ default: m.SalesCustomersPage })));
+const SalesPipelinePage    = lazyImport(() => import('@/modules/sales/pipeline/pages/SalesPipelinePage')      .then(m => ({ default: m.SalesPipelinePage })));
+const SalesQuotesPage      = lazyImport(() => import('@/modules/sales/quotes/pages/SalesQuotesPage')          .then(m => ({ default: m.SalesQuotesPage })));
+const SalesInvoicesPage    = lazyImport(() => import('@/modules/sales/invoices/pages/SalesInvoicesPage')      .then(m => ({ default: m.SalesInvoicesPage })));
+const SalesPaymentsPage    = lazyImport(() => import('@/modules/sales/payments/pages/SalesPaymentsPage')      .then(m => ({ default: m.SalesPaymentsPage })));
+const SalesContractsPage   = lazyImport(() => import('@/modules/sales/contracts/pages/SalesContractsPage')    .then(m => ({ default: m.SalesContractsPage })));
+const SalesCalendarPage    = lazyImport(() => import('@/modules/sales/calendar/pages/SalesCalendarPage')      .then(m => ({ default: m.SalesCalendarPage })));
+const SalesTasksPage       = lazyImport(() => import('@/modules/sales/tasks/pages/SalesTasksPage')            .then(m => ({ default: m.SalesTasksPage })));
+const SalesProductsPage    = lazyImport(() => import('@/modules/sales/products/pages/SalesProductsPage')      .then(m => ({ default: m.SalesProductsPage })));
+const SalesEmployeesPage   = lazyImport(() => import('@/modules/sales/employees/pages/SalesEmployeesPage')    .then(m => ({ default: m.SalesEmployeesPage })));
+const SalesGoalsPage       = lazyImport(() => import('@/modules/sales/goals/pages/SalesGoalsPage')            .then(m => ({ default: m.SalesGoalsPage })));
+const SalesCommissionsPage = lazyImport(() => import('@/modules/sales/commissions/pages/SalesCommissionsPage').then(m => ({ default: m.SalesCommissionsPage })));
+const SalesReportsPage     = lazyImport(() => import('@/modules/sales/reports/pages/SalesReportsPage')        .then(m => ({ default: m.SalesReportsPage })));
+const SalesSettingsPage    = lazyImport(() => import('@/modules/sales/settings/pages/SalesSettingsPage')      .then(m => ({ default: m.SalesSettingsPage })));
 
 /* ── Router ───────────────────────────────────────────────────────── */
 export function AppRouter() {
@@ -377,6 +396,28 @@ export function AppRouter() {
                   <Route path={ROUTES.SEO_MEMBER.BONUS_DETAIL()} element={<PersonalBonusDetailPage layoutScope="seo" seoRouteVariant="member" />} />
                   <Route path={ROUTES.SEO_MEMBER.DAILY_REPORTS} element={<SeoMemberDailyReportsPage />} />
                   <Route path={ROUTES.SEO_MEMBER.PROFILE}       element={<SeoMemberProfilePage />} />
+                </Route>
+              </Route>
+
+              {/* Sales module — temporarily admin-only until a dedicated backend "sales" role exists */}
+              <Route element={<RoleGuard allowedRoles={['admin']} />}>
+                <Route element={<SalesLayout />}>
+                  <Route path={ROUTES.SALES.DASHBOARD}   element={<SalesDashboardPage />} />
+                  <Route path={ROUTES.SALES.LEADS}       element={<SalesLeadsPage />} />
+                  <Route path={ROUTES.SALES.CUSTOMERS}   element={<SalesCustomersPage />} />
+                  <Route path={ROUTES.SALES.PIPELINE}    element={<SalesPipelinePage />} />
+                  <Route path={ROUTES.SALES.QUOTES}      element={<SalesQuotesPage />} />
+                  <Route path={ROUTES.SALES.INVOICES}    element={<SalesInvoicesPage />} />
+                  <Route path={ROUTES.SALES.PAYMENTS}    element={<SalesPaymentsPage />} />
+                  <Route path={ROUTES.SALES.CONTRACTS}   element={<SalesContractsPage />} />
+                  <Route path={ROUTES.SALES.CALENDAR}    element={<SalesCalendarPage />} />
+                  <Route path={ROUTES.SALES.TASKS}       element={<SalesTasksPage />} />
+                  <Route path={ROUTES.SALES.PRODUCTS}    element={<SalesProductsPage />} />
+                  <Route path={ROUTES.SALES.EMPLOYEES}   element={<SalesEmployeesPage />} />
+                  <Route path={ROUTES.SALES.GOALS}       element={<SalesGoalsPage />} />
+                  <Route path={ROUTES.SALES.COMMISSIONS} element={<SalesCommissionsPage />} />
+                  <Route path={ROUTES.SALES.REPORTS}     element={<SalesReportsPage />} />
+                  <Route path={ROUTES.SALES.SETTINGS}    element={<SalesSettingsPage />} />
                 </Route>
               </Route>
 
