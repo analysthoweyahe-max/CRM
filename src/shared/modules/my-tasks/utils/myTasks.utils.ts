@@ -11,25 +11,32 @@ import type {
 } from '../types/myTasks.types';
 
 export function resolveTasksRole(user: ResolveTasksRoleInput): TasksApiRole | null {
+  // Trust the already-resolved portal role first — it's what RoleGuard used
+  // to place the user on this page, and (via mapRolesToAppRole's priority
+  // order) it correctly disambiguates accounts that carry both a pm-employee
+  // and a seo-employee role slug. Falling back to raw actor/section/roles
+  // heuristics before this caused SEO employees whose `section` isn't
+  // exactly 'seo' to be routed to PM task endpoints while on an SEO page.
+  if (user.role === 'seo-member')  return 'seo-employee';
+  if (user.role === 'employee')    return 'pm-employee';
+  if (user.role === 'seo-leader')  return 'seo-manager';
+  if (user.role === 'manager')     return 'project-manager';
+
   if (user.actor === 'employee') {
     if (user.section === 'seo') return 'seo-employee';
     if (user.section === 'pm')  return 'pm-employee';
-    if (user.roles.includes('pm-employee'))    return 'pm-employee';
     if (user.roles.includes('seo-employee'))   return 'seo-employee';
+    if (user.roles.includes('pm-employee'))    return 'pm-employee';
   }
   if (user.actor === 'admin') {
-    if (user.roles.includes('project-manager') || user.roles.includes('manager')) {
-      return 'project-manager';
-    }
     if (user.roles.includes('seo-manager') || user.roles.includes('seo-leader')) {
       return 'seo-manager';
     }
+    if (user.roles.includes('project-manager') || user.roles.includes('manager')) {
+      return 'project-manager';
+    }
   }
 
-  if (user.role === 'employee')    return 'pm-employee';
-  if (user.role === 'seo-member')  return 'seo-employee';
-  if (user.role === 'manager')     return 'project-manager';
-  if (user.role === 'seo-leader')  return 'seo-manager';
   return null;
 }
 
@@ -84,7 +91,6 @@ export function getTasksEndpoint(tasksRole: TasksApiRole, projectId?: number | s
       case 'project-manager':
         return `/v1/pm/projects/${projectId}/tasks`;
       case 'seo-employee':
-        return `/v1/seo/employee/projects/${projectId}/tasks`;
       case 'seo-manager':
         return `/v1/seo/projects/${projectId}/tasks`;
     }

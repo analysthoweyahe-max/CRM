@@ -2,7 +2,7 @@ import { http } from '@/shared/services/http.service';
 import type { SeoTask, SeoTaskStatus, SeoTaskPriority } from '../types/seoTask.types';
 
 /* Raw backend shape — GET /v1/seo/employee/tasks?mine=1 and
-   GET /v1/seo/employee/projects/{project}/tasks?mine=1.
+   GET /v1/seo/projects/{project}/tasks.
    Mirrors the confirmed PM-employee shape: grouped into status columns,
    same as the SEO manager's task resource — NOT a flat paginated list. */
 export interface RawSeoTaskRef {

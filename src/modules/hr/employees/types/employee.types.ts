@@ -38,6 +38,12 @@ export interface ApiEmployee {
   onboardingStep?:     number;
   manager?:            ApiLookup | null;
   roles?:              string[];
+  /** Per-role permission breakdown, when provided by the backend. */
+  roleDetails?:        { name: string; permissions: string[] }[];
+  /** Effective permissions for UI gating. */
+  permissions?:        string[];
+  /** true = Super Admin set the role manually; department changes won't re-sync it. */
+  roleManuallyAssigned?: boolean;
   createdAt?:          string;
   updatedAt?:          string;
 }
@@ -120,10 +126,9 @@ export interface UpdateEmployeePasswordPayload {
   password_confirmation: string;
 }
 
-export interface AssignEmployeeRolePayload {
-  role:        string;
-  permissions: string[];
-}
+export type AssignEmployeeRolePayload =
+  | { role: string; permissions?: string[] }
+  | { sync_role_from_department: true };
 
 // ── Avatar helpers ────────────────────────────────────────────────────────────
 const AVATAR_COLORS = [

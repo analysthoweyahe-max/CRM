@@ -8,10 +8,11 @@ interface Props {
   isLoading:  boolean;
   isAr:       boolean;
   // When provided, sending persists for real via /v1/pm/.../comments.
-  // Omitted by callers (e.g. the SEO task detail reuse) with no real backend
-  // wiring yet — those fall back to local-only comment state.
   projectId?: string;
   taskId?:    string;
+  // Alternative persistence path for callers with their own comment API
+  // (e.g. SEO task detail) — takes priority over projectId/taskId when set.
+  onSend?:    (body: string) => Promise<unknown>;
 }
 
 function Skeleton() {
@@ -33,8 +34,8 @@ function Skeleton() {
   );
 }
 
-export function TaskDetailComments({ comments: serverComments, isLoading, isAr, projectId, taskId }: Props) {
-  const canPersist = !!(projectId && taskId);
+export function TaskDetailComments({ comments: serverComments, isLoading, isAr, projectId, taskId, onSend }: Props) {
+  const canPersist = !!onSend || !!(projectId && taskId);
   const createCommentMutation = useCreateComment(projectId ?? '', taskId ?? '');
 
   const [localComments, setLocalComments] = useState<TaskComment[]>(serverComments);
@@ -82,6 +83,15 @@ export function TaskDetailComments({ comments: serverComments, isLoading, isAr, 
   function sendComment() {
     const trimmed = text.trim();
     if (!trimmed) return;
+
+    if (onSend) {
+      onSend(trimmed).then(() => {
+        setText('');
+        selRef.current = { start: 0, end: 0 };
+        textareaRef.current?.focus();
+      });
+      return;
+    }
 
     if (canPersist) {
       createCommentMutation.mutate(trimmed, {

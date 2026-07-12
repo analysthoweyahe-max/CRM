@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '@/modules/auth/schemas/login.schema';
 import { useLogin } from '@/modules/auth/hooks/useLogin';
 import { useAuth } from '@/modules/auth/context/AuthContext';
@@ -111,32 +111,31 @@ export function LoginForm() {
         </div>
       )}
 
-      {/* Admin ID */}
+      {/* Email */}
       <div className="flex flex-col gap-1">
         <label className="text-base font-medium text-gray-700">
-          {t.login.adminId}
+          {t.login.email}
           <span className="text-red-500 ms-0.5">*</span>
         </label>
         <div className="relative" dir="ltr">
           <input
-            {...register('adminId')}
-            type="text"
-            inputMode="numeric"
-            placeholder={t.login.adminIdPlaceholder}
+            {...register('email')}
+            type="email"
+            placeholder={t.login.emailPlaceholder}
             autoComplete="username"
-            aria-invalid={!!errors.adminId}
+            aria-invalid={!!errors.email}
             className={`w-full rounded-lg border bg-white py-3 ps-11 pe-4
                        text-base outline-none focus:border-brand-500 focus:ring-2
                        focus:ring-brand-500/20 transition placeholder:text-gray-400 ${
-                         errors.adminId ? 'border-red-300' : 'border-gray-300'
+                         errors.email ? 'border-red-300' : 'border-gray-300'
                        }`}
           />
           <span className="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center ps-3 text-gray-400">
-            <User size={17} />
+            <Mail size={17} />
           </span>
         </div>
-        {errors.adminId && (
-          <p className="mt-0.5 text-xs text-red-500">{fieldErr(errors.adminId.message)}</p>
+        {errors.email && (
+          <p className="mt-0.5 text-xs text-red-500">{fieldErr(errors.email.message)}</p>
         )}
       </div>
 

@@ -107,6 +107,8 @@ function normalizeApiAdmin(raw: ApiAdmin): ApiAdmin {
     permissions,
     roleDetails,
     isSuperAdmin: raw.isSuperAdmin ?? extra.is_super_admin === true,
+    // Profile/login endpoints return the photo under `avatar`, not `avatar_url`.
+    avatar_url:   raw.avatar_url ?? (typeof extra.avatar === 'string' ? extra.avatar : undefined),
   };
 }
 
@@ -165,6 +167,7 @@ function buildAdminUser(raw: ApiAdmin): AuthUser {
     isSuperAdmin,
     actor:        'admin',
     avatarUrl:    admin.avatar_url,
+    phone:        admin.phone,
   };
 }
 
@@ -402,14 +405,14 @@ async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
 // ── Auth operations ───────────────────────────────────────────────────────────
 
 /**
- * Unified login — POST /v1/admin/auth/login with { admin_id, password } only.
+ * Unified login — POST /v1/admin/auth/login with { email, password }.
  * Backend returns actorType admin | employee; no OTP step.
  */
 async function login(credentials: LoginCredentials): Promise<LoginResult> {
   const password = credentials.password;
-  const adminId = String(credentials.adminId).trim();
+  const email = credentials.email.trim();
 
-  const { data } = await authApi.adminLogin({ admin_id: adminId, password });
+  const { data } = await authApi.adminLogin({ email, password });
   const payload = unwrapLoginPayload(data);
 
   const accessToken = readAccessToken(payload);
@@ -420,7 +423,7 @@ async function login(credentials: LoginCredentials): Promise<LoginResult> {
   const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
   const user = await resolveLoginUser(accessToken, payload, credentials.rememberMe ?? false);
   storeAuth(accessToken, user, credentials.rememberMe ?? false);
-  setCachedAccountType(adminId, user.actor === 'employee' ? 'employee' : 'admin');
+  setCachedAccountType(email, user.actor === 'employee' ? 'employee' : 'admin');
 
   return {
     status:       'success',
@@ -657,6 +660,27 @@ async function changePassword(payload: {
   }
 }
 
+async function updateProfile(payload: { name: string; email: string; phone: string }): Promise<AuthUser> {
+  const { data } = await authApi.adminUpdateProfile(payload);
+  const user = buildAdminUser(parseAdminProfilePayload(data.data));
+  updateStoredUser(user);
+  return user;
+}
+
+async function uploadAvatar(file: File): Promise<AuthUser> {
+  const { data } = await authApi.adminUploadAvatar(file);
+  const user = buildAdminUser(parseAdminProfilePayload(data.data));
+  updateStoredUser(user);
+  return user;
+}
+
+async function deleteAvatar(): Promise<AuthUser> {
+  const { data } = await authApi.adminDeleteAvatar();
+  const user = buildAdminUser(parseAdminProfilePayload(data.data));
+  updateStoredUser(user);
+  return user;
+}
+
 async function logout(): Promise<void> {
   const stored = getStoredUser();
   try {
@@ -681,6 +705,9 @@ export const authService = {
   setPassword,
   activateInvite,
   changePassword,
+  updateProfile,
+  uploadAvatar,
+  deleteAvatar,
   validateInvite,
   requestEmployeeResetOtp,
   verifyEmployeeResetOtp,

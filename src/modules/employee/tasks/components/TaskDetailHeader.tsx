@@ -9,6 +9,7 @@ interface TaskDetailHeaderProps {
   isAr:      boolean;
   onBack:    () => void;
   onEdit:    () => void;
+  canEdit:   boolean;
 }
 
 function Skeleton() {
@@ -26,7 +27,7 @@ function Skeleton() {
   );
 }
 
-export function TaskDetailHeader({ task, isLoading, isAr, onBack, onEdit }: TaskDetailHeaderProps) {
+export function TaskDetailHeader({ task, isLoading, isAr, onBack, onEdit, canEdit }: TaskDetailHeaderProps) {
   if (isLoading || !task) return <Skeleton />;
 
   const status  = STATUS_MAP[task.status];
@@ -50,13 +51,15 @@ export function TaskDetailHeader({ task, isLoading, isAr, onBack, onEdit }: Task
           icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
         />
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
-          <button
-            onClick={onEdit}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors shrink-0"
-            aria-label={isAr ? 'تعديل المهمة' : 'Edit task'}
-          >
-            <SquarePen size={16} />
-          </button>
+          {canEdit && (
+            <button
+              onClick={onEdit}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors shrink-0"
+              aria-label={isAr ? 'تعديل المهمة' : 'Edit task'}
+            >
+              <SquarePen size={16} />
+            </button>
+          )}
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
         </div>
       </div>

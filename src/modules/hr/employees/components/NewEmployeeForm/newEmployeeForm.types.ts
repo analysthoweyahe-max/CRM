@@ -88,6 +88,13 @@ export function makeAllDataSchema(ar: boolean, _defaultDailyHours = 8) {
 
 export type AllDataValues = z.infer<ReturnType<typeof makeAllDataSchema>>;
 
+export interface RoleAssignmentValue {
+  role:        string;
+  permissions: string[];
+}
+
 export interface AllFormData {
   step1?: AllDataValues;
+  /** Super-admin-only manual role override; null/undefined = automatic (department-based). */
+  roleAssignment?: RoleAssignmentValue | null;
 }

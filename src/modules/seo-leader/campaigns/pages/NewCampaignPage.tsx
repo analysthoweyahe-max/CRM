@@ -1,17 +1,39 @@
+import { useEffect, useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { Card } from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui/Button';
-import { SeoPhasesPanel } from '../components/SeoPhasesPanel';
+import { Combobox } from '@/shared/components/form/Combobox';
+import { SDLCPanel } from '@/modules/project-manager/projects/components/SDLCPanel';
 import { CreateProjectForm } from '@/shared/modules/create-project/components/CreateProjectForm';
 import { useCreateProjectForm } from '@/shared/modules/create-project/hooks/useCreateProjectForm';
+import { useAllTemplates } from '@/modules/project-manager/templates/hooks/useProjectTemplates';
+import { filterTemplatesByType } from '@/modules/project-manager/templates/utils/templateFilter';
 
 export function NewCampaignPage() {
   const { lang, isRTL } = useLang();
   const isAr = lang === 'ar';
   const navigate = useNavigate();
-  const form = useCreateProjectForm({ module: 'seo' });
+
+  const [templateId, setTemplateId] = useState('');
+  const form = useCreateProjectForm({ module: 'seo', templateId: templateId || undefined });
+
+  const { data: allTemplates = [], isLoading: templatesLoading } = useAllTemplates('seo');
+  const selectedTypeId = form.projectTypeId ? Number(form.projectTypeId) : null;
+  const matchingTemplates = filterTemplatesByType(allTemplates, selectedTypeId);
+  const templateItems = [
+    { id: '', label: isAr ? '-- بدون قالب --' : '-- No template --' },
+    ...matchingTemplates.map(t => ({
+      id:     t.uuid,
+      label:  t.name,
+      detail: isAr ? `${t.stepsCount} مرحلة` : `${t.stepsCount} steps`,
+    })),
+  ];
+
+  useEffect(() => {
+    if (templateId && !matchingTemplates.some(t => t.uuid === templateId)) setTemplateId('');
+  }, [form.projectTypeId, allTemplates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -26,9 +48,31 @@ export function NewCampaignPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="order-2 lg:order-1">
-          <SeoPhasesPanel isAr={isAr} />
+          <SDLCPanel
+            module="seo"
+            isAr={isAr}
+            templateId={templateId}
+            templates={matchingTemplates}
+            isLoadingTemplates={templatesLoading}
+            onTemplateSelect={setTemplateId}
+          />
         </div>
-        <Card padding="md" className="order-1 lg:order-2 lg:col-span-2">
+        <Card padding="md" className="order-1 lg:order-2 lg:col-span-2 space-y-5">
+          {selectedTypeId && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                {isAr ? 'قالب المشروع (اختياري)' : 'Project Template (optional)'}
+              </label>
+              <Combobox
+                items={templateItems}
+                value={templateId}
+                onChange={setTemplateId}
+                placeholder={isAr ? '-- بدون قالب --' : '-- No template --'}
+                searchPlaceholder={isAr ? 'ابحث عن قالب...' : 'Search template...'}
+                noResultsText={isAr ? 'لا توجد قوالب لهذا النوع' : 'No templates for this type'}
+              />
+            </div>
+          )}
           <CreateProjectForm form={form} />
         </Card>
       </div>

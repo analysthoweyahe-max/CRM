@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { ensureHttpUrl } from '@/shared/utils';
+import { RichTextView } from '@/shared/components/form/RichTextView';
 import type { PmProjectDetails } from '../types/project.types';
 
 interface Props {
@@ -35,7 +36,7 @@ export function ProjectDetailsContent({ project, isAr }: Props) {
     <div dir={isAr ? 'rtl' : 'ltr'}>
       <Row icon={<FileText size={16} />} label={isAr ? 'الوصف' : 'Description'}>
         {project.description
-          ? project.description
+          ? <RichTextView html={project.description} />
           : <span className="text-gray-400">{isAr ? 'لا يوجد وصف' : 'No description'}</span>}
       </Row>
 

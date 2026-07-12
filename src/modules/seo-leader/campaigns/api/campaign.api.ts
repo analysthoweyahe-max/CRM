@@ -193,7 +193,7 @@ export interface SeoProjectUpdatePayload {
   employeeIds?:             string[];
 }
 
-/** PUT/PATCH /v1/seo/manager/projects/{uuid}/tasks/{taskUuid} */
+/** PUT/PATCH /v1/seo/projects/{uuid}/tasks/{taskUuid} */
 export interface SeoUpdateTaskPayload {
   title?:            string;
   description?:      string;
@@ -302,21 +302,22 @@ export const campaignApi = {
   },
 
   /* ── Tasks (manager) ──────────────────────────────────────────────────
-     Confirmed prefix: /v1/seo/manager/... — distinct from the /v1/seo/projects/...
-     prefix used by the project-level (non-task) endpoints above. */
+     Base path /v1/seo/projects/{project_id}/tasks — shared by seo-manager
+     and seo-employee (guard-scoped by token, not by URL prefix). Only
+     time-logs keep a separate employee/manager path (see below). */
   listAllTasks(params?: { project_id?: string | number; status?: string; search?: string; per_page?: number }) {
     return http.get<ApiResponse<PhasedTasksResponse>>('/v1/seo/manager/tasks', { params });
   },
 
   getTasks(projectId: string | number, params?: { status?: string; search?: string }) {
     return http.get<ApiResponse<PhasedTasksResponse>>(
-      `/v1/seo/manager/projects/${projectId}/tasks`, { params }
+      `/v1/seo/projects/${projectId}/tasks`, { params }
     );
   },
 
   getTask(projectId: string | number, taskId: string | number) {
     return http.get<ApiResponse<SeoTaskDetail>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}`,
     ).then(res => ({
       ...res,
       data: {
@@ -340,30 +341,30 @@ export const campaignApi = {
       if (payload.target_url)       fd.append('target_url', payload.target_url);
       appendSeoTaskFiles(fd, files);
       return http.post<ApiResponse<SeoTask>>(
-        `/v1/seo/manager/projects/${projectId}/tasks`, fd,
+        `/v1/seo/projects/${projectId}/tasks`, fd,
         { headers: { 'Content-Type': undefined } },
       );
     }
     return http.post<ApiResponse<SeoTask>>(
-      `/v1/seo/manager/projects/${projectId}/tasks`, payload,
+      `/v1/seo/projects/${projectId}/tasks`, payload,
     );
   },
 
   updateTask(projectId: string | number, taskId: string | number, payload: SeoUpdateTaskPayload) {
     return http.put<ApiResponse<SeoTaskDetail>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}`, payload
+      `/v1/seo/projects/${projectId}/tasks/${taskId}`, payload
     );
   },
 
   updateTaskStatus(projectId: string | number, taskId: string | number, status: string) {
     return http.patch<ApiResponse<{ status: string }>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/status`, { status }
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status }
     );
   },
 
   updateAssignees(projectId: string | number, taskId: string | number, assigneeIds: string[]) {
     return http.put<ApiResponse<SeoTask>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/assignees`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/assignees`,
       { employee_ids: assigneeIds, employeeIds: assigneeIds },
     );
   },
@@ -372,7 +373,7 @@ export const campaignApi = {
     const fd = new FormData();
     appendSeoTaskFiles(fd, files);
     return http.post<ApiResponse<SeoTaskUploadResponse>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/attachments`, fd,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/attachments`, fd,
       { headers: { 'Content-Type': undefined } },
     ).then(res => ({
       ...res,
@@ -393,7 +394,7 @@ export const campaignApi = {
 
   deleteAttachment(projectId: string | number, taskId: string | number, attachmentId: string | number) {
     return http.delete<ApiResponse<SeoTaskUploadResponse>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`,
     ).then(res => ({
       ...res,
       data: {
@@ -465,28 +466,28 @@ export const campaignApi = {
     );
   },
 
-  /* ── Task Comments (manager) ──────────────────────────────────────────── */
+  /* ── Task Comments ─────────────────────────────────────────────────── */
   getComments(projectId: string | number, taskId: string | number) {
     return http.get<ApiResponse<SeoCommentsPage>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments`
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`
     );
   },
 
   addComment(projectId: string | number, taskId: string | number, body: string) {
     return http.post<ApiResponse<{ comment: SeoComment }>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments`, { body }
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`, { body }
     );
   },
 
   updateComment(projectId: string | number, taskId: string | number, commentId: string | number, body: string) {
     return http.put<ApiResponse<SeoCommentsPage>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { body }
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { body }
     );
   },
 
   deleteComment(projectId: string | number, taskId: string | number, commentId: string | number) {
     return http.delete<ApiResponse<SeoCommentsPage>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/comments/${commentId}`
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments/${commentId}`
     );
   },
 };

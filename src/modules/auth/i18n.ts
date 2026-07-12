@@ -21,8 +21,8 @@ export const authTranslations = {
     login: {
       title:                 'تسجيل الدخول',
       subtitle:              'أدخل بياناتك للوصول إلى لوحة التحكم',
-      adminId:            'المعرّف',
-      adminIdPlaceholder: 'معرف الأدمن',
+      email:              'البريد الإلكتروني',
+      emailPlaceholder:   'name@company.com',
       password:              'كلمة المرور',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'نسيت كلمة المرور؟',
@@ -132,8 +132,6 @@ export const authTranslations = {
     },
 
     validation: {
-      adminIdRequired: 'المعرّف مطلوب',
-      adminIdInvalid:  'أدخل معرّفاً صحيحاً',
       passwordRequired:   'كلمة المرور مطلوبة',
       loginPasswordMin:   'كلمة المرور مطلوبة',
       passwordMin:        'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
@@ -168,8 +166,8 @@ export const authTranslations = {
     login: {
       title:                 'Sign In',
       subtitle:              'Enter your credentials to access the dashboard',
-      adminId:            'ID',
-      adminIdPlaceholder: 'Admin ID',
+      email:              'Email',
+      emailPlaceholder:   'name@company.com',
       password:              'Password',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'Forgot password?',
@@ -279,8 +277,6 @@ export const authTranslations = {
     },
 
     validation: {
-      adminIdRequired: 'ID is required',
-      adminIdInvalid:  'Enter a valid ID',
       passwordRequired:   'Password is required',
       loginPasswordMin:   'Password is required',
       passwordMin:        'Password must be at least 8 characters',

@@ -136,6 +136,18 @@ export function useSeoTaskComments(projectId: string | undefined, taskId: string
   });
 }
 
+export function useAddSeoTaskComment(projectId: string | undefined, taskId: string | undefined, isAr: boolean) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: string) => seoTaskDetailApi.addComment(projectId!, taskId!, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['seo-member', 'task-comments', projectId, taskId] });
+      qc.invalidateQueries({ queryKey: detailKey(projectId, taskId) });
+    },
+    onError: () => toast.error(isAr ? 'تعذّر إرسال التعليق' : 'Failed to send comment'),
+  });
+}
+
 export function useSeoTaskSessions(projectId: string | undefined, taskId: string | undefined) {
   return useQuery({
     queryKey: ['seo-member', 'task-sessions', projectId, taskId],

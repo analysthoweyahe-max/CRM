@@ -3,6 +3,7 @@ import { Plus }     from 'lucide-react';
 import { useLang }  from '@/app/providers/LanguageProvider';
 import { Card }     from '@/shared/components/ui/Card';
 import { Button }   from '@/shared/components/ui/Button';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { useEmpLeaveSummary, useEmpLeaveList } from '../hooks/useEmployeeLeave';
 import { LeaveRequestsTable }    from '../components/LeaveRequestsTable';
 import { LeaveBalancePanel }     from '../components/LeaveBalancePanel';
@@ -23,6 +24,8 @@ export function EmployeeRequestsPage() {
   const [tab,       setTab]       = useState<Tab>('requests');
   const [showModal, setShowModal] = useState(false);
 
+  const canRequestLeave = usePermission('request-leave');
+
   const { data: summary  = [], isLoading: summaryLoading } = useEmpLeaveSummary();
   const { data: requests = [], isLoading: reqLoading }     = useEmpLeaveList();
 
@@ -34,9 +37,11 @@ export function EmployeeRequestsPage() {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
           {isAr ? 'طلباتى' : 'My Requests'}
         </h1>
-        <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => setShowModal(true)}>
-          {isAr ? 'طلب جديد' : 'New Request'}
-        </Button>
+        {canRequestLeave && (
+          <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => setShowModal(true)}>
+            {isAr ? 'طلب جديد' : 'New Request'}
+          </Button>
+        )}
       </div>
 
       {/* ── Card ── */}

@@ -41,6 +41,13 @@ export function useCreateEmployee() {
         });
       }
 
+      if (formData.roleAssignment) {
+        await employeeApi.assignRole(id, {
+          role:        formData.roleAssignment.role,
+          permissions: formData.roleAssignment.permissions,
+        });
+      }
+
       const finalEmp = {
         ...emp,
         employmentType: d.jobType as EmploymentType,

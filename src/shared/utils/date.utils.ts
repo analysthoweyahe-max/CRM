@@ -42,6 +42,21 @@ export function isExpired(dateStr: string): boolean {
   return new Date(dateStr) < new Date();
 }
 
+/** Compute an end date (YYYY-MM-DD) from a start date + a whole number of contract months. */
+export function addMonthsToDate(dateStr: string, months: number): string {
+  if (!dateStr || !months || Number.isNaN(months)) return '';
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + months);
+  // Guard against month overflow (e.g. Jan 31 + 1 → Mar 3): clamp to month end.
+  if (d.getDate() < day) d.setDate(0);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
 /**
  * TODO(backend): remove this once the API returns ISO 8601 timestamps with
  * timezone info (e.g. "2026-07-06T17:16:47Z" or "2026-07-06T17:16:47+03:00").

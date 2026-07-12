@@ -29,7 +29,9 @@ export function useAdminEmployeeDetail(isAr: boolean) {
 
   const employee = data ? toAdminEmployeeDetail(data) : undefined;
 
-  const { availableRoles } = useEmployeeAssignableRoles(employee?.roles ?? []);
+  // No exclusion list: the employee's current role must stay selectable so the
+  // "Change Role" dropdown can default to it (see AssignRoleModal initialRole).
+  const { availableRoles } = useEmployeeAssignableRoles();
   const { mutate: assignRole, isPending: assigningRole } = useAssignEmployeeRole();
 
   const updatePasswordMutation = useMutation({
@@ -70,6 +72,16 @@ export function useAdminEmployeeDetail(isAr: boolean) {
     });
   }
 
+  function resetRoleToDepartmentDefault() {
+    if (!id || assigningRole) return;
+    assignRole({ id, payload: { sync_role_from_department: true } }, {
+      onSuccess: () => {
+        toast.success(isAr ? 'تمت إعادة الضبط حسب القسم' : 'Reset to department default');
+      },
+      onError: (err) => toast.error(extractApiError(err)),
+    });
+  }
+
   return {
     employee,
     isLoading,
@@ -80,6 +92,7 @@ export function useAdminEmployeeDetail(isAr: boolean) {
     openRoleModal:  () => setRoleModalOpen(true),
     closeRoleModal: () => setRoleModalOpen(false),
     assignEmployeeRole,
+    resetRoleToDepartmentDefault,
     assigningRole,
     editEmployee: () => id && navigate(ROUTES.EMPLOYEES.EDIT(id)),
     passwordModalOpen,

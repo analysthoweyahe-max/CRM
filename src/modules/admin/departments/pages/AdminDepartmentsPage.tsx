@@ -12,7 +12,7 @@ export function AdminDepartmentsPage() {
   const isAr     = lang === 'ar';
 
   const {
-    departments, isLoading,
+    departments, isLoading, isDeleteLocked,
     showAdd, openAdd, closeAdd, submitAdd, creating,
     editingDepartment, openEdit, closeEdit, submitEdit, updating,
     pendingDelete, askDelete, cancelDelete, confirmDelete, deleting,
@@ -46,6 +46,7 @@ export function AdminDepartmentsPage() {
               key={dept.id}
               department={dept}
               isAr={isAr}
+              deleteLocked={isDeleteLocked(dept)}
               onEdit={() => openEdit(dept)}
               onDelete={() => askDelete(dept)}
             />

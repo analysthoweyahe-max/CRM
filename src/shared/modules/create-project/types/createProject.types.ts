@@ -83,6 +83,7 @@ export interface CreateSeoProjectPayload {
   isDraft?:                boolean;
   startDate?:              string | null;
   expectedEndDate?:        string | null;
+  templateId?:             string | null;
 }
 
 export interface CreateProjectTypePayload {

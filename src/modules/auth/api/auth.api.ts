@@ -19,9 +19,9 @@ import type {
 export const authApi = {
   // ── Admin / HR Manager ───────────────────────────────────────────────────
 
-  adminLogin(credentials: { admin_id: string | number; password: string }) {
+  adminLogin(credentials: { email: string; password: string }) {
     return http.post<AdminLoginApiResponse>('/v1/admin/auth/login', {
-      admin_id: String(credentials.admin_id).trim(),
+      email:    credentials.email.trim(),
       password: credentials.password,
     });
   },
@@ -65,6 +65,22 @@ export const authApi = {
 
   adminProfile() {
     return http.get<AdminProfileApiResponse>('/v1/admin/auth/profile');
+  },
+
+  adminUpdateProfile(payload: { name: string; email: string; phone: string }) {
+    return http.post<AdminProfileApiResponse>('/v1/admin/auth/profile', payload);
+  },
+
+  adminUploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return http.post<AdminProfileApiResponse>('/v1/admin/auth/profile/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  adminDeleteAvatar() {
+    return http.delete<AdminProfileApiResponse>('/v1/admin/auth/profile/avatar');
   },
 
   adminForgotPassword(payload: { email: string }) {

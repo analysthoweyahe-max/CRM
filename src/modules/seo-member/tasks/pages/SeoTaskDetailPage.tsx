@@ -1,6 +1,7 @@
 import { useState }          from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLang }            from '@/app/providers/LanguageProvider';
+import { usePermission }      from '@/shared/hooks/usePermission';
 import { ROUTES }             from '@/app/router/routes';
 import { TaskDetailTabs }     from '@/modules/employee/tasks/components/TaskDetailTabs';
 import { TaskDetailTimeTracker }  from '@/modules/employee/tasks/components/TaskDetailTimeTracker';
@@ -12,6 +13,7 @@ import {
   useSeoTaskDetail,
   useUpdateSeoTaskStatus,
   useSeoTaskComments,
+  useAddSeoTaskComment,
   useSeoTaskSessions,
   useUploadSeoTaskAttachments,
   useDeleteSeoTaskAttachment,
@@ -27,11 +29,14 @@ export function SeoTaskDetailPage() {
 
   const [activeTab, setActiveTab] = useState<TabId>('time');
 
+  const canEdit = usePermission('edit-seo-tasks');
+
   const { data: detailRes, isLoading } = useSeoTaskDetail(projectId, taskId);
   const detail = detailRes?.task;
   const tabs = detailRes?.tabs;
 
   const { data: comments = [], isLoading: commentsLoading } = useSeoTaskComments(projectId, taskId);
+  const { mutateAsync: addComment } = useAddSeoTaskComment(projectId, taskId, isAr);
   const { data: sessions = [], isLoading: sessionsLoading } = useSeoTaskSessions(projectId, taskId);
   const { mutate: changeStatus } = useUpdateSeoTaskStatus(projectId, taskId, isAr);
   const { uploadFiles, isUploading, uploadError } = useUploadSeoTaskAttachments(projectId, taskId, isAr);
@@ -88,7 +93,7 @@ export function SeoTaskDetailPage() {
             />
           )}
           {activeTab === 'info' && (
-            <SeoTaskDetailInfo task={detail} isLoading={isLoading} isAr={isAr} onStatusChange={changeStatus} />
+            <SeoTaskDetailInfo task={detail} isLoading={isLoading} isAr={isAr} onStatusChange={changeStatus} canEdit={canEdit} />
           )}
           {activeTab === 'attachments' && (
             <SeoAttachmentsTab
@@ -106,6 +111,7 @@ export function SeoTaskDetailPage() {
               comments={comments}
               isLoading={isLoading || commentsLoading}
               isAr={isAr}
+              onSend={(body) => addComment(body)}
             />
           )}
         </div>

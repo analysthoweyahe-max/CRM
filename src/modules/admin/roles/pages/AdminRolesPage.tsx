@@ -21,7 +21,7 @@ export function AdminRolesPage() {
   const navigate = useNavigate();
 
   const {
-    roles, isLoading, isLocked,
+    roles, isLoading, isLocked, isDeleteLocked,
     showModal, creating,
     openCreate, closeModal, submitRole,
     pendingDelete, askDelete, cancelDelete, confirmDelete, deleting,
@@ -86,6 +86,7 @@ export function AdminRolesPage() {
                     role={role}
                     isAr={isAr}
                     isLocked={isLocked(role)}
+                    deleteLocked={isDeleteLocked(role)}
                     onEdit={() => navigate(ROUTES.ADMIN.ROLES_EDIT(String(role.id)))}
                     onDelete={() => askDelete(role)}
                   />

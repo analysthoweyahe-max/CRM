@@ -76,13 +76,9 @@ export const myTasksApi = {
           { status },
         );
       case 'seo-employee':
-        return http.patch(
-          `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/status`,
-          { status },
-        );
       case 'seo-manager':
         return http.patch(
-          `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/status`,
+          `/v1/seo/projects/${projectId}/tasks/${taskId}/status`,
           { status },
         );
     }

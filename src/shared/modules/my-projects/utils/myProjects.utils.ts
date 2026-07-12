@@ -84,6 +84,7 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
 /** Open membership project by uuid (employee-accessible tasks path). */
 export function membershipWorkspacePath(project: Pick<EmployeeMembershipProject, 'uuid' | 'module' | 'id'>): string {
   const id = project.uuid || String(project.id);
+  if (project.module === 'seo') return ROUTES.SEO_MEMBER.DETAILS(id);
   return ROUTES.EMPLOYEE.PROJECT_TASKS(id);
 }
 

@@ -23,6 +23,8 @@ export const ROUTES = {
     JOB_TITLES:      '/admin-job-titles',
     ROLES:           '/admin-roles',
     ROLES_EDIT:      (id = ':id') => `/admin-roles/${id}/edit`,
+    EMPLOYEE_ROLES:      '/admin-employee-roles',
+    EMPLOYEE_ROLES_EDIT: (id = ':id') => `/admin-employee-roles/${id}/edit`,
     MANAGERS:        '/admin-managers',
     MANAGER_DETAIL:  (id = ':id') => `/admin-managers/${id}`,
     MANAGER_EDIT:    (id = ':id') => `/admin-managers/${id}/edit`,

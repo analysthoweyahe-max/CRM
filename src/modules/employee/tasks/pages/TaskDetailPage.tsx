@@ -1,4 +1,5 @@
 import { Card }                    from '@/shared/components/ui/Card';
+import { usePermission }            from '@/shared/hooks/usePermission';
 import { useTaskDetailPage }        from './useTaskDetailPage';
 import { TaskDetailHeader }         from '../components/TaskDetailHeader';
 import { TaskDetailTabs }           from '../components/TaskDetailTabs';
@@ -14,10 +15,12 @@ export function TaskDetailPage() {
     isEditOpen, openEdit, closeEdit,
   } = useTaskDetailPage();
 
+  const canEdit = usePermission('edit-pm-tasks');
+
   return (
     <div className="space-y-4" dir={isAr ? 'rtl' : 'ltr'}>
-      <TaskDetailHeader task={task} isLoading={isLoading} isAr={isAr} onBack={goBack} onEdit={openEdit} />
-      {task && <EditTaskModal open={isEditOpen} onClose={closeEdit} task={task} isAr={isAr} />}
+      <TaskDetailHeader task={task} isLoading={isLoading} isAr={isAr} onBack={goBack} onEdit={openEdit} canEdit={canEdit} />
+      {task && canEdit && <EditTaskModal open={isEditOpen} onClose={closeEdit} task={task} isAr={isAr} />}
       <Card>
         <TaskDetailTabs activeTab={activeTab} onTabChange={setActiveTab} isAr={isAr} />
         <div className="p-5">

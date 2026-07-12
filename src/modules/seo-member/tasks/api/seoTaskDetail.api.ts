@@ -95,7 +95,7 @@ export const seoTaskDetailApi = {
       status: string;
       message: string;
       data: { task: RawSeoTaskDetail; tabs?: SeoTaskDetailTabs };
-    }>(`/v1/seo/employee/projects/${projectId}/tasks/${taskId}`);
+    }>(`/v1/seo/projects/${projectId}/tasks/${taskId}`);
 
     const task = toSeoTaskDetail(res.data.data.task);
     const tabs = res.data.data.tabs;
@@ -110,7 +110,7 @@ export const seoTaskDetailApi = {
 
   async updateStatus(projectId: string, taskId: string, status: SeoTaskStatus): Promise<SeoTaskDetail> {
     const res = await http.patch<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/status`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/status`,
       { status: STATUS_TO_WIRE[status] },
     );
     return toSeoTaskDetail(res.data.data.task);
@@ -140,7 +140,7 @@ export const seoTaskDetailApi = {
     const fd = new FormData();
     appendSeoTaskFiles(fd, files);
     return http.post<{ status: string; message: string; data: SeoTaskUploadResponse }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/attachments`, fd,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/attachments`, fd,
       { headers: { 'Content-Type': undefined } },
     ).then(res => ({
       ...res,
@@ -153,7 +153,7 @@ export const seoTaskDetailApi = {
 
   deleteAttachment(projectId: string, taskId: string, attachmentId: string | number) {
     return http.delete<{ status: string; message: string; data: SeoTaskUploadResponse }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}`,
     ).then(res => ({
       ...res,
       data: {
@@ -183,25 +183,28 @@ export const seoTaskDetailApi = {
 
   getComments(projectId: string, taskId: string) {
     return http.get<{ status: string; message: string; data: SeoTaskCommentsPage }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/comments`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`,
     );
   },
 
   addComment(projectId: string, taskId: string, body: string) {
+    const fd = new FormData();
+    fd.append('body', body);
     return http.post<{ status: string; message: string; data: { comment: SeoTaskComment } }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/comments`, { body },
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`, fd,
+      { headers: { 'Content-Type': undefined } },
     );
   },
 
   updateComment(projectId: string, taskId: string, commentId: string | number, body: string) {
     return http.put<{ status: string; message: string; data: SeoTaskCommentsPage }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { body },
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { body },
     );
   },
 
   deleteComment(projectId: string, taskId: string, commentId: string | number) {
     return http.delete<{ status: string; message: string; data: SeoTaskCommentsPage }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
     );
   },
 };

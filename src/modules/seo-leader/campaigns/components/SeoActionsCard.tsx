@@ -9,6 +9,7 @@ import { ROUTES }            from '@/app/router/routes';
 import { extractApiError }   from '@/shared/utils/error.utils';
 import { archiveSeoProject } from '../store/seoArchivedStore';
 import { campaignApi }       from '../api/campaign.api';
+import { stripHtml }         from '@/shared/utils/richText.utils';
 
 export interface SeoExportData {
   name:             string;
@@ -44,7 +45,7 @@ function buildExcel(data: SeoExportData, isAr: boolean): string {
         ['النوع',            data.campaignTypeLabel ?? '—'],
         ['تاريخ البدء',      data.startDate    ?? '—'],
         ['تاريخ الانتهاء',   data.expectedEndDate ?? '—'],
-        ['الوصف',            data.description  ?? '—'],
+        ['الوصف',            stripHtml(data.description) || '—'],
       ]
     : [
         ['Project Name',    data.name],
@@ -53,7 +54,7 @@ function buildExcel(data: SeoExportData, isAr: boolean): string {
         ['Type',            data.campaignTypeLabel ?? '—'],
         ['Start Date',      data.startDate    ?? '—'],
         ['End Date',        data.expectedEndDate ?? '—'],
-        ['Description',     data.description  ?? '—'],
+        ['Description',     stripHtml(data.description) || '—'],
       ];
 
   const header = isAr ? ['الحقل', 'القيمة'] : ['Field', 'Value'];

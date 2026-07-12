@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { ProjectOptionalFields } from '@/shared/components/form/ProjectOptionalFields';
 import type { SelectOption } from '../api/campaign.api';
 import type { ProjectOptionalFieldErrors } from '@/shared/utils/projectOptionalFields.utils';
@@ -90,7 +91,7 @@ export function SeoProjectInfoForm({
 
       <div>
         <label className={LABEL}>{isAr ? 'الوصف' : 'Description'}</label>
-        <textarea rows={3} value={desc} onChange={e => onChangeDesc(e.target.value)} className={`${INPUT} resize-none`} dir={inputDir(isAr)} />
+        <RichTextEditor value={desc} onChange={onChangeDesc} dir={inputDir(isAr)} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -1,9 +1,12 @@
 ﻿import { useState }    from 'react';
 import { useForm }    from 'react-hook-form';
-import { User, Mail, Phone, Briefcase, Check, FileText } from 'lucide-react';
+import { User, Mail, Phone, Check, FileText } from 'lucide-react';
 import { toast }      from 'sonner';
 import type { AuthUser } from '@/modules/auth/types/auth.types';
-import { EMPLOYEES }  from '@/modules/hr/employees/data/employeeData';
+import { useAuth }    from '@/modules/auth/context/AuthContext';
+import { authService } from '@/modules/auth/services/auth.service';
+import { extractApiError } from '@/shared/utils/error.utils';
+import { isSuperAdminUser } from '@/shared/utils/authPermissions.utils';
 import { Card }       from '@/shared/components/ui/Card';
 import { Input }      from '@/shared/components/ui/Input';
 import { Button }     from '@/shared/components/ui/Button';
@@ -15,7 +18,7 @@ type Tab = 'info' | 'contract';
 interface ProfileFormValues {
   fullName: string;
   email:    string;
-  phone:    string;
+  phone?:    string;
 }
 
 interface Props {
@@ -25,29 +28,36 @@ interface Props {
 
 export function ProfileInfoCard({ user, isAr }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('info');
+  const { refreshUser } = useAuth();
 
-  const emp = EMPLOYEES.find((e) => e.id === user.employeeId);
-
-  const { register, handleSubmit, formState: { isSubmitting } } =
+  const { register, handleSubmit, formState: { isSubmitting, errors } } =
     useForm<ProfileFormValues>({
       defaultValues: {
         fullName: user.fullName,
-        email:    emp?.email ?? '',
-        phone:    emp?.phone ?? '',
+        email:    user.email ?? '',
+        phone:    user.phone ?? '',
       },
     });
 
   async function onSubmit(data: ProfileFormValues) {
-    await new Promise((r) => setTimeout(r, 500));
-    console.log('profile update:', data);
-    toast.success(isAr ? 'تم حفظ التغييرات' : 'Changes saved');
+    try {
+      await authService.updateProfile({
+        name:  data.fullName,
+        email: data.email,
+        phone: data.phone ?? '',
+      });
+      await refreshUser();
+      toast.success(isAr ? 'تم حفظ التغييرات' : 'Changes saved');
+    } catch (err) {
+      toast.error(extractApiError(err));
+    }
   }
-
-  const jobTitle = isAr ? (emp?.jobTitle ?? '—') : (emp?.jobTitleEn ?? '—');
 
   const tabs: { key: Tab; labelAr: string; labelEn: string; icon: React.ReactElement }[] = [
     { key: 'info',     labelAr: 'المعلومات الشخصية', labelEn: 'Personal Info', icon: <User size={14} />     },
-    { key: 'contract', labelAr: 'عقد العمل',          labelEn: 'Contract',      icon: <FileText size={14} /> },
+    ...(isSuperAdminUser(user)
+      ? []
+      : [{ key: 'contract' as const, labelAr: 'عقد العمل', labelEn: 'Contract', icon: <FileText size={14} /> }]),
   ];
 
   return (
@@ -84,9 +94,12 @@ export function ProfileInfoCard({ user, isAr }: Props) {
             <FormField
               label={isAr ? 'الاسم الكامل' : 'Full Name'}
               icon={<User size={15} className="text-gray-400" />}
+              error={errors.fullName?.message}
             >
               <Input
-                {...register('fullName')}
+                {...register('fullName', {
+                  required: isAr ? 'الاسم مطلوب' : 'Name is required',
+                })}
                 endIcon={<User size={15} />}
                 placeholder={isAr ? 'الاسم الكامل' : 'Full name'}
               />
@@ -95,9 +108,16 @@ export function ProfileInfoCard({ user, isAr }: Props) {
             <FormField
               label={isAr ? 'البريد الإلكتروني' : 'Email'}
               icon={<Mail size={15} className="text-gray-400" />}
+              error={errors.email?.message}
             >
               <Input
-                {...register('email')}
+                {...register('email', {
+                  required: isAr ? 'البريد الإلكتروني مطلوب' : 'Email is required',
+                  pattern: {
+                    value:   /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: isAr ? 'بريد إلكتروني غير صالح' : 'Invalid email address',
+                  },
+                })}
                 type="email"
                 dir="ltr"
                 className={isAr ? 'text-right' : ''}
@@ -109,27 +129,17 @@ export function ProfileInfoCard({ user, isAr }: Props) {
             <FormField
               label={isAr ? 'رقم الهاتف' : 'Phone'}
               icon={<Phone size={15} className="text-gray-400" />}
+              error={errors.phone?.message}
             >
               <Input
-                {...register('phone')}
+                {...register('phone', {
+                  required: isAr ? 'رقم الهاتف مطلوب' : 'Phone is required',
+                })}
                 type="tel"
                 dir={isAr ? 'rtl' : 'ltr'}
                 className={isAr ? 'text-right' : ''}
                 endIcon={<Phone size={15} />}
                 placeholder="01xxxxxxxx"
-              />
-            </FormField>
-
-            <FormField
-              label={isAr ? 'المسمى الوظيفي' : 'Job Title'}
-              icon={<Briefcase size={15} className="text-gray-400" />}
-            >
-              <Input
-                value={jobTitle}
-                readOnly
-                disabled
-                className="cursor-not-allowed"
-                endIcon={<Briefcase size={15} />}
               />
             </FormField>
 

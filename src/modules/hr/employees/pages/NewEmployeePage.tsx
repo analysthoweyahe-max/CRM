@@ -11,7 +11,7 @@ import { StepIndicator }  from '../components/NewEmployeeForm/StepWizard';
 import { Step1BasicData } from '../components/NewEmployeeForm/Step1BasicData';
 import { Step2Review }    from '../components/NewEmployeeForm/Steps3to5';
 import { useCreateEmployee } from '../hooks/useCreateEmployee';
-import type { AllFormData } from '../components/NewEmployeeForm/newEmployeeForm.types';
+import type { AllFormData, RoleAssignmentValue } from '../components/NewEmployeeForm/newEmployeeForm.types';
 
 export function NewEmployeePage() {
   const { lang, isRTL } = useLang();
@@ -79,7 +79,10 @@ export function NewEmployeePage() {
         <Step1BasicData
           isAr={isAr} isRTL={isRTL}
           defaultValues={formData.step1}
-          onNext={(d) => { setFormData({ step1: d }); setStep(2); }}
+          roleAssignment={formData.roleAssignment ?? null}
+          onRoleAssignmentChange={(v: RoleAssignmentValue | null) =>
+            setFormData((fd) => ({ ...fd, roleAssignment: v }))}
+          onNext={(d) => { setFormData((fd) => ({ ...fd, step1: d })); setStep(2); }}
           onBack={() => navigate(ROUTES.EMPLOYEES.LIST)}
         />
       )}

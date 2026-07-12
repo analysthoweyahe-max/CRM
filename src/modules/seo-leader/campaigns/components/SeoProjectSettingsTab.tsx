@@ -1,5 +1,8 @@
+import { useState }                  from 'react';
 import { useNavigate }               from 'react-router-dom';
+import { LayoutTemplate }            from 'lucide-react';
 import { ROUTES }                    from '@/app/router/routes';
+import { Button }                    from '@/shared/components/ui/Button';
 import { SeoProjectInfoForm }        from './SeoProjectInfoForm';
 import { SeoSettingsPhasesSection }  from './SeoSettingsPhasesSection';
 import { SeoActionsCard }            from './SeoActionsCard';
@@ -8,6 +11,7 @@ import { DangerZoneCard }            from '@/shared/modules/project/components/D
 import { campaignApi }               from '../api/campaign.api';
 import { useSeoProjectSettings }     from '../hooks/useSeoProjectSettings';
 import { toast }                     from 'sonner';
+import { ApplyTemplateModal }        from '@/modules/project-manager/templates/components/ApplyTemplateModal';
 
 interface Props {
   campaignId: string;
@@ -16,6 +20,7 @@ interface Props {
 
 export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
   const navigate = useNavigate();
+  const [showApply, setShowApply] = useState(false);
 
   const {
     isLoading, settings,
@@ -90,7 +95,25 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
         isAr={isAr}
       />
 
+      <div className="flex justify-end">
+        <Button
+          variant="secondary"
+          startIcon={<LayoutTemplate size={15} />}
+          onClick={() => setShowApply(true)}
+        >
+          {isAr ? 'تطبيق قالب' : 'Apply Template'}
+        </Button>
+      </div>
+
       <SeoSettingsPhasesSection isAr={isAr} />
+
+      <ApplyTemplateModal
+        open={showApply}
+        onClose={() => setShowApply(false)}
+        projectId={campaignId}
+        module="seo"
+        isAr={isAr}
+      />
 
       <SeoActionsCard
         campaignId={campaignId}

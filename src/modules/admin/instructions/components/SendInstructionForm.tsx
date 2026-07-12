@@ -1,35 +1,36 @@
 import { Send } from 'lucide-react';
-import { Card }      from '@/shared/components/ui/Card';
-import { Button }    from '@/shared/components/ui/Button';
-import { Input }     from '@/shared/components/ui/Input';
+import { Card } from '@/shared/components/ui/Card';
+import { Button } from '@/shared/components/ui/Button';
+import { Input } from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
-import { Combobox }  from '@/shared/components/form/Combobox';
+import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import type { InstructionAudienceType } from '../types/instruction.types';
 
 interface Props {
-  title:          string;
-  setTitle:       (v: string) => void;
-  body:           string;
-  setBody:        (v: string) => void;
-  audienceType:   InstructionAudienceType;
+  title: string;
+  setTitle: (v: string) => void;
+  body: string;
+  setBody: (v: string) => void;
+  audienceType: InstructionAudienceType;
   setAudienceType: (v: InstructionAudienceType) => void;
-  departmentId:   string;
+  departmentId: string;
   setDepartmentId: (v: string) => void;
-  employeeId:     string;
-  setEmployeeId:  (v: string) => void;
+  employeeId: string;
+  setEmployeeId: (v: string) => void;
   departmentItems: ComboboxItem[];
-  employeeItems:   ComboboxItem[];
-  isValid:        boolean;
-  sending:        boolean;
-  onSubmit:       () => void;
-  isAr:           boolean;
+  employeeItems: ComboboxItem[];
+  isValid: boolean;
+  sending: boolean;
+  onSubmit: () => void;
+  isAr: boolean;
 }
 
 const AUDIENCE_OPTIONS: { value: InstructionAudienceType; ar: string; en: string }[] = [
-  { value: 'all',        ar: 'كل الموظفين',      en: 'All Employees' },
-  { value: 'department', ar: 'قسم معين',         en: 'A Department'  },
-  { value: 'employee',   ar: 'موظف معين',        en: 'An Employee'   },
+  { value: 'all', ar: 'كل الموظفين', en: 'All Employees' },
+  { value: 'department', ar: 'قسم معين', en: 'A Department' },
+  { value: 'employee', ar: 'موظف معين', en: 'An Employee' },
+  { value: 'managers', ar: 'المديرين', en: 'Managers' },
 ];
 
 export function SendInstructionForm({

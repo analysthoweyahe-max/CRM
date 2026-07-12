@@ -2,30 +2,38 @@ import { useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User, Mail, Phone, CalendarDays, Wallet, Clock, Info } from 'lucide-react';
-import { Card }      from '@/shared/components/ui/Card';
-import { Input }     from '@/shared/components/ui/Input';
+import { Card } from '@/shared/components/ui/Card';
+import { Input } from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
-import { Combobox }  from '@/shared/components/form/Combobox';
+import { Combobox } from '@/shared/components/form/Combobox';
 import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { NavButtons } from './StepWizard';
+import { RoleAssignmentSection } from './RoleAssignmentSection';
 import {
   makeAllDataSchema,
   CURRENCIES,
   type AllDataValues,
+  type RoleAssignmentValue,
 } from './newEmployeeForm.types';
 import { useDepartments, useJobTitles, useEmploymentTypes, useManagerOptions } from '../../hooks/useLookups';
 import { titleDepartmentId } from '../../types/employee.types';
 import { useOrgSettingsData } from '@/modules/admin/org-settings/hooks/useOrgSettings';
+import { usePermission } from '@/shared/hooks/usePermission';
 
 interface Step1Props {
-  isAr:           boolean;
-  isRTL:          boolean;
+  isAr: boolean;
+  isRTL: boolean;
   defaultValues?: Partial<AllDataValues>;
-  onNext:         (d: AllDataValues) => void;
-  onBack:         () => void;
+  roleAssignment: RoleAssignmentValue | null;
+  onRoleAssignmentChange: (value: RoleAssignmentValue | null) => void;
+  onNext: (d: AllDataValues) => void;
+  onBack: () => void;
 }
 
-export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: Step1Props) {
+export function Step1BasicData({
+  isAr, isRTL, defaultValues, roleAssignment, onRoleAssignmentChange, onNext, onBack,
+}: Step1Props) {
+  const canAssignRole = usePermission('assign-role');
   const { data: orgSettings } = useOrgSettingsData();
   const defaultDailyHours = orgSettings?.dailyWorkHours ?? 8;
 
@@ -52,7 +60,7 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
     }
   }, [orgSettings, defaultValues?.workingHours, setValue]);
 
-  const { data: departments = [], isLoading: deptsLoading }   = useDepartments();
+  const { data: departments = [], isLoading: deptsLoading } = useDepartments();
   const { data: allJobTitles = [], isLoading: titlesLoading } = useJobTitles();
   const { data: employmentTypes = [], isLoading: typesLoading } = useEmploymentTypes();
   const { items: managerItems, isLoading: managersLoading } = useManagerOptions(isAr);
@@ -79,13 +87,13 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
     }
   }, [selectedDeptSet, selectedJobTitle, allJobTitles, setValue]);
 
-  const deptItems  = departments.map((d) => ({
-    id:    String(d.id),
+  const deptItems = departments.map((d) => ({
+    id: String(d.id),
     label: isAr ? (d.nameAr || d.name) : d.name,
   }));
 
   const titleItems = filteredTitles.map((t) => ({
-    id:    String(t.id),
+    id: String(t.id),
     label: isAr ? (t.nameAr || t.name) : t.name,
   }));
 
@@ -173,8 +181,8 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
                     selectedDeptIds.length === 0
                       ? (isAr ? 'اختر القسم أولاً' : 'Select department first')
                       : titlesLoading
-                      ? (isAr ? 'جاري التحميل...' : 'Loading...')
-                      : (isAr ? 'اختر المسمى' : 'Select title')
+                        ? (isAr ? 'جاري التحميل...' : 'Loading...')
+                        : (isAr ? 'اختر المسمى' : 'Select title')
                   }
                   searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
                   noResultsText={isAr ? 'لا نتائج' : 'No results'} />
@@ -219,8 +227,8 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               <div className="flex gap-2">
                 <div className="flex-1 min-w-0">
                   <Input {...register('salary', {
-                      setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-                    })}
+                    setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+                  })}
                     type="number" min="1" placeholder="10000"
                     hasError={!!errors.salary} endIcon={<Wallet size={15} />} />
                 </div>
@@ -243,31 +251,40 @@ export function Step1BasicData({ isAr, isRTL, defaultValues, onNext, onBack }: S
               error={errors.workingHours?.message}
             >
               <Input {...register('workingHours', {
-                  setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-                })}
+                setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+              })}
                 type="number" min="1" placeholder={String(defaultDailyHours)}
                 hasError={!!errors.workingHours} endIcon={<Clock size={15} />} />
             </FormField>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-start gap-3 rounded-xl bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 p-4">
-              <Clock size={15} className="text-[#709028] mt-0.5 shrink-0" />
-              <p className="text-sm text-[#709028] leading-relaxed">
-                {isAr
-                  ? 'يُحسب الدوام بعدد الساعات اليومية. المؤقت يبدأ فور تسجيل الحضور في أي وقت ولا يتوقف حتى الانصراف.'
-                  : 'Work is measured by daily hours. The timer starts on check-in at any time and runs until check-out.'}
-              </p>
-            </div>
+          {canAssignRole && (
+            <RoleAssignmentSection
+              isAr={isAr}
+              value={roleAssignment}
+              onChange={onRoleAssignmentChange}
+            />
+          )}
+        </div>
 
-            <div className="flex items-start gap-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 p-4">
-              <Info size={15} className="text-blue-500 mt-0.5 shrink-0" />
-              <p className="text-sm text-blue-600 dark:text-blue-300 leading-relaxed">
-                {isAr
-                  ? 'التأخير والعمل الإضافي يُسجَّلان للمراجعة. الحضور المبكر مسموح والمؤقت يعمل فوراً.'
-                  : 'Late arrival and overtime are flagged for review. Early check-in is allowed and the timer starts immediately.'}
-              </p>
-            </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-start gap-3 rounded-xl bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 p-4">
+            <Clock size={15} className="text-[#709028] mt-0.5 shrink-0" />
+            <p className="text-sm text-[#709028] leading-relaxed">
+              {isAr
+                ? 'يُحسب الدوام بعدد الساعات اليومية. المؤقت يبدأ فور تسجيل الحضور في أي وقت ولا يتوقف حتى الانصراف.'
+                : 'Work is measured by daily hours. The timer starts on check-in at any time and runs until check-out.'}
+            </p>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 p-4">
+            <Info size={15} className="text-blue-500 mt-0.5 shrink-0" />
+            <p className="text-sm text-blue-600 dark:text-blue-300 leading-relaxed">
+              {isAr
+                ? 'التأخير والعمل الإضافي يُسجَّلان للمراجعة. الحضور المبكر مسموح والمؤقت يعمل فوراً.'
+                : 'Late arrival and overtime are flagged for review. Early check-in is allowed and the timer starts immediately.'}
+            </p>
           </div>
         </div>
 

@@ -51,6 +51,14 @@ export interface AdminEmployee {
   statusLabelAr:  string;
   statusLabelEn:  string;
   phone?:         string;
+  /** Effective permissions for UI gating. */
+  permissions:    string[];
+  /** Per-role permission breakdown, when provided by the backend. */
+  roleDetails:    { name: string; permissions: string[] }[];
+  /** Human-readable department section (e.g. "SEO"). */
+  sectionLabel?:  string;
+  /** true = Super Admin set the role manually; department changes won't re-sync it. */
+  roleManuallyAssigned: boolean;
 }
 
 export interface AdminEmployeeActivity {
@@ -118,6 +126,10 @@ export function toAdminEmployee(emp: ApiEmployee): AdminEmployee {
     status,
     statusLabelAr:  STATUS_LABEL[status].ar,
     statusLabelEn:  STATUS_LABEL[status].en,
+    permissions:    emp.permissions ?? [],
+    roleDetails:    emp.roleDetails ?? [],
+    sectionLabel:   emp.sectionLabel ?? undefined,
+    roleManuallyAssigned: emp.roleManuallyAssigned ?? false,
   };
 }
 

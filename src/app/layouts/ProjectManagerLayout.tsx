@@ -6,7 +6,6 @@ import { useLang }    from '@/app/providers/LanguageProvider';
 import { AppSidebar } from './components/AppSidebar';
 import { Topbar }     from './components/Topbar';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
-import { AttendanceWidget } from './components/AttendanceWidget';
 import { useAttendanceWidget } from './components/useAttendanceWidget';
 import { ROUTES }     from '@/app/router/routes';
 
@@ -37,7 +36,6 @@ export function ProjectManagerLayout() {
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(p => !p)}
         isCheckedIn={!isSuperAdmin && attendance.isActiveDay}
-        footerWidget={isSuperAdmin ? undefined : <AttendanceWidget layoutScope="pm" />}
       />
 
       <div className={[
@@ -45,7 +43,7 @@ export function ProjectManagerLayout() {
         'transition-all duration-300',
         collapsed ? 'lg:ms-16' : 'lg:ms-64',
       ].join(' ')}>
-        <Topbar onMenuToggle={() => setSidebarOpen(p => !p)} profileRoute={ROUTES.PROJECT_MANAGER.PROFILE} />
+        <Topbar onMenuToggle={() => setSidebarOpen(p => !p)} profileRoute={ROUTES.PROJECT_MANAGER.PROFILE} layoutScope="pm" />
         <main className="flex-1 p-4 md:p-6">
           <Suspense fallback={<LoadingSpinner />}>
             <Outlet />

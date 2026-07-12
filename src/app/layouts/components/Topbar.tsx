@@ -10,6 +10,8 @@ import { ROUTES }                     from '@/app/router/routes';
 import { UserRoleBadges }             from '@/shared/components/auth';
 import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
+import { HeaderAttendanceTimer }      from './HeaderAttendanceTimer';
+import type { AttendanceScope }       from '@/shared/modules/attendance/types/attendanceTimer.types';
 import { resolveNotificationPath, getMessagesRoute } from '@/shared/utils/notificationNavigation.utils';
 import { parseBackendTimestamp }      from '@/shared/utils/date.utils';
 import { playNotificationSound }      from '@/shared/utils/sound.utils';
@@ -19,9 +21,10 @@ import type { AppNotification }     from '@/shared/types/notification.types';
 interface TopbarProps {
   onMenuToggle:  () => void;
   profileRoute?: string;
+  layoutScope?:  AttendanceScope;
 }
 
-export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarProps) {
+export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScope }: TopbarProps) {
   const { user, logout }        = useAuth();
   const { lang, toggleLang }    = useLang();
   const { isDark, toggleTheme } = useTheme();
@@ -50,6 +53,9 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
 
   useEffect(() => {
     if (!isEmployee) return;
+    // Wait for the first real fetch — before that, unreadAlertsCount is a
+    // loading-placeholder 0 and would falsely look like a jump from 0.
+    if (alertsData === undefined) return;
     const prev = prevUnreadAlertsCount.current;
     prevUnreadAlertsCount.current = unreadAlertsCount;
     if (prev === null || unreadAlertsCount <= prev) return;
@@ -58,7 +64,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
     setRinging(true);
     const t = setTimeout(() => setRinging(false), 700);
     return () => clearTimeout(t);
-  }, [unreadAlertsCount, isEmployee]);
+  }, [unreadAlertsCount, isEmployee, alertsData]);
 
   const alertNotifications: AppNotification[] = (alertsData?.data ?? []).map(a => ({
     id:        `alert-${a.id}`,
@@ -144,6 +150,13 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE }: TopbarPr
       <div className="flex-1" />
 
       <div className="flex items-center gap-1 shrink-0">
+
+        {layoutScope && (
+          <>
+            <HeaderAttendanceTimer layoutScope={layoutScope} />
+            <span className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block" />
+          </>
+        )}
 
         <button
           type="button"

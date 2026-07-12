@@ -26,8 +26,7 @@ function resolveRedirect(redirectPath: string | undefined, user: AuthUser): stri
 
 function extractLoginError(err: unknown): string {
   const fields = extractApiFieldErrors(err);
-  return fields.admin_id
-    || fields.adminId
+  return fields.email
     || fields.password
     || extractApiError(err)
     || 'invalidCredentials';

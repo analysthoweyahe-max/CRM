@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
+import { isSeoLabel } from '@/modules/project-manager/projects/utils/seoProject';
 import { useDepartmentList, useCreateDepartment, useUpdateDepartment, useDeleteDepartment } from './useDepartments';
 import type { ApiDepartment } from '../types/adminDepartment.types';
+
+function isDeleteLocked(department: ApiDepartment) {
+  return isSeoLabel(department.name);
+}
 
 export function useAdminDepartmentsPage(isAr: boolean) {
   const { data: departments, isLoading } = useDepartmentList();
@@ -41,6 +46,11 @@ export function useAdminDepartmentsPage(isAr: boolean) {
 
   function confirmDelete() {
     if (!pendingDelete) return;
+    if (isDeleteLocked(pendingDelete)) {
+      toast.error(isAr ? 'لا يمكن حذف قسم SEO' : 'The SEO department cannot be deleted');
+      setPendingDelete(null);
+      return;
+    }
     remove(pendingDelete.id, {
       onSuccess: () => {
         toast.success(isAr ? 'تم حذف القسم' : 'Department deleted');
@@ -53,6 +63,7 @@ export function useAdminDepartmentsPage(isAr: boolean) {
   return {
     departments: departments ?? [],
     isLoading,
+    isDeleteLocked,
     showAdd, openAdd: () => setShowAdd(true), closeAdd: () => setShowAdd(false),
     submitAdd, creating,
     editingDepartment, openEdit: setEditingDepartment, closeEdit: () => setEditingDepartment(null),

@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
-/** Unified login — admin_id + password only (no email). */
+/** Unified login — email + password. */
 export const loginSchema = z.object({
-  adminId: z
+  email: z
     .string()
     .trim()
-    .min(1, 'adminIdRequired'),
+    .min(1, 'emailRequired')
+    .email('emailInvalid'),
   password: z
     .string()
     .min(1, 'passwordRequired'),

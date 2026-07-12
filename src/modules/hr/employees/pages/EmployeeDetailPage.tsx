@@ -9,6 +9,9 @@ import {
 import { useLang }    from '@/app/providers/LanguageProvider';
 import { ROUTES }     from '@/app/router/routes';
 import { Button }     from '@/shared/components/ui/Button';
+import { Badge }      from '@/shared/components/ui/Badge';
+import { PermissionTagList } from '@/shared/components/ui/PermissionTagList';
+import { getRoleLabel } from '@/modules/admin/employees/types/adminEmployee.types';
 import { STATUS_STYLES } from '../data/employeeData';
 import { getAvatarColor, getInitial, mapEmploymentType, formatEmployeeDepartments } from '../types/employee.types';
 import { useEmployee } from '../hooks/useEmployee';
@@ -237,6 +240,31 @@ export function EmployeeDetailPage() {
             <p className="text-xs text-center mt-4 text-gray-400 dark:text-gray-500">
               {isAr ? `تم استخدام ${usedPct}% من الرصيد السنوي` : `${usedPct}% of annual balance used`}
             </p>
+          </div>
+
+          {/* Roles & Permissions (read-only) */}
+          <div className="lg:col-span-3 rounded-2xl bg-white dark:bg-gray-800
+                          border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                {isAr ? 'الأدوار والصلاحيات' : 'Roles & Permissions'}
+              </h3>
+              <div className="flex flex-wrap gap-2 justify-end">
+                {(emp.roles ?? []).length === 0 ? (
+                  <span className="text-sm text-gray-400 dark:text-gray-500">
+                    {isAr ? 'لم يُعيَّن أي دور بعد' : 'No roles assigned yet'}
+                  </span>
+                ) : (
+                  emp.roles!.map((role) => (
+                    <Badge key={role} label={getRoleLabel(role, isAr)} variant="gray" />
+                  ))
+                )}
+              </div>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 text-end">
+              {isAr ? 'الصلاحيات الفعّالة' : 'Effective Permissions'}
+            </p>
+            <PermissionTagList permissions={emp.permissions ?? []} isAr={isAr} />
           </div>
         </div>
       )}

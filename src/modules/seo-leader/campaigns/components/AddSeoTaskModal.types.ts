@@ -10,7 +10,7 @@ export interface AddSeoTaskForm {
   targetUrl:      string;
 }
 
-/** POST /v1/seo/manager/projects/{id}/tasks — title/phase/employee_ids required, rest optional */
+/** POST /v1/seo/projects/{id}/tasks — title/phase/employee_ids required, rest optional */
 export interface CreateSeoTaskPayload {
   title:               string;
   phase:               string;

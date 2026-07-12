@@ -29,7 +29,7 @@ export function useAdminInstructionsPage(isAr: boolean) {
 
   const isValid = !!(
     title.trim() && body.trim() &&
-    (audienceType === 'all' || (audienceType === 'department' && departmentId) || (audienceType === 'employee' && employeeId))
+    (audienceType === 'all' || audienceType === 'managers' || (audienceType === 'department' && departmentId) || (audienceType === 'employee' && employeeId))
   );
 
   function reset() {

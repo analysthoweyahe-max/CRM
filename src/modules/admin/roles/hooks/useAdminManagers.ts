@@ -44,6 +44,9 @@ export function toManagerVM(m: ApiAdminManager, isAr = true): AdminEmployee {
     statusLabelAr:  getManagerStatusLabel(status, true),
     statusLabelEn:  getManagerStatusLabel(status, false),
     phone:          m.phone ?? undefined,
+    permissions:    [],
+    roleDetails:    [],
+    roleManuallyAssigned: false,
   };
 }
 

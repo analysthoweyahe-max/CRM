@@ -37,6 +37,7 @@ export interface AuthUser {
   /** Which auth guard this session belongs to — drives profile/logout endpoints. */
   actor:       AuthActor;
   avatarUrl?:  string;
+  phone?:      string | null;
 }
 
 export interface AuthState {
@@ -47,7 +48,7 @@ export interface AuthState {
 }
 
 export interface LoginCredentials {
-  adminId:     string;
+  email:       string;
   password:    string;
   rememberMe?: boolean;
 }

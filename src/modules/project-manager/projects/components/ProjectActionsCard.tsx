@@ -5,6 +5,7 @@ import { toast }    from 'sonner';
 import { Button }   from '@/shared/components/ui/Button';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { resourceKey } from '@/shared/utils/resourceKey.utils';
+import { stripHtml } from '@/shared/utils/richText.utils';
 import { pmProjectsApi } from '../api/project.api';
 import type { PmProjectDetails } from '../types/project.types';
 
@@ -54,7 +55,7 @@ export function ProjectActionsCard({ project, isAr, onPublished }: Props) {
       [isAr ? 'مسودة'           : 'Draft',       project.isDraft ? (isAr ? 'نعم' : 'Yes') : (isAr ? 'لا' : 'No')],
       [isAr ? 'تاريخ البدء'     : 'Start Date',  project.startDate],
       [isAr ? 'الموعد النهائي'  : 'Deadline',    project.deadline],
-      [isAr ? 'الوصف'           : 'Description', project.description ?? '—'],
+      [isAr ? 'الوصف'           : 'Description', stripHtml(project.description) || '—'],
     ];
 
     /* ── Sheet 2: Team Members ── */

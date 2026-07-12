@@ -4,13 +4,14 @@ import { Button } from '@/shared/components/ui/Button';
 import type { ApiDepartment } from '../types/adminDepartment.types';
 
 interface Props {
-  department: ApiDepartment;
-  isAr:       boolean;
-  onEdit:     () => void;
-  onDelete:   () => void;
+  department:    ApiDepartment;
+  isAr:          boolean;
+  deleteLocked?: boolean;
+  onEdit:        () => void;
+  onDelete:      () => void;
 }
 
-export function DepartmentCard({ department, isAr, onEdit, onDelete }: Props) {
+export function DepartmentCard({ department, isAr, deleteLocked, onEdit, onDelete }: Props) {
   return (
     <Card padding="lg" className="space-y-3">
       <div className="flex items-center justify-between gap-2">
@@ -19,6 +20,7 @@ export function DepartmentCard({ department, isAr, onEdit, onDelete }: Props) {
             variant="icon-danger"
             aria-label={isAr ? 'حذف القسم' : 'Delete department'}
             onClick={onDelete}
+            disabled={deleteLocked}
           >
             <Trash2 size={15} />
           </Button>

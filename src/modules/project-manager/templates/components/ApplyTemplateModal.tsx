@@ -9,6 +9,7 @@ import { FormField } from '@/shared/components/form/FormField';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { useAllTemplates, useApplyTemplate } from '../hooks/useProjectTemplates';
 import { filterTemplatesByType } from '../utils/templateFilter';
+import type { TemplateModule } from '../api/projectTemplate.api';
 
 interface Props {
   open:           boolean;
@@ -16,12 +17,13 @@ interface Props {
   projectId:      string;
   projectTypeId?: number | null;
   isAr:           boolean;
+  module?:        TemplateModule;
   onApplied?:     () => void;
 }
 
-export function ApplyTemplateModal({ open, onClose, projectId, projectTypeId, isAr, onApplied }: Props) {
-  const { data: templates = [], isLoading } = useAllTemplates();
-  const { mutate: apply, isPending } = useApplyTemplate(projectId);
+export function ApplyTemplateModal({ open, onClose, projectId, projectTypeId, isAr, module = 'pm', onApplied }: Props) {
+  const { data: templates = [], isLoading } = useAllTemplates(module);
+  const { mutate: apply, isPending } = useApplyTemplate(projectId, module);
 
   const [templateId, setTemplateId] = useState('');
   const [replace, setReplace]       = useState(false);

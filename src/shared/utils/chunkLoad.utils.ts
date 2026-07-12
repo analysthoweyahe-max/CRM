@@ -23,23 +23,20 @@ function redirectToLogin(): void {
 
 /** Reload when a stale lazy chunk is detected. Falls back to login after repeated failures. */
 export function reloadForStaleChunk(): boolean {
-  const attempts = Number(sessionStorage.getItem(CHUNK_ATTEMPTS_KEY) ?? '0');
-  if (attempts >= MAX_CHUNK_ATTEMPTS) {
+  const lastReload = sessionStorage.getItem(CHUNK_RELOAD_KEY);
+  const now = Date.now();
+  // A chunk error striking again inside the cooldown means the previous
+  // reload didn't fix it — count it as a repeat attempt instead of reloading forever.
+  const withinCooldown = !!lastReload && now - Number(lastReload) < RELOAD_COOLDOWN_MS;
+  const attempts = withinCooldown ? Number(sessionStorage.getItem(CHUNK_ATTEMPTS_KEY) ?? '0') + 1 : 1;
+
+  if (attempts > MAX_CHUNK_ATTEMPTS) {
     clearChunkReloadFlag();
     redirectToLogin();
     return false;
   }
 
-  const lastReload = sessionStorage.getItem(CHUNK_RELOAD_KEY);
-  const now = Date.now();
-
-  if (lastReload && now - Number(lastReload) < RELOAD_COOLDOWN_MS) {
-    clearChunkReloadFlag();
-    window.location.reload();
-    return true;
-  }
-
-  sessionStorage.setItem(CHUNK_ATTEMPTS_KEY, String(attempts + 1));
+  sessionStorage.setItem(CHUNK_ATTEMPTS_KEY, String(attempts));
   sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now));
   window.location.reload();
   return true;

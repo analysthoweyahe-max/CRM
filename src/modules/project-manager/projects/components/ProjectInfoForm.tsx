@@ -6,6 +6,7 @@ import { useAuth } from '@/modules/auth/context/AuthContext';
 import { Button } from '@/shared/components/ui/Button';
 import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { ProjectOptionalFields } from '@/shared/components/form/ProjectOptionalFields';
 import { useProjectSettings } from '../hooks/useProjectSettings';
 import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
@@ -192,12 +193,10 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
 
       <div>
         <label className={LABEL}>{isAr ? 'الوصف' : 'Description'}</label>
-        <textarea
-          rows={3}
+        <RichTextEditor
           value={description}
-          onChange={e => setDesc(e.target.value)}
+          onChange={setDesc}
           placeholder={isAr ? 'وصف المشروع وأهدافه...' : 'Project description and goals…'}
-          className={`${INPUT} resize-none`}
           dir={inputDir(isAr)}
         />
       </div>

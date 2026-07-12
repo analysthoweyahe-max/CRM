@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Plus, Paperclip, X, FileText } from 'lucide-react';
 import { Combobox } from '@/shared/components/form/Combobox';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { ProjectOptionalFields } from '@/shared/components/form/ProjectOptionalFields';
 import { Button } from '@/shared/components/ui/Button';
 import { MultiSelectChecklist } from './MultiSelectChecklist';
@@ -36,13 +37,14 @@ export function CreateProjectForm({ form }: Props) {
     contractDurationMonths, setContractDurationMonths,
     startDate, setStartDate,
     endDate, setEndDate,
+    endDateAuto,
     status, setStatus,
     saveAsDraft, setSaveAsDraft,
     managerIds, setManagerIds,
     managerSearch, setManagerSearch,
     employeeIds, setEmployeeIds,
     employeeSearch, setEmployeeSearch,
-    attachment, setAttachment,
+    attachments, setAttachments,
     fieldErrors,
     departmentItems, projectTypeItems, statusItems, employeeItems, managerItems,
     typesLoading, statusesLoading, employeesLoading, managersLoading,
@@ -59,9 +61,13 @@ export function CreateProjectForm({ form }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  function handleFile(files: FileList | null) {
-    const file = files?.[0];
-    if (file) setAttachment(file);
+  function handleFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setAttachments([...attachments, ...Array.from(files)]);
+  }
+
+  function removeAttachment(index: number) {
+    setAttachments(attachments.filter((_, i) => i !== index));
   }
 
   function fmtSize(bytes: number) {
@@ -156,12 +162,11 @@ export function CreateProjectForm({ form }: Props) {
 
       <div>
         <label className={LABEL}>{isAr ? 'وصف المشروع' : 'Description'}</label>
-        <textarea
-          rows={3}
+        <RichTextEditor
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={setDescription}
+          dir={isAr ? 'rtl' : 'ltr'}
           placeholder={isAr ? 'نبذة عن المشروع' : 'Brief about the project'}
-          className={`${INPUT} resize-none`}
         />
       </div>
 
@@ -178,47 +183,55 @@ export function CreateProjectForm({ form }: Props) {
       />
 
       <div>
-        <label className={LABEL}>{isAr ? 'مرفق' : 'Attachment'}</label>
+        <label className={LABEL}>{isAr ? 'مرفقات' : 'Attachments'}</label>
 
         <input
           ref={fileInputRef}
           type="file"
+          multiple
           className="hidden"
-          onChange={e => { handleFile(e.target.files); e.target.value = ''; }}
+          onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
         />
 
-        {attachment ? (
-          <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-2.5">
-            <FileText size={18} className="text-gray-400 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-gray-700 dark:text-gray-200 truncate">{attachment.name}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">{fmtSize(attachment.size)}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAttachment(null)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        ) : (
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
-            className={[
-              'border-2 border-dashed rounded-xl px-4 py-5 flex flex-col items-center gap-1.5 cursor-pointer transition-colors',
-              dragOver
-                ? 'border-[#A0CD39] bg-[#D8EBAE]/20 dark:bg-[#A0CD39]/10'
-                : 'border-gray-200 dark:border-gray-600 hover:border-[#A0CD39]/50 hover:bg-[#D8EBAE]/10',
-            ].join(' ')}
-          >
-            <Paperclip size={20} className={dragOver ? 'text-[#A0CD39]' : 'text-gray-300 dark:text-gray-600'} />
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-              {isAr ? 'اسحب ملف هنا أو انقر للتصفح' : 'Drag a file here or click to browse'}
-            </p>
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+          className={[
+            'border-2 border-dashed rounded-xl px-4 py-5 flex flex-col items-center gap-1.5 cursor-pointer transition-colors',
+            dragOver
+              ? 'border-[#A0CD39] bg-[#D8EBAE]/20 dark:bg-[#A0CD39]/10'
+              : 'border-gray-200 dark:border-gray-600 hover:border-[#A0CD39]/50 hover:bg-[#D8EBAE]/10',
+          ].join(' ')}
+        >
+          <Paperclip size={20} className={dragOver ? 'text-[#A0CD39]' : 'text-gray-300 dark:text-gray-600'} />
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+            {isAr ? 'اسحب ملفات هنا أو انقر للتصفح' : 'Drag files here or click to browse'}
+          </p>
+        </div>
+
+        {attachments.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {attachments.map((file, index) => (
+              <div
+                key={`${file.name}-${index}`}
+                className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-2.5"
+              >
+                <FileText size={18} className="text-gray-400 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-gray-700 dark:text-gray-200 truncate">{file.name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{fmtSize(file.size)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeAttachment(index)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -230,7 +243,20 @@ export function CreateProjectForm({ form }: Props) {
         </div>
         <div>
           <label className={LABEL}>{endLabel}</label>
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={INPUT} />
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+            disabled={endDateAuto}
+            className={`${INPUT}${endDateAuto ? ' cursor-not-allowed opacity-70' : ''}`}
+          />
+          {endDateAuto && (
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              {isAr
+                ? 'محسوب تلقائياً من تاريخ البدء ومدة العقد'
+                : 'Auto-calculated from start date + contract duration'}
+            </p>
+          )}
         </div>
       </div>
 
@@ -248,7 +274,7 @@ export function CreateProjectForm({ form }: Props) {
             }
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
-            disabled={statusesLoading || statusItems.length === 0}
+            disabled={statusesLoading}
           />
         </div>
         <div className="flex items-end">
@@ -272,8 +298,8 @@ export function CreateProjectForm({ form }: Props) {
         </h3>
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
           {isAr
-            ? 'يظهر الموظفون المرتبطون بنفس قسم نوع المشروع المختار'
-            : 'Only employees from the selected project type department are listed'}
+            ? 'يظهر الموظفون المرتبطون بنفس قسم نوع المشروع المختار. إذا لم تختر أحداً، سيُسنَد المشروع إليك.'
+            : 'Only employees from the selected project type department are listed. If none is selected, the project will be assigned to you.'}
         </p>
         <MultiSelectChecklist
           items={employeeItems}

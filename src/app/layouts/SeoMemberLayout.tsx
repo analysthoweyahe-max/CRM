@@ -4,7 +4,6 @@ import { toast }    from 'sonner';
 import { AppSidebar }          from './components/AppSidebar';
 import { Topbar }              from './components/Topbar';
 import { LoadingSpinner }      from '@/shared/components/feedback/LoadingSpinner';
-import { AttendanceWidget }    from './components/AttendanceWidget';
 import { FloatingTimer }       from './components/FloatingTimer';
 import { TaskTimerProvider }   from './components/TaskTimerContext';
 import { useAttendanceWidget } from './components/useAttendanceWidget';
@@ -37,7 +36,6 @@ export function SeoMemberLayout() {
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed(p => !p)}
           isCheckedIn={attendance.isActiveDay}
-          footerWidget={<AttendanceWidget layoutScope="seo" />}
         />
 
         <div className={[
@@ -48,6 +46,7 @@ export function SeoMemberLayout() {
           <Topbar
             onMenuToggle={() => setSidebarOpen(p => !p)}
             profileRoute={ROUTES.SEO_MEMBER.PROFILE}
+            layoutScope="seo"
           />
           <main className="flex-1 p-4 md:p-6">
             <Suspense fallback={<LoadingSpinner />}>

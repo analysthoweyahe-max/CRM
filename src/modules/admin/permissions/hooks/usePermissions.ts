@@ -6,12 +6,12 @@ import type { ApiPermission } from '../types/adminPermission.types';
 
 const PERMISSIONS_KEY = ['admin', 'permissions'];
 
-export function usePermissionList() {
+export function usePermissionList(guardName = 'admin') {
   const { isSuperAdmin } = useAuth();
 
   return useQuery({
-    queryKey: PERMISSIONS_KEY,
-    queryFn:  () => permissionApi.list().then((r) => normalizePermissionList(r.data.data)),
+    queryKey: [...PERMISSIONS_KEY, guardName],
+    queryFn:  () => permissionApi.list(guardName).then((r) => normalizePermissionList(r.data.data)),
     staleTime: 60 * 1000,
     enabled: isSuperAdmin,
   });

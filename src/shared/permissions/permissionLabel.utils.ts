@@ -1,7 +1,8 @@
 import { PANEL_PERMISSION_GROUPS } from './panelPermissionCatalog';
+import { EMPLOYEE_PERMISSION_GROUPS } from './employeePermissionCatalog';
 
 const LABEL_BY_SLUG = new Map(
-  PANEL_PERMISSION_GROUPS.flatMap((group) =>
+  [...PANEL_PERMISSION_GROUPS, ...EMPLOYEE_PERMISSION_GROUPS].flatMap((group) =>
     group.slugs.map((s) => [s.slug, { ar: s.labelAr, en: s.labelEn }] as const),
   ),
 );

@@ -7,6 +7,11 @@ import type { ApiRole, RoleFormInput } from '../types/adminRole.types';
 import type { CreateAdminPayload } from '../types/adminManager.types';
 
 const LOCKED_ROLES = new Set(['super-admin']);
+const SEO_ROLE_SLUGS = new Set(['seo-leader', 'seo-manager', 'seo-employee', 'seo-member']);
+
+function isDeleteLocked(role: ApiRole) {
+  return LOCKED_ROLES.has(role.name) || SEO_ROLE_SLUGS.has(role.name);
+}
 
 export function useAdminRoles(isAr: boolean) {
   const { data: roles, isLoading } = useRoleList();
@@ -44,6 +49,11 @@ export function useAdminRoles(isAr: boolean) {
 
   function confirmDelete() {
     if (!pendingDelete) return;
+    if (isDeleteLocked(pendingDelete)) {
+      toast.error(isAr ? 'لا يمكن حذف أدوار SEO' : 'SEO roles cannot be deleted');
+      setPendingDelete(null);
+      return;
+    }
     remove(pendingDelete.id, {
       onSuccess: () => {
         toast.success(isAr ? 'تم حذف الدور' : 'Role deleted');
@@ -57,6 +67,7 @@ export function useAdminRoles(isAr: boolean) {
     roles: roles ?? [],
     isLoading,
     isLocked: (role: ApiRole) => LOCKED_ROLES.has(role.name),
+    isDeleteLocked,
     showModal, creating,
     openCreate, closeModal, submitRole,
     pendingDelete, askDelete: setPendingDelete, cancelDelete: () => setPendingDelete(null),

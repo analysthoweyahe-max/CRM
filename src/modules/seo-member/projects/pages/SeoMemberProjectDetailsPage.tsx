@@ -7,6 +7,7 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES } from '@/app/router/routes';
 import { Button } from '@/shared/components/ui/Button';
 import { Card } from '@/shared/components/ui/Card';
+import { RichTextView } from '@/shared/components/form/RichTextView';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { formatDateShort } from '@/shared/utils/date.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
@@ -143,7 +144,7 @@ export function SeoMemberProjectDetailsPage() {
         status: string;
         message: string;
         data: { phases?: { phase: string; tasks: SeoTask[] }[]; columns?: { status: string; tasks: SeoTask[] }[]; total?: number };
-      }>(`/v1/seo/employee/projects/${projectKey}/tasks`, { params: { mine: 0 } });
+      }>(`/v1/seo/projects/${projectKey}/tasks`, { params: { mine: 0 } });
       const payload = data.data;
       if (Array.isArray(payload.phases)) {
         return payload.phases.flatMap(p => p.tasks);
@@ -349,9 +350,10 @@ export function SeoMemberProjectDetailsPage() {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 {isAr ? 'الوصف' : 'Description'}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {description}
-              </p>
+              <RichTextView
+                html={description}
+                className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed"
+              />
             </div>
           )}
 

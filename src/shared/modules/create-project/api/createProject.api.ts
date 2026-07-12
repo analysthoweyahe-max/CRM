@@ -44,9 +44,11 @@ interface AdminManagerRecord {
 }
 
 
-/** Build multipart form data for project creation when an attachment is
- * included — arrays are sent Laravel-style as indexed `key[i]` fields. */
-function toFormData(payload: object, file: File, fileField = 'attachment'): FormData {
+/** Build multipart form data for project creation when attachments are
+ * included — arrays are sent Laravel-style as indexed `key[i]` fields.
+ * Files are sent under the `files[]` key so the backend receives them as
+ * the `files` array it validates against. */
+function toFormData(payload: object, files: File[]): FormData {
   const fd = new FormData();
   for (const [key, value] of Object.entries(payload)) {
     if (value === undefined || value === null) continue;
@@ -58,7 +60,7 @@ function toFormData(payload: object, file: File, fileField = 'attachment'): Form
       fd.append(key, String(value));
     }
   }
-  fd.append(fileField, file);
+  files.forEach(file => fd.append('files[]', file));
   return fd;
 }
 
@@ -158,11 +160,11 @@ export const createProjectApi = {
       .map(a => ({ id: a.id, name: a.name, email: a.email }));
   },
 
-  createPm(payload: CreatePmProjectPayload, attachment?: File | null) {
-    if (attachment) {
+  createPm(payload: CreatePmProjectPayload, attachments?: File[]) {
+    if (attachments && attachments.length > 0) {
       return http.post<{ status: string; message: string; data: { id: number } }>(
         '/v1/pm/projects',
-        toFormData(payload, attachment),
+        toFormData(payload, attachments),
         /* Let the browser set multipart boundary — do not force Content-Type. */
         { headers: { 'Content-Type': undefined } },
       );
@@ -173,11 +175,11 @@ export const createProjectApi = {
     );
   },
 
-  createSeo(payload: CreateSeoProjectPayload, attachment?: File | null) {
-    if (attachment) {
+  createSeo(payload: CreateSeoProjectPayload, attachments?: File[]) {
+    if (attachments && attachments.length > 0) {
       return http.post<{ status: string; message: string; data: { id: number } }>(
         '/v1/seo/projects',
-        toFormData(payload, attachment),
+        toFormData(payload, attachments),
         { headers: { 'Content-Type': undefined } },
       );
     }

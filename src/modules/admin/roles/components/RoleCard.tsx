@@ -5,26 +5,29 @@ import { getRoleNameLabel } from '../types/adminRole.types';
 import type { ApiRole } from '../types/adminRole.types';
 
 interface Props {
-  role:       ApiRole;
-  isAr:       boolean;
-  isLocked:   boolean;
-  onEdit:     () => void;
-  onDelete:   () => void;
+  role:           ApiRole;
+  isAr:           boolean;
+  isLocked:       boolean;
+  deleteLocked?:  boolean;
+  onEdit:         () => void;
+  onDelete?:      () => void;
 }
 
-export function RoleCard({ role, isAr, isLocked, onEdit, onDelete }: Props) {
+export function RoleCard({ role, isAr, isLocked, deleteLocked, onEdit, onDelete }: Props) {
   return (
     <Card padding="lg" className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
-          <Button
-            variant="icon-danger"
-            aria-label={isAr ? 'حذف الدور' : 'Delete role'}
-            onClick={onDelete}
-            disabled={isLocked}
-          >
-            <Trash2 size={15} />
-          </Button>
+          {onDelete && (
+            <Button
+              variant="icon-danger"
+              aria-label={isAr ? 'حذف الدور' : 'Delete role'}
+              onClick={onDelete}
+              disabled={isLocked || deleteLocked}
+            >
+              <Trash2 size={15} />
+            </Button>
+          )}
           <Button
             variant="icon"
             aria-label={isAr ? 'تعديل الدور' : 'Edit role'}

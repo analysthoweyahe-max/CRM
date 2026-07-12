@@ -78,12 +78,16 @@ export function useNotifications() {
   const [justArrived, setJustArrived] = useState(0);
 
   useEffect(() => {
+    // Wait for the first real fetch — before that, unreadCount is a
+    // loading-placeholder 0 and would falsely look like a jump from 0.
+    if (data === undefined) return;
+
     if (prevUnreadCount.current !== null && unreadCount > prevUnreadCount.current) {
       playNotificationSound();
       setJustArrived(n => n + 1);
     }
     prevUnreadCount.current = unreadCount;
-  }, [unreadCount]);
+  }, [unreadCount, data]);
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => notificationsApi.markRead(role, id),

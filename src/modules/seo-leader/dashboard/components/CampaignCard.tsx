@@ -4,6 +4,7 @@ import { Card }            from '@/shared/components/ui/Card';
 import { Button }          from '@/shared/components/ui/Button';
 import { formatDateShort } from '@/shared/utils/date.utils';
 import { ensureHttpUrl }   from '@/shared/utils';
+import { stripHtml }       from '@/shared/utils/richText.utils';
 import { ROUTES }          from '@/app/router/routes';
 import type { CampaignViewModel } from '../hooks/useSeoLeaderDashboard';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
@@ -51,7 +52,7 @@ export function CampaignCard({ campaign, isAr }: Props) {
             )}
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-            {campaign.description}
+            {stripHtml(campaign.description)}
           </p>
         </div>
         <span className="shrink-0 text-xs px-2.5 py-1 rounded-full border

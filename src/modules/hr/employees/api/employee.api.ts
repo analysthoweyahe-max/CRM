@@ -58,7 +58,7 @@ export const employeeApi = {
   },
 
   assignRole(id: string, payload: AssignEmployeeRolePayload) {
-    return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/role`, payload);
+    return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/access`, payload);
   },
 
   lookupDepartments() {

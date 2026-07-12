@@ -13,18 +13,28 @@ import {
   validateProjectOptionalFields,
 } from '@/shared/utils/projectOptionalFields.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { addMonthsToDate } from '@/shared/utils/date.utils';
 import { createProjectApi } from '../api/createProject.api';
 import { activeProjectTypes, projectTypeLabel } from '../utils/createProject.utils';
 import type {
   CreateProjectFieldErrors,
   CreateProjectModule,
   CreateProjectTypePayload,
+  StatusLookup,
 } from '../types/createProject.types';
 
 export interface UseCreateProjectFormOptions {
   module:      CreateProjectModule;
   templateId?: string;
 }
+
+/** Fallback shown if the backend statuses lookup is temporarily empty/unreachable, so the field is never stuck disabled. */
+const DEFAULT_STATUS_OPTIONS: StatusLookup[] = [
+  { value: 'not_started', label: 'Not Started' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'on_hold', label: 'On Hold' },
+  { value: 'completed', label: 'Completed' },
+];
 
 export function useCreateProjectForm({ module, templateId }: UseCreateProjectFormOptions) {
   const navigate    = useNavigate();
@@ -50,7 +60,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
   const [managerSearch, setManagerSearch] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
-  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [fieldErrors, setFieldErrors] = useState<CreateProjectFieldErrors>({});
   const [saved, setSaved] = useState(false);
   const [savedAsDraft, setSavedAsDraft] = useState(false);
@@ -124,12 +134,17 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     })),
   [projectTypes, isAr]);
 
+  const statusOptions = useMemo(() => {
+    if (statusesQ.data && statusesQ.data.length > 0) return statusesQ.data;
+    return statusesQ.isLoading ? [] : DEFAULT_STATUS_OPTIONS;
+  }, [statusesQ.data, statusesQ.isLoading]);
+
   const statusItems = useMemo(() =>
-    (statusesQ.data ?? []).map(s => ({
+    statusOptions.map(s => ({
       id:    s.value,
       label: translateProjectLookup(s.value, s.label, isAr),
     })),
-  [statusesQ.data, isAr]);
+  [statusOptions, isAr]);
 
   const employeeItems = useMemo(() =>
     (employeesQ.data?.data ?? []).map(e => ({
@@ -168,12 +183,21 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
   }, [projectTypeId]);
 
   useEffect(() => {
-    const options = statusesQ.data ?? [];
-    if (options.length === 0) return;
-    if (!options.some(s => s.value === status)) {
-      setStatus(options[0].value);
+    if (statusOptions.length === 0) return;
+    if (!statusOptions.some(s => s.value === status)) {
+      setStatus(statusOptions[0].value);
     }
-  }, [statusesQ.data, status]);
+  }, [statusOptions, status]);
+
+  // Auto-calculate the end date from the start date + selected contract duration.
+  const endDateAuto = !!startDate && !!contractDurationMonths.trim();
+  useEffect(() => {
+    if (!endDateAuto) return;
+    const months = Number(contractDurationMonths);
+    if (!Number.isInteger(months) || months <= 0) return;
+    const computed = addMonthsToDate(startDate, months);
+    if (computed) setEndDate(computed);
+  }, [startDate, contractDurationMonths, endDateAuto]);
 
   const validateOptionalFields = useCallback(() => {
     const optional = validateProjectOptionalFields(githubLink, driveLink, contractDurationMonths, isAr);
@@ -189,6 +213,12 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
 
   const createMutation = useMutation({
     mutationFn: async (asDraft: boolean) => {
+      // No employees picked — assign the project/task to whoever is creating it.
+      const selfId = user?.employeeId || user?.id;
+      const effectiveEmployeeIds = employeeIds.length
+        ? employeeIds
+        : (selfId ? [String(selfId)] : undefined);
+
       const common = {
         name:                   name.trim(),
         description:            description.trim() || null,
@@ -196,7 +226,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
         githubLink:             optionalLink(githubLink),
         driveLink:              optionalLink(driveLink),
         contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
-        employeeIds:            employeeIds.length ? employeeIds : undefined,
+        employeeIds:            effectiveEmployeeIds,
         status:                 status || 'not_started',
         isDraft:                asDraft,
         startDate:              startDate || null,
@@ -208,15 +238,16 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
           deadline:   endDate || null,
           templateId: templateId || null,
           managerIds: isAdmin ? managerIds : undefined,
-        }, attachment);
+        }, attachments);
       }
 
       return createProjectApi.createSeo({
         ...common,
         targetDomain:     targetDomain.trim() || null,
         expectedEndDate:  endDate || null,
+        templateId:       templateId || null,
         managerIds:       isAdmin ? managerIds : undefined,
-      }, attachment);
+      }, attachments);
     },
     onSuccess: (res, asDraft) => {
       const newId = res.data?.data?.id;
@@ -277,11 +308,6 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
         ? 'يجب اختيار مدير مشروع واحد على الأقل'
         : 'At least one project manager must be selected';
     }
-    if (!asDraft && employeeIds.length === 0) {
-      errors.employeeIds = isAr
-        ? 'يجب تعيين موظف واحد على الأقل قبل النشر'
-        : 'Assign at least one employee before publishing';
-    }
 
     setFieldErrors(errors);
     const optionalOk = validateOptionalFields();
@@ -324,13 +350,14 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     contractDurationMonths, setContractDurationMonths,
     startDate, setStartDate,
     endDate, setEndDate,
+    endDateAuto,
     status, setStatus,
     saveAsDraft, setSaveAsDraft,
     managerIds, setManagerIds,
     managerSearch, setManagerSearch,
     employeeIds, setEmployeeIds,
     employeeSearch, setEmployeeSearch,
-    attachment, setAttachment,
+    attachments, setAttachments,
     fieldErrors,
     // lookups
     departmentItems,

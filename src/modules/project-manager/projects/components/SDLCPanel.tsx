@@ -17,6 +17,7 @@ import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { useTemplate } from '@/modules/project-manager/templates/hooks/useProjectTemplates';
 
 import type { PmProjectTemplate } from '@/modules/project-manager/templates/types/template.types';
+import type { TemplateModule } from '@/modules/project-manager/templates/api/projectTemplate.api';
 
 
 
@@ -29,6 +30,8 @@ interface Props {
   templates:          PmProjectTemplate[];
 
   isLoadingTemplates?: boolean;
+
+  module?:            TemplateModule;
 
   onTemplateSelect: (uuid: string) => void;
 
@@ -46,11 +49,15 @@ export function SDLCPanel({
 
   isLoadingTemplates,
 
+  module = 'pm',
+
   onTemplateSelect,
 
 }: Props) {
 
-  const { data: template, isLoading: isLoadingTemplate } = useTemplate('pm', templateId || undefined);
+  const { data: template, isLoading: isLoadingTemplate } = useTemplate(module, templateId || undefined);
+
+  const manageTemplatesPath = module === 'seo' ? ROUTES.SEO_LEADER.TEMPLATES : ROUTES.PROJECT_MANAGER.TEMPLATES;
 
 
 
@@ -184,7 +191,7 @@ export function SDLCPanel({
 
             <Link
 
-              to={ROUTES.PROJECT_MANAGER.TEMPLATES}
+              to={manageTemplatesPath}
 
               className="text-xs text-[#709028] dark:text-[#A0CD39] hover:underline"
 
@@ -296,7 +303,7 @@ export function SDLCPanel({
 
           <Link
 
-            to={ROUTES.PROJECT_MANAGER.TEMPLATES}
+            to={manageTemplatesPath}
 
             className="text-xs text-[#709028] dark:text-[#A0CD39] hover:underline"
 

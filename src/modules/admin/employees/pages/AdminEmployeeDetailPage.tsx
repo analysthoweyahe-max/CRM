@@ -29,6 +29,7 @@ export function AdminEmployeeDetailPage() {
     openRoleModal,
     closeRoleModal,
     assignEmployeeRole,
+    resetRoleToDepartmentDefault,
     assigningRole,
   } = useAdminEmployeeDetail(isAr);
 
@@ -80,6 +81,9 @@ export function AdminEmployeeDetailPage() {
           <EmploymentInfoCard employee={employee} isAr={isAr} />
           <EmployeeRolesCard
             roles={employee.roles}
+            permissions={employee.permissions}
+            roleManuallyAssigned={employee.roleManuallyAssigned}
+            sectionLabel={employee.sectionLabel}
             isAr={isAr}
             canAssign={canAssignRole}
             availableRoles={availableRoles}
@@ -88,6 +92,7 @@ export function AdminEmployeeDetailPage() {
             onOpenAssign={openRoleModal}
             onCloseAssign={closeRoleModal}
             onAssign={assignEmployeeRole}
+            onResetToDepartment={resetRoleToDepartmentDefault}
           />
         </div>
       </div>

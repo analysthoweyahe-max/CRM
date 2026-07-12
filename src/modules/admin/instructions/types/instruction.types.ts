@@ -1,4 +1,4 @@
-export type InstructionAudienceType = 'all' | 'department' | 'employee';
+export type InstructionAudienceType = 'all' | 'department' | 'employee' | 'managers';
 
 export interface AdminInstructionPayload {
   title:         string;
