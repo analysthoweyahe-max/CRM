@@ -22,7 +22,7 @@ import { extractApiError } from '@/shared/utils/error.utils';
 
 const INITIAL: PmTaskFormState = {
   title: '', description: '', priority: '', status: '',
-  assigneeId: '', dueDate: '', estimatedHours: '', phaseId: '',
+  assigneeId: '', dueDate: '', estimatedHours: '', estimatedMinutes: '', phaseId: '',
 };
 
 export function AddPmTaskPage() {
@@ -127,6 +127,7 @@ export function AddPmTaskPage() {
         priority:        normalizePmTaskPriority(form.priority),
         dueDate:         form.dueDate,
         estimatedHours:  form.estimatedHours ? Number(form.estimatedHours) : undefined,
+        estimatedMinutes: form.estimatedMinutes ? Number(form.estimatedMinutes) : undefined,
         phaseId:         Number(form.phaseId),
         status:          form.status,
       });

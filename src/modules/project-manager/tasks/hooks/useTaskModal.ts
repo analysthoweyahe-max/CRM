@@ -161,6 +161,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   const [editPriority, setEditPriority] = useState<string>(task?.priority ?? '');
   const [editDueDate,  setEditDueDate]  = useState(task?.dueDate ?? '');
   const [editEstHours, setEditEstHours] = useState(String(task?.estimatedHours ?? 10));
+  const [editEstMinutes, setEditEstMinutes] = useState(String(task?.estimatedMinutes ?? ''));
   const [savingEdit,   setSavingEdit]   = useState(false);
 
   function openEdit() {
@@ -168,6 +169,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     setEditPriority(task?.priority ?? '');
     setEditDueDate(task?.dueDate ?? '');
     setEditEstHours(String(task?.estimatedHours ?? 10));
+    setEditEstMinutes(task?.estimatedMinutes != null ? String(task.estimatedMinutes) : '');
     setIsEditOpen(true);
   }
   function closeEdit() { setIsEditOpen(false); }
@@ -181,12 +183,14 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
         priority:        editPriority || undefined,
         dueDate:         editDueDate || undefined,
         estimatedHours:  editEstHours ? Number(editEstHours) : undefined,
+        estimatedMinutes: editEstMinutes ? Number(editEstMinutes) : undefined,
       };
       const baseline = {
         title:           task.title,
         priority:        task.priority,
         dueDate:         task.dueDate || undefined,
         estimatedHours:  task.estimatedHours,
+        estimatedMinutes: task.estimatedMinutes,
       };
       const payload = Object.fromEntries(
         Object.entries(next).filter(([key, value]) => value !== undefined && value !== baseline[key as keyof typeof baseline]),
@@ -247,6 +251,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     isEditOpen, editTitle, setEditTitle,
     editPriority, setEditPriority,
     editDueDate, setEditDueDate, editEstHours, setEditEstHours,
+    editEstMinutes, setEditEstMinutes,
     openEdit, closeEdit, saveEdit, savingEdit,
     changeStatus, changingStatus,
     isDeleteOpen, openDelete, closeDelete, confirmDelete,

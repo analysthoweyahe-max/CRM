@@ -3,6 +3,7 @@ import { Button }            from '@/shared/components/ui/Button';
 import { Combobox }          from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextView }      from '@/shared/components/form/RichTextView';
+import { formatEstimatedTime } from '@/shared/utils/format.utils';
 import type { Task, TaskStatus } from '../types/task.types';
 import { usePmTaskLookups } from '../../projects/hooks/usePmTaskLookups';
 
@@ -75,8 +76,10 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, onStatusChange, 
       {/* Dates */}
       <div className="flex items-center justify-between text-sm">
         <div className="text-left">
-          <p className="text-xs text-gray-400">{isAr ? 'الساعات المقدرة' : 'Est. Hours'}</p>
-          <p className="font-medium text-gray-700 dark:text-gray-200 mt-0.5">{task.estimatedHours ?? '—'}</p>
+          <p className="text-xs text-gray-400">{isAr ? 'الوقت المقدر' : 'Est. Time'}</p>
+          <p className="font-medium text-gray-700 dark:text-gray-200 mt-0.5">
+            {formatEstimatedTime(task.estimatedHours, task.estimatedMinutes, isAr)}
+          </p>
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-400">{isAr ? 'تاريخ التسليم' : 'Due Date'}</p>

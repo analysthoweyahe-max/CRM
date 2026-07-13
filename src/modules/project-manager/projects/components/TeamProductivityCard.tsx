@@ -11,8 +11,9 @@ interface Props {
 export function TeamProductivityCard({ tasks, isAr }: Props) {
   const teamMap = new Map<string, number>();
   tasks.forEach(t => {
-    if (t.estimatedHours) {
-      teamMap.set(t.assigneeName, (teamMap.get(t.assigneeName) ?? 0) + t.estimatedHours);
+    if (t.estimatedHours || t.estimatedMinutes) {
+      const hours = (t.estimatedHours ?? 0) + (t.estimatedMinutes ?? 0) / 60;
+      teamMap.set(t.assigneeName, (teamMap.get(t.assigneeName) ?? 0) + hours);
     }
   });
   const labels = Array.from(teamMap.keys());

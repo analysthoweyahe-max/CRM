@@ -24,6 +24,7 @@ export function toTask(raw: RawPmTask, projectId: string): Task {
     assigneeColor:   getAvatarColor(raw.assignee?.name ?? raw.title),
     dueDate:         raw.dueDate ?? '',
     estimatedHours:  raw.estimatedHours != null ? Number(raw.estimatedHours) : undefined,
+    estimatedMinutes: raw.estimatedMinutes != null ? Number(raw.estimatedMinutes) : undefined,
     status:          raw.status as TaskStatus,
     taskNumber:      `#${String(raw.taskNumber).padStart(3, '0')}`,
   };

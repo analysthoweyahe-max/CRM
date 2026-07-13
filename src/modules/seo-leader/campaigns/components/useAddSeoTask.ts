@@ -4,15 +4,16 @@ import { campaignApi }                      from '../api/campaign.api';
 import type { AddSeoTaskForm }              from './AddSeoTaskModal.types';
 
 const INITIAL: AddSeoTaskForm = {
-  title:          '',
-  phase:          '',
-  description:    '',
-  assignee:       '',
-  priority:       'medium',
-  dueDate:        '',
-  estimatedHours: '',
-  targetKeyword:  '',
-  targetUrl:      '',
+  title:            '',
+  phase:            '',
+  description:      '',
+  assignee:         '',
+  priority:         'medium',
+  dueDate:          '',
+  estimatedHours:   '',
+  estimatedMinutes: '',
+  targetKeyword:    '',
+  targetUrl:        '',
 };
 
 export function useAddSeoTask(
@@ -41,6 +42,7 @@ export function useAddSeoTask(
         priority:         form.priority || undefined,
         due_date:         form.dueDate            || undefined,
         estimated_hours:  form.estimatedHours ? Number(form.estimatedHours) : undefined,
+        estimated_minutes: form.estimatedMinutes ? Number(form.estimatedMinutes) : undefined,
         target_keyword:   form.targetKeyword.trim() || undefined,
         target_url:       form.targetUrl.trim()     || undefined,
       };

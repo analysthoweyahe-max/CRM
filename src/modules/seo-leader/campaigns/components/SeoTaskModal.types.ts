@@ -16,6 +16,7 @@ export interface SeoTaskFull {
   priorityLabel?:   string;
   stage?:           string | null;
   estimatedHours?:  number | null;
+  estimatedMinutes?: number | null;
   startDate?:       string | null;
   dueDate?:         string | null;
   siteLinks:        string[];

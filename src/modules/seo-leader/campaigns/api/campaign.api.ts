@@ -36,6 +36,7 @@ export interface SeoTask {
   startDate?:      string | null;
   dueDate?:        string | null;
   estimatedHours?: number | string | null;
+  estimatedMinutes?: number | string | null;
   siteLinks:       string[];
   notes?:          string | null;
   referenceLinks:  string[];
@@ -204,6 +205,7 @@ export interface SeoUpdateTaskPayload {
   startDate?:        string;
   dueDate?:          string;
   estimatedHours?:   number;
+  estimatedMinutes?: number;
   siteLinks?:        string[];
   notes?:            string;
   referenceLinks?:   string[];
@@ -211,6 +213,7 @@ export interface SeoUpdateTaskPayload {
   start_date?:       string;
   due_date?:         string;
   estimated_hours?:  number;
+  estimated_minutes?: number;
   site_links?:       string[];
   reference_links?:  string[];
   target_keyword?:   string;
@@ -338,6 +341,7 @@ export const campaignApi = {
       if (payload.priority)         fd.append('priority', payload.priority);
       if (payload.due_date)         fd.append('due_date', payload.due_date);
       if (payload.estimated_hours != null) fd.append('estimated_hours', String(payload.estimated_hours));
+      if (payload.estimated_minutes != null) fd.append('estimated_minutes', String(payload.estimated_minutes));
       if (payload.target_keyword)   fd.append('target_keyword', payload.target_keyword);
       if (payload.target_url)       fd.append('target_url', payload.target_url);
       appendSeoTaskFiles(fd, files);

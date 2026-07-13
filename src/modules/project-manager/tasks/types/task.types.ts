@@ -17,6 +17,7 @@ export interface Task {
   assigneeColor:    string;
   dueDate:          string;
   estimatedHours?:  number;
+  estimatedMinutes?: number;
   status:           TaskStatus;
   taskNumber:       string;
 }

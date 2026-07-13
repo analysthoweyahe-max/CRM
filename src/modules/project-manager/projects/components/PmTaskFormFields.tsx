@@ -18,9 +18,10 @@ export interface PmTaskFormState {
   priority:       string;
   status:         string;
   assigneeId:     string;
-  dueDate:        string;
-  estimatedHours: string;
-  phaseId:        string;
+  dueDate:          string;
+  estimatedHours:   string;
+  estimatedMinutes: string;
+  phaseId:          string;
 }
 
 interface Props {
@@ -97,8 +98,8 @@ export function PmTaskFormFields({
         </div>
       </div>
 
-      {/* Due Date + Estimated Hours */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Due Date + Estimated Hours/Minutes */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className={LABEL}>
             {isAr ? 'تاريخ التسليم' : 'Due Date'}
@@ -115,10 +116,22 @@ export function PmTaskFormFields({
           <label className={LABEL}>{isAr ? 'الساعات المقدرة' : 'Est. Hours'}</label>
           <input
             type="number"
-            min="1"
+            min="0"
             value={form.estimatedHours}
             onChange={e => set('estimatedHours', e.target.value)}
             placeholder="8"
+            className={INPUT}
+          />
+        </div>
+        <div>
+          <label className={LABEL}>{isAr ? 'الدقائق المقدرة' : 'Est. Minutes'}</label>
+          <input
+            type="number"
+            min="0"
+            max="59"
+            value={form.estimatedMinutes}
+            onChange={e => set('estimatedMinutes', e.target.value)}
+            placeholder="30"
             className={INPUT}
           />
         </div>

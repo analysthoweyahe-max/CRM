@@ -193,18 +193,33 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
             </div>
           </div>
 
-          {/* Estimated hours */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
-              {isAr ? 'الساعات المقدّرة' : 'Estimated Hours'}
-            </label>
-            <input
-              type="number"
-              min={1}
-              value={modal.editEstHours}
-              onChange={e => modal.setEditEstHours(e.target.value)}
-              className={`${inputCls(false)} text-right`}
-            />
+          {/* Estimated hours + minutes */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
+                {isAr ? 'الساعات المقدّرة' : 'Est. Hours'}
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={modal.editEstHours}
+                onChange={e => modal.setEditEstHours(e.target.value)}
+                className={`${inputCls(false)} text-right`}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
+                {isAr ? 'الدقائق المقدّرة' : 'Est. Minutes'}
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={59}
+                value={modal.editEstMinutes}
+                onChange={e => modal.setEditEstMinutes(e.target.value)}
+                className={`${inputCls(false)} text-right`}
+              />
+            </div>
           </div>
         </div>
       </Modal>

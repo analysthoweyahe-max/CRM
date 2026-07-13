@@ -1,13 +1,14 @@
 export interface AddSeoTaskForm {
-  title:          string;
-  phase:          string;
-  description:    string;
-  assignee:       string;
-  priority:       string;
-  dueDate:        string;
-  estimatedHours: string;
-  targetKeyword:  string;
-  targetUrl:      string;
+  title:            string;
+  phase:            string;
+  description:      string;
+  assignee:         string;
+  priority:         string;
+  dueDate:          string;
+  estimatedHours:   string;
+  estimatedMinutes: string;
+  targetKeyword:    string;
+  targetUrl:        string;
 }
 
 /** POST /v1/seo/projects/{id}/tasks — title/phase/employee_ids required, rest optional */
@@ -20,6 +21,7 @@ export interface CreateSeoTaskPayload {
   due_date?:           string;
   start_date?:         string;
   estimated_hours?:    number;
+  estimated_minutes?:  number;
   status?:             string;
   target_keyword?:     string;
   target_url?:         string;

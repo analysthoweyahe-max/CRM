@@ -10,6 +10,7 @@ export interface PmCreateTaskPayload {
   priority?:        string;
   dueDate?:         string;
   estimatedHours?:  number;
+  estimatedMinutes?: number;
   phaseId?:         number;
   status?:          string;
 }
@@ -51,6 +52,8 @@ export interface PmUpdateTaskPayload {
   due_date?:        string;
   estimatedHours?:  number;
   estimated_hours?: number;
+  estimatedMinutes?: number;
+  estimated_minutes?: number;
   phaseId?:         number;
   phase_id?:        number;
   status?:          string;
@@ -115,6 +118,7 @@ export interface RawPmTask {
   priorityLabel:    string;
   dueDate:          string | null;
   estimatedHours:   string | number | null;
+  estimatedMinutes: string | number | null;
   phase?:           RawPmTaskPhase | null;
   assignee?:        RawPmTaskAssignee | null;
   completedAt:      string | null;
