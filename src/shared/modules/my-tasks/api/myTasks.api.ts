@@ -1,6 +1,6 @@
 import { http } from '@/shared/services/http.service';
 import { myProjectsApi } from '@/shared/modules/my-projects/api/myProjects.api';
-import type { GroupedTasksData, TasksApiRole } from '../types/myTasks.types';
+import type { GroupedTasksData, TasksApiRole, TaskPhase } from '../types/myTasks.types';
 import {
   getTasksEndpoint,
   getTasksQueryParams,
@@ -62,6 +62,10 @@ export const myTasksApi = {
     }));
   },
 
+  /** The dedicated PATCH .../status sub-route is only ever exercised with an
+   *  employee token in the backend's own Postman collection — a manager
+   *  (admin token) instead goes through the general task-update endpoint
+   *  with `status` in the body. */
   updateStatus(
     tasksRole: TasksApiRole,
     projectId: number | string,
@@ -70,16 +74,51 @@ export const myTasksApi = {
   ) {
     switch (tasksRole) {
       case 'pm-employee':
-      case 'project-manager':
         return http.patch(
           `/v1/pm/projects/${projectId}/tasks/${taskId}/status`,
           { status },
         );
+      case 'project-manager':
+        return http.put(
+          `/v1/pm/projects/${projectId}/tasks/${taskId}`,
+          { status },
+        );
       case 'seo-employee':
-      case 'seo-manager':
         return http.patch(
           `/v1/seo/projects/${projectId}/tasks/${taskId}/status`,
           { status },
+        );
+      case 'seo-manager':
+        return http.put(
+          `/v1/seo/projects/${projectId}/tasks/${taskId}`,
+          { status },
+          { skip401Redirect: true },
+        );
+    }
+  },
+
+  /** PM's phaseId field is confirmed supported by the backend. SEO's `phase`
+   *  field is unverified — the documented full-update field list didn't
+   *  mention it, so this may silently no-op server-side for SEO roles. */
+  updatePhase(
+    tasksRole: TasksApiRole,
+    projectId: number | string,
+    taskId: number | string,
+    phase: TaskPhase,
+  ) {
+    switch (tasksRole) {
+      case 'pm-employee':
+      case 'project-manager':
+        return http.put(
+          `/v1/pm/projects/${projectId}/tasks/${taskId}`,
+          { phaseId: Number(phase.id) },
+        );
+      case 'seo-employee':
+      case 'seo-manager':
+        return http.put(
+          `/v1/seo/projects/${projectId}/tasks/${taskId}`,
+          { phase: phase.name },
+          { skip401Redirect: true },
         );
     }
   },

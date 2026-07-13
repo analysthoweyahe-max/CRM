@@ -12,11 +12,13 @@ import { extractApiError } from '@/shared/utils/error.utils';
 import { formatDateShort } from '@/shared/utils/date.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
-import { http } from '@/shared/services/http.service';
-import { useSeoTaskStatusList } from '@/modules/admin/seo-task-statuses/hooks/useSeoTaskStatuses';
+import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
+import type { SeoTaskStatusOption } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import { campaignApi } from '@/modules/seo-leader/campaigns/api/campaign.api';
 import type { SeoTask } from '@/modules/seo-leader/campaigns/api/campaign.api';
-import { SeoStatusColumn } from '@/modules/seo-leader/campaigns/components/SeoStatusColumn';
+import { KanbanBoard as SharedKanbanBoard } from '@/shared/components/kanban/KanbanBoard';
+import { colorForKey } from '@/shared/components/kanban/kanbanColors';
+import { KanbanTaskCard } from '@/modules/project-manager/projects/components/KanbanTaskCard';
 import { ProjectMessages } from '@/modules/seo-leader/campaigns/components/ProjectMessages';
 import { SeoProgressTab } from '@/modules/seo-leader/campaigns/components/SeoProgressTab';
 import { SeoProjectTeamTab } from '@/modules/seo-leader/projects/components/SeoProjectTeamTab';
@@ -126,33 +128,21 @@ export function SeoMemberProjectDetailsPage() {
     retry: 1,
   });
 
-  const { data: statusesRaw, isLoading: statusesLoading } = useSeoTaskStatusList();
-  const statuses = useMemo(
-    () => (statusesRaw ?? []).filter(s => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder),
-    [statusesRaw],
-  );
+  const { statusOptions: statuses, isLoading: statusesLoading } = useSeoTaskLookups(isAr);
   const marksCompletedByKey = useMemo(
     () => Object.fromEntries(statuses.map(s => [s.key, s.marksCompleted])),
     [statuses],
   );
+  const [viewMode, setViewMode] = useState<'status' | 'phase'>('status');
 
-  /* All project tasks visible to the member (mine=0); falls back if API ignores it. */
+  /* GET /v1/seo/employee/projects/{id}/tasks — the member-scoped route.
+     /v1/seo/manager/tasks (used by CampaignDetailsPage) is manager-guarded
+     and isn't valid for an employee token. */
   const { data: rawTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['seo-member-project-tasks', projectKey],
     queryFn: async () => {
-      const { data } = await http.get<{
-        status: string;
-        message: string;
-        data: { phases?: { phase: string; tasks: SeoTask[] }[]; columns?: { status: string; tasks: SeoTask[] }[]; total?: number };
-      }>(`/v1/seo/projects/${projectKey}/tasks`, { params: { mine: 0 } });
-      const payload = data.data;
-      if (Array.isArray(payload.phases)) {
-        return payload.phases.flatMap(p => p.tasks);
-      }
-      if (Array.isArray(payload.columns)) {
-        return payload.columns.flatMap(c => c.tasks);
-      }
-      return [] as SeoTask[];
+      const r = await campaignApi.getEmployeeTasks(projectKey, { per_page: 100 });
+      return (r.data.data.phases ?? []).flatMap(p => p.tasks);
     },
     enabled: !!projectKey,
     staleTime: 30_000,
@@ -178,6 +168,38 @@ export function SeoMemberProjectDetailsPage() {
     ),
     [baseTasks, statusOverrides, marksCompletedByKey],
   );
+
+  const displayColumns: SeoTaskStatusOption[] = useMemo(() => {
+    const known = new Set(statuses.map(s => s.key));
+    const extras: SeoTaskStatusOption[] = [];
+    const seen = new Set<string>();
+    tasks.forEach(t => {
+      if (!known.has(t.rawStatus) && !seen.has(t.rawStatus)) {
+        seen.add(t.rawStatus);
+        extras.push({
+          key: t.rawStatus,
+          label: t.rawStatus,
+          color: '#9CA3AF',
+          sortOrder: 999 + extras.length,
+          isActive: true,
+          marksCompleted: false,
+        });
+      }
+    });
+    return [...statuses, ...extras];
+  }, [statuses, tasks]);
+
+  const phaseColumns = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of tasks) {
+      const key = t.phaseName || (isAr ? 'بدون مرحلة' : 'No phase');
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    }
+    return Array.from(map.entries()).map(([key, items]) => ({
+      key, label: key, color: colorForKey(key), items,
+    }));
+  }, [tasks, isAr]);
 
   function handleDrop(taskId: string, toStatusKey: string) {
     const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
@@ -328,18 +350,46 @@ export function SeoMemberProjectDetailsPage() {
             ))}
           </div>
         ) : (
-          <div className="flex gap-5 overflow-x-auto pb-4 px-1">
-            {statuses.map(status => (
-              <SeoStatusColumn
-                key={status.key}
-                status={status}
-                tasks={tasks.filter(t => t.rawStatus === status.key)}
-                isAr={isAr}
-                onDrop={handleDrop}
-                onOpen={handleOpenTask}
-              />
-            ))}
-          </div>
+          <>
+            <div className="flex items-center justify-between gap-3 mb-3 px-1">
+              <div className="inline-flex rounded-xl border border-gray-200 dark:border-gray-700 p-0.5 bg-gray-50 dark:bg-gray-900/40">
+                {(['status', 'phase'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setViewMode(mode)}
+                    className={[
+                      'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                      viewMode === mode
+                        ? 'bg-white dark:bg-gray-800 text-[#709028] dark:text-[#A0CD39] shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200',
+                    ].join(' ')}
+                  >
+                    {mode === 'status' ? (isAr ? 'الحالة' : 'Status') : (isAr ? 'المرحلة' : 'Phase')}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <SharedKanbanBoard
+              columns={
+                viewMode === 'status'
+                  ? displayColumns.map(status => ({
+                      key:   status.key,
+                      label: status.label,
+                      color: status.color,
+                      items: tasks.filter(t => t.rawStatus === status.key),
+                    }))
+                  : phaseColumns
+              }
+              isAr={isAr}
+              getId={(task: Task) => task.id}
+              renderCard={(task: Task) => (
+                <KanbanTaskCard task={task} isAr={isAr} onOpen={handleOpenTask} />
+              )}
+              onDrop={viewMode === 'status' ? handleDrop : () => {}}
+              draggable={viewMode === 'status'}
+            />
+          </>
         )
       )}
 

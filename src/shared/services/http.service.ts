@@ -3,6 +3,14 @@ import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axio
 import { env } from '@/app/config/env';
 import { TOKEN_KEY, USER_KEY, LANG_KEY } from '@/app/config/constants';
 
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    /** Set true for optional/unverified endpoints so a 401 rejects the
+     *  request normally without forcing a full app logout+redirect. */
+    skip401Redirect?: boolean;
+  }
+}
+
 const PUBLIC_AUTH_SEGMENTS = [
   '/auth/login',
   '/auth/forgot-password',
@@ -51,8 +59,9 @@ http.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     const publicAuth = isPublicAuthRequest(error.config?.url);
+    const skipRedirect = (error.config as { skip401Redirect?: boolean } | undefined)?.skip401Redirect;
 
-    if (error.response?.status === 401 && !publicAuth) {
+    if (error.response?.status === 401 && !publicAuth && !skipRedirect) {
       localStorage.removeItem(TOKEN_KEY);
       sessionStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);

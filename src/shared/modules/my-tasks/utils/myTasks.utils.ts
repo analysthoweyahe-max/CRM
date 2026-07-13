@@ -422,17 +422,3 @@ export const PRIORITY_BADGE: Record<string, string> = {
   low:    'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
 };
 
-export const COLUMN_ACCENT: Record<string, { dot: string; accent: string; surface: string }> = {
-  pending:      { dot: 'bg-gray-400',    accent: 'border-t-gray-400',    surface: 'bg-gray-50/90 dark:bg-gray-900/40' },
-  in_progress:  { dot: 'bg-[#A0CD39]', accent: 'border-t-[#A0CD39]', surface: 'bg-[#f7fbea]/80 dark:bg-[#A0CD39]/5' },
-  in_review:    { dot: 'bg-amber-500',   accent: 'border-t-amber-500',   surface: 'bg-amber-50/70 dark:bg-amber-900/10' },
-  needs_review: { dot: 'bg-amber-500',   accent: 'border-t-amber-500',   surface: 'bg-amber-50/70 dark:bg-amber-900/10' },
-  blocked:      { dot: 'bg-red-500',     accent: 'border-t-red-500',     surface: 'bg-red-50/70 dark:bg-red-900/10' },
-  completed:    { dot: 'bg-emerald-500', accent: 'border-t-emerald-500', surface: 'bg-emerald-50/60 dark:bg-emerald-900/10' },
-};
-
-export const DEFAULT_COLUMN_ACCENT = {
-  dot: 'bg-gray-400',
-  accent: 'border-t-gray-400',
-  surface: 'bg-gray-50/90 dark:bg-gray-900/40',
-};

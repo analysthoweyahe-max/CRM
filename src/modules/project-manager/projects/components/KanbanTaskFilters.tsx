@@ -13,6 +13,7 @@ interface Props {
   hasActive:     boolean;
   resultCount:   number;
   totalCount:    number;
+  hidePhase?:    boolean;
 }
 
 export function KanbanTaskFilters({
@@ -27,22 +28,25 @@ export function KanbanTaskFilters({
   hasActive,
   resultCount,
   totalCount,
+  hidePhase,
 }: Props) {
   const sp = isAr ? 'ابحث...' : 'Search...';
   const nr = isAr ? 'لا نتائج' : 'No results';
 
   return (
     <div className="flex flex-wrap items-center gap-3 mb-4 px-1">
-      <div className="w-48 min-w-[11rem] flex-1 sm:flex-none">
-        <Combobox
-          items={phaseItems}
-          value={phase}
-          onChange={onPhase}
-          placeholder={isAr ? 'المرحلة' : 'Phase'}
-          searchPlaceholder={sp}
-          noResultsText={nr}
-        />
-      </div>
+      {!hidePhase && (
+        <div className="w-48 min-w-[11rem] flex-1 sm:flex-none">
+          <Combobox
+            items={phaseItems}
+            value={phase}
+            onChange={onPhase}
+            placeholder={isAr ? 'المرحلة' : 'Phase'}
+            searchPlaceholder={sp}
+            noResultsText={nr}
+          />
+        </div>
+      )}
       <div className="w-48 min-w-[11rem] flex-1 sm:flex-none">
         <Combobox
           items={assigneeItems}

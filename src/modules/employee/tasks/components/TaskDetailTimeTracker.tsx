@@ -5,16 +5,25 @@ import { useTaskTimer } from '@/app/layouts/components/TaskTimerContext';
 import { useCreateSession, useDeleteSession } from '../hooks/useTaskDetail';
 import type { TaskDetail, TaskSession } from '../types/taskDetail.types';
 
+interface CreateSessionPayload { workDate: string; startedAt: string; endedAt: string }
+
 interface Props {
   task:       TaskDetail | undefined;
   sessions:   TaskSession[];
   isLoading:  boolean;
   isAr:       boolean;
-  // When provided, add/delete persist for real via /v1/pm/.../time-logs.
-  // Omitted by callers (e.g. the SEO task detail reuse) that have no real
-  // backend wiring yet — those fall back to local-only session state.
+  // When provided (with taskId), add/delete persist for real. Omitted by
+  // callers with no backend wiring at all — those fall back to local-only
+  // session state.
   projectId?: string;
   taskId?:    string;
+  // Override the default PM (/v1/pm/.../time-logs) persistence with a
+  // different backend — e.g. the SEO module reuses this component but needs
+  // its own time-log endpoints, not the PM ones.
+  onCreateSession?: (payload: CreateSessionPayload, opts: { onSuccess: () => void }) => void;
+  onDeleteSession?: (sessionId: string) => void;
+  creatingSession?: boolean;
+  deletingSession?: boolean;
 }
 
 interface AddSessionForm {
@@ -55,11 +64,20 @@ function Skeleton() {
   );
 }
 
-export function TaskDetailTimeTracker({ task, sessions: serverSessions, isLoading, isAr, projectId, taskId }: Props) {
+export function TaskDetailTimeTracker({
+  task, sessions: serverSessions, isLoading, isAr, projectId, taskId,
+  onCreateSession, onDeleteSession, creatingSession, deletingSession,
+}: Props) {
   const { activeTask, elapsed, startTimer, stopTimer } = useTaskTimer();
   const canPersist = !!(projectId && taskId);
-  const createSessionMutation = useCreateSession(projectId ?? '', taskId ?? '');
-  const deleteSessionMutation = useDeleteSession(projectId ?? '', taskId ?? '');
+  // Always called (rules-of-hooks) but only actually invoked as the default
+  // PM persistence path — a no-op unless canPersist and no override is given.
+  const pmCreateSessionMutation = useCreateSession(projectId ?? '', taskId ?? '');
+  const pmDeleteSessionMutation = useDeleteSession(projectId ?? '', taskId ?? '');
+  const persistCreate = onCreateSession ?? ((payload, opts) => pmCreateSessionMutation.mutate(payload, opts));
+  const persistDelete = onDeleteSession ?? ((id: string) => pmDeleteSessionMutation.mutate(id));
+  const isCreatingSession = onCreateSession ? !!creatingSession : pmCreateSessionMutation.isPending;
+  const isDeletingSession = onDeleteSession ? !!deletingSession : pmDeleteSessionMutation.isPending;
 
   const [localSessions, setLocalSessions] = useState<TaskSession[]>(serverSessions);
   const sessions = canPersist ? serverSessions : localSessions;
@@ -80,7 +98,7 @@ export function TaskDetailTimeTracker({ task, sessions: serverSessions, isLoadin
   };
 
   function deleteSession(id: string) {
-    if (canPersist) { deleteSessionMutation.mutate(id); return; }
+    if (canPersist) { persistDelete(id); return; }
     setLocalSessions(prev => prev.filter(s => s.id !== id));
   }
 
@@ -89,7 +107,7 @@ export function TaskDetailTimeTracker({ task, sessions: serverSessions, isLoadin
     if (!form.date || !form.from || !form.to || duration <= 0) return;
 
     if (canPersist) {
-      createSessionMutation.mutate(
+      persistCreate(
         { workDate: form.date, startedAt: form.from, endedAt: form.to },
         { onSuccess: () => { setForm({ date: '', from: '', to: '' }); setShowModal(false); } },
       );
@@ -179,7 +197,8 @@ export function TaskDetailTimeTracker({ task, sessions: serverSessions, isLoadin
                     <span className="text-brand-500 font-medium tabular-nums">{s.durationHours} {isAr ? 'س' : 'h'}</span>
                     <button
                       onClick={() => deleteSession(s.id)}
-                      className="text-gray-300 hover:text-red-500 transition-colors"
+                      disabled={isDeletingSession}
+                      className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
                       title={isAr ? 'حذف' : 'Delete'}
                     >
                       <Trash2 size={14} />
@@ -289,7 +308,7 @@ export function TaskDetailTimeTracker({ task, sessions: serverSessions, isLoadin
                 variant="primary"
                 className="flex-1"
                 onClick={handleAddSession}
-                disabled={!form.date || !form.from || !form.to || duration <= 0}
+                disabled={!form.date || !form.from || !form.to || duration <= 0 || isCreatingSession}
               >
                 {isAr ? 'إضافة' : 'Add'}
               </Button>
