@@ -20,12 +20,7 @@ export function KanbanTaskCard({ task, isAr, onOpen, onDelete }: Props) {
 
   return (
     <div
-      draggable
       onClick={() => onOpen(task)}
-      onDragStart={e => {
-        e.dataTransfer.setData('taskId', task.id);
-        e.dataTransfer.effectAllowed = 'move';
-      }}
       className="group bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm
                  border border-gray-100 dark:border-gray-700/60
                  cursor-grab active:cursor-grabbing active:opacity-50

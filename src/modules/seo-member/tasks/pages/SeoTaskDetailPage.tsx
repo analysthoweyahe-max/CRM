@@ -15,6 +15,8 @@ import {
   useSeoTaskComments,
   useAddSeoTaskComment,
   useSeoTaskSessions,
+  useCreateSeoTaskSession,
+  useDeleteSeoTaskSession,
   useUploadSeoTaskAttachments,
   useDeleteSeoTaskAttachment,
 } from '../hooks/useSeoTaskDetail';
@@ -38,6 +40,8 @@ export function SeoTaskDetailPage() {
   const { data: comments = [], isLoading: commentsLoading } = useSeoTaskComments(projectId, taskId);
   const { mutateAsync: addComment } = useAddSeoTaskComment(projectId, taskId, isAr);
   const { data: sessions = [], isLoading: sessionsLoading } = useSeoTaskSessions(projectId, taskId);
+  const createSessionMutation = useCreateSeoTaskSession(projectId ?? '', taskId ?? '');
+  const deleteSessionMutation = useDeleteSeoTaskSession(projectId ?? '', taskId ?? '');
   const { mutate: changeStatus } = useUpdateSeoTaskStatus(projectId, taskId, isAr);
   const { uploadFiles, isUploading, uploadError } = useUploadSeoTaskAttachments(projectId, taskId, isAr);
   const { deleteAttachment, deletingId } = useDeleteSeoTaskAttachment(projectId, taskId, isAr);
@@ -90,6 +94,12 @@ export function SeoTaskDetailPage() {
               sessions={sessions}
               isLoading={isLoading || sessionsLoading}
               isAr={isAr}
+              projectId={projectId}
+              taskId={taskId}
+              onCreateSession={(payload, opts) => createSessionMutation.mutate(payload, opts)}
+              onDeleteSession={id => deleteSessionMutation.mutate(id)}
+              creatingSession={createSessionMutation.isPending}
+              deletingSession={deleteSessionMutation.isPending}
             />
           )}
           {activeTab === 'info' && (

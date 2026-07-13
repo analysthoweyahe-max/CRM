@@ -11,6 +11,7 @@ import { AddTaskModal } from '@/modules/employee/tasks/components/AddTaskModal';
 import { AddSelfSeoTaskModal } from '@/modules/seo-member/tasks/components/AddSelfSeoTaskModal';
 import { useMyTasksPage } from '../hooks/useMyTasksPage';
 import { MyTasksKanbanBoard } from '../components/MyTasksKanbanBoard';
+import { MyTasksProjectSection } from '../components/MyTasksProjectSection';
 import { MyTasksProjectFilter } from '../components/MyTasksProjectFilter';
 import type { MyTask } from '../types/myTasks.types';
 
@@ -28,10 +29,12 @@ export function MyTasksPage() {
     setProjectId,
     projectOptions,
     data,
+    perProjectData,
     isLoading,
     isError,
     errorStatus,
     updateStatus,
+    updatePhase,
     getTaskId,
   } = useMyTasksPage(isAr, { routeProjectId });
 
@@ -101,6 +104,27 @@ export function MyTasksPage() {
           title={isAr ? 'لا توجد مهام' : 'No tasks'}
           description={isAr ? 'لم يتم إسناد أي مهام لك بعد.' : 'No tasks have been assigned to you yet.'}
         />
+      ) : perProjectData && perProjectData.length > 0 ? (
+        <div className="space-y-8">
+          {perProjectData.map(({ project, data: projectData }) => (
+            <MyTasksProjectSection
+              key={project.id}
+              project={project}
+              data={projectData}
+              isAr={isAr}
+              canDrag={config.canDragStatus}
+              onOpen={handleOpen}
+              onStatusChange={async (task, toStatus) => {
+                if (!tasksRole) return;
+                await updateStatus(project.id, getTaskId(task), toStatus);
+              }}
+              onPhaseChange={async (task, toPhase) => {
+                if (!tasksRole) return;
+                await updatePhase(project.id, getTaskId(task), toPhase);
+              }}
+            />
+          ))}
+        </div>
       ) : (
         <MyTasksKanbanBoard
           data={data}

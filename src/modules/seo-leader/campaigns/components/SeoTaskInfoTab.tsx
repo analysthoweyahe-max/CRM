@@ -3,6 +3,7 @@ import { Button }        from '@/shared/components/ui/Button';
 import { Combobox }      from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
+import { useSeoTaskLookups } from '../hooks/useSeoTaskLookups';
 import type { SeoTaskFull } from './SeoTaskModal.types';
 
 /* ── Style tokens ─────────────────────────────────────────────────────── */
@@ -31,13 +32,6 @@ const PHASE_ITEMS: ComboboxItem[] = [
   { id: 'competitor_analysis',  label: 'تحليل المنافسين'         },
   { id: 'on_page_seo',          label: 'تحسين على الصفحة'        },
   { id: 'off_page_seo',         label: 'تحسين خارج الصفحة'       },
-];
-
-const PRIORITY_ITEMS: ComboboxItem[] = [
-  { id: 'high',   label: 'عالية'   },
-  { id: 'medium', label: 'متوسطة' },
-  { id: 'normal', label: 'عادية'   },
-  { id: 'low',    label: 'منخفضة' },
 ];
 
 const STATUS_ITEMS: ComboboxItem[] = [
@@ -205,6 +199,7 @@ export function SeoTaskInfoTab({
   assigneeItems, assigneeId, setAssigneeId,
 }: SeoTaskInfoTabProps) {
   const kd = Number(keywordDifficulty) || 0;
+  const { priorityItems } = useSeoTaskLookups(isAr);
 
   function addSiteLink(v: string)       { setSiteLinks([...siteLinks, v]);         }
   function removeSiteLink(i: number)    { setSiteLinks(siteLinks.filter((_,x)=>x!==i)); }
@@ -313,7 +308,7 @@ export function SeoTaskInfoTab({
         <div>
           <p className={LABEL}>{isAr ? 'الأولوية' : 'Priority'}</p>
           <Combobox
-            items={PRIORITY_ITEMS}
+            items={priorityItems}
             value={priority}
             onChange={setPriority}
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}

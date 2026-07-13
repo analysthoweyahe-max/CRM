@@ -1,6 +1,17 @@
 import { toast } from 'sonner';
 import type { GroupedTasksData, MyTask } from '../types/myTasks.types';
-import { MyTasksKanbanColumn } from './MyTasksKanbanColumn';
+import { KanbanBoard } from '@/shared/components/kanban/KanbanBoard';
+import { colorForKey } from '@/shared/components/kanban/kanbanColors';
+import { MyTaskCard } from './MyTaskCard';
+
+const STATUS_COLOR: Record<string, string> = {
+  pending:      '#9CA3AF',
+  in_progress:  '#A0CD39',
+  in_review:    '#F59E0B',
+  needs_review: '#F59E0B',
+  blocked:      '#EF4444',
+  completed:    '#10B981',
+};
 
 interface Props {
   data:            GroupedTasksData;
@@ -21,7 +32,8 @@ export function MyTasksKanbanBoard({
 }: Props) {
   const allTasks = data.columns.flatMap((c) => c.tasks);
 
-  async function handleDrop(taskId: number, toStatus: string) {
+  async function handleDrop(id: string, toStatus: string) {
+    const taskId = Number(id);
     const task = allTasks.find((t) => t.id === taskId);
     if (!task || task.status === toStatus || !onStatusChange) return;
     if (!task.project?.id) {
@@ -37,18 +49,20 @@ export function MyTasksKanbanBoard({
   }
 
   return (
-    <div className="flex gap-5 overflow-x-auto pb-4 px-1">
-      {data.columns.map((column) => (
-        <MyTasksKanbanColumn
-          key={column.status}
-          column={column}
-          isAr={isAr}
-          showProjectName={showProjectName}
-          canDrag={canDrag && !!onStatusChange}
-          onOpen={onOpen}
-          onDrop={handleDrop}
-        />
-      ))}
-    </div>
+    <KanbanBoard
+      columns={data.columns.map((column) => ({
+        key:   column.status,
+        label: column.statusLabel,
+        color: STATUS_COLOR[column.status] ?? colorForKey(column.status),
+        items: column.tasks,
+      }))}
+      isAr={isAr}
+      draggable={canDrag && !!onStatusChange}
+      getId={(task: MyTask) => String(task.id)}
+      renderCard={(task: MyTask) => (
+        <MyTaskCard task={task} isAr={isAr} showProjectName={showProjectName} onOpen={onOpen} />
+      )}
+      onDrop={handleDrop}
+    />
   );
 }

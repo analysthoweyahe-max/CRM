@@ -3,8 +3,8 @@ import { useMutation, useQueryClient }  from '@tanstack/react-query';
 import { X }                            from 'lucide-react';
 import { Button }                       from '@/shared/components/ui/Button';
 import { Combobox }                     from '@/shared/components/form/Combobox';
-import type { ComboboxItem }            from '@/shared/components/form/Combobox';
 import { campaignApi }                  from '../api/campaign.api';
+import { useSeoTaskLookups }            from '../hooks/useSeoTaskLookups';
 import type { SeoTaskFull }             from './SeoTaskModal.types';
 import { taskResourceKey }              from '@/shared/utils/resourceKey.utils';
 import { extractApiError }              from '@/shared/utils/error.utils';
@@ -20,12 +20,6 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 text-end';
 
-const PRIORITY_ITEMS: ComboboxItem[] = [
-  { id: 'high',   label: 'عالية'   },
-  { id: 'normal', label: 'عادية'   },
-  { id: 'low',    label: 'منخفضة' },
-];
-
 interface Props {
   task:      SeoTaskFull;
   projectId: string;
@@ -35,6 +29,7 @@ interface Props {
 
 export function SeoEditTaskModal({ task, projectId, isAr, onClose }: Props) {
   const queryClient = useQueryClient();
+  const { priorityItems } = useSeoTaskLookups(isAr);
 
   const [title,    setTitle]    = useState('');
   const [priority, setPriority] = useState('');
@@ -110,7 +105,7 @@ export function SeoEditTaskModal({ task, projectId, isAr, onClose }: Props) {
             <div>
               <label className={LABEL}>{isAr ? 'الأولوية' : 'Priority'}</label>
               <Combobox
-                items={PRIORITY_ITEMS}
+                items={priorityItems}
                 value={priority}
                 onChange={setPriority}
                 placeholder={isAr ? 'اختر الأولوية' : 'Select priority'}

@@ -5,11 +5,39 @@ import { TOKEN_KEY }                from '@/app/config/constants';
 import type {
   CreateCampaignPayload,
   CampaignLookupResponse,
+  CampaignLookupItem,
 } from '../types/campaign.types';
 import type { SeoCampaign }          from '../../dashboard/types/dashboard.types';
 import type { CreateSeoTaskPayload } from '../components/AddSeoTaskModal.types';
 import type { SeoTaskDetail }        from '../components/SeoTaskModal.types';
 import { appendSeoTaskFiles, normalizeSeoAttachments, type SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
+
+/** Unwraps a lookup payload regardless of nesting depth — confirmed the real
+ *  backend wraps task-priorities as `{ data: { data: [...], total } }` (one
+ *  level deeper than `{ data: [...] }`), and task-statuses is unverified so
+ *  may do the same. Falls back to [] instead of crashing on `.map`. */
+function unwrapLookupArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  if (value && typeof value === 'object') {
+    const inner = (value as Record<string, unknown>).data;
+    if (Array.isArray(inner)) return inner as T[];
+  }
+  return [];
+}
+
+/** Shape is unverified against the real backend — every field but `value`/
+ *  `key` is optional so callers must supply sane fallbacks. */
+export interface SeoTaskStatusLookupItem {
+  key?:            string;
+  value?:          string;
+  label?:          string;
+  labelAr?:        string;
+  labelEn?:        string;
+  color?:          string;
+  sortOrder?:      number;
+  isActive?:       boolean;
+  marksCompleted?: boolean;
+}
 
 export interface SeoTaskAssignee {
   id:             string;
@@ -199,6 +227,10 @@ export interface SeoProjectUpdatePayload {
 export interface SeoUpdateTaskPayload {
   title?:            string;
   description?:      string;
+  /** Unverified against the real backend — the documented full-update field
+   *  list doesn't mention `phase`, so a phase-column drag may silently no-op
+   *  server-side. See phase-view drag handler in CampaignDetailsPage. */
+  phase?:            string;
   taskType?:         string;
   status?:           string;
   priority?:         string;
@@ -305,6 +337,32 @@ export const campaignApi = {
     return http.get<CampaignLookupResponse>('/v1/seo/projects/lookups/statuses');
   },
 
+  /** Project-scoped task-status catalog (manager view). May return a plain
+   *  {value,label} list or the richer admin shape — callers must treat
+   *  color/marksCompleted/sortOrder/isActive as optional either way.
+   *  Unverified against the real backend — skip401Redirect so that if this
+   *  route 401s (wrong guard/not deployed) it doesn't force-logout the user
+   *  out of an otherwise-working page over an optional lookup. */
+  getTaskStatuses() {
+    return http.get<ApiResponse<SeoTaskStatusLookupItem[]>>(
+      '/v1/seo/projects/lookups/task-statuses',
+      { skip401Redirect: true },
+    ).then(res => ({
+      ...res,
+      data: { ...res.data, data: unwrapLookupArray<SeoTaskStatusLookupItem>(res.data?.data) },
+    }));
+  },
+
+  getTaskPriorities() {
+    return http.get<CampaignLookupResponse>(
+      '/v1/seo/projects/lookups/task-priorities',
+      { skip401Redirect: true },
+    ).then(res => ({
+      ...res,
+      data: { ...res.data, data: unwrapLookupArray<CampaignLookupItem>(res.data?.data) },
+    }));
+  },
+
   /* ── Tasks (manager) ──────────────────────────────────────────────────
      Base path /v1/seo/projects/{project_id}/tasks — shared by seo-manager
      and seo-employee (guard-scoped by token, not by URL prefix). Only
@@ -313,9 +371,18 @@ export const campaignApi = {
     return http.get<ApiResponse<PhasedTasksResponse>>('/v1/seo/manager/tasks', { params });
   },
 
-  getTasks(projectId: string | number, params?: { status?: string; search?: string }) {
+  getTasks(projectId: string | number, params?: { status?: string; search?: string; per_page?: number }) {
     return http.get<ApiResponse<PhasedTasksResponse>>(
       `/v1/seo/projects/${projectId}/tasks`, { params }
+    );
+  },
+
+  /** SEO-employee-scoped project task list — `/v1/seo/manager/tasks` (used
+   *  for the manager board) is manager-guarded and 403s for employee tokens,
+   *  so member-facing project pages must use this route instead. */
+  getEmployeeTasks(projectId: string | number, params?: { status?: string; search?: string; per_page?: number }) {
+    return http.get<ApiResponse<PhasedTasksResponse>>(
+      `/v1/seo/employee/projects/${projectId}/tasks`, { params }
     );
   },
 
@@ -412,21 +479,25 @@ export const campaignApi = {
     }));
   },
 
+  /* Unified path — the /v1/seo/manager/projects/... prefix this used to hit
+     is manager-guarded only and 401s (→ forced logout) for a super-admin
+     token; the unified path is valid for both super-admin and the project's
+     SEO manager. */
   getTimeLogs(projectId: string | number, taskId: string | number) {
     return http.get<ApiResponse<SeoTaskTimeLogSummary>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/time-logs`
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/time-logs`
     );
   },
 
   addTimeLog(projectId: string | number, taskId: string | number, payload: AddSeoTimeLogPayload) {
     return http.post<ApiResponse<SeoTaskTimeLog>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/time-logs`, payload
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/time-logs`, payload
     );
   },
 
   deleteTimeLog(projectId: string | number, taskId: string | number, timeLogId: string | number) {
     return http.delete<ApiResponse<SeoTaskTimeLogSummary>>(
-      `/v1/seo/manager/projects/${projectId}/tasks/${taskId}/time-logs/${timeLogId}`
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/time-logs/${timeLogId}`
     );
   },
 

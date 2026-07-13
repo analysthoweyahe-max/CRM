@@ -40,7 +40,7 @@ interface Props {
 
 /* ── Component ───────────────────────────────────────────────────────── */
 export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
-  const d = useSeoTaskDrawer(projectId, taskId);
+  const d = useSeoTaskDrawer(projectId, taskId, isAr);
 
   const [editOpen, setEditOpen] = useState(false);
 
@@ -170,6 +170,8 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                 estimatedHours={d.estimatedHours}
                 remainingHours={d.remainingHours}
                 progress={d.progress}
+                onAddTimeLog={d.addTimeLog}
+                loggingTime={d.loggingTime}
                 isAr={isAr}
               />
             )}

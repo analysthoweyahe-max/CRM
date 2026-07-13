@@ -1,6 +1,7 @@
 import { Combobox }     from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
+import { useSeoTaskLookups } from '../hooks/useSeoTaskLookups';
 import { SeoTaskFilesInput } from './SeoTaskFilesInput';
 import type { AddSeoTaskForm } from './AddSeoTaskModal.types';
 
@@ -15,12 +16,6 @@ const INPUT = [
 
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
-const PRIORITY_ITEMS: ComboboxItem[] = [
-  { id: 'high',   label: 'عالية'    },
-  { id: 'medium', label: 'متوسطة'  },
-  { id: 'low',    label: 'منخفضة'  },
-];
-
 interface Props {
   form:       AddSeoTaskForm;
   set:        <K extends keyof AddSeoTaskForm>(key: K, val: AddSeoTaskForm[K]) => void;
@@ -33,6 +28,7 @@ interface Props {
 }
 
 export function AddSeoTaskForm({ form, set, teamItems, isAr, files = [], onFilesChange, fileError, onFileError }: Props) {
+  const { priorityItems } = useSeoTaskLookups(isAr);
   return (
     <div className="space-y-4">
 
@@ -96,7 +92,7 @@ export function AddSeoTaskForm({ form, set, teamItems, isAr, files = [], onFiles
         <div>
           <label className={LABEL}>{isAr ? 'الأولوية' : 'Priority'}</label>
           <Combobox
-            items={PRIORITY_ITEMS}
+            items={priorityItems}
             value={form.priority}
             onChange={v => set('priority', v)}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}

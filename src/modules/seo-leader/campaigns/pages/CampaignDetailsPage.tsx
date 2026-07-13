@@ -18,9 +18,11 @@ import { SeoProjectTeamTab }      from '../../projects/components/SeoProjectTeam
 import { SeoProjectSettingsTab }  from '../components/SeoProjectSettingsTab';
 import { SeoProgressTab }         from '../components/SeoProgressTab';
 import { SeoClientUpdatesTab }    from '../components/SeoClientUpdatesTab';
-import { SeoStatusColumn }        from '../components/SeoStatusColumn';
-import { useSeoTaskStatusList }   from '@/modules/admin/seo-task-statuses/hooks/useSeoTaskStatuses';
-import type { ApiSeoTaskStatus }  from '@/modules/admin/seo-task-statuses/types/seoTaskStatus.types';
+import { useSeoTaskLookups }       from '../hooks/useSeoTaskLookups';
+import type { SeoTaskStatusOption } from '../hooks/useSeoTaskLookups';
+import { KanbanBoard as SharedKanbanBoard } from '@/shared/components/kanban/KanbanBoard';
+import { colorForKey }            from '@/shared/components/kanban/kanbanColors';
+import { KanbanTaskCard }         from '@/modules/project-manager/projects/components/KanbanTaskCard';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
@@ -133,25 +135,24 @@ export function CampaignDetailsPage() {
     queryFn:  () => campaignApi.getStatuses().then(r => r.data.data ?? []),
     staleTime: 5 * 60 * 1000,
   });
-  /* ── Task statuses — admin-configured, drives the Kanban columns ───── */
-  const { data: statusesRaw, isLoading: statusesLoading } = useSeoTaskStatusList();
-  const statuses = useMemo(
-    () => (statusesRaw ?? []).filter(s => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder),
-    [statusesRaw],
-  );
+  /* ── Task statuses — project-scoped lookup, drives the Kanban columns ── */
+  const { statusOptions: statuses, isLoading: statusesLoading } = useSeoTaskLookups(isAr);
   const marksCompletedByKey = useMemo(
     () => Object.fromEntries(statuses.map(s => [s.key, s.marksCompleted])),
     [statuses],
   );
+  const [viewMode, setViewMode] = useState<'status' | 'phase'>('status');
 
   /* ── Tasks from backend ───────────────────────────────────────────────
-     Uses the flat /v1/seo/manager/tasks?project_id= listing rather than the
-     nested /v1/seo/manager/projects/{id}/tasks one — confirmed the nested
-     endpoint doesn't reliably reflect newly created tasks, the flat one does. */
+     GET /v1/seo/projects/{id}/tasks — the unified path, valid for both
+     super-admin and the project's SEO manager. /v1/seo/manager/tasks is
+     manager-guarded only: a super-admin token gets a 401 there, which the
+     global axios interceptor treats as an invalid session and force-logs
+     the user out (surfaces as this page silently redirecting to login). */
   const { data: rawTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['campaign-tasks', projectKey],
     queryFn:  async () => {
-      const r = await campaignApi.listAllTasks({ project_id: projectKey, per_page: 100 });
+      const r = await campaignApi.getTasks(projectKey, { per_page: 100 });
       return (r.data.data.phases ?? []).flatMap(p => p.tasks);
     },
     enabled:   !!projectKey,
@@ -180,41 +181,66 @@ export function CampaignDetailsPage() {
      that don't match any active status used to be silently dropped from
      the board — this synthesizes a read-only column per unmatched key so
      they stay visible instead of vanishing. */
-  const displayColumns: ApiSeoTaskStatus[] = useMemo(() => {
+  const displayColumns: SeoTaskStatusOption[] = useMemo(() => {
     const known = new Set(statuses.map(s => s.key));
-    const extras: ApiSeoTaskStatus[] = [];
+    const extras: SeoTaskStatusOption[] = [];
     const seen = new Set<string>();
     tasks.forEach(t => {
       if (!known.has(t.rawStatus) && !seen.has(t.rawStatus)) {
         seen.add(t.rawStatus);
         extras.push({
-          id: -1 - extras.length,
           key: t.rawStatus,
           label: t.rawStatus,
-          labelEn: t.rawStatus,
-          labelAr: t.rawStatus,
           color: '#9CA3AF',
           sortOrder: 999 + extras.length,
           isActive: true,
-          isDefault: false,
           marksCompleted: false,
-          createdAt: '',
-          updatedAt: '',
         });
       }
     });
     return [...statuses, ...extras];
   }, [statuses, tasks]);
 
-  /* ── Drag-drop: optimistic status override + API call ─────────────── */
+  /* ── Phase columns — grouped by the task's phaseName ────────────────── */
+  const phaseColumns = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of tasks) {
+      const key = t.phaseName || (isAr ? 'بدون مرحلة' : 'No phase');
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    }
+    return Array.from(map.entries()).map(([key, items]) => ({
+      key, label: key, color: colorForKey(key), items,
+    }));
+  }, [tasks, isAr]);
+
+  /* ── Drag-drop: optimistic status override + API call ───────────────
+     Not the dedicated PATCH .../status sub-route — per the backend's own
+     Postman collection, that route is only ever exercised with an employee
+     token; a manager (admin token) instead goes through the general
+     task-update endpoint with `status` in the body. */
   function handleDrop(taskId: string, toStatusKey: string) {
     const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
     setStatusOverrides(prev => ({ ...prev, [taskId]: toStatusKey }));
     campaignApi
-      .updateTaskStatus(projectKey, task ? taskResourceKey(task) : taskId, toStatusKey)
+      .updateTask(projectKey, task ? taskResourceKey(task) : taskId, { status: toStatusKey })
       .catch((err) => {
         console.error(err);
         toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));
+      });
+  }
+
+  /* ── Drag-drop: phase change — unverified against the real backend, see
+     the `phase` field comment on SeoUpdateTaskPayload. */
+  function handlePhaseDrop(taskId: string, toPhaseName: string) {
+    const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
+    if (!task) return;
+    campaignApi
+      .updateTask(projectKey, taskResourceKey(task), { phase: toPhaseName })
+      .then(() => queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectKey] }))
+      .catch((err) => {
+        console.error(err);
+        toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث مرحلة المهمة' : 'Failed to update task phase'));
       });
   }
 
@@ -388,18 +414,45 @@ export function CampaignDetailsPage() {
             ))}
           </div>
         ) : (
-          <div className="flex gap-5 overflow-x-auto pb-4 px-1">
-            {displayColumns.map(status => (
-              <SeoStatusColumn
-                key={status.key}
-                status={status}
-                tasks={tasks.filter(t => t.rawStatus === status.key)}
-                isAr={isAr}
-                onDrop={handleDrop}
-                onOpen={t => setSelectedTaskId(taskResourceKey(t))}
-              />
-            ))}
-          </div>
+          <>
+            <div className="flex items-center justify-between gap-3 mb-3 px-1">
+              <div className="inline-flex rounded-xl border border-gray-200 dark:border-gray-700 p-0.5 bg-gray-50 dark:bg-gray-900/40">
+                {(['status', 'phase'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setViewMode(mode)}
+                    className={[
+                      'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                      viewMode === mode
+                        ? 'bg-white dark:bg-gray-800 text-[#709028] dark:text-[#A0CD39] shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200',
+                    ].join(' ')}
+                  >
+                    {mode === 'status' ? (isAr ? 'الحالة' : 'Status') : (isAr ? 'المرحلة' : 'Phase')}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <SharedKanbanBoard
+              columns={
+                viewMode === 'status'
+                  ? displayColumns.map(status => ({
+                      key:   status.key,
+                      label: status.label,
+                      color: status.color,
+                      items: tasks.filter(t => t.rawStatus === status.key),
+                    }))
+                  : phaseColumns
+              }
+              isAr={isAr}
+              getId={(task: Task) => task.id}
+              renderCard={(task: Task) => (
+                <KanbanTaskCard task={task} isAr={isAr} onOpen={t => setSelectedTaskId(taskResourceKey(t))} />
+              )}
+              onDrop={viewMode === 'status' ? handleDrop : handlePhaseDrop}
+            />
+          </>
         )
       ) : activeTab === 'client' ? (
         <SeoClientUpdatesTab isAr={isAr} />

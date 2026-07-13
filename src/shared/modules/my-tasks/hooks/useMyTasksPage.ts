@@ -26,10 +26,14 @@ export interface UseMyTasksPageResult {
   setProjectId:    (id: string) => void;
   projectOptions:  { id: number | string; name: string }[];
   data:            GroupedTasksData | undefined;
+  /** Only populated for the employee client-aggregate path (cross-project,
+   *  unfiltered) — one unmerged result per project, for a per-project view. */
+  perProjectData:  { project: { id: number | string; name: string }; data: GroupedTasksData }[] | undefined;
   isLoading:       boolean;
   isError:         boolean;
   errorStatus:     number | undefined;
   updateStatus:    (projectId: number | string, taskId: number | string, status: string) => Promise<void>;
+  updatePhase:     (projectId: number | string, taskId: number | string, phase: { id: number; name: string }) => Promise<void>;
   isUpdating:      boolean;
   getTaskId:       (task: import('../types/myTasks.types').MyTask) => string | number;
 }
@@ -98,7 +102,8 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
           }
         }),
       );
-      return mergeGroupedTasksAcrossProjects(results.filter((r): r is NonNullable<typeof r> => r !== null));
+      const perProject = results.filter((r): r is NonNullable<typeof r> => r !== null);
+      return { merged: mergeGroupedTasksAcrossProjects(perProject), perProject };
     },
     enabled: needsClientAggregate && !!employeeProjectsQuery.data,
   });
@@ -145,8 +150,34 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     await mutation.mutateAsync({ projectId: pid, taskId, status });
   }
 
+  const phaseMutation = useMutation({
+    mutationFn: ({
+      projectId: pid,
+      taskId,
+      phase,
+    }: {
+      projectId: number | string;
+      taskId:    number | string;
+      phase:     { id: number; name: string };
+    }) => myTasksApi.updatePhase(tasksRole!, pid, taskId, phase),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-tasks', tasksRole] });
+    },
+  });
+
+  async function updatePhase(
+    pid: number | string,
+    taskId: number | string,
+    phase: { id: number; name: string },
+  ) {
+    await phaseMutation.mutateAsync({ projectId: pid, taskId, phase });
+  }
+
   const getTaskId = (task: import('../types/myTasks.types').MyTask) =>
     tasksRole ? getTaskRouteId(task, tasksRole) : task.id;
+
+  const perProjectData = needsClientAggregate ? aggregateQuery.data?.perProject : undefined;
+  const data = needsClientAggregate ? aggregateQuery.data?.merged : (query.data as GroupedTasksData | undefined);
 
   return {
     config,
@@ -155,11 +186,13 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     projectId,
     setProjectId,
     projectOptions,
-    data:        activeQuery.data,
+    data,
+    perProjectData,
     isLoading,
     isError:     activeQuery.isError,
     errorStatus: activeQuery.isError ? extractApiStatus(activeQuery.error) : undefined,
     updateStatus,
+    updatePhase,
     isUpdating:  mutation.isPending,
     getTaskId,
   };

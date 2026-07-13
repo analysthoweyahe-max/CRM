@@ -148,9 +148,12 @@ export function useAddSeoTaskComment(projectId: string | undefined, taskId: stri
   });
 }
 
+const sessionsKey = (projectId?: string, taskId?: string) =>
+  ['seo-member', 'task-sessions', projectId, taskId] as const;
+
 export function useSeoTaskSessions(projectId: string | undefined, taskId: string | undefined) {
   return useQuery({
-    queryKey: ['seo-member', 'task-sessions', projectId, taskId],
+    queryKey: sessionsKey(projectId, taskId),
     queryFn: async () => {
       const res = await seoTaskDetailApi.getTimeLogs(projectId!, taskId!);
       const sessions: TaskSession[] = (res.data.data.sessions ?? []).map((s) => ({
@@ -163,5 +166,27 @@ export function useSeoTaskSessions(projectId: string | undefined, taskId: string
       return sessions;
     },
     enabled: !!projectId && !!taskId,
+  });
+}
+
+export function useCreateSeoTaskSession(projectId: string, taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { workDate: string; startedAt: string; endedAt: string; notes?: string }) =>
+      seoTaskDetailApi.addTimeLog(projectId, taskId, {
+        work_date:  payload.workDate,
+        started_at: payload.startedAt,
+        ended_at:   payload.endedAt,
+        notes:      payload.notes,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: sessionsKey(projectId, taskId) }),
+  });
+}
+
+export function useDeleteSeoTaskSession(projectId: string, taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => seoTaskDetailApi.deleteTimeLog(projectId, taskId, sessionId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: sessionsKey(projectId, taskId) }),
   });
 }

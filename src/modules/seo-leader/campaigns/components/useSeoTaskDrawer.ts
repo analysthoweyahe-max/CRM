@@ -1,5 +1,7 @@
 import { useState, useEffect }                  from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast }                                 from 'sonner';
+import { extractApiError }                       from '@/shared/utils/error.utils';
 import { campaignApi }                           from '../api/campaign.api';
 import type { SeoComment }                       from '../api/campaign.api'; // used in extractComments + toTaskComment
 import type { SeoDrawerTab }                     from './SeoTaskModal.types';
@@ -49,6 +51,7 @@ function toTaskComment(c: SeoComment): TaskComment {
 export function useSeoTaskDrawer(
   projectId: string,
   taskId:    string | null,
+  isAr:      boolean,
 ) {
   const queryClient = useQueryClient();
 
@@ -207,12 +210,42 @@ export function useSeoTaskDrawer(
     id: a.id, label: a.name,
   }));
 
-  /* ── Time: placeholder (no endpoint) ───────────────────────────────── */
-  const sessions:        TimeSession[] = [];
-  const totalHours     = 0;
-  const estimatedHours = 0;
-  const remainingHours = 0;
-  const progress       = 0;
+  /* ── Time tracking ──────────────────────────────────────────────────── */
+  const timeLogsKey = ['seo-task-time-logs', projectId, taskId];
+  const { data: timeLogs } = useQuery({
+    queryKey: timeLogsKey,
+    queryFn:  () => campaignApi.getTimeLogs(projectId, taskId!).then(r => r.data.data),
+    enabled:  !!taskId && !!projectId,
+  });
+
+  const sessions: TimeSession[] = (timeLogs?.sessions ?? []).map(s => ({
+    id:    String(s.id),
+    date:  s.workDate,
+    from:  s.startedAt,
+    to:    s.endedAt,
+    hours: s.durationHours,
+  }));
+  const totalHours     = timeLogs?.totalHours      ?? 0;
+  const estimatedHours = timeLogs?.estimatedHours  ?? task?.estimatedHours ?? 0;
+  const remainingHours = timeLogs?.remainingHours  ?? 0;
+  const progress       = timeLogs?.progressPercent ?? 0;
+
+  const timeLogMutation = useMutation({
+    mutationFn: (payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) =>
+      campaignApi.addTimeLog(projectId, taskId!, {
+        work_date:  payload.workDate,
+        started_at: payload.startedAt,
+        ended_at:   payload.endedAt,
+        notes:      payload.notes || undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: timeLogsKey });
+      toast.success(isAr ? 'تم تسجيل الوقت' : 'Time logged');
+    },
+    onError: (err) => {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر تسجيل الوقت' : 'Failed to log time'));
+    },
+  });
 
   /* ── Combined save ──────────────────────────────────────────────────── */
   function handleSave() {
@@ -265,5 +298,8 @@ export function useSeoTaskDrawer(
     addComment: handleAddComment,
     isAddingComment: commentMutation.isPending,
     sessions, totalHours, estimatedHours, remainingHours, progress,
+    addTimeLog: (payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) =>
+      timeLogMutation.mutate(payload),
+    loggingTime: timeLogMutation.isPending,
   };
 }

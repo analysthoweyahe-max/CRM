@@ -217,7 +217,11 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     if (!task || !taskKey || status === task.status || changingStatus) return;
     setChangingStatus(true);
     try {
-      await pmTaskApi.updateStatus(projectId, taskKey, status);
+      // Not the dedicated PATCH .../status sub-route — per the backend's own
+      // Postman collection, that route is only ever exercised with an
+      // employee token; a manager (admin token) instead goes through the
+      // general task-update endpoint with `status` in the body.
+      await pmTaskApi.update(projectId, taskKey, { status });
       invalidateProjectTasks();
       invalidateDetail();
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
