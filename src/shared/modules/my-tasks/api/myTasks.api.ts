@@ -49,7 +49,7 @@ export const myTasksApi = {
       // GET /v1/seo/employee/projects
       const projects = await myProjectsApi.listSeoEmployeeProjects();
       return projects.map((p) => ({
-        id:   p.uuid || p.id,
+        id:   p.id,
         name: p.name,
       }));
     }

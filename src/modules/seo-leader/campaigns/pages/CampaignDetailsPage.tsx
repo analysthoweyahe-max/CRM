@@ -21,7 +21,7 @@ import { SeoClientUpdatesTab }    from '../components/SeoClientUpdatesTab';
 import { SeoStatusColumn }        from '../components/SeoStatusColumn';
 import { useSeoTaskStatusList }   from '@/modules/admin/seo-task-statuses/hooks/useSeoTaskStatuses';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
-import { resourceKey, taskResourceKey } from '@/shared/utils/resourceKey.utils';
+import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
 
 /* Task.status is typed as the PM's fixed 4-value union, but the real set of
@@ -125,7 +125,7 @@ export function CampaignDetailsPage() {
     staleTime: 30_000,
   });
 
-  const projectKey = campaign ? resourceKey(campaign) : id;
+  const projectKey = campaign ? String(campaign.id) : id;
 
   const { data: projectStatuses = [] } = useQuery({
     queryKey: ['seo-project-statuses'],

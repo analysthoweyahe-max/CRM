@@ -161,7 +161,7 @@ export function SeoMemberDashboardPage() {
                 onDetails={(t) => {
                   const projectId = t.project?.id;
                   if (!projectId) return;
-                  navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(projectId, t.uuid));
+                  navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(projectId, t.id));
                 }}
               />
             ))}

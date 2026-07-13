@@ -93,7 +93,7 @@ function resolveSeoTaskPath(
     return ROUTES.SEO_LEADER.DETAILS(pid);
   }
 
-  if (taskUuid || taskId) return ROUTES.SEO_MEMBER.TASK_DETAIL(pid, String(taskUuid ?? taskId));
+  if (taskId || taskUuid) return ROUTES.SEO_MEMBER.TASK_DETAIL(pid, String(taskId ?? taskUuid));
   return ROUTES.SEO_MEMBER.DETAILS(pid);
 }
 
@@ -291,7 +291,7 @@ export function resolveNotificationPath(
   if (projectId && (taskUuid || taskId)) {
     const pid = String(projectId);
     if (seo && user?.role === 'seo-leader') return ROUTES.SEO_LEADER.DETAILS(pid);
-    if (seo && taskUuid) return ROUTES.SEO_MEMBER.TASK_DETAIL(pid, String(taskUuid));
+    if (seo && (taskId || taskUuid)) return ROUTES.SEO_MEMBER.TASK_DETAIL(pid, String(taskId ?? taskUuid));
     if (taskId) return ROUTES.EMPLOYEE.TASK_DETAIL(pid, String(taskId));
   }
 

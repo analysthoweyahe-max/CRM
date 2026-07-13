@@ -134,11 +134,8 @@ export function getTasksQueryParams(
   return params;
 }
 
-/** PM uses integer id; SEO uses uuid in routes and API paths. */
-export function getTaskRouteId(task: MyTask, tasksRole: TasksApiRole): string | number {
-  if (tasksRole === 'seo-employee' || tasksRole === 'seo-manager') {
-    return task.uuid;
-  }
+/** Both PM and SEO tasks are addressed by integer id in routes and API paths. */
+export function getTaskRouteId(task: MyTask, _tasksRole: TasksApiRole): string | number {
   return task.id;
 }
 

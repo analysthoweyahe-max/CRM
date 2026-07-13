@@ -11,7 +11,7 @@ import { RichTextView } from '@/shared/components/form/RichTextView';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { formatDateShort } from '@/shared/utils/date.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
-import { resourceKey, taskResourceKey } from '@/shared/utils/resourceKey.utils';
+import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import { http } from '@/shared/services/http.service';
 import { useSeoTaskStatusList } from '@/modules/admin/seo-task-statuses/hooks/useSeoTaskStatuses';
 import { campaignApi } from '@/modules/seo-leader/campaigns/api/campaign.api';
@@ -116,7 +116,7 @@ export function SeoMemberProjectDetailsPage() {
     retry: 1,
   });
 
-  const projectKey = campaign ? resourceKey(campaign) : id;
+  const projectKey = campaign ? String(campaign.id) : id;
 
   const { data: settings } = useQuery({
     queryKey: ['seo-member-project-settings', projectKey],

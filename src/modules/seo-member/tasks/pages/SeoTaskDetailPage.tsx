@@ -44,7 +44,7 @@ export function SeoTaskDetailPage() {
 
   const taskDetailAdapter: TaskDetail | undefined = detail
     ? {
-        id:             detail.uuid ?? String(detail.id),
+        id:             String(detail.id),
         projectId:      projectId ?? '',
         title:          detail.title,
         description:    detail.description ?? '',

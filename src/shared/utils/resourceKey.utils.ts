@@ -5,9 +5,9 @@ export function resourceKey(entity: { uuid?: string | null; id: number | string 
   return uuid || String(entity.id);
 }
 
-/** Task routes expect taskUuid when available. */
+/** SEO tasks are addressed by id, not uuid. */
 export function taskResourceKey(task: { uuid?: string | null; id: number | string } | null | undefined): string {
-  return resourceKey(task);
+  return String(task?.id ?? '');
 }
 
 /**
