@@ -32,6 +32,16 @@ export interface WorkOverviewTotals {
   totalAmount: number;
 }
 
+export interface WorkOverviewSalary {
+  financialMonth: string;
+  basicSalary:    number;
+  deductions:     number;
+  rewards:        number;
+  overtime:       number;
+  bonus:          number;
+  netSalary:      number;
+}
+
 export interface WorkOverviewLinks {
   attendanceHistory: string;
   attendanceSummary: string;
@@ -45,6 +55,7 @@ export interface WorkOverviewData {
   attendance: WorkOverviewAttendance;
   deductions: WorkOverviewTotals;
   bonuses:    WorkOverviewTotals;
+  salary?:    WorkOverviewSalary;
   links:      WorkOverviewLinks;
 }
 

@@ -5,6 +5,7 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Combobox } from '@/shared/components/form/Combobox';
 import { WorkOverviewStats } from '../components/WorkOverviewStats';
+import { WorkOverviewSalaryCard } from '../components/WorkOverviewSalaryCard';
 import { WorkedDaysTable } from '../components/WorkedDaysTable';
 import { WorkApiErrorBanner } from '../components/WorkApiErrorBanner';
 import { useWorkOverview, useApiQueryError } from '../hooks/useWorkOverview';
@@ -50,6 +51,10 @@ export function WorkOverviewPage({ layoutScope, seoRouteVariant }: WorkOverviewP
 
       {data && <WorkOverviewStats data={data} isAr={isAr} isLoading={isLoading} />}
       {!data && isLoading && <WorkOverviewStats data={placeholderOverview(month)} isAr={isAr} isLoading />}
+
+      {(data?.salary || isLoading) && (
+        <WorkOverviewSalaryCard salary={data?.salary} isAr={isAr} isLoading={isLoading && !data?.salary} />
+      )}
 
       <div className="flex flex-wrap gap-2">
         <Link to={routes.attendance} className={linkCls}>
