@@ -82,8 +82,9 @@ export interface SeoMessage {
 }
 
 export interface Mentionable {
-  id:   string;
-  name: string;
+  id:    string;
+  name:  string;
+  type?: string;
 }
 
 export interface SeoComment {
@@ -432,9 +433,10 @@ export const campaignApi = {
     );
   },
 
-  sendMessage(projectId: string | number, content: string) {
+  sendMessage(projectId: string | number, content: string, mentions?: Array<{ type: string; id: string }>) {
     return http.post<ApiResponse<SeoMessage>>(
-      `/v1/seo/projects/${projectId}/messages`, { body: content }
+      `/v1/seo/projects/${projectId}/messages`,
+      { body: content, ...(mentions?.length ? { mentions } : {}) },
     );
   },
 

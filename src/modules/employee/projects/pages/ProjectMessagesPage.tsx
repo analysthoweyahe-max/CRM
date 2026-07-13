@@ -2,6 +2,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, AtSign, FileText, Paperclip, Search, Send } from 'lucide-react';
 import { useLang }  from '@/app/providers/LanguageProvider';
 import { Avatar }   from '@/shared/components/ui/Avatar';
+import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
+import { getPastedImageFile }    from '@/shared/utils/clipboardImage.utils';
 import { useProjectMessages } from '../hooks/useProjectMessages';
 import type { ChatMessage } from '../types/projectMessage.types';
 
@@ -48,6 +50,15 @@ export function ProjectMessagesPage() {
     isLoading, sendError, isSending,
     showMentions, setShowMentions, mentionables, insertMention,
   } = useProjectMessages(projectId);
+
+  const textareaRef = useAutoResizeTextarea(text);
+
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const file = getPastedImageFile(e);
+    if (!file) return;
+    e.preventDefault();
+    send(file);
+  }
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
@@ -148,10 +159,12 @@ export function ProjectMessagesPage() {
             </button>
 
             <textarea
+              ref={textareaRef}
               rows={1}
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={handleKey}
+              onPaste={handlePaste}
               placeholder={isAr ? 'اكتب رسالة...' : 'Write a message...'}
               className="flex-1 resize-none text-sm rounded-xl
                          bg-gray-50 dark:bg-gray-700/50
@@ -160,7 +173,8 @@ export function ProjectMessagesPage() {
                          text-gray-700 dark:text-gray-300
                          placeholder:text-gray-400
                          text-end
-                         focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50"
+                         focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50
+                         max-h-28 overflow-y-auto"
             />
 
             <div className="relative">

@@ -3,6 +3,11 @@ export type DayStatus =
   | 'normal_day' | 'late_arrival' | 'early_leave' | 'overtime' | 'awaiting_check_in';
 export type WorkStatus = 'working' | 'done' | 'not_started' | 'offline';
 
+/** AttendanceDayStatus enum (Modules/HR/app/Enums/AttendanceDayStatus.php) — filter/response values for /v1/hr/attendance/daily */
+export type DailyDayStatus = 'normal' | 'late_arrival' | 'overtime' | 'absent' | 'awaiting_check_in';
+/** WorkStatus enum (Modules/HR/app/Enums/WorkStatus.php) — filter/response values for /v1/hr/attendance/daily */
+export type DailyWorkStatus = 'currently_working' | 'on_break' | 'offline';
+
 /* ── Frontend display record (used by table + stats) ── */
 export interface AttendanceRecord {
   id:          string;
@@ -14,9 +19,10 @@ export interface AttendanceRecord {
   checkIn:     string | null;
   checkOut:    string | null;
   workedHours: number | null;
-  dayStatus:   DayStatus;
+  dayStatus:   DailyDayStatus;
   dayStatusLabel?: string;
-  workStatus:  WorkStatus;
+  workStatus:  DailyWorkStatus;
+  workStatusLabel?: string;
 }
 
 /* ── API: daily attendance (/v1/hr/attendance/daily) ── */
@@ -29,9 +35,9 @@ export interface ApiDailyRecord {
   checkInTime:     string | null;
   checkOutTime:    string | null;
   workingHours:    number | null;
-  dayStatus:       DayStatus;
+  dayStatus:       DailyDayStatus;
   dayStatusLabel:  string;
-  workStatus:      WorkStatus;
+  workStatus:      DailyWorkStatus;
   workStatusLabel: string;
 }
 
@@ -58,8 +64,8 @@ export interface DailyAttendanceResponse {
 export interface DailyAttendanceParams {
   search?:        string;
   department_id?: string | number;
-  day_status?:    DayStatus | '';
-  work_status?:   WorkStatus | '';
+  day_status?:    DailyDayStatus | '';
+  work_status?:   DailyWorkStatus | '';
   per_page?:      number;
   page?:          number;
 }

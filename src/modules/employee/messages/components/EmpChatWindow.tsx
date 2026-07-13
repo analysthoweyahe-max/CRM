@@ -3,6 +3,8 @@ import { Send, Paperclip, AtSign, Menu } from 'lucide-react';
 import { useAuth }           from '@/modules/auth/context/AuthContext';
 import { ChatAttachments, MessageBodyText } from '@/shared/components/chat';
 import { setOpenConversation } from '@/shared/realtime-messages';
+import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
+import { getPastedImageFile } from '@/shared/utils/clipboardImage.utils';
 import { useEmpMessages, useEmpSendMessage, useEmpSendMedia, useEmpMarkRead } from '../hooks/useEmployeeMessages';
 import type { EmpConversation, EmpMessage } from '../types/messages.types';
 
@@ -23,6 +25,7 @@ export function EmpChatWindow({ conversation, isAr, onOpenSidebar }: Props) {
   const bottomRef  = useRef<HTMLDivElement>(null);
   const fileRef    = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
+  const textareaRef = useAutoResizeTextarea(text);
 
   const { data: messages = [], isLoading } = useEmpMessages(conversation.id);
   const { mutate: sendText,  isPending: sending  } = useEmpSendMessage(conversation.id);
@@ -63,6 +66,13 @@ export function EmpChatWindow({ conversation, isAr, onOpenSidebar }: Props) {
     if (!file) return;
     sendMedia(file);
     e.target.value = '';
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const file = getPastedImageFile(e);
+    if (!file) return;
+    e.preventDefault();
+    sendMedia(file);
   }
 
   const convName = conversation.name ?? conversation.participants?.[0]?.name ?? (isAr ? 'محادثة' : 'Chat');
@@ -136,9 +146,11 @@ export function EmpChatWindow({ conversation, isAr, onOpenSidebar }: Props) {
 
           {/* Text area */}
           <textarea
+            ref={textareaRef}
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKey}
+            onPaste={handlePaste}
             rows={1}
             placeholder={isAr ? 'اكتب رسالة...' : 'Type a message...'}
             className="flex-1 resize-none py-2.5 px-3 text-sm rounded-xl

@@ -20,6 +20,7 @@ import { SeoProgressTab }         from '../components/SeoProgressTab';
 import { SeoClientUpdatesTab }    from '../components/SeoClientUpdatesTab';
 import { SeoStatusColumn }        from '../components/SeoStatusColumn';
 import { useSeoTaskStatusList }   from '@/modules/admin/seo-task-statuses/hooks/useSeoTaskStatuses';
+import type { ApiSeoTaskStatus }  from '@/modules/admin/seo-task-statuses/types/seoTaskStatus.types';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
@@ -171,6 +172,39 @@ export function CampaignDetailsPage() {
     ),
     [baseTasks, statusOverrides, marksCompletedByKey],
   );
+
+  /* ── Fallback columns ──────────────────────────────────────────────────
+     A task's rawStatus is whatever the backend stored on it, which can
+     drift from the *currently active* admin-configured status catalog (a
+     status got renamed/deactivated after tasks were created, etc). Tasks
+     that don't match any active status used to be silently dropped from
+     the board — this synthesizes a read-only column per unmatched key so
+     they stay visible instead of vanishing. */
+  const displayColumns: ApiSeoTaskStatus[] = useMemo(() => {
+    const known = new Set(statuses.map(s => s.key));
+    const extras: ApiSeoTaskStatus[] = [];
+    const seen = new Set<string>();
+    tasks.forEach(t => {
+      if (!known.has(t.rawStatus) && !seen.has(t.rawStatus)) {
+        seen.add(t.rawStatus);
+        extras.push({
+          id: -1 - extras.length,
+          key: t.rawStatus,
+          label: t.rawStatus,
+          labelEn: t.rawStatus,
+          labelAr: t.rawStatus,
+          color: '#9CA3AF',
+          sortOrder: 999 + extras.length,
+          isActive: true,
+          isDefault: false,
+          marksCompleted: false,
+          createdAt: '',
+          updatedAt: '',
+        });
+      }
+    });
+    return [...statuses, ...extras];
+  }, [statuses, tasks]);
 
   /* ── Drag-drop: optimistic status override + API call ─────────────── */
   function handleDrop(taskId: string, toStatusKey: string) {
@@ -355,7 +389,7 @@ export function CampaignDetailsPage() {
           </div>
         ) : (
           <div className="flex gap-5 overflow-x-auto pb-4 px-1">
-            {statuses.map(status => (
+            {displayColumns.map(status => (
               <SeoStatusColumn
                 key={status.key}
                 status={status}

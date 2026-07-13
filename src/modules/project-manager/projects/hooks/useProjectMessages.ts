@@ -18,7 +18,7 @@ export function useProjectMessages(projectId: string) {
 
   const { data: mentionables = [] } = useQuery({
     queryKey: ['pm-project-mentionables', projectId],
-    queryFn:  () => pmProjectMessagesApi.mentionables(projectId).then(r => r.data.data.data),
+    queryFn:  () => pmProjectMessagesApi.mentionables(projectId).then(r => r.data.data),
     enabled:  showMentions && !!projectId,
     staleTime: 60_000,
   });

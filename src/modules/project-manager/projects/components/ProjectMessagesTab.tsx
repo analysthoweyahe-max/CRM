@@ -2,6 +2,8 @@ import { AtSign, FileText, Paperclip, Search, Send, UserPlus } from 'lucide-reac
 import { Avatar }               from '@/shared/components/ui/Avatar';
 import { Button }               from '@/shared/components/ui/Button';
 import { MessageBodyText }      from '@/shared/components/chat';
+import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
+import { getPastedImageFile }   from '@/shared/utils/clipboardImage.utils';
 import { useProjectMessages }   from '../hooks/useProjectMessages';
 import { useProjectTeamTab }    from '../hooks/useProjectTeamTab';
 import { AddTeamMemberModal }   from './AddTeamMemberModal';
@@ -59,6 +61,15 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
     isLoading, canSend, sendError, isSending,
     showMentions, setShowMentions, mentionables, insertMention,
   } = useProjectMessages(projectId);
+
+  const textareaRef = useAutoResizeTextarea(text);
+
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const file = getPastedImageFile(e);
+    if (!file) return;
+    e.preventDefault();
+    send(file);
+  }
 
   const {
     showModal, openModal, closeModal,
@@ -172,10 +183,12 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
             </button>
 
             <textarea
+              ref={textareaRef}
               rows={1}
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={handleKey}
+              onPaste={handlePaste}
               placeholder={isAr ? 'اكتب رسالة...' : 'Write a message...'}
               className="flex-1 resize-none text-sm rounded-xl
                          bg-gray-50 dark:bg-gray-700/50
@@ -184,7 +197,8 @@ export function ProjectMessagesTab({ projectId, isAr }: Props) {
                          text-gray-700 dark:text-gray-300
                          placeholder:text-gray-400
                          text-end
-                         focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50"
+                         focus:outline-none focus:ring-1 focus:ring-[#A0CD39]/50
+                         max-h-28 overflow-y-auto"
             />
 
             <div className="relative">

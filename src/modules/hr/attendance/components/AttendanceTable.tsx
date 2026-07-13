@@ -2,25 +2,20 @@
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge }  from '@/shared/components/ui/Badge';
 import { utcClockToLocal } from '@/shared/utils/date.utils';
-import type { AttendanceRecord, DayStatus, WorkStatus } from '@/modules/hr/attendance/types/attendance.types';
+import type { AttendanceRecord, DailyDayStatus, DailyWorkStatus } from '@/modules/hr/attendance/types/attendance.types';
 
-const DAY_STATUS_MAP: Record<string, { ar: string; en: string; variant: 'success' | 'warning' | 'error' | 'brand' }> = {
-  present:           { ar: 'حاضر',           en: 'Present',           variant: 'success' },
-  normal_day:        { ar: 'يوم عادي',       en: 'Normal Day',        variant: 'success' },
-  late:              { ar: 'متأخر',          en: 'Late',              variant: 'warning' },
-  late_arrival:      { ar: 'تأخر',           en: 'Late Arrival',      variant: 'warning' },
-  absent:            { ar: 'غائب',           en: 'Absent',            variant: 'error'   },
-  leave:             { ar: 'إجازة',          en: 'Leave',             variant: 'brand'   },
-  early_leave:       { ar: 'انصراف مبكر',    en: 'Early Leave',       variant: 'warning' },
+const DAY_STATUS_MAP: Record<DailyDayStatus, { ar: string; en: string; variant: 'success' | 'warning' | 'error' | 'brand' }> = {
+  normal:            { ar: 'عادي',           en: 'Normal',            variant: 'success' },
+  late_arrival:      { ar: 'تأخر عن الموعد', en: 'Late Arrival',      variant: 'warning' },
   overtime:          { ar: 'ساعات إضافية',   en: 'Overtime',          variant: 'brand'   },
-  awaiting_check_in: { ar: 'بانتظار الحضور', en: 'Awaiting Check-in', variant: 'brand'   },
+  absent:            { ar: 'غائب',           en: 'Absent',            variant: 'error'   },
+  awaiting_check_in: { ar: 'بانتظار تسجيل الحضور', en: 'Awaiting Check-in', variant: 'brand' },
 };
 
-const WORK_STATUS_MAP: Record<WorkStatus, { ar: string; en: string; dot: string }> = {
-  working:     { ar: 'يعمل الآن',    en: 'Working Now', dot: 'bg-emerald-500' },
-  done:        { ar: 'انتهى الدوام', en: 'Done',        dot: 'bg-blue-400'   },
-  not_started: { ar: 'لم يبدأ',      en: 'Not Started', dot: 'bg-gray-300 dark:bg-gray-600' },
-  offline:     { ar: 'غير متصل',     en: 'Offline',     dot: 'bg-gray-400 dark:bg-gray-500' },
+const WORK_STATUS_MAP: Record<DailyWorkStatus, { ar: string; en: string; dot: string }> = {
+  currently_working: { ar: 'يعمل حاليًا', en: 'Currently Working', dot: 'bg-emerald-500' },
+  on_break:          { ar: 'في استراحة',  en: 'On Break',          dot: 'bg-amber-400'   },
+  offline:           { ar: 'غير متصل',    en: 'Offline',           dot: 'bg-gray-400 dark:bg-gray-500' },
 };
 
 export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>[] {
@@ -87,7 +82,7 @@ export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>
       accessorKey: 'dayStatus',
       header: isAr ? 'حالة اليوم' : 'Status',
       cell: ({ getValue, row }) => {
-        const s = DAY_STATUS_MAP[getValue<DayStatus>()];
+        const s = DAY_STATUS_MAP[getValue<DailyDayStatus>()];
         const label = row.original.dayStatusLabel;
         if (!s && !label) return <span className="text-sm text-gray-400">—</span>;
         return <Badge label={label ?? (isAr ? s?.ar : s?.en) ?? String(getValue())} variant={s?.variant ?? 'brand'} />;
@@ -97,13 +92,14 @@ export function getAttendanceColumns(isAr: boolean): ColumnDef<AttendanceRecord>
       accessorKey: 'workStatus',
       header: isAr ? 'حالة العمل' : 'Work Status',
       enableSorting: false,
-      cell: ({ getValue }) => {
-        const s = WORK_STATUS_MAP[getValue<WorkStatus>()];
-        if (!s) return <span className="text-sm text-gray-400">—</span>;
+      cell: ({ getValue, row }) => {
+        const s = WORK_STATUS_MAP[getValue<DailyWorkStatus>()];
+        const label = row.original.workStatusLabel;
+        if (!s && !label) return <span className="text-sm text-gray-400">—</span>;
         return (
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
-            <span className="text-sm text-gray-700 dark:text-gray-300">{isAr ? s.ar : s.en}</span>
+            <span className={`w-2 h-2 rounded-full shrink-0 ${s?.dot ?? 'bg-gray-400 dark:bg-gray-500'}`} />
+            <span className="text-sm text-gray-700 dark:text-gray-300">{label ?? (isAr ? s?.ar : s?.en)}</span>
           </div>
         );
       },

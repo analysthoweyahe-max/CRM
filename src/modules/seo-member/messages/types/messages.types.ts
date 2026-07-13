@@ -87,10 +87,16 @@ export interface SeoMessage {
   reactions?:  SeoMessageReaction[];
 }
 
+export interface SeoMentionRef {
+  type: SeoParticipantType;
+  id:   string;
+}
+
 export interface SendSeoMessagePayload {
   body?:     string;
   reply_to?: number | string;
   file?:     File;
+  mentions?: SeoMentionRef[];
 }
 
 export interface SeoMessageListResponse {

@@ -25,6 +25,7 @@ export function useProjectMessages(projectId: string) {
   const [apiError,     setApiError]     = useState<string | null>(null);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionRefs,  setMentionRefs]  = useState<Mentionable[]>([]);
 
   /* ── Messages list ───────────────────────────────────────────────────── */
   const { data: messagesData, isLoading } = useQuery({
@@ -56,7 +57,8 @@ export function useProjectMessages(projectId: string) {
 
   /* ── Send text message ───────────────────────────────────────────────── */
   const sendMutation = useMutation({
-    mutationFn: (content: string) => campaignApi.sendMessage(projectId, content),
+    mutationFn: ({ content, mentions }: { content: string; mentions?: Array<{ type: string; id: string }> }) =>
+      campaignApi.sendMessage(projectId, content, mentions),
     onSuccess: (res) => {
       const msg = res.data.data;
       if (msg) {
@@ -68,6 +70,7 @@ export function useProjectMessages(projectId: string) {
         queryClient.invalidateQueries({ queryKey: ['seo-messages', projectId] });
       }
       setText('');
+      setMentionRefs([]);
       setApiError(null);
     },
     onError: (err: unknown) => {
@@ -127,11 +130,12 @@ export function useProjectMessages(projectId: string) {
     }
   }, []);
 
-  const insertMention = useCallback((name: string) => {
+  const insertMention = useCallback((m: Mentionable) => {
     setText(prev => {
       const lastAt = prev.lastIndexOf('@');
-      return prev.slice(0, lastAt) + `@${name} `;
+      return prev.slice(0, lastAt) + `@${m.name} `;
     });
+    setMentionRefs(prev => (prev.some(r => r.id === m.id) ? prev : [...prev, m]));
     setShowMentions(false);
     setMentionQuery('');
   }, []);
@@ -140,8 +144,11 @@ export function useProjectMessages(projectId: string) {
   const handleSend = useCallback(() => {
     const content = text.trim();
     if (!content || sendMutation.isPending) return;
-    sendMutation.mutate(content);
-  }, [text, sendMutation]);
+    const mentions = mentionRefs
+      .filter(m => content.includes(`@${m.name}`))
+      .map(m => ({ type: m.type ?? 'employee', id: m.id }));
+    sendMutation.mutate({ content, mentions });
+  }, [text, sendMutation, mentionRefs]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -154,13 +161,16 @@ export function useProjectMessages(projectId: string) {
     fileRef.current?.click();
   }, []);
 
+  const sendFile = useCallback((file: File) => {
+    fileMutation.mutate(file);
+  }, [fileMutation]);
+
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    console.log('[handleFileChange] file:', file?.name ?? 'none');
     if (!file) return;
-    fileMutation.mutate(file);
+    sendFile(file);
     e.target.value = '';
-  }, [fileMutation]);
+  }, [sendFile]);
 
   const openMention = useCallback(() => {
     setText(prev => {
@@ -181,7 +191,7 @@ export function useProjectMessages(projectId: string) {
     showMentions,
     filteredMentions, insertMention,
     openMention,
-    openFilePicker,  handleFileChange,
+    openFilePicker,  handleFileChange, sendFile,
     fileRef,
     bottomRef,
   };

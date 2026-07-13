@@ -75,6 +75,10 @@ export const seoMessagesApi = {
       if (data.body?.trim()) fd.append('body', data.body.trim());
       if (data.reply_to != null) fd.append('reply_to', String(data.reply_to));
       fd.append('file', data.file);
+      data.mentions?.forEach((m, i) => {
+        fd.append(`mentions[${i}][type]`, m.type);
+        fd.append(`mentions[${i}][id]`, m.id);
+      });
       return http.post<SeoMessageSendResponse>(
         `${messengerBase()}/conversations/${conversationId}/messages`,
         fd,
@@ -87,6 +91,7 @@ export const seoMessagesApi = {
       {
         body: data.body?.trim() ?? '',
         ...(data.reply_to != null ? { reply_to: data.reply_to } : {}),
+        ...(data.mentions?.length ? { mentions: data.mentions } : {}),
       },
     );
   },

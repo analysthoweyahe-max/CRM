@@ -69,7 +69,5 @@ export interface PmMentionable {
 export interface PmMentionablesResponse {
   status:  string;
   message: string;
-  data: {
-    data: PmMentionable[];
-  };
+  data:    PmMentionable[];
 }

@@ -3,6 +3,8 @@ import { useState, useEffect }             from 'react';
 import { useProjectMessages }              from './useProjectMessages';
 import { env }                             from '@/app/config/env';
 import { TOKEN_KEY }                       from '@/app/config/constants';
+import { useAutoResizeTextarea }           from '@/shared/hooks/useAutoResizeTextarea';
+import { getPastedImageFile }              from '@/shared/utils/clipboardImage.utils';
 
 /* ── Build full URL (backend may return localhost URLs) ───────────────── */
 const API_ORIGIN = (() => {
@@ -73,9 +75,18 @@ export function ProjectMessages({ projectId, isAr }: Props) {
     text, handleTextChange, handleKeyDown, handleSend, isSending,
     apiError,
     showMentions, filteredMentions, insertMention, openMention,
-    openFilePicker, handleFileChange, fileRef,
+    openFilePicker, handleFileChange, sendFile, fileRef,
     bottomRef,
   } = useProjectMessages(projectId);
+
+  const textareaRef = useAutoResizeTextarea(text);
+
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const file = getPastedImageFile(e);
+    if (!file) return;
+    e.preventDefault();
+    sendFile(file);
+  }
 
   return (
     <div
@@ -189,7 +200,7 @@ export function ProjectMessages({ projectId, isAr }: Props) {
             <button
               key={m.id}
               type="button"
-              onMouseDown={e => { e.preventDefault(); insertMention(m.name); }}
+              onMouseDown={e => { e.preventDefault(); insertMention(m); }}
               className="w-full flex items-center gap-2 px-4 py-2.5 text-sm
                          text-gray-700 dark:text-gray-200
                          hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -229,10 +240,12 @@ export function ProjectMessages({ projectId, isAr }: Props) {
 
           {/* Textarea */}
           <textarea
+            ref={textareaRef}
             rows={1}
             value={text}
             onChange={e => handleTextChange(e.target.value)}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={isAr ? 'اكتب رسالة...' : 'Type a message…'}
             className="flex-1 bg-gray-50 dark:bg-gray-800 text-sm text-gray-800
                        dark:text-gray-100 placeholder:text-gray-400 rounded-xl
@@ -240,11 +253,6 @@ export function ProjectMessages({ projectId, isAr }: Props) {
                        focus:ring-[#A0CD39] border border-gray-200 dark:border-gray-700
                        leading-relaxed"
             style={{ minHeight: '40px', maxHeight: '112px', overflowY: 'auto' }}
-            onInput={e => {
-              const el = e.currentTarget;
-              el.style.height = 'auto';
-              el.style.height = `${Math.min(el.scrollHeight, 112)}px`;
-            }}
           />
 
           {/* @ mention */}

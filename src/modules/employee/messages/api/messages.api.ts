@@ -46,6 +46,7 @@ export const empMessagesApi = {
   sendMedia(uuid: string, file: File) {
     const fd = new FormData();
     fd.append('file', file);
+    fd.append('type', file.type.startsWith('image/') ? 'image' : 'file');
     return http.post<EmpSendMessageResponse>(
       `/v1/employee/messages/conversations/${uuid}/media`,
       fd,

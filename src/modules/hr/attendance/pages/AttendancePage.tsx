@@ -15,7 +15,7 @@ import { getAttendanceColumns } from '@/modules/hr/attendance/components/Attenda
 import { useDailyAttendance }   from '@/modules/hr/attendance/hooks/useDailyAttendance';
 import { useDepartments }       from '@/modules/hr/employees/hooks/useLookups';
 import { getInitial, getAvatarColor } from '@/modules/hr/employees/types/employee.types';
-import type { AttendanceRecord, ApiDailyRecord, DayStatus, WorkStatus } from '@/modules/hr/attendance/types/attendance.types';
+import type { AttendanceRecord, ApiDailyRecord, DailyDayStatus, DailyWorkStatus } from '@/modules/hr/attendance/types/attendance.types';
 
 const PAGE_SIZE = 15;
 
@@ -34,15 +34,16 @@ function mapRecord(r: ApiDailyRecord): AttendanceRecord {
     dayStatus:   r.dayStatus,
     dayStatusLabel: r.dayStatusLabel,
     workStatus:  r.workStatus,
+    workStatusLabel: r.workStatusLabel,
   };
 }
 
 type CardKey = 'checkedIn' | 'working' | 'late' | 'absent';
 
-const CARD_TO_PARAMS: Record<CardKey, { day_status?: DayStatus; work_status?: WorkStatus }> = {
+const CARD_TO_PARAMS: Record<CardKey, { day_status?: DailyDayStatus; work_status?: DailyWorkStatus }> = {
   checkedIn: {},
-  working:   { work_status: 'working' },
-  late:      { day_status: 'late' },
+  working:   { work_status: 'currently_working' },
+  late:      { day_status: 'late_arrival' },
   absent:    { day_status: 'absent' },
 };
 
@@ -52,7 +53,7 @@ export function AttendancePage() {
 
   const [search,     setSearch]     = useState('');
   const [deptId,     setDeptId]     = useState('');
-  const [dayStatus,  setDayStatus]  = useState<DayStatus | ''>('');
+  const [dayStatus,  setDayStatus]  = useState<DailyDayStatus | ''>('');
   const [cardFilter, setCardFilter] = useState<CardKey | null>(null);
   const [page,       setPage]       = useState(1);
 
@@ -70,7 +71,13 @@ export function AttendancePage() {
   };
 
   const { data: tablePage, isLoading } = useDailyAttendance(tableParams);
-  const tableRecords = useMemo(() => (tablePage?.data ?? []).map(mapRecord), [tablePage]);
+  const tableRecords = useMemo(() => {
+    const mapped = (tablePage?.data ?? []).map(mapRecord);
+    if (cardFilter === 'checkedIn') {
+      return mapped.filter((r) => r.dayStatus !== 'awaiting_check_in' && r.dayStatus !== 'absent');
+    }
+    return mapped;
+  }, [tablePage, cardFilter]);
 
   const pageCount = tablePage?.last_page  ?? 1;
   const totalRows = tablePage?.total      ?? 0;
@@ -113,10 +120,10 @@ export function AttendancePage() {
     return found ? (isAr ? (found.nameAr || found.name) : found.name) : (isAr ? 'كل الأقسام' : 'All Departments');
   }, [deptId, depts, isAr]);
 
-  const STATUS_OPTIONS_AR = ['كل الحالات', 'حاضر', 'متأخر', 'غائب', 'إجازة'];
-  const STATUS_OPTIONS_EN = ['All Statuses', 'Present', 'Late', 'Absent', 'Leave'];
-  const STATUS_MAP_AR: Record<string, DayStatus | ''> = { 'كل الحالات': '', 'حاضر': 'present', 'متأخر': 'late', 'غائب': 'absent', 'إجازة': 'leave' };
-  const STATUS_MAP_EN: Record<string, DayStatus | ''> = { 'All Statuses': '', 'Present': 'present', 'Late': 'late', 'Absent': 'absent', 'Leave': 'leave' };
+  const STATUS_OPTIONS_AR = ['كل الحالات', 'عادي', 'تأخر عن الموعد', 'ساعات إضافية', 'غائب'];
+  const STATUS_OPTIONS_EN = ['All Statuses', 'Normal', 'Late Arrival', 'Overtime', 'Absent'];
+  const STATUS_MAP_AR: Record<string, DailyDayStatus | ''> = { 'كل الحالات': '', 'عادي': 'normal', 'تأخر عن الموعد': 'late_arrival', 'ساعات إضافية': 'overtime', 'غائب': 'absent' };
+  const STATUS_MAP_EN: Record<string, DailyDayStatus | ''> = { 'All Statuses': '', 'Normal': 'normal', 'Late Arrival': 'late_arrival', 'Overtime': 'overtime', 'Absent': 'absent' };
 
   const statusOptions   = isAr ? STATUS_OPTIONS_AR : STATUS_OPTIONS_EN;
   const statusMap       = isAr ? STATUS_MAP_AR : STATUS_MAP_EN;

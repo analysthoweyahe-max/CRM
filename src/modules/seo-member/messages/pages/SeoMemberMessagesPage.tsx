@@ -16,6 +16,8 @@ import { useAuth } from '@/modules/auth/context/AuthContext';
 import { ChatAttachments, MessageBodyText } from '@/shared/components/chat';
 import { setOpenConversation } from '@/shared/realtime-messages';
 import { extractApiError } from '@/shared/utils/error.utils';
+import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
+import { getPastedImageFile } from '@/shared/utils/clipboardImage.utils';
 import { CreateSeoGroupModal } from '../components/CreateSeoGroupModal';
 import { NewSeoConversationModal } from '../components/NewSeoConversationModal';
 import { SeoConversationList } from '../components/SeoConversationList';
@@ -76,9 +78,11 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
 
   const [text, setText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
+  const [mentionRefs, setMentionRefs] = useState<SeoMentionable[]>([]);
   const [showMembers, setShowMembers] = useState(false);
   const [replyTo, setReplyTo] = useState<SeoMessage | null>(null);
   const [reactionFor, setReactionFor] = useState<string | null>(null);
+  const textareaRef = useAutoResizeTextarea(text);
 
   const isGroup = conversation.type === 'group';
 
@@ -108,6 +112,7 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
     setShowMembers(false);
     setText('');
     setShowMentions(false);
+    setMentionRefs([]);
     setReplyTo(null);
     setReactionFor(null);
   }, [conversation.id]);
@@ -121,16 +126,25 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
+  function activeMentions(body: string) {
+    return mentionRefs
+      .filter(m => body.includes(`@${m.name}`))
+      .map(m => ({ type: m.type, id: m.id }));
+  }
+
   function handleSend() {
     const body = text.trim();
     if ((!body && !replyTo) || sending) return;
     if (!body) return;
+    const mentions = activeMentions(body);
     setText('');
+    setMentionRefs([]);
     const parentId = replyTo?.id;
     setReplyTo(null);
     sendMessage({
       body,
       ...(parentId != null ? { reply_to: parentId } : {}),
+      ...(mentions.length ? { mentions } : {}),
     });
   }
 
@@ -138,22 +152,38 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   }
 
-  function insertMention(name: string) {
-    setText(prev => (prev.endsWith(' ') || !prev ? prev : `${prev} `) + `@${name} `);
+  function insertMention(m: SeoMentionable) {
+    setText(prev => (prev.endsWith(' ') || !prev ? prev : `${prev} `) + `@${m.name} `);
+    setMentionRefs(prev => (prev.some(r => r.id === m.id && r.type === m.type) ? prev : [...prev, m]));
     setShowMentions(false);
+  }
+
+  function sendFile(file: File) {
+    if (sending) return;
+    const body = text.trim();
+    sendMessage({
+      body: body || undefined,
+      file,
+      ...(replyTo?.id != null ? { reply_to: replyTo.id } : {}),
+      ...(body ? (activeMentions(body).length ? { mentions: activeMentions(body) } : {}) : {}),
+    });
+    setText('');
+    setMentionRefs([]);
+    setReplyTo(null);
   }
 
   function handleFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || sending) return;
-    sendMessage({
-      body: text.trim() || undefined,
-      file,
-      ...(replyTo?.id != null ? { reply_to: replyTo.id } : {}),
-    });
-    setText('');
-    setReplyTo(null);
+    if (!file) return;
+    sendFile(file);
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const file = getPastedImageFile(e);
+    if (!file) return;
+    e.preventDefault();
+    sendFile(file);
   }
 
   function handleReact(messageId: number | string, emoji: string) {
@@ -379,9 +409,11 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
           </button>
 
           <textarea
+            ref={textareaRef}
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKey}
+            onPaste={handlePaste}
             rows={1}
             placeholder={isAr ? 'اكتب رسالة...' : 'Type a message...'}
             className="flex-1 resize-none py-2.5 px-3 text-sm rounded-xl
@@ -414,7 +446,7 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
                   <button
                     key={`${m.type}:${m.id}`}
                     type="button"
-                    onClick={() => insertMention(m.name)}
+                    onClick={() => insertMention(m)}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-end
                                text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
