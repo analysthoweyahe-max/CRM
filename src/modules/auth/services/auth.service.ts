@@ -405,14 +405,14 @@ async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
 // ── Auth operations ───────────────────────────────────────────────────────────
 
 /**
- * Unified login — POST /v1/admin/auth/login with { email, password }.
+ * Unified login — POST /v1/admin/auth/login with { email | admin_id, password }.
  * Backend returns actorType admin | employee; no OTP step.
  */
 async function login(credentials: LoginCredentials): Promise<LoginResult> {
   const password = credentials.password;
-  const email = credentials.email.trim();
+  const identifier = credentials.email.trim();
 
-  const { data } = await authApi.adminLogin({ email, password });
+  const { data } = await authApi.adminLogin({ identifier, password });
   const payload = unwrapLoginPayload(data);
 
   const accessToken = readAccessToken(payload);
@@ -423,7 +423,7 @@ async function login(credentials: LoginCredentials): Promise<LoginResult> {
   const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
   const user = await resolveLoginUser(accessToken, payload, credentials.rememberMe ?? false);
   storeAuth(accessToken, user, credentials.rememberMe ?? false);
-  setCachedAccountType(email, user.actor === 'employee' ? 'employee' : 'admin');
+  setCachedAccountType(identifier, user.actor === 'employee' ? 'employee' : 'admin');
 
   return {
     status:       'success',

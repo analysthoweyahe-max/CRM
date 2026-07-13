@@ -16,12 +16,21 @@ import type {
   PasswordResetVerifyApiResponse,
 } from '@/modules/auth/types/auth.types';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const authApi = {
   // ── Admin / HR Manager ───────────────────────────────────────────────────
 
-  adminLogin(credentials: { email: string; password: string }) {
+  // `identifier` may be an email address or an admin user ID — the backend
+  // expects the former under `email` and the latter under `admin_id`.
+  adminLogin(credentials: { identifier: string; password: string }) {
+    const identifier = credentials.identifier.trim();
+    const body = EMAIL_RE.test(identifier)
+      ? { email: identifier }
+      : { admin_id: identifier };
+
     return http.post<AdminLoginApiResponse>('/v1/admin/auth/login', {
-      email:    credentials.email.trim(),
+      ...body,
       password: credentials.password,
     });
   },

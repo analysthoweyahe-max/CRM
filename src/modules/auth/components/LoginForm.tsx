@@ -120,7 +120,7 @@ export function LoginForm() {
         <div className="relative" dir="ltr">
           <input
             {...register('email')}
-            type="email"
+            type="text"
             placeholder={t.login.emailPlaceholder}
             autoComplete="username"
             aria-invalid={!!errors.email}

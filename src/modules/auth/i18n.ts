@@ -21,8 +21,8 @@ export const authTranslations = {
     login: {
       title:                 'تسجيل الدخول',
       subtitle:              'أدخل بياناتك للوصول إلى لوحة التحكم',
-      email:              'البريد الإلكتروني',
-      emailPlaceholder:   'name@company.com',
+      email:              'البريد الإلكتروني أو رقم المستخدم',
+      emailPlaceholder:   'name@company.com أو رقم المستخدم',
       password:              'كلمة المرور',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'نسيت كلمة المرور؟',
@@ -166,8 +166,8 @@ export const authTranslations = {
     login: {
       title:                 'Sign In',
       subtitle:              'Enter your credentials to access the dashboard',
-      email:              'Email',
-      emailPlaceholder:   'name@company.com',
+      email:              'Email or User ID',
+      emailPlaceholder:   'name@company.com or User ID',
       password:              'Password',
       passwordPlaceholder:   '••••••••••••••',
       forgotPassword:        'Forgot password?',
