@@ -303,12 +303,6 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     if (module === 'seo' && !targetDomain.trim() && !asDraft) {
       errors.targetDomain = isAr ? 'الدومين المستهدف مطلوب' : 'Target domain is required';
     }
-    if (isAdmin && managerIds.length === 0) {
-      errors.managerIds = isAr
-        ? 'يجب اختيار مدير مشروع واحد على الأقل'
-        : 'At least one project manager must be selected';
-    }
-
     setFieldErrors(errors);
     const optionalOk = validateOptionalFields();
     return Object.keys(errors).length === 0 && optionalOk;
@@ -327,7 +321,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     ? (user?.role === 'employee' ? ROUTES.EMPLOYEE.MY_PROJECTS : ROUTES.PROJECT_MANAGER.DASHBOARD)
     : (user?.role === 'seo-member' ? ROUTES.SEO_MEMBER.MY_PROJECTS : ROUTES.SEO_LEADER.DASHBOARD);
 
-  const isValid = !!name.trim() && !!projectTypeId && (!isAdmin || managerIds.length > 0);
+  const isValid = !!name.trim() && !!projectTypeId;
 
   return {
     module,

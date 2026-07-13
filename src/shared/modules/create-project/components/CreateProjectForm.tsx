@@ -323,7 +323,6 @@ export function CreateProjectForm({ form }: Props) {
         <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
           <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">
             {isAr ? 'مديرو المشروع' : 'Project Managers'}
-            <span className="text-red-500 ms-1">*</span>
           </h3>
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
             {isAr ? 'يمكن اختيار أكثر من مدير' : 'You can select multiple managers'}
