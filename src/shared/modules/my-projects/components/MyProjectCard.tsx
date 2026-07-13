@@ -93,10 +93,6 @@ export function MyProjectCard({ item, config, isAr }: Props) {
       }));
       return;
     }
-    if (item.kind === 'seo' && item.project.uuid) {
-      navigate(config.workspacePath(item.project.uuid));
-      return;
-    }
     navigate(config.workspacePath(p.id));
   };
 
@@ -108,10 +104,6 @@ export function MyProjectCard({ item, config, isAr }: Props) {
         id: p.id,
         module: projectModule,
       }));
-      return;
-    }
-    if (item.kind === 'seo' && item.project.uuid) {
-      navigate(config.tasksPath(item.project.uuid));
       return;
     }
     const tasksApiUrl = 'tasksApiUrl' in p ? p.tasksApiUrl : undefined;

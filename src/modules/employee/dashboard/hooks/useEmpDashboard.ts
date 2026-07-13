@@ -16,7 +16,7 @@ export function useEmpDashboard() {
   });
 
   const projects: EmpProject[] = useMemo(() => membership.map((project) => ({
-    id:              project.uuid || project.id,
+    id:              project.id,
     name:            project.name,
     status:          project.status,
     statusLabel:     project.statusLabel,
@@ -24,7 +24,7 @@ export function useEmpDashboard() {
     tasksCompleted:  project.tasksCompleted,
     progressPercent: project.progressPercent,
     tasksUrl:        project.tasksUrl
-      ?? ROUTES.EMPLOYEE.PROJECT_TASKS(project.uuid),
+      ?? ROUTES.EMPLOYEE.PROJECT_TASKS(project.id),
     myProjectRole:   project.myProjectRole,
     module:          project.module,
   })), [membership]);

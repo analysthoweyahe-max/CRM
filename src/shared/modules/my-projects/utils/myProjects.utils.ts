@@ -27,7 +27,6 @@ export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): M
       showManager:     false,
       showTasksButton: true,
       createPath:      ROUTES.SEO_MEMBER.NEW,
-      // uuid from membership API
       workspacePath:   (id) => ROUTES.SEO_MEMBER.DETAILS(String(id)),
       tasksPath:       (id) => ROUTES.SEO_MEMBER.DETAILS(String(id)),
     };

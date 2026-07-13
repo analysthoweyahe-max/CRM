@@ -97,16 +97,16 @@ const STATUS_KEYS = new Set(['not_started', 'in_progress', 'on_hold', 'completed
  * - GET /v1/employee/projects  (module: seo | pm)
  * - GET /v1/seo/employee/projects (SEO only)
  *
- * Uses uuid for opening details. Never from manager project lists.
+ * Uses the numeric id for opening details; uuid is kept alongside for
+ * callers that still need it, but never as the primary identifier.
  */
 export function normalizeMembershipProject(raw: unknown): EmployeeMembershipProject | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
 
-  const uuid = typeof r.uuid === 'string' && r.uuid.trim()
-    ? r.uuid.trim()
-    : (r.id != null ? String(r.id) : '');
-  if (!uuid) return null;
+  const uuid = typeof r.uuid === 'string' ? r.uuid.trim() : '';
+  const id: number | string = r.id != null ? (r.id as number | string) : uuid;
+  if (id === '' || id == null) return null;
 
   const statusRaw = String(r.status ?? 'in_progress');
   const status = (STATUS_KEYS.has(statusRaw) ? statusRaw : 'in_progress') as ProjectStatus;
@@ -114,7 +114,7 @@ export function normalizeMembershipProject(raw: unknown): EmployeeMembershipProj
   const module: 'seo' | 'pm' = moduleRaw === 'pm' ? 'pm' : 'seo';
 
   return {
-    id:              uuid,
+    id,
     uuid,
     name:            String(r.name ?? ''),
     status,
@@ -144,7 +144,7 @@ export function normalizeMembershipProject(raw: unknown): EmployeeMembershipProj
 
 function toSeoProject(m: EmployeeMembershipProject): SeoProject {
   return {
-    id:                     m.uuid || m.id,
+    id:                     m.id,
     uuid:                   m.uuid,
     name:                   m.name,
     targetDomain:           null,

@@ -4,7 +4,7 @@ export type MyProjectsModule = 'pm' | 'seo';
 
 /** Membership row from GET /v1/employee/projects or /v1/seo/employee/projects */
 export interface EmployeeMembershipProject {
-  /** Prefer uuid for routing; falls back to numeric id when uuid missing. */
+  /** Numeric id — used for routing. */
   id:            number | string;
   uuid:          string;
   name:          string;
