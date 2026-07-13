@@ -27,6 +27,7 @@ export function WorkOverviewPage({ layoutScope, seoRouteVariant }: WorkOverviewP
 
   const { data, isLoading, error, isError } = useWorkOverview(scope, month);
   const apiError = useApiQueryError(isError ? error : null);
+  const salary = data?.salary;
 
   return (
     <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
@@ -52,8 +53,8 @@ export function WorkOverviewPage({ layoutScope, seoRouteVariant }: WorkOverviewP
       {data && <WorkOverviewStats data={data} isAr={isAr} isLoading={isLoading} />}
       {!data && isLoading && <WorkOverviewStats data={placeholderOverview(month)} isAr={isAr} isLoading />}
 
-      {(data?.salary || isLoading) && (
-        <WorkOverviewSalaryCard salary={data?.salary} isAr={isAr} isLoading={isLoading && !data?.salary} />
+      {(salary || isLoading) && (
+        <WorkOverviewSalaryCard salary={salary} isAr={isAr} isLoading={isLoading && !salary} />
       )}
 
       <div className="flex flex-wrap gap-2">
