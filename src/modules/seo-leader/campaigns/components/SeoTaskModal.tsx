@@ -1,8 +1,10 @@
 import { useRef }       from 'react';
 import { X, Upload, Download, UserMinus, Users, Paperclip } from 'lucide-react';
 import { Button }        from '@/shared/components/ui/Button';
+import { CopyAttachmentLinkButton } from '@/shared/components/ui/CopyAttachmentLinkButton';
 import { Combobox }      from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { buildAuthMediaUrl }  from '@/shared/components/chat/authMediaUrl';
 import { useSeoTaskModal }   from './useSeoTaskModal';
 import type { SeoTaskTab }   from './SeoTaskModal.types';
 
@@ -362,15 +364,23 @@ export function SeoTaskModal({ taskId, projectId, onClose, isAr }: Props) {
                         </div>
                       </div>
                       {att.url && (
-                        <a
-                          href={att.url}
-                          download={att.fileName}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/30 dark:hover:bg-[#A0CD39]/10 transition-colors shrink-0"
-                        >
-                          <Download size={15} />
-                        </a>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <a
+                            href={att.url}
+                            download={att.fileName}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/30 dark:hover:bg-[#A0CD39]/10 transition-colors"
+                          >
+                            <Download size={15} />
+                          </a>
+                          <CopyAttachmentLinkButton
+                            url={buildAuthMediaUrl(att.url)}
+                            isAr={isAr}
+                            size={15}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/30 dark:hover:bg-[#A0CD39]/10 transition-colors flex items-center justify-center"
+                          />
+                        </div>
                       )}
                     </li>
                   ))}

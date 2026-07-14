@@ -1,5 +1,7 @@
 import { useRef, useState }  from 'react';
 import { Paperclip, Trash2, Download, FileImage, FileText, File } from 'lucide-react';
+import { CopyAttachmentLinkButton } from '@/shared/components/ui/CopyAttachmentLinkButton';
+import { buildAuthMediaUrl } from '@/shared/components/chat/authMediaUrl';
 import type { TaskAttachment } from '../types/taskModal.types';
 
 interface Props {
@@ -74,33 +76,37 @@ export function TaskAttachmentsTab({ attachments, onRemove, onAdd, onDownload, i
       )}
 
       <div className="space-y-2">
-        {attachments.map(file => (
-          <div key={file.id}
-            className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+        {attachments.map(file => {
+          const fullUrl = buildAuthMediaUrl(file.url);
+          return (
+            <div key={file.id}
+              className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
 
-            <div className="flex items-center gap-1 shrink-0">
-              {onRemove && (
-                <button type="button" onClick={() => onRemove(file.id)}
-                  className="w-8 h-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center transition-colors">
-                  <Trash2 size={14} />
+              <div className="flex items-center gap-1 shrink-0">
+                {onRemove && (
+                  <button type="button" onClick={() => onRemove(file.id)}
+                    className="w-8 h-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+                <button type="button" onClick={() => onDownload(file)}
+                  className="w-8 h-8 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 flex items-center justify-center transition-colors">
+                  <Download size={14} />
                 </button>
-              )}
-              <button type="button" onClick={() => onDownload(file)}
-                className="w-8 h-8 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 flex items-center justify-center transition-colors">
-                <Download size={14} />
-              </button>
-            </div>
+                {fullUrl && <CopyAttachmentLinkButton url={fullUrl} isAr={isAr} />}
+              </div>
 
-            <div className="flex-1 text-right min-w-0">
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{file.name}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                {file.sizeLabel} · {file.uploadedAt} · {file.uploadedBy}
-              </p>
-            </div>
+              <div className="flex-1 text-right min-w-0">
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{file.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {file.sizeLabel} · {file.uploadedAt} · {file.uploadedBy}
+                </p>
+              </div>
 
-            <FileThumbnail type={file.fileType} />
-          </div>
-        ))}
+              <FileThumbnail type={file.fileType} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

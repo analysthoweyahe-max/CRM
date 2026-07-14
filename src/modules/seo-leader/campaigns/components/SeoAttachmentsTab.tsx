@@ -1,27 +1,14 @@
 import { useRef, useState }                              from 'react';
 import { Paperclip, Trash2, Download, FileImage, FileText, File, Loader2 } from 'lucide-react';
-import { env }                       from '@/app/config/env';
 import { TOKEN_KEY }                 from '@/app/config/constants';
+import { CopyAttachmentLinkButton }  from '@/shared/components/ui/CopyAttachmentLinkButton';
+import { buildAuthMediaUrl }         from '@/shared/components/chat/authMediaUrl';
 import {
   formatFileSize,
   SEO_ATTACHMENT_UPLOAD_MAX_MB,
   validateSeoFileSizes,
   type SeoTaskAttachment,
 } from '@/shared/utils/seoTaskAttachment.utils';
-
-const API_ORIGIN = (() => {
-  try { return new URL(env.apiBaseUrl).origin; } catch { return ''; }
-})();
-
-function buildUrl(url?: string) {
-  if (!url) return '';
-  try {
-    const { pathname, search } = new URL(url);
-    return `${API_ORIGIN}${pathname}${search}`;
-  } catch {
-    return `${API_ORIGIN}${url.startsWith('/') ? '' : '/'}${url}`;
-  }
-}
 
 async function downloadFile(url: string, filename: string) {
   try {
@@ -196,7 +183,7 @@ export function SeoAttachmentsTab({
           </p>
         ) : (
           attachments.map(file => {
-            const fullUrl = buildUrl(file.url);
+            const fullUrl = buildAuthMediaUrl(file.url);
             const isDeleting = deletingId === file.id;
             return (
               <div
@@ -225,12 +212,16 @@ export function SeoAttachmentsTab({
                         : <Trash2 size={14} />}
                     </button>
                   )}
-                  {fullUrl
-                    ? <DownloadBtn url={fullUrl} name={file.fileName} />
-                    : <span className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-300 opacity-40">
-                        <Download size={14} />
-                      </span>
-                  }
+                  {fullUrl ? (
+                    <>
+                      <DownloadBtn url={fullUrl} name={file.fileName} />
+                      <CopyAttachmentLinkButton url={fullUrl} isAr={isAr} />
+                    </>
+                  ) : (
+                    <span className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-300 opacity-40">
+                      <Download size={14} />
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex-1 text-end min-w-0">

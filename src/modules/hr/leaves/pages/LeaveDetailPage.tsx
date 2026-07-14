@@ -2,7 +2,9 @@ import { useNavigate }  from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Download, FileText } from 'lucide-react';
 import { ROUTES }        from '@/app/router/routes';
 import { Card }          from '@/shared/components/ui/Card';
+import { CopyAttachmentLinkButton } from '@/shared/components/ui/CopyAttachmentLinkButton';
 import { usePermission } from '@/shared/hooks/usePermission';
+import { buildAuthMediaUrl } from '@/shared/components/chat/authMediaUrl';
 import { LeaveStatusBadge }  from '../components/LeaveStatusBadge';
 import { ApproveModal, RejectModal } from '../components/LeaveActionModals';
 import { useLeaveDetailPage } from './useLeaveDetailPage';
@@ -143,10 +145,16 @@ export function LeaveDetailPage() {
                     <p className="text-xs text-gray-400">{Math.round(req.attachment.size / 1024)} KB</p>
                   </div>
                 </div>
-                <a href={req.attachment.url} target="_blank" rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                  <Download size={14} />
-                </a>
+                <div className="flex items-center gap-1">
+                  <a href={req.attachment.url} target="_blank" rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <Download size={14} />
+                  </a>
+                  <CopyAttachmentLinkButton
+                    url={buildAuthMediaUrl(req.attachment.url)}
+                    isAr={isAr}
+                  />
+                </div>
               </div>
             </div>
           )}
