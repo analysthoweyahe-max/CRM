@@ -4,7 +4,7 @@ import { ClientUpdatePhaseCard } from './ClientUpdatePhaseCard';
 
 interface Props {
   projectId: string;
-  isAr:      boolean;
+  isAr: boolean;
 }
 
 export function ProjectClientUpdatesTab({ projectId, isAr }: Props) {
@@ -29,6 +29,10 @@ export function ProjectClientUpdatesTab({ projectId, isAr }: Props) {
 
   return (
     <div className="space-y-4 pb-10">
+      <div className='p-3 flex flex-col items-center justify-center bg-blue-100 rounded-2xl  text-blue-500 w-fit mx-auto'>
+        <span>note:</span>
+        بانتظار الربط مع crm  العميل
+      </div>
       {phases.map(phase => (
         <ClientUpdatePhaseCard
           key={phase.uuid}

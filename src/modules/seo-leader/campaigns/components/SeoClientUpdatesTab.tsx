@@ -1,33 +1,33 @@
-import { useState }     from 'react';
+import { useState } from 'react';
 import {
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   Paperclip, Plus, Send, Calendar, CheckCircle2, MessageSquare,
 } from 'lucide-react';
-import { Avatar }   from '@/shared/components/ui/Avatar';
-import { Button }   from '@/shared/components/ui/Button';
-import { Modal }    from '@/shared/components/ui/Modal';
+import { Avatar } from '@/shared/components/ui/Avatar';
+import { Button } from '@/shared/components/ui/Button';
+import { Modal } from '@/shared/components/ui/Modal';
 
 /* ── Types ────────────────────────────────────────────────────────────── */
 interface ClientMessage {
-  id:            number;
-  senderName:    string;
+  id: number;
+  senderName: string;
   senderInitial: string;
-  senderColor:   string;
-  text:          string;
-  sentAt:        string;
-  isOwn:         boolean;
+  senderColor: string;
+  text: string;
+  sentAt: string;
+  isOwn: boolean;
 }
 
 interface ClientMilestone {
-  id:            number;
-  title:         string;
-  status:        'pending' | 'in_review' | 'approved' | 'rejected';
-  statusLabel:   string;
-  description?:  string;
+  id: number;
+  title: string;
+  status: 'pending' | 'in_review' | 'approved' | 'rejected';
+  statusLabel: string;
+  description?: string;
   deliveryDate?: string;
-  approvedAt?:   string;
-  attachments:   { id: number; name: string }[];
-  messages:      ClientMessage[];
+  approvedAt?: string;
+  attachments: { id: number; name: string }[];
+  messages: ClientMessage[];
 }
 
 /* ── Dummy data ───────────────────────────────────────────────────────── */
@@ -94,19 +94,19 @@ const INITIAL_MILESTONES: ClientMilestone[] = [
 
 /* ── Status badge styles ─────────────────────────────────────────────── */
 const STATUS_CLS: Record<string, string> = {
-  approved:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   in_review: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  pending:   'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-  rejected:  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  pending: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+  rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
 /* ── Single milestone accordion card ─────────────────────────────────── */
 interface CardProps {
   milestone: ClientMilestone;
-  isOpen:    boolean;
-  onToggle:  () => void;
-  onSend:    (milestoneId: number, text: string) => void;
-  isAr:      boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  onSend: (milestoneId: number, text: string) => void;
+  isAr: boolean;
 }
 
 function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardProps) {
@@ -145,7 +145,7 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
             {m.statusLabel}
           </span>
           {isOpen
-            ? <ChevronUp   size={15} className="text-gray-400" />
+            ? <ChevronUp size={15} className="text-gray-400" />
             : <ChevronDown size={15} className="text-gray-400" />}
         </div>
       </button>
@@ -294,10 +294,10 @@ function MilestoneCard({ milestone: m, isOpen, onToggle, onSend, isAr }: CardPro
 
 /* ── Add milestone modal ─────────────────────────────────────────────── */
 interface AddModalProps {
-  open:       boolean;
-  onClose:    () => void;
-  onAdd:      (title: string) => void;
-  isAr:       boolean;
+  open: boolean;
+  onClose: () => void;
+  onAdd: (title: string) => void;
+  isAr: boolean;
 }
 
 function AddMilestoneModal({ open, onClose, onAdd, isAr }: AddModalProps) {
@@ -355,8 +355,8 @@ interface Props {
 
 export function SeoClientUpdatesTab({ isAr }: Props) {
   const [milestones, setMilestones] = useState<ClientMilestone[]>(INITIAL_MILESTONES);
-  const [openIds,    setOpenIds]    = useState<Set<number>>(new Set([1]));
-  const [showAdd,    setShowAdd]    = useState(false);
+  const [openIds, setOpenIds] = useState<Set<number>>(new Set([1]));
+  const [showAdd, setShowAdd] = useState(false);
 
   function toggleOpen(id: number) {
     setOpenIds(prev => {
@@ -371,12 +371,12 @@ export function SeoClientUpdatesTab({ isAr }: Props) {
     setMilestones(prev => [
       ...prev,
       {
-        id:          newId,
+        id: newId,
         title,
-        status:      'pending',
+        status: 'pending',
         statusLabel: isAr ? 'قيد التنفيذ' : 'In Progress',
         attachments: [],
-        messages:    [],
+        messages: [],
       },
     ]);
     setOpenIds(prev => new Set([...prev, newId]));
@@ -388,20 +388,20 @@ export function SeoClientUpdatesTab({ isAr }: Props) {
         m.id !== milestoneId
           ? m
           : {
-              ...m,
-              messages: [
-                ...m.messages,
-                {
-                  id:            Date.now(),
-                  senderName:    isAr ? 'أنت' : 'You',
-                  senderInitial: 'أ',
-                  senderColor:   'bg-[#A0CD39]',
-                  text,
-                  sentAt:        new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-                  isOwn:         true,
-                },
-              ],
-            }
+            ...m,
+            messages: [
+              ...m.messages,
+              {
+                id: Date.now(),
+                senderName: isAr ? 'أنت' : 'You',
+                senderInitial: 'أ',
+                senderColor: 'bg-[#A0CD39]',
+                text,
+                sentAt: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                isOwn: true,
+              },
+            ],
+          }
       )
     );
   }
@@ -419,7 +419,10 @@ export function SeoClientUpdatesTab({ isAr }: Props) {
           {isAr ? 'إضافة مرحلة' : 'Add Milestone'}
         </Button>
       </div>
-
+      <div className='p-3 flex flex-col items-center justify-center bg-blue-100 rounded-2xl  text-blue-500 w-fit mx-auto'>
+        <span>note:</span>
+        بانتظار الربط مع crm  العميل
+        </div>
       {/* Milestone list */}
       {milestones.map(m => (
         <MilestoneCard
