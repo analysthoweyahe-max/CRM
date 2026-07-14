@@ -2,6 +2,8 @@ import { useMemo }         from 'react';
 import { Clock }             from 'lucide-react';
 import { useReactTable, getCoreRowModel, getFilteredRowModel, createColumnHelper } from '@tanstack/react-table';
 import { DataTable }         from '@/shared/components/tables/DataTable';
+import { TimerControls }     from '@/shared/modules/task-timer/components/TimerControls';
+import type { TimerPortal }  from '@/shared/modules/task-timer/types/taskTimer.types';
 import { AddTimeLogForm }    from './AddTimeLogForm';
 import type { TimeSession }  from '../types/taskModal.types';
 
@@ -14,11 +16,18 @@ interface Props {
   onAddTimeLog?:   (payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) => void;
   loggingTime?:    boolean;
   isAr:            boolean;
+  /** Live timer — omitted where the caller hasn't wired a task/project id yet. */
+  timer?: {
+    portal:    TimerPortal;
+    projectId: string;
+    taskId:    string;
+    title:     string;
+  };
 }
 
 const col = createColumnHelper<TimeSession>();
 
-export function TaskTimeTab({ sessions, totalHours, estimatedHours, remainingHours, progress, onAddTimeLog, loggingTime, isAr }: Props) {
+export function TaskTimeTab({ sessions, totalHours, estimatedHours, remainingHours, progress, onAddTimeLog, loggingTime, isAr, timer }: Props) {
   const columns = useMemo(() => [
     col.accessor('date',  { header: isAr ? 'التاريخ' : 'Date',         enableSorting: false }),
     col.accessor('from',  { header: isAr ? 'من'       : 'From',         enableSorting: false }),
@@ -48,6 +57,19 @@ export function TaskTimeTab({ sessions, totalHours, estimatedHours, remainingHou
         </h3>
         <Clock size={17} className="text-[#A0CD39]" />
       </div>
+
+      {timer && (
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 p-4 flex items-center justify-end">
+          <TimerControls
+            portal={timer.portal}
+            projectId={timer.projectId}
+            taskId={timer.taskId}
+            title={timer.title}
+            isAr={isAr}
+            size="sm"
+          />
+        </div>
+      )}
 
       <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 text-right">
         {isAr ? 'الجلسات المسجلة' : 'Recorded Sessions'}

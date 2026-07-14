@@ -1,14 +1,7 @@
 import { fmtDeadline } from '@/modules/employee/tasks/components/useTasksTable';
 import type { EmpTask } from '@/modules/employee/dashboard/types/empTask.types';
-import type { SeoTask, SeoTaskPriority, SeoTaskStatus } from '../types/seoTask.types';
-
-const STATUS_MAP: Record<SeoTaskStatus, { ar: string; en: string; variant: 'brand' | 'success' | 'gray' | 'error' }> = {
-  pending:    { ar: 'لم تبدأ بعد', en: 'Not Started', variant: 'gray'    },
-  inProgress: { ar: 'قيد التنفيذ', en: 'In Progress',  variant: 'brand'   },
-  inReview:   { ar: 'قيد المراجعة', en: 'In Review',   variant: 'brand'   },
-  completed:  { ar: 'مكتملة',      en: 'Completed',    variant: 'success' },
-  blocked:    { ar: 'محظورة',      en: 'Blocked',      variant: 'error'   },
-};
+import { useSeoTaskLookups, badgeVariantForStatus } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
+import type { SeoTask, SeoTaskPriority } from '../types/seoTask.types';
 
 const PRIORITY_MAP: Record<SeoTaskPriority, { ar: string; en: string; variant: 'error' | 'warning' | 'gray' }> = {
   high:   { ar: 'عالية',  en: 'High',   variant: 'error'   },
@@ -17,7 +10,12 @@ const PRIORITY_MAP: Record<SeoTaskPriority, { ar: string; en: string; variant: '
 };
 
 export function useSeoTaskCard(task: SeoTask, isAr: boolean) {
-  const status   = STATUS_MAP[task.status]   ?? STATUS_MAP.pending;
+  const { statusOptions } = useSeoTaskLookups(isAr);
+  const statusOpt = statusOptions.find(s => s.key === task.status);
+  const status = {
+    label:   statusOpt?.label ?? task.status,
+    variant: badgeVariantForStatus(task.status, statusOpt?.marksCompleted ?? false),
+  };
   const priority = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.normal;
   const taskNum  = `#${task.taskNumber.toString().padStart(3, '0')}`;
   const deadline = task.dueDate

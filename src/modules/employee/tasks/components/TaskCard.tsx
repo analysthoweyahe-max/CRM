@@ -1,18 +1,19 @@
-import { Play, Square, Briefcase, CalendarClock } from 'lucide-react';
+import { Briefcase, CalendarClock } from 'lucide-react';
 import { useNavigate }   from 'react-router-dom';
 import { Badge }         from '@/shared/components/ui/Badge';
 import { Button }        from '@/shared/components/ui/Button';
 import { Card }          from '@/shared/components/ui/Card';
-import { useTaskTimer }  from '@/app/layouts/components/TaskTimerContext';
+import { TimerControls } from '@/shared/modules/task-timer/components/TimerControls';
+import { useTaskTimers } from '@/shared/modules/task-timer/hooks/useTaskTimers';
 import { ROUTES }        from '@/app/router/routes';
 import { useTaskCard }   from './useTaskCard';
 import type { TaskCardProps } from './TaskCard.types';
 
 export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
-  const { status, priority, title, project, deadline, taskNum, empTask } = useTaskCard(task, isAr);
-  const { activeTask, startTimer, stopTimer } = useTaskTimer();
+  const { status, priority, title, project, deadline, taskNum } = useTaskCard(task, isAr);
+  const { getTimer } = useTaskTimers();
   const navigate = useNavigate();
-  const isActive = activeTask?.id === task.id;
+  const isActive = !!getTimer(task.id);
   const handleDetails = onDetails ? () => onDetails(task.id) : () => navigate(ROUTES.EMPLOYEE.TASK_DETAIL(task.projectId, task.id));
 
   return (
@@ -32,11 +33,19 @@ export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
             <span className="font-semibold text-gray-800 dark:text-gray-100">{title}</span>
             <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums">{taskNum}</span>
           </div>
-          <Badge
-            label={isAr ? status.ar : status.en}
-            variant={status.variant}
-            icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
-          />
+          <div className="flex items-center gap-1.5 shrink-0">
+            {(task.isOverdue || task.isDelayed) && (
+              <Badge
+                label={task.overdueLabel || (isAr ? 'متأخرة' : 'Overdue')}
+                variant="error"
+              />
+            )}
+            <Badge
+              label={isAr ? status.ar : status.en}
+              variant={status.variant}
+              icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
+            />
+          </div>
         </div>
 
         {/* Row 2: project */}
@@ -59,25 +68,7 @@ export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {isActive ? (
-              <Button
-                variant="danger"
-                size="sm"
-                startIcon={<Square size={13} fill="currentColor" />}
-                onClick={() => stopTimer()}
-              >
-                {isAr ? 'إيقاف' : 'Stop'}
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                startIcon={<Play size={13} />}
-                onClick={() => startTimer(empTask)}
-              >
-                {isAr ? 'بدء المؤقت' : 'Start Timer'}
-              </Button>
-            )}
+            <TimerControls portal="pm" projectId={task.projectId} taskId={task.id} title={title} isAr={isAr} size="sm" />
             <Button variant="secondary" size="sm" onClick={handleDetails}>
               {isAr ? 'تفاصيل' : 'Details'}
             </Button>

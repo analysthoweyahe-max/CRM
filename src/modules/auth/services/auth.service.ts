@@ -16,6 +16,7 @@ import type {
 import { mapRolesToAppRole } from '@/shared/types/role.types';
 import { resetFcmRegistration } from '@/shared/services/fcm.service';
 import { disconnectEcho } from '@/shared/realtime-messages';
+import { queryClient } from '@/app/providers/QueryProvider';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
 
 type AccountType = 'employee' | 'admin';
@@ -693,6 +694,7 @@ async function logout(): Promise<void> {
     clearAuth();
     resetFcmRegistration();
     disconnectEcho();
+    queryClient.clear();
   }
 }
 

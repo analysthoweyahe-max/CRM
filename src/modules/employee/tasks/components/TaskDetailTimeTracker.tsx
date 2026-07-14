@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Play, Square, Trash2, Plus, X } from 'lucide-react';
+import { Trash2, Plus, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
-import { useTaskTimer } from '@/app/layouts/components/TaskTimerContext';
+import { TimerControls } from '@/shared/modules/task-timer/components/TimerControls';
+import type { TimerPortal } from '@/shared/modules/task-timer/types/taskTimer.types';
 import { useCreateSession, useDeleteSession } from '../hooks/useTaskDetail';
 import type { TaskDetail, TaskSession } from '../types/taskDetail.types';
 
@@ -24,19 +25,14 @@ interface Props {
   onDeleteSession?: (sessionId: string) => void;
   creatingSession?: boolean;
   deletingSession?: boolean;
+  /** Which time-log endpoint family the live timer should call — defaults to PM. */
+  portal?: TimerPortal;
 }
 
 interface AddSessionForm {
   date: string;
   from: string;
   to:   string;
-}
-
-function formatElapsed(sec: number): string {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  return [h, m, s].map(n => String(n).padStart(2, '0')).join(':');
 }
 
 function calcDuration(from: string, to: string): number {
@@ -67,8 +63,8 @@ function Skeleton() {
 export function TaskDetailTimeTracker({
   task, sessions: serverSessions, isLoading, isAr, projectId, taskId,
   onCreateSession, onDeleteSession, creatingSession, deletingSession,
+  portal = 'pm',
 }: Props) {
-  const { activeTask, elapsed, startTimer, stopTimer } = useTaskTimer();
   const canPersist = !!(projectId && taskId);
   // Always called (rules-of-hooks) but only actually invoked as the default
   // PM persistence path — a no-op unless canPersist and no override is given.
@@ -86,16 +82,9 @@ export function TaskDetailTimeTracker({
 
   if (isLoading || !task) return <Skeleton />;
 
-  const isActive    = activeTask?.id === task.id;
   const consumed    = sessions.reduce((s, r) => s + r.durationHours, 0);
   const remaining   = Math.max(0, task.allocatedHours - consumed);
   const progressPct = Math.min(100, (consumed / task.allocatedHours) * 100);
-
-  const empTask = {
-    id: task.id, titleAr: task.title, titleEn: task.title,
-    project: task.project,
-    deadline: task.deadline, priority: task.priority,
-  };
 
   function deleteSession(id: string) {
     if (canPersist) { persistDelete(id); return; }
@@ -131,25 +120,11 @@ export function TaskDetailTimeTracker({
   return (
     <div className="space-y-5">
       {/* Timer card */}
-      <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-5 flex items-center justify-between gap-4">
-        <div>
-          {isActive ? (
-            <Button variant="danger" startIcon={<Square size={14} fill="currentColor" />} onClick={() => stopTimer()}>
-              {isAr ? 'إيقاف' : 'Stop'}
-            </Button>
-          ) : (
-            <Button variant="primary" startIcon={<Play size={14} />} onClick={() => startTimer(empTask)}>
-              {isAr ? 'بدء المؤقت' : 'Start Timer'}
-            </Button>
-          )}
+      {canPersist && (
+        <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-5 flex items-center justify-between gap-4">
+          <TimerControls portal={portal} projectId={projectId!} taskId={taskId!} title={task.title} isAr={isAr} size="md" />
         </div>
-        <div className="text-end">
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{isAr ? 'الوقت الحالي' : 'Current Time'}</p>
-          <p className="text-3xl font-mono font-bold text-gray-800 dark:text-gray-100 tabular-nums">
-            {isActive ? formatElapsed(elapsed) : '00:00:00'}
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Sessions */}
       <div>

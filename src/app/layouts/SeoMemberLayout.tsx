@@ -4,8 +4,8 @@ import { toast }    from 'sonner';
 import { AppSidebar }          from './components/AppSidebar';
 import { Topbar }              from './components/Topbar';
 import { LoadingSpinner }      from '@/shared/components/feedback/LoadingSpinner';
-import { FloatingTimer }       from './components/FloatingTimer';
-import { TaskTimerProvider }   from './components/TaskTimerContext';
+import { FloatingTimer }       from '@/shared/modules/task-timer/components/FloatingTimer';
+import { TaskTimersProvider }  from '@/shared/modules/task-timer/hooks/useTaskTimers';
 import { useAttendanceWidget } from './components/useAttendanceWidget';
 import { useLang }             from '@/app/providers/LanguageProvider';
 import { ROUTES }              from '@/app/router/routes';
@@ -27,7 +27,7 @@ export function SeoMemberLayout() {
   }, [collapsed, attendance.isActiveDay, isAr]);
 
   return (
-    <TaskTimerProvider>
+    <TaskTimersProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AppSidebar
           variant="seo-member"
@@ -57,6 +57,6 @@ export function SeoMemberLayout() {
 
         <FloatingTimer />
       </div>
-    </TaskTimerProvider>
+    </TaskTimersProvider>
   );
 }

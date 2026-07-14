@@ -1,8 +1,9 @@
-import { Play, Square, CalendarClock } from 'lucide-react';
+import { CalendarClock } from 'lucide-react';
 import { Badge }        from '@/shared/components/ui/Badge';
 import { Button }       from '@/shared/components/ui/Button';
 import { Card }         from '@/shared/components/ui/Card';
-import { useTaskTimer } from '@/app/layouts/components/TaskTimerContext';
+import { TimerControls } from '@/shared/modules/task-timer/components/TimerControls';
+import { useTaskTimers } from '@/shared/modules/task-timer/hooks/useTaskTimers';
 import { useSeoTaskCard } from '@/modules/seo-member/tasks/components/useSeoTaskCard';
 import type { SeoTask } from '@/modules/seo-member/tasks/types/seoTask.types';
 
@@ -13,9 +14,11 @@ interface Props {
 }
 
 export function TodayTaskCard({ task, isAr, onDetails }: Props) {
-  const { priority, taskNum, deadline, empTask } = useSeoTaskCard(task, isAr);
-  const { activeTask, startTimer, stopTimer }    = useTaskTimer();
-  const isActive = activeTask?.id === String(task.id);
+  const { priority, taskNum, deadline } = useSeoTaskCard(task, isAr);
+  const { getTimer } = useTaskTimers();
+  const taskId = String(task.id);
+  const isActive = !!getTimer(taskId);
+  const projectId = task.project?.id ?? '';
 
   return (
     <Card
@@ -23,11 +26,16 @@ export function TodayTaskCard({ task, isAr, onDetails }: Props) {
       className={isActive ? 'border-brand-400 shadow-md shadow-brand-100 dark:shadow-brand-900/20' : ''}
     >
       <div className="space-y-1.5">
-        <Badge
-          label={isAr ? priority.ar : priority.en}
-          variant={priority.variant}
-          icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
-        />
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Badge
+            label={isAr ? priority.ar : priority.en}
+            variant={priority.variant}
+            icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
+          />
+          {(task.isOverdue || task.isDelayed) && (
+            <Badge label={task.overdueLabel || (isAr ? 'متأخرة' : 'Overdue')} variant="error" />
+          )}
+        </div>
         <div className="flex items-baseline gap-2">
           <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">{task.title}</span>
           <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums shrink-0">{taskNum}</span>
@@ -39,15 +47,7 @@ export function TodayTaskCard({ task, isAr, onDetails }: Props) {
 
       <div className="flex items-center justify-between gap-3 pt-3 flex-wrap">
         <div className="flex items-center gap-2">
-          {isActive ? (
-            <Button variant="danger" size="sm" startIcon={<Square size={13} fill="currentColor" />} onClick={() => stopTimer()}>
-              {isAr ? 'إيقاف' : 'Stop'}
-            </Button>
-          ) : (
-            <Button variant="primary" size="sm" startIcon={<Play size={13} />} onClick={() => startTimer(empTask)}>
-              {isAr ? 'بدء المؤقت' : 'Start Timer'}
-            </Button>
-          )}
+          <TimerControls portal="seo" projectId={projectId} taskId={taskId} title={task.title} isAr={isAr} size="sm" />
           <Button variant="secondary" size="sm" onClick={() => onDetails?.(task)}>
             {isAr ? 'تفاصيل' : 'Details'}
           </Button>

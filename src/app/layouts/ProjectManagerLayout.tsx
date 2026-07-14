@@ -8,6 +8,8 @@ import { Topbar }     from './components/Topbar';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
 import { useAttendanceWidget } from './components/useAttendanceWidget';
 import { ROUTES }     from '@/app/router/routes';
+import { FloatingTimer }      from '@/shared/modules/task-timer/components/FloatingTimer';
+import { TaskTimersProvider } from '@/shared/modules/task-timer/hooks/useTaskTimers';
 
 export function ProjectManagerLayout() {
   const { user, isSuperAdmin } = useAuth();
@@ -28,28 +30,32 @@ export function ProjectManagerLayout() {
   }, [collapsed, attendance.isActiveDay, isAr, isSuperAdmin]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppSidebar
-        variant={user?.role === 'admin' ? 'admin' : 'pm'}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed(p => !p)}
-        isCheckedIn={!isSuperAdmin && attendance.isActiveDay}
-      />
+    <TaskTimersProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <AppSidebar
+          variant={user?.role === 'admin' ? 'admin' : 'pm'}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed(p => !p)}
+          isCheckedIn={!isSuperAdmin && attendance.isActiveDay}
+        />
 
-      <div className={[
-        'flex flex-col min-h-screen dark:bg-gray-950',
-        'transition-all duration-300',
-        collapsed ? 'lg:ms-16' : 'lg:ms-64',
-      ].join(' ')}>
-        <Topbar onMenuToggle={() => setSidebarOpen(p => !p)} profileRoute={ROUTES.PROJECT_MANAGER.PROFILE} layoutScope="pm" />
-        <main className="flex-1 p-4 md:p-6">
-          <Suspense fallback={<LoadingSpinner />}>
-            <Outlet />
-          </Suspense>
-        </main>
+        <div className={[
+          'flex flex-col min-h-screen dark:bg-gray-950',
+          'transition-all duration-300',
+          collapsed ? 'lg:ms-16' : 'lg:ms-64',
+        ].join(' ')}>
+          <Topbar onMenuToggle={() => setSidebarOpen(p => !p)} profileRoute={ROUTES.PROJECT_MANAGER.PROFILE} layoutScope="pm" />
+          <main className="flex-1 p-4 md:p-6">
+            <Suspense fallback={<LoadingSpinner />}>
+              <Outlet />
+            </Suspense>
+          </main>
+        </div>
+
+        <FloatingTimer />
       </div>
-    </div>
+    </TaskTimersProvider>
   );
 }

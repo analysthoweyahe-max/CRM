@@ -1,15 +1,18 @@
-import { Play, Square, Tag, FolderOpen, CalendarClock } from 'lucide-react';
+import { Tag, FolderOpen, CalendarClock } from 'lucide-react';
 import { Badge }        from '@/shared/components/ui/Badge';
 import { Button }       from '@/shared/components/ui/Button';
 import { Card }         from '@/shared/components/ui/Card';
-import { useTaskTimer } from '@/app/layouts/components/TaskTimerContext';
+import { TimerControls } from '@/shared/modules/task-timer/components/TimerControls';
+import { useTaskTimers } from '@/shared/modules/task-timer/hooks/useTaskTimers';
 import { useSeoTaskCard } from './useSeoTaskCard';
 import type { SeoTaskCardProps } from './SeoTaskCard.types';
 
 export function SeoTaskCard({ task, isAr, onDetails }: SeoTaskCardProps) {
-  const { status, priority, taskNum, deadline, empTask } = useSeoTaskCard(task, isAr);
-  const { activeTask, startTimer, stopTimer } = useTaskTimer();
-  const isActive = activeTask?.id === String(task.id);
+  const { status, priority, taskNum, deadline } = useSeoTaskCard(task, isAr);
+  const { getTimer } = useTaskTimers();
+  const taskId = String(task.id);
+  const isActive = !!getTimer(taskId);
+  const projectId = task.project?.id ?? '';
 
   return (
     <Card
@@ -29,11 +32,19 @@ export function SeoTaskCard({ task, isAr, onDetails }: SeoTaskCardProps) {
             <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">{task.title}</span>
             <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums shrink-0">{taskNum}</span>
           </div>
-          <Badge
-            label={isAr ? status.ar : status.en}
-            variant={status.variant}
-            icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
-          />
+          <div className="flex items-center gap-1.5 shrink-0">
+            {(task.isOverdue || task.isDelayed) && (
+              <Badge
+                label={task.overdueLabel || (isAr ? 'متأخرة' : 'Overdue')}
+                variant="error"
+              />
+            )}
+            <Badge
+              label={status.label}
+              variant={status.variant}
+              icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
+            />
+          </div>
         </div>
 
         {/* Row 2: task type | phase */}
@@ -64,25 +75,7 @@ export function SeoTaskCard({ task, isAr, onDetails }: SeoTaskCardProps) {
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {isActive ? (
-              <Button
-                variant="danger"
-                size="sm"
-                startIcon={<Square size={13} fill="currentColor" />}
-                onClick={() => stopTimer()}
-              >
-                {isAr ? 'إيقاف' : 'Stop'}
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                startIcon={<Play size={13} />}
-                onClick={() => startTimer(empTask)}
-              >
-                {isAr ? 'بدء المؤقت' : 'Start Timer'}
-              </Button>
-            )}
+            <TimerControls portal="seo" projectId={projectId} taskId={taskId} title={task.title} isAr={isAr} size="sm" />
             <Button
               variant="secondary"
               size="sm"
