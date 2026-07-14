@@ -15,6 +15,7 @@ interface Props {
   onExtendClick?:  () => void;
   onStatusChange:  (status: string) => void;
   changingStatus:  boolean;
+  canEdit?:        boolean;
   isAr:            boolean;
 }
 
@@ -31,7 +32,7 @@ const PRIORITY_LABEL: Record<Task['priority'], { ar: string; en: string }> = {
   low:    { ar: 'منخفضة', en: 'Low'    },
 };
 
-export function TaskInfoTab({ task, onDeleteClick, onEditClick, onExtendClick, onStatusChange, changingStatus, isAr }: Props) {
+export function TaskInfoTab({ task, onDeleteClick, onEditClick, onExtendClick, onStatusChange, changingStatus, canEdit = true, isAr }: Props) {
   const { statuses } = usePmTaskLookups();
   const statusItems: ComboboxItem[] = statuses.map(s => ({ id: s.value, label: s.label }));
   const priorityLabel = PRIORITY_LABEL[task.priority];
@@ -108,7 +109,7 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, onExtendClick, o
             items={statusItems}
             value={task.status as TaskStatus}
             onChange={onStatusChange}
-            disabled={changingStatus}
+            disabled={!canEdit || changingStatus}
             placeholder={isAr ? 'الحالة' : 'Status'}
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
             noResultsText={isAr ? 'لا نتائج' : 'No results'}
@@ -117,19 +118,21 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, onExtendClick, o
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3 pt-2">
-        <Button variant="danger" size="sm" startIcon={<Trash2 size={14} />} onClick={onDeleteClick}>
-          {isAr ? 'حذف المهمة' : 'Delete Task'}
-        </Button>
-        {task.canExtend && onExtendClick && (
-          <Button variant="secondary" size="sm" startIcon={<CalendarClock size={14} />} onClick={onExtendClick}>
-            {isAr ? 'تمديد الموعد' : 'Extend Deadline'}
+      {canEdit && (
+        <div className="flex items-center gap-3 pt-2">
+          <Button variant="danger" size="sm" startIcon={<Trash2 size={14} />} onClick={onDeleteClick}>
+            {isAr ? 'حذف المهمة' : 'Delete Task'}
           </Button>
-        )}
-        <Button variant="secondary" size="sm" startIcon={<Pencil size={14} />} onClick={onEditClick}>
-          {isAr ? 'تعديل المهمة' : 'Edit Task'}
-        </Button>
-      </div>
+          {task.canExtend && onExtendClick && (
+            <Button variant="secondary" size="sm" startIcon={<CalendarClock size={14} />} onClick={onExtendClick}>
+              {isAr ? 'تمديد الموعد' : 'Extend Deadline'}
+            </Button>
+          )}
+          <Button variant="secondary" size="sm" startIcon={<Pencil size={14} />} onClick={onEditClick}>
+            {isAr ? 'تعديل المهمة' : 'Edit Task'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

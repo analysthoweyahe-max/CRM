@@ -22,14 +22,24 @@ interface TaskTimeLogResponse {
 }
 
 function toTaskTimeLog(raw: RawTaskTimeLog): TaskTimeLog {
+  const isPaused  = Boolean(raw.isPaused);
+  const isRunning = Boolean(raw.isRunning);
+  const isOpen    = Boolean(raw.isOpen ?? raw.isRunning ?? true);
+
+  // Prefer explicit capability flags from the API; fall back to isPaused so the
+  // Pause ↔ Resume toggle still works if the backend omits canPause/canResume.
+  const canPause  = raw.canPause  != null ? Boolean(raw.canPause)  : isOpen && !isPaused;
+  const canResume = raw.canResume != null ? Boolean(raw.canResume) : isOpen && isPaused;
+  const canStop   = raw.canStop   != null ? Boolean(raw.canStop)   : isOpen;
+
   return {
     id:                     String(raw.id),
-    isRunning:              Boolean(raw.isRunning),
-    isPaused:               Boolean(raw.isPaused),
-    isOpen:                 Boolean(raw.isOpen ?? raw.isRunning),
-    canPause:               Boolean(raw.canPause),
-    canResume:              Boolean(raw.canResume),
-    canStop:                Boolean(raw.canStop),
+    isRunning,
+    isPaused,
+    isOpen,
+    canPause,
+    canResume,
+    canStop,
     elapsedSeconds:         raw.elapsedSeconds ?? 0,
     durationHours:          raw.durationHours ?? 0,
     pausedAt:               raw.pausedAt ?? null,

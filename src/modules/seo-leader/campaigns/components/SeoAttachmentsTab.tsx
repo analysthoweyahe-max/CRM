@@ -99,13 +99,13 @@ function DownloadBtn({ url, name }: { url: string; name: string }) {
 }
 
 interface Props {
-  attachments:   SeoTaskAttachment[];
-  onUploadFiles: (files: File[]) => void;
-  onDelete?:     (attachmentId: number) => void;
-  isUploading:   boolean;
-  deletingId?:   number | null;
-  isAr:          boolean;
-  uploadError?:  string | null;
+  attachments:    SeoTaskAttachment[];
+  onUploadFiles?: (files: File[]) => void;
+  onDelete?:      (attachmentId: number) => void;
+  isUploading:    boolean;
+  deletingId?:    number | null;
+  isAr:           boolean;
+  uploadError?:   string | null;
 }
 
 export function SeoAttachmentsTab({
@@ -120,9 +120,10 @@ export function SeoAttachmentsTab({
   const fileRef  = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const canUpload = !!onUploadFiles;
 
   function handleFiles(files: FileList | null) {
-    if (!files?.length || isUploading) return;
+    if (!canUpload || !files?.length || isUploading) return;
     const list = Array.from(files);
     const validation = validateSeoFileSizes(list, SEO_ATTACHMENT_UPLOAD_MAX_MB);
     if (validation) {
@@ -137,48 +138,52 @@ export function SeoAttachmentsTab({
 
   return (
     <div className="space-y-4">
-      <input
-        ref={fileRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
-      />
+      {canUpload && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
+          />
 
-      <div
-        onClick={() => !isUploading && fileRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-        className={[
-          'border-2 border-dashed rounded-2xl p-8 flex flex-col items-center gap-2 transition-colors',
-          isUploading ? 'cursor-wait opacity-70' : 'cursor-pointer',
-          dragOver
-            ? 'border-[#A0CD39] bg-[#D8EBAE]/20 dark:bg-[#A0CD39]/10'
-            : 'border-gray-200 dark:border-gray-600 hover:border-[#A0CD39]/50 hover:bg-[#D8EBAE]/10',
-        ].join(' ')}
-      >
-        {isUploading ? (
-          <>
-            <Loader2 size={22} className="animate-spin text-[#709028]" />
-            <p className="text-sm text-[#709028] dark:text-[#A0CD39]">
-              {isAr ? 'جاري الرفع...' : 'Uploading…'}
-            </p>
-          </>
-        ) : (
-          <>
-            <Paperclip size={24} className={dragOver ? 'text-[#A0CD39]' : 'text-gray-300 dark:text-gray-600'} />
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 text-center">
-              {isAr ? 'اسحب الملفات هنا أو انقر للتصفح' : 'Drag files here or click to browse'}
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              {isAr
-                ? `صور، PDF، مستندات — حد ${SEO_ATTACHMENT_UPLOAD_MAX_MB} م.ب لكل ملف`
-                : `Images, PDF, docs — max ${SEO_ATTACHMENT_UPLOAD_MAX_MB} MB each`}
-            </p>
-          </>
-        )}
-      </div>
+          <div
+            onClick={() => !isUploading && fileRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+            className={[
+              'border-2 border-dashed rounded-2xl p-8 flex flex-col items-center gap-2 transition-colors',
+              isUploading ? 'cursor-wait opacity-70' : 'cursor-pointer',
+              dragOver
+                ? 'border-[#A0CD39] bg-[#D8EBAE]/20 dark:bg-[#A0CD39]/10'
+                : 'border-gray-200 dark:border-gray-600 hover:border-[#A0CD39]/50 hover:bg-[#D8EBAE]/10',
+            ].join(' ')}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 size={22} className="animate-spin text-[#709028]" />
+                <p className="text-sm text-[#709028] dark:text-[#A0CD39]">
+                  {isAr ? 'جاري الرفع...' : 'Uploading…'}
+                </p>
+              </>
+            ) : (
+              <>
+                <Paperclip size={24} className={dragOver ? 'text-[#A0CD39]' : 'text-gray-300 dark:text-gray-600'} />
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 text-center">
+                  {isAr ? 'اسحب الملفات هنا أو انقر للتصفح' : 'Drag files here or click to browse'}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {isAr
+                    ? `صور، PDF، مستندات — حد ${SEO_ATTACHMENT_UPLOAD_MAX_MB} م.ب لكل ملف`
+                    : `Images, PDF, docs — max ${SEO_ATTACHMENT_UPLOAD_MAX_MB} MB each`}
+                </p>
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       {displayError && (
         <p className="text-sm text-red-500 text-center">{displayError}</p>

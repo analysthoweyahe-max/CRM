@@ -2,6 +2,7 @@ import { useNavigate }  from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Download, FileText } from 'lucide-react';
 import { ROUTES }        from '@/app/router/routes';
 import { Card }          from '@/shared/components/ui/Card';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { LeaveStatusBadge }  from '../components/LeaveStatusBadge';
 import { ApproveModal, RejectModal } from '../components/LeaveActionModals';
 import { useLeaveDetailPage } from './useLeaveDetailPage';
@@ -19,6 +20,7 @@ function Field({ label, value }: FieldProps) {
 
 export function LeaveDetailPage() {
   const navigate = useNavigate();
+  const canApprove = usePermission('approve-leave');
   const {
     isAr, req, isLoading, isError,
     name, initial, avatarBg, daysLabel,
@@ -52,7 +54,7 @@ export function LeaveDetailPage() {
             </p>
           </div>
         </div>
-        {req.status === 'pending' && (
+        {canApprove && req.status === 'pending' && (
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setApproveOpen(true)} disabled={isActionPending}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold

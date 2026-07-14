@@ -4,8 +4,8 @@ import type { TaskAttachment } from '../types/taskModal.types';
 
 interface Props {
   attachments: TaskAttachment[];
-  onRemove:    (id: string) => void;
-  onAdd:       (file: File) => void;
+  onRemove?:   (id: string) => void;
+  onAdd?:      (file: File) => void;
   onDownload:  (att: TaskAttachment) => void;
   isAr:        boolean;
 }
@@ -31,64 +31,66 @@ function FileThumbnail({ type }: { type: TaskAttachment['fileType'] }) {
 export function TaskAttachmentsTab({ attachments, onRemove, onAdd, onDownload, isAr }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const canUpload = !!onAdd;
 
   function handleFiles(files: FileList | null) {
-    if (!files) return;
+    if (!canUpload || !files) return;
     Array.from(files).forEach(file => onAdd(file));
   }
 
   return (
     <div className="space-y-4">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
-      />
+      {canUpload && (
+        <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={e => { handleFiles(e.target.files); e.target.value = ''; }}
+          />
 
-      {/* Drop zone */}
-      <div
-        onClick={() => fileInputRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-        className={[
-          'border-2 border-dashed rounded-2xl p-8 flex flex-col items-center gap-2 cursor-pointer transition-colors',
-          dragOver
-            ? 'border-[#A0CD39] bg-[#D8EBAE]/20 dark:bg-[#A0CD39]/10'
-            : 'border-gray-200 dark:border-gray-600 hover:border-[#A0CD39]/50 hover:bg-[#D8EBAE]/10',
-        ].join(' ')}
-      >
-        <Paperclip size={24} className={dragOver ? 'text-[#A0CD39]' : 'text-gray-300 dark:text-gray-600'} />
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-          {isAr ? 'اسحب الملفات هنا أو انقر للتصفح' : 'Drag files here or click to browse'}
-        </p>
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          {isAr ? 'صور، PDF، مستندات، ZIP' : 'Images, PDF, Documents, ZIP'}
-        </p>
-      </div>
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+            className={[
+              'border-2 border-dashed rounded-2xl p-8 flex flex-col items-center gap-2 cursor-pointer transition-colors',
+              dragOver
+                ? 'border-[#A0CD39] bg-[#D8EBAE]/20 dark:bg-[#A0CD39]/10'
+                : 'border-gray-200 dark:border-gray-600 hover:border-[#A0CD39]/50 hover:bg-[#D8EBAE]/10',
+            ].join(' ')}
+          >
+            <Paperclip size={24} className={dragOver ? 'text-[#A0CD39]' : 'text-gray-300 dark:text-gray-600'} />
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              {isAr ? 'اسحب الملفات هنا أو انقر للتصفح' : 'Drag files here or click to browse'}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              {isAr ? 'صور، PDF، مستندات، ZIP' : 'Images, PDF, Documents, ZIP'}
+            </p>
+          </div>
+        </>
+      )}
 
-      {/* File list */}
       <div className="space-y-2">
         {attachments.map(file => (
           <div key={file.id}
             className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
 
-            {/* Actions (left) */}
             <div className="flex items-center gap-1 shrink-0">
-              <button type="button" onClick={() => onRemove(file.id)}
-                className="w-8 h-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center transition-colors">
-                <Trash2 size={14} />
-              </button>
+              {onRemove && (
+                <button type="button" onClick={() => onRemove(file.id)}
+                  className="w-8 h-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center transition-colors">
+                  <Trash2 size={14} />
+                </button>
+              )}
               <button type="button" onClick={() => onDownload(file)}
                 className="w-8 h-8 rounded-lg text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 flex items-center justify-center transition-colors">
                 <Download size={14} />
               </button>
             </div>
 
-            {/* Meta */}
             <div className="flex-1 text-right min-w-0">
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{file.name}</p>
               <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -96,7 +98,6 @@ export function TaskAttachmentsTab({ attachments, onRemove, onAdd, onDownload, i
               </p>
             </div>
 
-            {/* Thumbnail */}
             <FileThumbnail type={file.fileType} />
           </div>
         ))}

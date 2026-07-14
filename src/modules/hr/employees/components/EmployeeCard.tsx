@@ -20,7 +20,7 @@ interface EmployeeCardProps {
   emp:            ApiEmployee;
   isAr:           boolean;
   onView:         (id: string) => void;
-  onEdit:         (id: string) => void;
+  onEdit?:        (id: string) => void;
   onDelete?:      (id: string) => void;
   selected?:      boolean;
   onToggleSelect?: (id: string) => void;
@@ -138,15 +138,17 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
             <Eye size={20} strokeWidth={2} />
           </Button>
 
-          <Button
-            variant="icon"
-            type="button"
-            className="!w-10 !h-10"
-            onClick={() => onEdit(emp.id)}
-            aria-label={isAr ? 'تعديل' : 'Edit'}
-          >
-            <SquarePen size={19} strokeWidth={2} />
-          </Button>
+          {onEdit && (
+            <Button
+              variant="icon"
+              type="button"
+              className="!w-10 !h-10"
+              onClick={() => onEdit(emp.id)}
+              aria-label={isAr ? 'تعديل' : 'Edit'}
+            >
+              <SquarePen size={19} strokeWidth={2} />
+            </Button>
+          )}
 
           {onDelete && (
             <Button

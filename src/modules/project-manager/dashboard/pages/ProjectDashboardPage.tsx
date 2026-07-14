@@ -5,6 +5,7 @@ import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
 import { WorkTimerCard } from '@/shared/modules/attendance/components/WorkTimerCard';
 import { StatCard }        from '@/shared/components/ui/StatCard';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { ProjectsSection } from '../components/ProjectsSection';
 import { ProjectDashboardSkeleton } from '../components/ProjectDashboardSkeleton';
 import { usePmDashboard } from '../hooks/usePmDashboard';
@@ -16,6 +17,7 @@ export function ProjectDashboardPage() {
   const navigate = useNavigate();
   const { isLoading, sections, stats, checkIn } = usePmDashboard();
   const teamCount = usePmTeamCount();
+  const canCreate = usePermission('create-pm-project');
 
   const [activeSectionKey, setActiveSectionKey] = useState<string | undefined>(undefined);
   const projectsRef = useRef<HTMLDivElement>(null);
@@ -79,6 +81,7 @@ export function ProjectDashboardPage() {
           activeKey={activeSectionKey ?? sections[0]?.key}
           onActiveKeyChange={setActiveSectionKey}
           isAr={isAr}
+          canCreate={canCreate}
           onNewProject={() => navigate(ROUTES.PROJECT_MANAGER.NEW)}
         />
       </div>

@@ -9,6 +9,7 @@ import { ROUTES }      from '@/app/router/routes';
 import { PageHeader }  from '@/shared/components/ui/PageHeader';
 import { Button }      from '@/shared/components/ui/Button';
 import { SearchInput } from '@/shared/components/form/SearchInput';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { matchesSearch } from '@/shared/utils/search.utils';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { BulkDeleteEmployeesModal } from '@/modules/admin/employees/components/BulkDeleteEmployeesModal';
@@ -28,6 +29,9 @@ export function EmployeeListPage() {
   const qc        = useQueryClient();
   const { user }  = useAuth();
   const isAdmin   = user?.role === 'admin';
+  const canCreate = usePermission('create-employee');
+  const canEdit   = usePermission('edit-employee');
+  const canDelete = usePermission('delete-employee');
 
   const [search, setSearch] = useState('');
   const [page,   setPage]   = useState(1);       // 1-indexed
@@ -98,12 +102,14 @@ export function EmployeeListPage() {
         title={isAr ? 'الموظفون' : 'Employees'}
         subtitle={isAr ? `إدارة بيانات ${total} موظف` : `Managing ${total} employees`}
         actions={
-          <Button
-            onClick={() => navigate(ROUTES.EMPLOYEES.NEW)}
-            startIcon={<Plus size={16} />}
-          >
-            {isAr ? 'إضافة موظف' : 'Add Employee'}
-          </Button>
+          canCreate ? (
+            <Button
+              onClick={() => navigate(ROUTES.EMPLOYEES.NEW)}
+              startIcon={<Plus size={16} />}
+            >
+              {isAr ? 'إضافة موظف' : 'Add Employee'}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -118,7 +124,7 @@ export function EmployeeListPage() {
         />
       </div>
 
-      {isAdmin && selected.size > 0 && (
+      {canDelete && selected.size > 0 && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl
                         bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/40">
           <p className="text-sm text-red-700 dark:text-red-400">
@@ -147,10 +153,10 @@ export function EmployeeListPage() {
               emp={emp}
               isAr={isAr}
               onView={(id) => navigate(ROUTES.EMPLOYEES.DETAIL(id))}
-              onEdit={(id) => navigate(ROUTES.EMPLOYEES.EDIT(id))}
-              onDelete={isAdmin ? (id) => removeOne(id) : undefined}
+              onEdit={canEdit ? (id) => navigate(ROUTES.EMPLOYEES.EDIT(id)) : undefined}
+              onDelete={canDelete ? (id) => removeOne(id) : undefined}
               selected={selected.has(emp.id)}
-              onToggleSelect={isAdmin ? toggleSelect : undefined}
+              onToggleSelect={canDelete ? toggleSelect : undefined}
             />
           ))}
         </div>

@@ -10,14 +10,9 @@ interface CanProps {
 
 /** Renders children only when the user has the required permission slug(s). */
 export function Can({ permission, match = 'any', children, fallback = null }: CanProps) {
-  const { hasPermission, user } = useAuth();
+  const { can, user } = useAuth();
 
   if (!user) return fallback;
 
-  const slugs = Array.isArray(permission) ? permission : [permission];
-  const allowed = match === 'all'
-    ? slugs.every((p) => hasPermission(p))
-    : slugs.some((p) => hasPermission(p));
-
-  return allowed ? children : fallback;
+  return can(permission, match) ? children : fallback;
 }

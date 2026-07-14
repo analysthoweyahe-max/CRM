@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { pmTaskTimerApi, seoTaskTimerApi } from '../api/taskTimer.api';
 import type { TaskTimeLog, TimerPortal } from '../types/taskTimer.types';
@@ -19,6 +19,13 @@ interface StartArgs {
   title:     string;
 }
 
+interface TimerMeta {
+  taskId:    string;
+  projectId: string;
+  portal:    TimerPortal;
+  title:     string;
+}
+
 interface TaskTimersState {
   timers:      Map<string, TimerEntry>;
   getTimer:    (taskId: string) => TimerEntry | undefined;
@@ -34,19 +41,26 @@ function apiFor(portal: TimerPortal) {
   return portal === 'seo' ? seoTaskTimerApi : pmTaskTimerApi;
 }
 
-function toEntry(
-  raw: TaskTimeLog,
-  meta: { taskId: string; projectId: string; portal: TimerPortal; title: string },
-): TimerEntry {
-  return { ...raw, ...meta, syncedAt: Date.now() };
+/** Merge API payload with local meta — never spread a full entry over `raw` or
+ *  stale `isPaused` / `canPause` / `canResume` would clobber a successful pause/resume. */
+function toEntry(raw: TaskTimeLog, meta: TimerMeta): TimerEntry {
+  return {
+    ...raw,
+    taskId:    meta.taskId,
+    projectId: meta.projectId,
+    portal:    meta.portal,
+    title:     meta.title,
+    syncedAt:  Date.now(),
+  };
 }
 
 export function TaskTimersProvider({ children }: { children: ReactNode }) {
   const [timers, setTimers] = useState<Map<string, TimerEntry>>(new Map());
+  // Keep a ref for async mutation callbacks so they always see the latest map
+  // without closing over a stale render. Sync during render (not in an effect)
+  // so the same tick as setState still has a consistent view inside putTimer.
   const timersRef = useRef(timers);
-  useEffect(() => {
-    timersRef.current = timers;
-  }, [timers]);
+  timersRef.current = timers;
 
   function putTimer(taskId: string, entry: TimerEntry | null) {
     setTimers((prev) => {
@@ -57,9 +71,10 @@ export function TaskTimersProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  // Read from state (not the ref) so consumers re-render with fresh pause/resume flags.
   const getTimer = useCallback(
-    (taskId: string) => timersRef.current.get(taskId),
-    [],
+    (taskId: string) => timers.get(taskId),
+    [timers],
   );
 
   const startTimer = useCallback(async ({ portal, projectId, taskId, title }: StartArgs) => {
@@ -76,7 +91,12 @@ export function TaskTimersProvider({ children }: { children: ReactNode }) {
     if (!entry) return;
     try {
       const raw = await apiFor(entry.portal).pause(entry.projectId, taskId, entry.id);
-      putTimer(taskId, toEntry(raw, entry));
+      putTimer(taskId, toEntry(raw, {
+        taskId: entry.taskId,
+        projectId: entry.projectId,
+        portal: entry.portal,
+        title: entry.title,
+      }));
     } catch {
       toast.error('Failed to pause timer');
     }
@@ -87,7 +107,12 @@ export function TaskTimersProvider({ children }: { children: ReactNode }) {
     if (!entry) return;
     try {
       const raw = await apiFor(entry.portal).resume(entry.projectId, taskId, entry.id);
-      putTimer(taskId, toEntry(raw, entry));
+      putTimer(taskId, toEntry(raw, {
+        taskId: entry.taskId,
+        projectId: entry.projectId,
+        portal: entry.portal,
+        title: entry.title,
+      }));
     } catch {
       toast.error('Failed to resume timer');
     }

@@ -43,12 +43,16 @@ export interface UseMyProjectsPageResult {
 }
 
 export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageResult {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const { lang } = useLang();
   const isAr       = lang === 'ar';
   const role       = user!.role;
 
-  const config = useMemo(() => resolveMyProjectsConfig(role, module), [role, module]);
+  const config = useMemo(() => {
+    const base = resolveMyProjectsConfig(role, module);
+    const createSlug = module === 'seo' ? 'create-seo-project' : 'create-pm-project';
+    return { ...base, canCreate: base.canCreate && can(createSlug) };
+  }, [role, module, can]);
 
   const [search, setSearchRaw]     = useState('');
   const [status, setStatusRaw]     = useState('');

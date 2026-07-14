@@ -1,6 +1,7 @@
 import { UserPlus, Mail }              from 'lucide-react';
 import { Button }                      from '@/shared/components/ui/Button';
 import { Modal }                       from '@/shared/components/ui/Modal';
+import { usePermission }               from '@/shared/hooks/usePermission';
 import { ProjectMemberCard }           from '@/shared/modules/team/components/ProjectMemberCard';
 import { SeoAddProjectMemberModal }    from './SeoAddProjectMemberModal';
 import { SeoInviteProjectMemberModal } from './SeoInviteProjectMemberModal';
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export function SeoProjectTeamTab({ projectId, isAr, readOnly = false }: Props) {
+  const canEditProject = usePermission('edit-seo-project');
+  const isReadOnly = readOnly || !canEditProject;
   const {
     members, isLoading,
     showModal, openModal, closeModal,
@@ -38,7 +41,7 @@ export function SeoProjectTeamTab({ projectId, isAr, readOnly = false }: Props) 
     <div className="space-y-4">
 
       {/* Add / Invite buttons */}
-      {!readOnly && (
+      {!isReadOnly && (
         <div className="flex justify-end gap-2">
           <Button variant="ghost" startIcon={<Mail size={15} />} onClick={openInviteModal}>
             {isAr ? 'دعوة عضو جديد' : 'Invite New Member'}
@@ -70,7 +73,7 @@ export function SeoProjectTeamTab({ projectId, isAr, readOnly = false }: Props) 
             <ProjectMemberCard
               key={member.id}
               member={member}
-              onRemove={readOnly ? undefined : requestRemove}
+              onRemove={isReadOnly ? undefined : requestRemove}
               onView={requestView}
               isAr={isAr}
             />

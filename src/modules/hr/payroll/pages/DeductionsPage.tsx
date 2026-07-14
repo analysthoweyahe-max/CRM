@@ -6,6 +6,7 @@ import { useLang }          from '@/app/providers/LanguageProvider';
 import { ROUTES }           from '@/app/router/routes';
 import { PageHeader }       from '@/shared/components/ui/PageHeader';
 import { Button }           from '@/shared/components/ui/Button';
+import { usePermission }    from '@/shared/hooks/usePermission';
 import { DataTable }        from '@/shared/components/tables/DataTable';
 import { DeductionStats }   from '@/modules/hr/payroll/components/DeductionStats';
 import { DeductionsSkeleton } from '@/modules/hr/payroll/components/DeductionsSkeleton';
@@ -30,6 +31,7 @@ export function DeductionsPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
+  const canManage = usePermission('manage-payroll');
 
   const [sorting,      setSorting]      = useState<SortingState>([]);
   const [search,       setSearch]       = useState('');
@@ -92,9 +94,11 @@ export function DeductionsPage() {
         title={isAr ? 'الخصومات' : 'Deductions'}
         subtitle={isAr ? 'إدارة الخصومات التلقائية واليدوية' : 'Manage automatic and manual deductions'}
         actions={
-          <Button onClick={() => navigate(ROUTES.PAYROLL.DEDUCTIONS_NEW)} startIcon={<Plus size={16} />}>
-            {isAr ? 'إضافة خصم' : 'Add Deduction'}
-          </Button>
+          canManage ? (
+            <Button onClick={() => navigate(ROUTES.PAYROLL.DEDUCTIONS_NEW)} startIcon={<Plus size={16} />}>
+              {isAr ? 'إضافة خصم' : 'Add Deduction'}
+            </Button>
+          ) : undefined
         }
       />
 

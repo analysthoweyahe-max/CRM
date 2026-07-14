@@ -50,9 +50,10 @@ function toComboboxItems(lookups: PmLookupItem[], isAr: boolean): ComboboxItem[]
 interface Props {
   projectId: string;
   isAr:      boolean;
+  readOnly?: boolean;
 }
 
-export function ProjectInfoForm({ projectId, isAr }: Props) {
+export function ProjectInfoForm({ projectId, isAr, readOnly = false }: Props) {
   const { user } = useAuth();
   const isAdmin  = user?.role === 'admin';
   const queryClient = useQueryClient();
@@ -263,14 +264,16 @@ export function ProjectInfoForm({ projectId, isAr }: Props) {
         <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className={INPUT} dir={inputDir(isAr)} />
       </div>
 
-      <Button
-        variant="primary"
-        startIcon={<Check size={15} />}
-        disabled={!name.trim() || saving || hasOptionalErrors}
-        onClick={handleSave}
-      >
-        {isAr ? 'حفظ' : 'Save'}
-      </Button>
+      {!readOnly && (
+        <Button
+          variant="primary"
+          startIcon={<Check size={15} />}
+          disabled={!name.trim() || saving || hasOptionalErrors}
+          onClick={handleSave}
+        >
+          {isAr ? 'حفظ' : 'Save'}
+        </Button>
+      )}
     </div>
   );
 }

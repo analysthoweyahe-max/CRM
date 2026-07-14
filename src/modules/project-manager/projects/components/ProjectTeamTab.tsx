@@ -1,6 +1,7 @@
 import { UserPlus, Mail }      from 'lucide-react';
 import { Button }              from '@/shared/components/ui/Button';
 import { Modal }               from '@/shared/components/ui/Modal';
+import { usePermission }       from '@/shared/hooks/usePermission';
 import { ProjectMemberCard }   from '@/shared/modules/team/components/ProjectMemberCard';
 import { AddTeamMemberModal }  from './AddTeamMemberModal';
 import { PmInviteMemberModal } from './PmInviteMemberModal';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function ProjectTeamTab({ projectId, isAr }: Props) {
+  const canEditProject = usePermission('edit-pm-project');
   const {
     members, isLoading,
     showModal, openModal, closeModal,
@@ -36,14 +38,16 @@ export function ProjectTeamTab({ projectId, isAr }: Props) {
     <div className="space-y-4">
 
       {/* Add / Invite buttons */}
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" startIcon={<Mail size={15} />} onClick={openInviteModal}>
-          {isAr ? 'دعوة عضو جديد' : 'Invite New Member'}
-        </Button>
-        <Button variant="primary" startIcon={<UserPlus size={15} />} onClick={openModal}>
-          {isAr ? 'إضافة عضو جديد' : 'Add New Member'}
-        </Button>
-      </div>
+      {canEditProject && (
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" startIcon={<Mail size={15} />} onClick={openInviteModal}>
+            {isAr ? 'دعوة عضو جديد' : 'Invite New Member'}
+          </Button>
+          <Button variant="primary" startIcon={<UserPlus size={15} />} onClick={openModal}>
+            {isAr ? 'إضافة عضو جديد' : 'Add New Member'}
+          </Button>
+        </div>
+      )}
 
       {/* Loading */}
       {isLoading && (
@@ -66,7 +70,7 @@ export function ProjectTeamTab({ projectId, isAr }: Props) {
             <ProjectMemberCard
               key={member.id}
               member={member}
-              onRemove={requestRemove}
+              onRemove={canEditProject ? requestRemove : undefined}
               onView={requestView}
               isAr={isAr}
             />

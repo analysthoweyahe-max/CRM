@@ -9,6 +9,7 @@ import { Button }                from '@/shared/components/ui/Button';
 import { ExtendDeadlineModal }   from '@/shared/components/form/ExtendDeadlineModal';
 import { Combobox }              from '@/shared/components/form/Combobox';
 import { inputCls }              from '@/shared/components/form/FormField';
+import { usePermission }         from '@/shared/hooks/usePermission';
 import { usePmTaskLookups }      from '../../projects/hooks/usePmTaskLookups';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey }       from '@/shared/utils/resourceKey.utils';
@@ -34,6 +35,7 @@ interface Props {
 export function TaskModal({ task, onClose, projectId, isAr }: Props) {
   const modal = useTaskModal(task, isAr, onClose, projectId);
   const { priorities } = usePmTaskLookups();
+  const canEdit = usePermission('edit-pm-tasks');
 
   if (!task) return null;
 
@@ -101,6 +103,7 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
               onExtendClick={modal.openExtend}
               onStatusChange={modal.changeStatus}
               changingStatus={modal.changingStatus}
+              canEdit={canEdit}
               isAr={isAr}
             />
           )}
@@ -111,7 +114,7 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
               estimatedHours={modal.estimatedHours}
               remainingHours={modal.remainingHours}
               progress={modal.progress}
-              onAddTimeLog={modal.addTimeLog}
+              onAddTimeLog={canEdit ? modal.addTimeLog : undefined}
               loggingTime={modal.loggingTime}
               isAr={isAr}
               timer={{ portal: 'pm', projectId, taskId: taskResourceKey(task), title: task.title }}
@@ -120,8 +123,8 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
           {modal.activeTab === 'attachments' && (
             <TaskAttachmentsTab
               attachments={modal.attachments}
-              onRemove={modal.removeAttachment}
-              onAdd={modal.addAttachment}
+              onRemove={canEdit ? modal.removeAttachment : undefined}
+              onAdd={canEdit ? modal.addAttachment : undefined}
               onDownload={modal.downloadAttachment}
               isAr={isAr}
             />

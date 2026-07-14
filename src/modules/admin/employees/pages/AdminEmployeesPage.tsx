@@ -4,6 +4,7 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { ROUTES }  from '@/app/router/routes';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button }     from '@/shared/components/ui/Button';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { AdminEmployeeFilters }     from '../components/AdminEmployeeFilters';
 import { AdminEmployeeTable }       from '../components/AdminEmployeeTable';
 import { DeleteEmployeeModal }      from '../components/DeleteEmployeeModal';
@@ -14,6 +15,8 @@ export function AdminEmployeesPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
   const navigate = useNavigate();
+  const canCreate = usePermission('create-employee');
+  const canDelete = usePermission('delete-employee');
 
   const {
     employees, total, pageSize, page, setPage, pageCount,
@@ -63,9 +66,11 @@ export function AdminEmployeesPage() {
             <Button variant="secondary" startIcon={<Download size={15} />} onClick={handleExport}>
               {isAr ? 'تصدير' : 'Export'}
             </Button>
-            <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => navigate(ROUTES.EMPLOYEES.NEW)}>
-              {isAr ? 'إضافة موظف' : 'Add Employee'}
-            </Button>
+            {canCreate && (
+              <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => navigate(ROUTES.EMPLOYEES.NEW)}>
+                {isAr ? 'إضافة موظف' : 'Add Employee'}
+              </Button>
+            )}
           </>
         }
       />
@@ -77,7 +82,7 @@ export function AdminEmployeesPage() {
         onSearch={setSearch} onDepartment={setDepartment} onRole={setRole} onStatus={setStatus}
       />
 
-      {selectedCount > 0 && (
+      {canDelete && selectedCount > 0 && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl
                         bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/40">
           <p className="text-sm text-red-700 dark:text-red-400">
@@ -103,7 +108,7 @@ export function AdminEmployeesPage() {
         selected={selected}
         onToggleOne={toggleOne}
         onToggleAll={toggleAllOnPage}
-        onDelete={askDelete}
+        onDelete={canDelete ? askDelete : undefined}
       />
 
       <DeleteEmployeeModal

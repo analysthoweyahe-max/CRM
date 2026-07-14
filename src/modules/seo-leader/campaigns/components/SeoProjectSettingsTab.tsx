@@ -3,6 +3,7 @@ import { useNavigate }               from 'react-router-dom';
 import { LayoutTemplate }            from 'lucide-react';
 import { ROUTES }                    from '@/app/router/routes';
 import { Button }                    from '@/shared/components/ui/Button';
+import { usePermission }             from '@/shared/hooks/usePermission';
 import { SeoProjectInfoForm }        from './SeoProjectInfoForm';
 import { SeoSettingsPhasesSection }  from './SeoSettingsPhasesSection';
 import { SeoActionsCard }            from './SeoActionsCard';
@@ -21,6 +22,8 @@ interface Props {
 export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
   const navigate = useNavigate();
   const [showApply, setShowApply] = useState(false);
+  const canEdit   = usePermission('edit-seo-project');
+  const canDelete = usePermission('delete-seo-project');
 
   const {
     isLoading, settings,
@@ -91,47 +94,55 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
         onSave={handleSave}
         isSaving={isSaving}
         saved={saved}
-        canSave={canSave}
+        canSave={canEdit && canSave}
         isAr={isAr}
       />
 
-      <div className="flex justify-end">
-        <Button
-          variant="secondary"
-          startIcon={<LayoutTemplate size={15} />}
-          onClick={() => setShowApply(true)}
-        >
-          {isAr ? 'تطبيق قالب' : 'Apply Template'}
-        </Button>
-      </div>
+      {canEdit && (
+        <div className="flex justify-end">
+          <Button
+            variant="secondary"
+            startIcon={<LayoutTemplate size={15} />}
+            onClick={() => setShowApply(true)}
+          >
+            {isAr ? 'تطبيق قالب' : 'Apply Template'}
+          </Button>
+        </div>
+      )}
 
       <SeoSettingsPhasesSection isAr={isAr} />
 
-      <ApplyTemplateModal
-        open={showApply}
-        onClose={() => setShowApply(false)}
-        projectId={campaignId}
-        module="seo"
-        isAr={isAr}
-      />
+      {canEdit && (
+        <ApplyTemplateModal
+          open={showApply}
+          onClose={() => setShowApply(false)}
+          projectId={campaignId}
+          module="seo"
+          isAr={isAr}
+        />
+      )}
 
-      <SeoActionsCard
-        campaignId={campaignId}
-        campaignName={settings?.name ?? name}
-        isDraft={settings?.isDraft === true}
-        exportData={exportData}
-        isAr={isAr}
-      />
+      {canEdit && (
+        <SeoActionsCard
+          campaignId={campaignId}
+          campaignName={settings?.name ?? name}
+          isDraft={settings?.isDraft === true}
+          exportData={exportData}
+          isAr={isAr}
+        />
+      )}
 
-      <DangerZoneCard
-        projectName={settings?.name ?? name}
-        onDelete={handleDelete}
-        isAr={isAr}
-        deleteLabel={isAr ? 'حذف المشروع نهائياً' : 'Delete Project'}
-        description={isAr
-          ? 'حذف المشروع نهائياً مع جميع مهامه وبياناته.'
-          : 'Permanently delete this project and all its tasks and data.'}
-      />
+      {canDelete && (
+        <DangerZoneCard
+          projectName={settings?.name ?? name}
+          onDelete={handleDelete}
+          isAr={isAr}
+          deleteLabel={isAr ? 'حذف المشروع نهائياً' : 'Delete Project'}
+          description={isAr
+            ? 'حذف المشروع نهائياً مع جميع مهامه وبياناته.'
+            : 'Permanently delete this project and all its tasks and data.'}
+        />
+      )}
     </div>
   );
 }

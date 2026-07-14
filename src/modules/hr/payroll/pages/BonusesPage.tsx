@@ -3,6 +3,7 @@ import { Plus }           from 'lucide-react';
 import { ROUTES }         from '@/app/router/routes';
 import { PageHeader }     from '@/shared/components/ui/PageHeader';
 import { Button }         from '@/shared/components/ui/Button';
+import { usePermission }  from '@/shared/hooks/usePermission';
 import { DataTable }      from '@/shared/components/tables/DataTable';
 import { BonusStats }     from '../components/BonusStats';
 import { BonusesSkeleton } from '../components/BonusesSkeleton';
@@ -11,6 +12,7 @@ import { useBonusesPage } from '../hooks/useBonusesPage';
 
 export function BonusesPage() {
   const navigate = useNavigate();
+  const canManage = usePermission('manage-payroll');
   const { isAr, isLoading, table, serverPagination, summary, search, filters } = useBonusesPage();
 
   if (isLoading) return <BonusesSkeleton />;
@@ -22,9 +24,11 @@ export function BonusesPage() {
         title={isAr ? 'المكافآت والحوافز' : 'Bonuses & Incentives'}
         subtitle={isAr ? 'إدارة المكافآت وإعدادات الساعات الإضافية' : 'Manage bonuses and overtime settings'}
         actions={
-          <Button onClick={() => navigate(ROUTES.PAYROLL.BONUSES_NEW)} startIcon={<Plus size={16} />}>
-            {isAr ? 'إضافة مكافأة' : 'Add Bonus'}
-          </Button>
+          canManage ? (
+            <Button onClick={() => navigate(ROUTES.PAYROLL.BONUSES_NEW)} startIcon={<Plus size={16} />}>
+              {isAr ? 'إضافة مكافأة' : 'Add Bonus'}
+            </Button>
+          ) : undefined
         }
       />
 

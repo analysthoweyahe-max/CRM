@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { ROUTES }           from '@/app/router/routes';
+import { usePermission }    from '@/shared/hooks/usePermission';
 import { LeaveStatusBadge } from './LeaveStatusBadge';
 import { getInitial, getAvatarColor } from '@/modules/hr/employees/types/employee.types';
 import { formatDateShort } from '@/shared/utils/date.utils';
@@ -18,6 +19,7 @@ interface Props {
 
 export function LeaveTableRow({ row, isAr }: Props) {
   const navigate = useNavigate();
+  const canApprove = usePermission('approve-leave');
   const name    = getLeaveEmployeeName(row);
   const dept    = getLeaveEmployeeDepartment(row, isAr);
   const initial = name ? getInitial(name) : '?';
@@ -61,7 +63,7 @@ export function LeaveTableRow({ row, isAr }: Props) {
             title={isAr ? 'عرض' : 'View'}>
             <Eye size={14} />
           </button>
-          {row.status === 'pending' && (
+          {canApprove && row.status === 'pending' && (
             <>
               <button type="button" onClick={() => navigate(ROUTES.LEAVES.DETAIL(row.id))}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[#709028]

@@ -9,6 +9,7 @@ import { ExtendDeadlineModal }   from '@/shared/components/form/ExtendDeadlineMo
 import { TaskTimeTab }           from '@/modules/project-manager/tasks/components/TaskTimeTab';
 import { TaskCommentsTab }       from '@/modules/project-manager/tasks/components/TaskCommentsTab';
 import { useCreateSeoConversation } from '@/modules/seo-member/messages/hooks/useSeoMessages';
+import { usePermission }         from '@/shared/hooks/usePermission';
 import { ROUTES }                from '@/app/router/routes';
 import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import type { SeoDrawerTab }     from './SeoTaskModal.types';
@@ -48,6 +49,7 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
   const d = useSeoTaskDrawer(projectId, taskId, isAr);
   const navigate = useNavigate();
   const { mutateAsync: createConversation } = useCreateSeoConversation(isAr);
+  const canEdit = usePermission('edit-seo-tasks');
 
   const [editOpen, setEditOpen] = useState(false);
 
@@ -179,6 +181,7 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                 onEdit={() => setEditOpen(true)}
                 onDelete={() => d.setDeleteOpen(true)}
                 onExtend={() => d.setExtendOpen(true)}
+                canEdit={canEdit}
                 assigneeItems={d.assigneeItems}
                 assigneeId={d.assigneeId}               setAssigneeId={d.setAssigneeId}
               />
@@ -192,7 +195,7 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                 estimatedHours={d.estimatedHours}
                 remainingHours={d.remainingHours}
                 progress={d.progress}
-                onAddTimeLog={d.addTimeLog}
+                onAddTimeLog={canEdit ? d.addTimeLog : undefined}
                 loggingTime={d.loggingTime}
                 isAr={isAr}
                 timer={{ portal: 'seo', projectId, taskId: taskId!, title: d.task.title }}
@@ -203,8 +206,8 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
             {d.tab === 'attachments' && (
               <SeoAttachmentsTab
                 attachments={d.attachments}
-                onUploadFiles={d.uploadFiles}
-                onDelete={d.deleteAttachment}
+                onUploadFiles={canEdit ? d.uploadFiles : undefined}
+                onDelete={canEdit ? d.deleteAttachment : undefined}
                 isUploading={d.isUploading}
                 deletingId={d.deletingId}
                 isAr={isAr}
@@ -229,7 +232,7 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
       </div>
 
       {/* Edit Task Modal */}
-      {editOpen && d.task && (
+      {canEdit && editOpen && d.task && (
         <SeoEditTaskModal
           task={d.task}
           projectId={projectId}
@@ -239,16 +242,18 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
       )}
 
       {/* Extend Deadline Modal */}
-      <ExtendDeadlineModal
-        open={d.extendOpen}
-        onClose={() => d.setExtendOpen(false)}
-        onSubmit={d.extendDeadline}
-        isSaving={d.extendingDeadline}
-        isAr={isAr}
-      />
+      {canEdit && (
+        <ExtendDeadlineModal
+          open={d.extendOpen}
+          onClose={() => d.setExtendOpen(false)}
+          onSubmit={d.extendDeadline}
+          isSaving={d.extendingDeadline}
+          isAr={isAr}
+        />
+      )}
 
       {/* Delete confirm */}
-      {d.deleteOpen && (
+      {canEdit && d.deleteOpen && (
         <>
           <div className="fixed inset-0 z-60 bg-black/40" onClick={() => d.setDeleteOpen(false)} />
           <div className="fixed inset-0 z-70 flex items-center justify-center p-4">

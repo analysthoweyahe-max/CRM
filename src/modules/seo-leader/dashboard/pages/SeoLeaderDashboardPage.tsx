@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
 import { StatCard }    from '@/shared/components/ui/StatCard';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { useSeoLeaderDashboard }      from '../hooks/useSeoLeaderDashboard';
 import { CampaignsSection }           from '../components/CampaignsSection';
 import { SeoLeaderDashboardSkeleton } from '../components/SeoLeaderDashboardSkeleton';
@@ -12,6 +13,7 @@ export function SeoLeaderDashboardPage() {
   const isAr                            = lang === 'ar';
   const navigate                        = useNavigate();
   const { isLoading, stats, campaigns } = useSeoLeaderDashboard();
+  const canCreate = usePermission('create-seo-project');
 
   if (isLoading) return <SeoLeaderDashboardSkeleton />;
 
@@ -59,6 +61,7 @@ export function SeoLeaderDashboardPage() {
       <CampaignsSection
         campaigns={campaigns}
         isAr={isAr}
+        canCreate={canCreate}
         onNewCampaign={() => navigate(ROUTES.SEO_LEADER.NEW)}
       />
 

@@ -19,9 +19,10 @@ interface Props {
   campaigns:     CampaignViewModel[];
   isAr:          boolean;
   onNewCampaign: () => void;
+  canCreate?:    boolean;
 }
 
-export function CampaignsSection({ campaigns, isAr, onNewCampaign }: Props) {
+export function CampaignsSection({ campaigns, isAr, onNewCampaign, canCreate = true }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>('in_progress');
 
   const visible = campaigns.filter(c => c.status === activeTab);
@@ -33,11 +34,13 @@ export function CampaignsSection({ campaigns, isAr, onNewCampaign }: Props) {
   return (
     <Card>
       {/* Header */}
-      <div className="flex items-center justify-end px-5 pt-5 pb-0">
-        <Button variant="primary" onClick={onNewCampaign} startIcon={<Plus size={16} />}>
-          {isAr ? 'مشروع جديد' : 'New Project'}
-        </Button>
-      </div>
+      {canCreate && (
+        <div className="flex items-center justify-end px-5 pt-5 pb-0">
+          <Button variant="primary" onClick={onNewCampaign} startIcon={<Plus size={16} />}>
+            {isAr ? 'مشروع جديد' : 'New Project'}
+          </Button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex items-end gap-1 px-5 mt-4 border-b border-gray-100 dark:border-gray-700/60 overflow-x-auto">

@@ -34,11 +34,15 @@ function DashboardSkeleton() {
 export function SeoMemberDashboardPage() {
   const { lang }  = useLang();
   const isAr      = lang === 'ar';
-  const { user }  = useAuth();
+  const { user, can }  = useAuth();
   const navigate  = useNavigate();
   const { tasksOverview, projects, isLoading, checkIn } = useSeoMemberDashboard();
   const { tasks: todayTasks, isLoading: tasksLoading } = useTodayTasks();
-  const projectsConfig = resolveMyProjectsConfig(user?.role ?? 'seo-member', 'seo');
+  const projectsConfig = {
+    ...resolveMyProjectsConfig(user?.role ?? 'seo-member', 'seo'),
+    canCreate: can('create-seo-project'),
+  };
+  const canCreate = projectsConfig.canCreate;
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -53,13 +57,15 @@ export function SeoMemberDashboardPage() {
 
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{greeting}</h1>
-        <Button
-          variant="primary"
-          startIcon={<Plus size={15} />}
-          onClick={() => navigate(ROUTES.SEO_MEMBER.NEW)}
-        >
-          {isAr ? 'إنشاء مشروع' : 'Create Project'}
-        </Button>
+        {canCreate && (
+          <Button
+            variant="primary"
+            startIcon={<Plus size={15} />}
+            onClick={() => navigate(ROUTES.SEO_MEMBER.NEW)}
+          >
+            {isAr ? 'إنشاء مشروع' : 'Create Project'}
+          </Button>
+        )}
       </div>
 
       <WorkTimerCard layoutScope="seo" variant="card" initialData={checkIn} />
@@ -113,13 +119,15 @@ export function SeoMemberDashboardPage() {
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-400 dark:text-gray-500 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
             <FolderKanban size={28} className="opacity-50" />
             <p className="text-sm">{isAr ? 'لا توجد مشاريع معيّنة لك حالياً' : 'No projects assigned to you yet'}</p>
-            <Button
-              variant="primary"
-              startIcon={<Plus size={15} />}
-              onClick={() => navigate(ROUTES.SEO_MEMBER.NEW)}
-            >
-              {isAr ? 'إنشاء مشروع' : 'Create Project'}
-            </Button>
+            {canCreate && (
+              <Button
+                variant="primary"
+                startIcon={<Plus size={15} />}
+                onClick={() => navigate(ROUTES.SEO_MEMBER.NEW)}
+              >
+                {isAr ? 'إنشاء مشروع' : 'Create Project'}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

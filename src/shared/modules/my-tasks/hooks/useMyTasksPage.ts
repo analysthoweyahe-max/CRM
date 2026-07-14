@@ -41,7 +41,7 @@ export interface UseMyTasksPageResult {
 }
 
 export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {}): UseMyTasksPageResult {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const qc = useQueryClient();
   const [searchParams] = useSearchParams();
   const [projectId, setProjectId] = useState(options.routeProjectId ?? '');
@@ -59,10 +59,20 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     [user],
   );
 
-  const config = useMemo(
-    () => (tasksRole ? resolveMyTasksConfig(tasksRole) : null),
-    [tasksRole],
-  );
+  const config = useMemo(() => {
+    if (!tasksRole) return null;
+    const base = resolveMyTasksConfig(tasksRole);
+    const editSlug =
+      tasksRole === 'seo-employee' || tasksRole === 'seo-manager'
+        ? 'edit-seo-tasks'
+        : 'edit-pm-tasks';
+    const canEdit = can(editSlug);
+    return {
+      ...base,
+      canAddSelfTask: base.canAddSelfTask && canEdit,
+      canDragStatus:  base.canDragStatus && canEdit,
+    };
+  }, [tasksRole, can]);
 
   // SEO task statuses are admin-configurable (not a fixed set) — fetch the
   // full catalog so the board always shows every status column, not just

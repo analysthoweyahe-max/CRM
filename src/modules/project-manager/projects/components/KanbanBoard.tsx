@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Modal }  from '@/shared/components/ui/Modal';
 import { Button } from '@/shared/components/ui/Button';
+import { usePermission } from '@/shared/hooks/usePermission';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
@@ -44,6 +45,7 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
   const [viewMode,       setViewMode]       = useState<'status' | 'phase'>('status');
   const invalidateTasks = useInvalidateProjectTasks(projectId);
   const { statuses: statusLookup } = usePmTaskLookups();
+  const canEditTasks = usePermission('edit-pm-tasks');
 
   const phaseItems: ComboboxItem[] = useMemo(() => {
     const fromProject = phases.map(p => ({ id: String(p.id), label: p.name }));
@@ -226,10 +228,11 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
             task={task}
             isAr={isAr}
             onOpen={t => setSelectedTaskId(t.id)}
-            onDelete={t => setDeleteTarget(t)}
+            onDelete={canEditTasks ? t => setDeleteTarget(t) : undefined}
           />
         )}
-        onDrop={viewMode === 'status' ? handleStatusDrop : handlePhaseDrop}
+        onDrop={canEditTasks ? (viewMode === 'status' ? handleStatusDrop : handlePhaseDrop) : () => {}}
+        draggable={canEditTasks}
       />
 
       <TaskModal

@@ -153,6 +153,7 @@ export interface SeoTaskInfoTabProps {
   onEdit:            () => void;
   onDelete:          () => void;
   onExtend?:         () => void;
+  canEdit?:          boolean;
   assigneeItems:     ComboboxItem[];
   assigneeId:        string;  setAssigneeId:    (v: string) => void;
 }
@@ -177,6 +178,7 @@ export function SeoTaskInfoTab({
   referenceLinks, setReferenceLinks,
   notes, setNotes,
   isSaving, onEdit, onDelete, onExtend,
+  canEdit = true,
   assigneeItems, assigneeId, setAssigneeId,
 }: SeoTaskInfoTabProps) {
   const kd = Number(keywordDifficulty) || 0;
@@ -431,37 +433,39 @@ export function SeoTaskInfoTab({
       </div>
 
       {/* ── Action buttons ── */}
-      <div className="flex items-center gap-3 pt-2">
-        <Button
-          variant="danger"
-          size="sm"
-          startIcon={<Trash2 size={14} />}
-          onClick={onDelete}
-        >
-          {isAr ? 'حذف المهمة' : 'Delete Task'}
-        </Button>
-        {task.canExtend && onExtend && (
+      {canEdit && (
+        <div className="flex items-center gap-3 pt-2">
           <Button
-            variant="secondary"
+            variant="danger"
             size="sm"
-            startIcon={<CalendarClock size={14} />}
-            onClick={onExtend}
+            startIcon={<Trash2 size={14} />}
+            onClick={onDelete}
           >
-            {isAr ? 'تمديد الموعد' : 'Extend Deadline'}
+            {isAr ? 'حذف المهمة' : 'Delete Task'}
           </Button>
-        )}
-        <Button
-          variant="primary"
-          size="sm"
-          startIcon={<Pencil size={14} />}
-          disabled={isSaving}
-          onClick={onEdit}
-        >
-          {isSaving
-            ? (isAr ? 'جاري الحفظ...' : 'Saving…')
-            : (isAr ? 'تعديل المهمة' : 'Update Task')}
-        </Button>
-      </div>
+          {task.canExtend && onExtend && (
+            <Button
+              variant="secondary"
+              size="sm"
+              startIcon={<CalendarClock size={14} />}
+              onClick={onExtend}
+            >
+              {isAr ? 'تمديد الموعد' : 'Extend Deadline'}
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            startIcon={<Pencil size={14} />}
+            disabled={isSaving}
+            onClick={onEdit}
+          >
+            {isSaving
+              ? (isAr ? 'جاري الحفظ...' : 'Saving…')
+              : (isAr ? 'تعديل المهمة' : 'Update Task')}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,20 +10,23 @@ interface Props {
   onActiveKeyChange: (key: string) => void;
   isAr:             boolean;
   onNewProject:     () => void;
+  canCreate?:       boolean;
 }
 
-export function ProjectsSection({ sections, activeKey, onActiveKeyChange, isAr, onNewProject }: Props) {
+export function ProjectsSection({ sections, activeKey, onActiveKeyChange, isAr, onNewProject, canCreate = true }: Props) {
   const active  = sections.find(s => s.key === activeKey) ?? sections[0];
   const visible = active?.projects ?? [];
 
   return (
     <Card>
       {/* Header */}
-      <div className="flex items-center justify-end px-5 pt-5 pb-0">
-        <Button variant="primary" onClick={onNewProject} startIcon={<Plus size={16} />}>
-          {isAr ? 'مشروع جديد' : 'New Project'}
-        </Button>
-      </div>
+      {canCreate && (
+        <div className="flex items-center justify-end px-5 pt-5 pb-0">
+          <Button variant="primary" onClick={onNewProject} startIcon={<Plus size={16} />}>
+            {isAr ? 'مشروع جديد' : 'New Project'}
+          </Button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex items-end gap-1 px-5 mt-4 border-b border-gray-100 dark:border-gray-700/60 overflow-x-auto">
