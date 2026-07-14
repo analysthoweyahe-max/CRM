@@ -48,9 +48,9 @@ export function WorkedDaysTable({ days, isAr, isLoading }: WorkedDaysTableProps)
           {days.map((d) => (
             <tr key={d.date} className="bg-white dark:bg-gray-900">
               <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">{d.date}</td>
-              <td className="px-4 py-2.5 font-mono">{formatTimeHHmm(d.checkInTime)}</td>
-              <td className="px-4 py-2.5 font-mono">{formatTimeHHmm(d.checkOutTime)}</td>
-              <td className="px-4 py-2.5 font-mono font-semibold">{formatWorkHours(d.workingHours)}</td>
+              <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">{formatTimeHHmm(d.checkInTime)}</td>
+              <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">{formatTimeHHmm(d.checkOutTime)}</td>
+              <td className="px-4 py-2.5 font-mono font-semibold text-gray-900 dark:text-gray-100">{formatWorkHours(d.workingHours)}</td>
               <td className="px-4 py-2.5">
                 <span className={`inline-flex text-[11px] px-2 py-0.5 rounded-full font-medium ${dayStatusBadgeClass(d.dayStatus)}`}>
                   {d.dayStatusLabel || d.dayStatus || '—'}
