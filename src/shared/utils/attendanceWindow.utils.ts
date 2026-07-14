@@ -17,10 +17,13 @@ export function timeToMinutes(raw?: string | null): number | null {
   return h * 60 + m;
 }
 
-export function minutesToHHMM(total: number): string {
-  const h = Math.floor(total / 60) % 24;
+/** Minutes since midnight -> local 12h display (e.g. "05:30 PM"). */
+export function minutesToHH12(total: number, isAr = false): string {
+  const h24 = Math.floor(total / 60) % 24;
   const m = total % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  const period = h24 >= 12 ? (isAr ? 'م' : 'PM') : (isAr ? 'ص' : 'AM');
+  const h12 = h24 % 12 || 12;
+  return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
 }
 
 export function resolveWindowConfig(config?: AttendanceWindowConfig | null) {
@@ -66,10 +69,11 @@ export function calcExpectedEnd(
   checkInTime: string | null | undefined,
   workingHours: number,
   _config?: AttendanceWindowConfig | null,
+  isAr = false,
 ): string | null {
   const checkInMins = timeToMinutes(checkInTime);
   if (checkInMins == null || workingHours <= 0) return null;
-  return minutesToHHMM(checkInMins + Math.round(workingHours * 60));
+  return minutesToHH12(checkInMins + Math.round(workingHours * 60), isAr);
 }
 
 /** True when worked hours are within 30 minutes of expected daily hours. */

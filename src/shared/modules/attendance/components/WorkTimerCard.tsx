@@ -102,7 +102,7 @@ export function WorkTimerCard({
   const isCompact = variant === 'compact';
 
   const expectedHours = dailyHours;
-  const expectedEnd = calcExpectedEnd(checkInTime, expectedHours, windowConfig);
+  const expectedEnd = calcExpectedEnd(checkInTime, expectedHours, windowConfig, isAr);
 
   const checkInTiming = checkInTime
     ? classifyCheckIn(checkInTime, windowConfig)
