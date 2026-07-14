@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dailyReportApi } from '../api/dailyReport.api';
+import type { CreateDailyReportPayload } from '@/shared/modules/daily-reports/types/dailyReport.types';
 import type { StartDayPayload, EndDayPayload } from '../types/dailyReport.types';
 
 export function useDailyReportList() {
@@ -18,6 +19,14 @@ export function useHistory() {
     queryKey: ['employee', 'daily-reports', 'history'],
     queryFn:  () => dailyReportApi.history(currentMonthRange()),
     select:   res => res.data.data.data,
+  });
+}
+
+export function useCreateDailyReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateDailyReportPayload) => dailyReportApi.createReport(payload),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: ['employee', 'daily-reports'] }),
   });
 }
 

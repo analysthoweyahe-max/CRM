@@ -1,26 +1,24 @@
 import { useState } from 'react';
-import { CalendarDays, Sun, Moon, LayoutGrid } from 'lucide-react';
+import { CalendarDays, FilePlus2, LayoutGrid } from 'lucide-react';
 import { useLang }    from '@/app/providers/LanguageProvider';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
-import { DailyReportList }     from '../components/DailyReportList';
-import { StartDayForm }        from '../components/StartDayForm';
-import { EndDayForm }          from '../components/EndDayForm';
+import { EmployeeDailyReportForm } from '../components/EmployeeDailyReportForm';
 import { WeeklyScheduleTable } from '../components/WeeklyScheduleTable';
+import { DailyReportHistoryTable } from '@/shared/modules/daily-reports/components/DailyReportHistoryTable';
 import { useHistory, useWeeklySchedule } from '../hooks/useDailyReports';
 
-type Tab = 'history' | 'start-day' | 'end-day' | 'weekly';
+type Tab = 'submit' | 'history' | 'weekly';
 
 const TABS = [
-  { id: 'start-day', arLabel: 'بداية اليوم',     enLabel: 'Start',  Icon: Sun          },
-  { id: 'end-day',   arLabel: 'نهاية اليوم',     enLabel: 'End',    Icon: Moon         },
-  { id: 'weekly',    arLabel: 'الجدول الأسبوعي', enLabel: 'Weekly', Icon: LayoutGrid   },
-  { id: 'history',   arLabel: 'السجل',            enLabel: 'Log',    Icon: CalendarDays },
+  { id: 'submit'  as Tab, arLabel: 'تقديم تقرير',     enLabel: 'Submit',  Icon: FilePlus2    },
+  { id: 'weekly'  as Tab, arLabel: 'الجدول الأسبوعي', enLabel: 'Weekly',  Icon: LayoutGrid   },
+  { id: 'history' as Tab, arLabel: 'السجل',            enLabel: 'Log',     Icon: CalendarDays },
 ] as const;
 
 export function EmployeeDailyReportsPage() {
   const { lang } = useLang();
   const isAr = lang === 'ar';
-  const [activeTab, setActiveTab] = useState<Tab>('start-day');
+  const [activeTab, setActiveTab] = useState<Tab>('submit');
 
   const { data: history = [], isLoading: histLoading } = useHistory();
   const { data: weekly  = [], isLoading: weekLoading  } = useWeeklySchedule();
@@ -29,7 +27,7 @@ export function EmployeeDailyReportsPage() {
     <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
       <PageHeader
         title={isAr ? 'التقارير اليومية' : 'Daily Reports'}
-        subtitle={isAr ? 'سجّل بداية ونهاية يومك' : 'Log your day start and end'}
+        subtitle={isAr ? 'قدّم تقريرك اليومي وتابع سجلك' : 'Submit your daily report and track your log'}
       />
 
       <div className="flex items-center flex-wrap gap-2">
@@ -38,7 +36,8 @@ export function EmployeeDailyReportsPage() {
           return (
             <button
               key={id}
-              onClick={() => setActiveTab(id as Tab)}
+              type="button"
+              onClick={() => setActiveTab(id)}
               className={[
                 'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors',
                 isActive
@@ -53,10 +52,11 @@ export function EmployeeDailyReportsPage() {
         })}
       </div>
 
-      {activeTab === 'start-day' && <StartDayForm isAr={isAr} />}
-      {activeTab === 'end-day'   && <EndDayForm isAr={isAr} />}
-      {activeTab === 'weekly'    && <WeeklyScheduleTable rows={weekly} isLoading={weekLoading} isAr={isAr} />}
-      {activeTab === 'history'   && <DailyReportList reports={history} isLoading={histLoading} isAr={isAr} />}
+      {activeTab === 'submit'  && <EmployeeDailyReportForm isAr={isAr} />}
+      {activeTab === 'weekly'  && <WeeklyScheduleTable rows={weekly} isLoading={weekLoading} isAr={isAr} />}
+      {activeTab === 'history' && (
+        <DailyReportHistoryTable reports={history} isLoading={histLoading} isAr={isAr} />
+      )}
     </div>
   );
 }

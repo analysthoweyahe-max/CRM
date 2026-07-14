@@ -1,5 +1,10 @@
-import { Calendar }         from 'lucide-react';
+import { Calendar, FileSpreadsheet } from 'lucide-react';
+import { Button }           from '@/shared/components/ui/Button';
 import { DailyReportCard }  from './DailyReportCard';
+import {
+  exportTeamReport,
+  exportTeamReportsTable,
+} from '@/shared/modules/daily-reports/utils/exportDailyReports';
 import type { DailyReport } from '../types/teamReport.types';
 
 interface Props {
@@ -14,8 +19,18 @@ export function DailyReportsTab({ reports, date, setDate, isEmpty, isAr }: Props
   return (
     <div className="space-y-4">
 
-      {/* Date picker */}
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          startIcon={<FileSpreadsheet size={15} />}
+          disabled={isEmpty}
+          onClick={() => exportTeamReportsTable(reports, date, isAr)}
+        >
+          {isAr ? 'تصدير الكل' : 'Export all'}
+        </Button>
+
         <div className="relative">
           <Calendar size={14}
             className="absolute top-1/2 -translate-y-1/2 start-3 text-gray-400 pointer-events-none" />
@@ -32,7 +47,6 @@ export function DailyReportsTab({ reports, date, setDate, isEmpty, isAr }: Props
         </div>
       </div>
 
-      {/* Cards */}
       {isEmpty ? (
         <div className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">
           {isAr ? 'لا توجد تقارير لهذا اليوم' : 'No reports for this day'}
@@ -40,7 +54,12 @@ export function DailyReportsTab({ reports, date, setDate, isEmpty, isAr }: Props
       ) : (
         <div className="space-y-3">
           {reports.map(r => (
-            <DailyReportCard key={r.id} report={r} isAr={isAr} />
+            <DailyReportCard
+              key={r.id}
+              report={r}
+              isAr={isAr}
+              onExport={() => exportTeamReport(r, isAr)}
+            />
           ))}
         </div>
       )}

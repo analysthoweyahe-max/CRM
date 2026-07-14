@@ -1,5 +1,10 @@
+import type { DailyReportHistoryItem } from '@/shared/modules/daily-reports/types/dailyReport.types';
+
 export type DailyReportStatus = 'submitted' | 'approved' | 'rejected';
 export type DayReportStatus   = 'completed' | 'pending';
+
+export type { DailyReportHistoryItem };
+export type DayHistoryItem = DailyReportHistoryItem;
 
 export interface DailyReport {
   id: string; date: string; title: string;
@@ -7,7 +12,6 @@ export interface DailyReport {
   status: DailyReportStatus; feedback?: string;
 }
 
-export interface DayHistoryItem { id: string; date: string; status: DayReportStatus; }
 export interface PlannedTask    { id: string; name: string; }
 export interface WorkedTask     { id: string; name: string; actualHours: number; }
 

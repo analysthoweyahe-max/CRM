@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { seoDailyReportApi } from '../api/dailyReport.api';
-import type { CreateDailyReportPayload, DayHistoryItem, RawDailyReportItem } from '../types/dailyReport.types';
+import { mapDailyReportHistoryItem } from '@/shared/modules/daily-reports/utils/mapDailyReport';
+import type { CreateDailyReportPayload } from '../types/dailyReport.types';
 
 const KEY = ['seo-member', 'daily-reports'];
 
@@ -11,20 +12,11 @@ function currentMonthRange() {
   return { date_from: dateFrom, date_to: dateTo };
 }
 
-function toHistoryItem(raw: RawDailyReportItem): DayHistoryItem {
-  return {
-    id:     String(raw.id ?? ''),
-    // Presence of a report on a given day is the only signal we have — treat it as "completed".
-    date:   raw.reportDate ?? raw.report_date ?? raw.date ?? '',
-    status: 'completed',
-  };
-}
-
 export function useHistory() {
   return useQuery({
     queryKey: [...KEY, 'history'],
     queryFn:  () => seoDailyReportApi.list(currentMonthRange()),
-    select:   res => res.data.data.data.map(toHistoryItem),
+    select:   res => res.data.data.data.map(mapDailyReportHistoryItem),
   });
 }
 

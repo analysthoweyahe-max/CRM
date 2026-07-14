@@ -3,7 +3,7 @@ import { CalendarDays, FilePlus2 } from 'lucide-react';
 import { useLang }        from '@/app/providers/LanguageProvider';
 import { PageHeader }     from '@/shared/components/ui/PageHeader';
 import { DailyReportForm } from '../components/DailyReportForm';
-import { DailyReportList } from '@/modules/employee/daily-reports/components/DailyReportList';
+import { DailyReportHistoryTable } from '@/shared/modules/daily-reports/components/DailyReportHistoryTable';
 import { useHistory }      from '../hooks/useDailyReports';
 
 type Tab = 'submit' | 'history';
@@ -28,7 +28,6 @@ export function SeoMemberDailyReportsPage() {
         subtitle={isAr ? 'قدّم تقريرك اليومي وتابع سجلك' : 'Submit your daily report and track your log'}
       />
 
-      {/* Tabs */}
       <div className="flex items-center gap-2 flex-wrap">
         {TABS.map(({ id, arLabel, enLabel, Icon }) => {
           const isActive = activeTab === id;
@@ -51,9 +50,10 @@ export function SeoMemberDailyReportsPage() {
         })}
       </div>
 
-      {/* Tab content */}
       {activeTab === 'submit'  && <DailyReportForm isAr={isAr} />}
-      {activeTab === 'history' && <DailyReportList reports={history} isLoading={histLoading} isAr={isAr} />}
+      {activeTab === 'history' && (
+        <DailyReportHistoryTable reports={history} isLoading={histLoading} isAr={isAr} />
+      )}
 
     </div>
   );

@@ -1,5 +1,10 @@
 import { http } from '@/shared/services/http.service';
 import { saveDayDraft, getDayDraft, clearDayDraft } from '../store/dayDraft.store';
+import { mapDailyReportHistoryItem } from '@/shared/modules/daily-reports/utils/mapDailyReport';
+import type {
+  CreateDailyReportPayload,
+  RawDailyReportItem as SharedRawDailyReportItem,
+} from '@/shared/modules/daily-reports/types/dailyReport.types';
 import type {
   DailyReportListResponse, DailyReportCreateResponse,
   HistoryListResponse, PlannedTasksResponse,
@@ -101,9 +106,19 @@ export const dailyReportApi = {
       data: {
         status: res.data.status,
         data: {
-          // Presence of a report on a given day is the only signal we have — treat it as "completed".
-          data: res.data.data.data.map(r => ({ id: r.id, date: r.reportDate, status: 'completed' as const })),
+          data: res.data.data.data.map(r => mapDailyReportHistoryItem(r as SharedRawDailyReportItem)),
         },
+      },
+    };
+  },
+
+  async createReport(payload: CreateDailyReportPayload) {
+    const res = await http.post<RawDailyReportCreateResponse>('/v1/pm/reports/daily', payload);
+    return {
+      data: {
+        status:  res.data.status,
+        message: res.data.message,
+        data:    mapDailyReportHistoryItem(res.data.data as SharedRawDailyReportItem),
       },
     };
   },
