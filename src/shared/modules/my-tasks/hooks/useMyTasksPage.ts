@@ -3,15 +3,17 @@ import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { extractApiStatus } from '@/shared/utils/error.utils';
+import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import { myTasksApi } from '../api/myTasks.api';
 import {
   extractProjectsFromColumns,
+  fillCatalogColumns,
   getTaskRouteId,
   mergeGroupedTasksAcrossProjects,
   resolveMyTasksConfig,
   resolveTasksRole,
 } from '../utils/myTasks.utils';
-import type { GroupedTasksData, MyTasksPageConfig, TasksApiRole } from '../types/myTasks.types';
+import type { GroupedTasksData, MyTasksPageConfig, TaskPhase, TasksApiRole } from '../types/myTasks.types';
 
 export interface UseMyTasksPageOptions {
   routeProjectId?: string;
@@ -33,7 +35,7 @@ export interface UseMyTasksPageResult {
   isError:         boolean;
   errorStatus:     number | undefined;
   updateStatus:    (projectId: number | string, taskId: number | string, status: string) => Promise<void>;
-  updatePhase:     (projectId: number | string, taskId: number | string, phase: { id: number; name: string }) => Promise<void>;
+  updatePhase:     (projectId: number | string, taskId: number | string, phase: TaskPhase) => Promise<void>;
   isUpdating:      boolean;
   getTaskId:       (task: import('../types/myTasks.types').MyTask) => string | number;
 }
@@ -61,6 +63,12 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     () => (tasksRole ? resolveMyTasksConfig(tasksRole) : null),
     [tasksRole],
   );
+
+  // SEO task statuses are admin-configurable (not a fixed set) — fetch the
+  // full catalog so the board always shows every status column, not just
+  // whichever ones the current tasks happen to occupy.
+  const isSeoEmployee = tasksRole === 'seo-employee';
+  const { statusOptions: seoStatusCatalog } = useSeoTaskLookups(isAr, { enabled: isSeoEmployee });
 
   const scopedProjectId = projectId || undefined;
 
@@ -102,7 +110,24 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
           }
         }),
       );
-      const perProject = results.filter((r): r is NonNullable<typeof r> => r !== null);
+      // Project-scoped task payloads often omit `task.project`. Stamp it so
+      // detail navigation / status updates work while "All projects" is selected
+      // (filter projectId is empty — handleOpen can't fall back to it).
+      const perProject = results
+        .filter((r): r is NonNullable<typeof r> => r !== null)
+        .map(({ project, data }) => ({
+          project,
+          data: {
+            ...data,
+            columns: data.columns.map((col) => ({
+              ...col,
+              tasks: col.tasks.map((task) => ({
+                ...task,
+                project: task.project ?? project,
+              })),
+            })),
+          },
+        }));
       return { merged: mergeGroupedTasksAcrossProjects(perProject), perProject };
     },
     enabled: needsClientAggregate && !!employeeProjectsQuery.data,
@@ -158,7 +183,7 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     }: {
       projectId: number | string;
       taskId:    number | string;
-      phase:     { id: number; name: string };
+      phase:     TaskPhase;
     }) => myTasksApi.updatePhase(tasksRole!, pid, taskId, phase),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-tasks', tasksRole] });
@@ -168,7 +193,7 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
   async function updatePhase(
     pid: number | string,
     taskId: number | string,
-    phase: { id: number; name: string },
+    phase: TaskPhase,
   ) {
     await phaseMutation.mutateAsync({ projectId: pid, taskId, phase });
   }
@@ -176,8 +201,19 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
   const getTaskId = (task: import('../types/myTasks.types').MyTask) =>
     tasksRole ? getTaskRouteId(task, tasksRole) : task.id;
 
-  const perProjectData = needsClientAggregate ? aggregateQuery.data?.perProject : undefined;
-  const data = needsClientAggregate ? aggregateQuery.data?.merged : (query.data as GroupedTasksData | undefined);
+  const rawPerProjectData = needsClientAggregate ? aggregateQuery.data?.perProject : undefined;
+  const rawData = needsClientAggregate ? aggregateQuery.data?.merged : (query.data as GroupedTasksData | undefined);
+
+  const statusCatalog = isSeoEmployee ? seoStatusCatalog : [];
+  const data = rawData && statusCatalog.length > 0
+    ? { ...rawData, columns: fillCatalogColumns(rawData.columns, statusCatalog) }
+    : rawData;
+  const perProjectData = rawPerProjectData && statusCatalog.length > 0
+    ? rawPerProjectData.map(({ project, data: projectData }) => ({
+        project,
+        data: { ...projectData, columns: fillCatalogColumns(projectData.columns, statusCatalog) },
+      }))
+    : rawPerProjectData;
 
   return {
     config,

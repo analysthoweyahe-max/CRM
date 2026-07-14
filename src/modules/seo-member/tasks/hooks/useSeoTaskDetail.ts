@@ -2,10 +2,21 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { seoTaskDetailApi } from '../api/seoTaskDetail.api';
+import type { SeoUpdateTaskPayload } from '../api/seoTaskDetail.api';
 import type { SeoTaskStatus } from '../types/seoTask.types';
 import type { SeoTaskComment } from '../types/seoTaskDetail.types';
 import type { TaskComment, TaskSession } from '@/modules/employee/tasks/types/taskDetail.types';
 import { extractSeoUploadErrors } from '@/shared/utils/seoTaskAttachment.utils';
+import { extractApiError } from '@/shared/utils/error.utils';
+import type { MentionRef } from '@/shared/components/chat';
+
+function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
+  const refs = (raw ?? [])
+    .filter((m): m is { type: unknown; id: unknown } => !!m && typeof m === 'object')
+    .filter(m => typeof m.type === 'string' && (typeof m.id === 'string' || typeof m.id === 'number'))
+    .map(m => ({ type: m.type as string, id: String(m.id) }));
+  return refs.length ? refs : undefined;
+}
 
 const detailKey = (projectId?: string, taskId?: string) =>
   ['seo-member', 'task-detail', projectId, taskId] as const;
@@ -26,15 +37,29 @@ export function useUpdateSeoTaskStatus(projectId: string | undefined, taskId: st
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (status: SeoTaskStatus) => seoTaskDetailApi.updateStatus(projectId!, taskId!, status),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: detailKey(projectId, taskId) });
+      qc.invalidateQueries({ queryKey: ['my-tasks'] });
+      qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
+      toast.success(isAr ? 'تم تحديث الحالة' : 'Status updated');
+    },
+    onError: () => toast.error(isAr ? 'تعذّر تحديث الحالة' : 'Failed to update status'),
+  });
+}
+
+export function useUpdateSeoTask(projectId: string | undefined, taskId: string | undefined, isAr: boolean) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: SeoUpdateTaskPayload) => seoTaskDetailApi.updateTask(projectId!, taskId!, payload),
     onSuccess: (detail) => {
       qc.setQueryData(detailKey(projectId, taskId), (prev: { task: typeof detail; tabs?: unknown } | undefined) =>
         prev ? { ...prev, task: detail } : { task: detail },
       );
       qc.invalidateQueries({ queryKey: ['my-tasks'] });
       qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
-      toast.success(isAr ? 'تم تحديث الحالة' : 'Status updated');
+      toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
     },
-    onError: () => toast.error(isAr ? 'تعذّر تحديث الحالة' : 'Failed to update status'),
+    onError: (err) => toast.error(extractApiError(err) || (isAr ? 'تعذّر حفظ التعديلات' : 'Failed to save changes')),
   });
 }
 
@@ -122,6 +147,7 @@ function mapSeoComments(comments: SeoTaskComment[]): TaskComment[] {
     body:      c.body,
     createdAt: c.sentAt,
     isMine:    false,
+    mentions:  toMentionRefs(c.mentions),
   }));
 }
 

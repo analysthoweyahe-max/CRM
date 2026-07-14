@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { KanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
 import { MyTaskCard } from './MyTaskCard';
-import type { GroupedTasksData, MyTask } from '../types/myTasks.types';
+import type { GroupedTasksData, MyTask, TaskPhase } from '../types/myTasks.types';
 
 const STATUS_COLOR: Record<string, string> = {
   pending:      '#9CA3AF',
@@ -20,7 +20,7 @@ interface Props {
   canDrag:   boolean;
   onOpen:    (task: MyTask) => void;
   onStatusChange?: (task: MyTask, toStatus: string) => Promise<void>;
-  onPhaseChange?:  (task: MyTask, toPhase: { id: number; name: string }) => Promise<void>;
+  onPhaseChange?:  (task: MyTask, toPhase: TaskPhase) => Promise<void>;
 }
 
 /** One project's board within the cross-project "My Tasks" page — same

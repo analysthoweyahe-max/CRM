@@ -1,5 +1,5 @@
 import { http } from '@/shared/services/http.service';
-import { STATUS_TO_WIRE, toSeoTask as mapSeoTask } from './seoTask.api';
+import { toSeoTask as mapSeoTask } from './seoTask.api';
 import type { RawSeoTask, RawSeoTaskRef } from './seoTask.api';
 import type { SeoTaskStatus } from '../types/seoTask.types';
 import type {
@@ -13,6 +13,7 @@ import {
   normalizeSeoAttachments,
   type SeoTaskAttachment,
 } from '@/shared/utils/seoTaskAttachment.utils';
+import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 
 interface RawSeoAssignee {
   id:        string | number;
@@ -38,6 +39,12 @@ interface RawSeoTaskDetail extends RawSeoTask {
   allocatedHours?:    number;
   attachments?:       unknown[];
   attachmentsCount?:  number;
+}
+
+export interface SeoUpdateTaskPayload {
+  title?:    string;
+  priority?: string;
+  dueDate?:  string;
 }
 
 interface SeoTaskUploadResponse {
@@ -108,10 +115,27 @@ export const seoTaskDetailApi = {
     };
   },
 
-  async updateStatus(projectId: string, taskId: string, status: SeoTaskStatus): Promise<SeoTaskDetail> {
-    const res = await http.patch<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/status`,
-      { status: STATUS_TO_WIRE[status] },
+  /* Doesn't parse/return the response body — the .../status endpoint's
+     response shape is unconfirmed, and a mismatch there (e.g. no nested
+     `task` object) previously made toSeoTaskDetail() throw on an otherwise-
+     successful update, surfacing as a false error toast. Callers should
+     refetch (invalidate the detail query) instead of trusting this return. */
+  async updateStatus(projectId: string, taskId: string, status: SeoTaskStatus): Promise<void> {
+    await http.patch(`/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status });
+  },
+
+  async extendDeadline(projectId: string, taskId: string, payload: ExtendDeadlinePayload): Promise<SeoTaskDetail> {
+    const res = await http.post<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/extend`,
+      payload,
+    );
+    return toSeoTaskDetail(res.data.data.task);
+  },
+
+  async updateTask(projectId: string, taskId: string, payload: SeoUpdateTaskPayload): Promise<SeoTaskDetail> {
+    const res = await http.put<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
+      `/v1/seo/projects/${projectId}/tasks/${taskId}`,
+      payload,
     );
     return toSeoTaskDetail(res.data.data.task);
   },
@@ -165,19 +189,19 @@ export const seoTaskDetailApi = {
 
   getTimeLogs(projectId: string, taskId: string) {
     return http.get<{ status: string; message: string; data: SeoTaskTimeLogSummary }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/time-logs`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/time-logs`,
     );
   },
 
   addTimeLog(projectId: string, taskId: string, payload: AddTimeLogPayload) {
     return http.post<{ status: string; message: string; data: SeoTaskTimeLog }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/time-logs`, payload,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/time-logs`, payload,
     );
   },
 
   deleteTimeLog(projectId: string, taskId: string, timeLogId: string | number) {
     return http.delete<{ status: string; message: string; data: SeoTaskTimeLogSummary }>(
-      `/v1/seo/employee/projects/${projectId}/tasks/${taskId}/time-logs/${timeLogId}`,
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/time-logs/${timeLogId}`,
     );
   },
 

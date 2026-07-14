@@ -1,21 +1,15 @@
-import { ArrowRight, ArrowLeft, FolderOpen } from 'lucide-react';
+import { ArrowRight, ArrowLeft, FolderOpen, Pencil } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/Badge';
+import { useSeoTaskLookups, badgeVariantForStatus } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import type { SeoTaskDetail } from '../types/seoTaskDetail.types';
-import type { SeoTaskStatus } from '../types/seoTask.types';
-
-const STATUS_MAP: Record<SeoTaskStatus, { ar: string; en: string; variant: 'brand' | 'success' | 'gray' | 'error' }> = {
-  pending:    { ar: 'لم تبدأ بعد', en: 'Not Started', variant: 'gray'    },
-  inProgress: { ar: 'قيد التنفيذ', en: 'In Progress',  variant: 'brand'   },
-  inReview:   { ar: 'قيد المراجعة', en: 'In Review',   variant: 'brand'   },
-  completed:  { ar: 'مكتملة',      en: 'Completed',    variant: 'success' },
-  blocked:    { ar: 'محظورة',      en: 'Blocked',      variant: 'error'   },
-};
 
 interface SeoTaskDetailHeaderProps {
   task:      SeoTaskDetail | undefined;
   isLoading: boolean;
   isAr:      boolean;
   onBack:    () => void;
+  canEdit?:  boolean;
+  onEdit?:   () => void;
 }
 
 function Skeleton() {
@@ -33,10 +27,15 @@ function Skeleton() {
   );
 }
 
-export function SeoTaskDetailHeader({ task, isLoading, isAr, onBack }: SeoTaskDetailHeaderProps) {
+export function SeoTaskDetailHeader({ task, isLoading, isAr, onBack, canEdit, onEdit }: SeoTaskDetailHeaderProps) {
+  const { statusOptions } = useSeoTaskLookups(isAr);
   if (isLoading || !task) return <Skeleton />;
 
-  const status  = STATUS_MAP[task.status] ?? STATUS_MAP.pending;
+  const statusOpt = statusOptions.find(s => s.key === task.status);
+  const status = {
+    label:   statusOpt?.label ?? task.status,
+    variant: badgeVariantForStatus(task.status, statusOpt?.marksCompleted ?? false),
+  };
   const taskNum = `#${task.taskNumber.toString().padStart(3, '0')}`;
   const campaign = task.phase ?? task.taskTypeLabel;
 
@@ -51,11 +50,26 @@ export function SeoTaskDetailHeader({ task, isLoading, isAr, onBack }: SeoTaskDe
       </button>
 
       <div className="flex items-start justify-between gap-4">
-        <Badge
-          label={isAr ? status.ar : status.en}
-          variant={status.variant}
-          icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
-        />
+        <div className="flex items-center gap-1.5">
+          {(task.isOverdue || task.isDelayed) && (
+            <Badge label={task.overdueLabel || (isAr ? 'متأخرة' : 'Overdue')} variant="error" />
+          )}
+          <Badge
+            label={status.label}
+            variant={status.variant}
+            icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
+          />
+          {canEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label={isAr ? 'تعديل المهمة' : 'Edit task'}
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{task.title}</h1>
           <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums">{taskNum}</span>

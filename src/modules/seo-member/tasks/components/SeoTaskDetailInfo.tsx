@@ -1,6 +1,7 @@
 import { Badge }    from '@/shared/components/ui/Badge';
 import { RichTextView } from '@/shared/components/form/RichTextView';
 import { fmtDeadline } from '@/modules/employee/tasks/components/useTasksTable';
+import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import type { SeoTaskDetail } from '../types/seoTaskDetail.types';
 import type { SeoTaskStatus } from '../types/seoTask.types';
 
@@ -49,20 +50,13 @@ function Skeleton() {
 }
 
 export function SeoTaskDetailInfo({ task, isLoading, isAr, onStatusChange, canEdit }: Props) {
+  const { statusOptions } = useSeoTaskLookups(isAr);
   if (isLoading || !task) return <Skeleton />;
 
   const priority  = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.normal;
   const phaseColor = task.phase ? (PHASE_COLORS[task.phase] ?? 'bg-gray-100 text-gray-600') : '';
   const dueDateFmt = task.dueDate ? fmtDeadline(task.dueDate, isAr) : '—';
   const startDateFmt = task.startDate ? fmtDeadline(task.startDate, isAr) : '—';
-
-  const STATUS_OPTIONS: { value: SeoTaskStatus; arLabel: string; enLabel: string }[] = [
-    { value: 'pending',    arLabel: 'لم تبدأ بعد', enLabel: 'Not Started' },
-    { value: 'inProgress', arLabel: 'قيد التنفيذ', enLabel: 'In Progress' },
-    { value: 'inReview',   arLabel: 'قيد المراجعة', enLabel: 'In Review'  },
-    { value: 'completed',  arLabel: 'مكتملة',       enLabel: 'Completed'  },
-    { value: 'blocked',    arLabel: 'محظورة',        enLabel: 'Blocked'    },
-  ];
 
   return (
     <div className="space-y-0" dir={isAr ? 'rtl' : 'ltr'}>
@@ -124,15 +118,15 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr, onStatusChange, canEd
             onChange={e => onStatusChange?.(e.target.value as SeoTaskStatus)}
             className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
-            {STATUS_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>
-                {isAr ? opt.arLabel : opt.enLabel}
+            {statusOptions.map(opt => (
+              <option key={opt.key} value={opt.key}>
+                {opt.label}
               </option>
             ))}
           </select>
         ) : (
           <Badge
-            label={STATUS_OPTIONS.find(o => o.value === task.status)?.[isAr ? 'arLabel' : 'enLabel'] ?? task.status}
+            label={statusOptions.find(o => o.key === task.status)?.label ?? task.status}
             variant="gray"
           />
         )}

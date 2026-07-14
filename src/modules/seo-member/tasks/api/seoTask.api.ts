@@ -1,5 +1,5 @@
 import { http } from '@/shared/services/http.service';
-import type { SeoTask, SeoTaskStatus, SeoTaskPriority } from '../types/seoTask.types';
+import type { SeoTask, SeoTaskPriority } from '../types/seoTask.types';
 
 /* Raw backend shape — GET /v1/seo/employee/tasks?mine=1 and
    GET /v1/seo/projects/{project}/tasks.
@@ -25,6 +25,11 @@ export interface RawSeoTask {
   taskTypeLabel?: string;
   phase?:         string | null;
   project?:       RawSeoTaskRef | null;
+  dueAt?:         string | null;
+  isOverdue?:     boolean;
+  isDelayed?:     boolean;
+  overdueLabel?:  string | null;
+  canExtend?:     boolean;
 }
 
 export interface RawSeoTaskPhaseGroup {
@@ -40,22 +45,6 @@ export interface RawSeoTaskListResponse {
     total:  number;
   };
 }
-
-export const STATUS_FROM_WIRE: Record<string, SeoTaskStatus> = {
-  pending:     'pending',
-  in_progress: 'inProgress',
-  in_review:   'inReview',
-  completed:   'completed',
-  blocked:     'blocked',
-};
-
-export const STATUS_TO_WIRE: Record<SeoTaskStatus, string> = {
-  pending:    'pending',
-  inProgress: 'in_progress',
-  inReview:   'in_review',
-  completed:  'completed',
-  blocked:    'blocked',
-};
 
 const PRIORITY_FROM_WIRE: Record<string, SeoTaskPriority> = {
   high:   'high',
@@ -73,13 +62,18 @@ export function toSeoTask(raw: RawSeoTask): SeoTask {
     phase:         raw.phase ?? null,
     taskType:      raw.taskType ?? '',
     taskTypeLabel: raw.taskTypeLabel ?? '',
-    status:        STATUS_FROM_WIRE[raw.status] ?? 'pending',
+    status:        raw.status,
     statusLabel:   raw.statusLabel,
     priority:      PRIORITY_FROM_WIRE[raw.priority] ?? 'normal',
     priorityLabel: raw.priorityLabel,
     dueDate:       raw.dueDate ?? null,
     description:   raw.description ?? null,
     project:       raw.project ? { id: String(raw.project.id), name: raw.project.name } : null,
+    dueAt:         raw.dueAt ?? null,
+    isOverdue:     raw.isOverdue,
+    isDelayed:     raw.isDelayed,
+    overdueLabel:  raw.overdueLabel ?? null,
+    canExtend:     raw.canExtend,
   };
 }
 

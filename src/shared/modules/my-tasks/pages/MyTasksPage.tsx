@@ -113,7 +113,7 @@ export function MyTasksPage() {
               data={projectData}
               isAr={isAr}
               canDrag={config.canDragStatus}
-              onOpen={handleOpen}
+              onOpen={(task) => handleOpen({ ...task, project: task.project ?? project })}
               onStatusChange={async (task, toStatus) => {
                 if (!tasksRole) return;
                 await updateStatus(project.id, getTaskId(task), toStatus);
