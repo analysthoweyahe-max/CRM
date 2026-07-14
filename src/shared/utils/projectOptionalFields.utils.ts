@@ -1,4 +1,6 @@
 export type ProjectOptionalFieldErrors = {
+  name?:                    string;
+  targetDomain?:            string;
   githubLink?:              string;
   driveLink?:               string;
   contractDurationMonths?:  string;

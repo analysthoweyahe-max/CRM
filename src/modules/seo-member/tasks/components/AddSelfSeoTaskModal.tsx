@@ -32,7 +32,7 @@ export function AddSelfSeoTaskModal({
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
     files, setFiles, fileError, setFileError,
-    isValid, creating,
+    errors, creating,
     handleSubmit, handleClose,
   } = useAddSelfSeoTask(onClose, isAr, { initialProjectId, lockProject });
 
@@ -51,7 +51,7 @@ export function AddSelfSeoTaskModal({
           <Button variant="secondary" onClick={handleClose}>
             {isAr ? 'إلغاء' : 'Cancel'}
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={!isValid} isLoading={creating}>
+          <Button variant="primary" onClick={handleSubmit} disabled={creating} isLoading={creating}>
             {isAr ? 'إضافة' : 'Add'}
           </Button>
         </>
@@ -59,7 +59,7 @@ export function AddSelfSeoTaskModal({
     >
       <div className="space-y-4 pt-1">
 
-        <FormField label={isAr ? 'المشروع' : 'Project'} required>
+        <FormField label={isAr ? 'المشروع' : 'Project'} required error={errors.projectId}>
           {projectLocked ? (
             <div className={`${inputCls(false)} bg-gray-50 dark:bg-gray-800/60 text-gray-700 dark:text-gray-200`}>
               {lockedProjectLabel || '—'}
@@ -69,6 +69,7 @@ export function AddSelfSeoTaskModal({
               items={projectItems}
               value={projectId}
               onChange={setProjectId}
+              error={!!errors.projectId}
               placeholder={isAr ? 'اختر المشروع' : 'Select project'}
               searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
               noResultsText={isAr ? 'لا توجد مشاريع' : 'No projects'}
@@ -76,21 +77,21 @@ export function AddSelfSeoTaskModal({
           )}
         </FormField>
 
-        <FormField label={isAr ? 'العنوان' : 'Title'} required>
+        <FormField label={isAr ? 'العنوان' : 'Title'} required error={errors.title}>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={isAr ? 'عنوان المهمة' : 'Task title'}
-            className={inputCls(false)}
+            className={inputCls(!!errors.title)}
           />
         </FormField>
 
-        <FormField label={isAr ? 'المرحلة' : 'Phase'} required>
+        <FormField label={isAr ? 'المرحلة' : 'Phase'} required error={errors.phase}>
           <input
             value={phase}
             onChange={(e) => setPhase(e.target.value)}
             placeholder={isAr ? 'مثال: On-Page SEO' : 'e.g. On-Page SEO'}
-            className={inputCls(false)}
+            className={inputCls(!!errors.phase)}
           />
         </FormField>
 

@@ -70,9 +70,12 @@ export function AddPmTaskPage() {
 
   const [form, setForm]         = useState<PmTaskFormState>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
+  const [touched, setTouched]           = useState<Record<string, boolean>>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   function set<K extends keyof PmTaskFormState>(key: K, val: PmTaskFormState[K]) {
     setForm(prev => ({ ...prev, [key]: val }));
+    setTouched(prev => (prev[key] ? prev : { ...prev, [key]: true }));
   }
 
   useEffect(() => {
@@ -109,9 +112,23 @@ export function AddPmTaskPage() {
     label: translateProjectLookup(s.value, s.label, isAr, s.labelAr),
   }));
 
-  const isValid = !!(form.title.trim() && form.assigneeId && form.priority && form.status && form.dueDate && form.phaseId);
+  const fieldErrors: Record<string, string> = {};
+  if (!form.title.trim()) fieldErrors.title      = isAr ? 'عنوان المهمة مطلوب' : 'Task title is required';
+  if (!form.assigneeId)   fieldErrors.assigneeId = isAr ? 'اختر المسؤول' : 'Assignee is required';
+  if (!form.priority)     fieldErrors.priority   = isAr ? 'اختر الأولوية' : 'Priority is required';
+  if (!form.status)       fieldErrors.status     = isAr ? 'اختر الحالة الابتدائية' : 'Initial status is required';
+  if (!form.dueDate)      fieldErrors.dueDate    = isAr ? 'تاريخ التسليم مطلوب' : 'Due date is required';
+  if (!form.phaseId)      fieldErrors.phaseId    = isAr ? 'اختر المرحلة' : 'Stage is required';
+
+  const isValid = Object.keys(fieldErrors).length === 0;
+
+  const errors: Record<string, string> = {};
+  for (const key of Object.keys(fieldErrors)) {
+    if (touched[key] || submitAttempted) errors[key] = fieldErrors[key];
+  }
 
   async function handleAdd() {
+    setSubmitAttempted(true);
     if (!isValid || submitting) return;
     if (!assignees.some(m => m.id === form.assigneeId)) {
       toast.error(isAr ? 'اختر عضواً من فريق المشروع' : 'Pick a member from the project team');
@@ -177,6 +194,7 @@ export function AddPmTaskPage() {
         <PmTaskFormFields
           form={form}
           set={set}
+          errors={errors}
           teamItems={teamItems}
           phaseItems={phaseItems}
           priorityItems={priorityItems}
@@ -195,7 +213,7 @@ export function AddPmTaskPage() {
         <div className="flex items-center gap-3 pt-6 mt-2 border-t border-gray-100 dark:border-gray-700/60">
           <Button
             variant="primary"
-            disabled={!isValid || submitting}
+            disabled={submitting}
             onClick={handleAdd}
             startIcon={<Check size={16} />}
           >

@@ -2,7 +2,7 @@ export interface AddSeoTaskForm {
   title:            string;
   phase:            string;
   description:      string;
-  assignee:         string;
+  assignees:        string[];
   priority:         string;
   dueDate:          string;
   estimatedHours:   string;

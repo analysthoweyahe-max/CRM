@@ -16,7 +16,7 @@ export function AddTaskModal({ open, onClose, isAr }: AddTaskModalProps) {
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
-    isValid, creating,
+    errors, creating,
     handleSubmit, handleClose,
   } = useAddTaskModal(onClose, isAr);
 
@@ -30,7 +30,7 @@ export function AddTaskModal({ open, onClose, isAr }: AddTaskModalProps) {
           <Button variant="secondary" onClick={handleClose}>
             {isAr ? 'إلغاء' : 'Cancel'}
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={!isValid} isLoading={creating}>
+          <Button variant="primary" onClick={handleSubmit} disabled={creating} isLoading={creating}>
             {isAr ? 'إضافة' : 'Add'}
           </Button>
         </>
@@ -38,23 +38,24 @@ export function AddTaskModal({ open, onClose, isAr }: AddTaskModalProps) {
     >
       <div className="space-y-4 pt-1">
 
-        <FormField label={isAr ? 'المشروع' : 'Project'} required>
+        <FormField label={isAr ? 'المشروع' : 'Project'} required error={errors.projectId}>
           <Combobox
             items={projectItems}
             value={projectId}
             onChange={v => { setProjectId(v); setPhaseId(''); }}
+            error={!!errors.projectId}
             placeholder={isAr ? 'اختر المشروع' : 'Select project'}
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
             noResultsText={isAr ? 'لا توجد مشاريع' : 'No projects'}
           />
         </FormField>
 
-        <FormField label={isAr ? 'العنوان' : 'Title'} required>
+        <FormField label={isAr ? 'العنوان' : 'Title'} required error={errors.title}>
           <input
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder={isAr ? 'عنوان المهمة' : 'Task title'}
-            className={inputCls(false)}
+            className={inputCls(!!errors.title)}
           />
         </FormField>
 

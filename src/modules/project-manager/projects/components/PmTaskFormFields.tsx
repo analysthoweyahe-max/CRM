@@ -10,7 +10,16 @@ const INPUT = [
   'transition-shadow duration-150',
 ].join(' ');
 
+const INPUT_ERROR = [
+  'w-full rounded-xl border border-red-400 dark:border-red-500',
+  'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100',
+  'px-4 py-2.5 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500',
+  'focus:outline-none focus:ring-2 focus:ring-red-400/40 focus:border-transparent',
+  'transition-shadow duration-150',
+].join(' ');
+
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
+const ERROR_TEXT = 'mt-1 text-xs text-red-500';
 
 export interface PmTaskFormState {
   title:          string;
@@ -27,6 +36,7 @@ export interface PmTaskFormState {
 interface Props {
   form:          PmTaskFormState;
   set:           <K extends keyof PmTaskFormState>(key: K, val: PmTaskFormState[K]) => void;
+  errors?:       Record<string, string>;
   teamItems:     ComboboxItem[];
   phaseItems:    ComboboxItem[];
   priorityItems: ComboboxItem[];
@@ -35,7 +45,7 @@ interface Props {
 }
 
 export function PmTaskFormFields({
-  form, set, teamItems, phaseItems, priorityItems, statusItems, isAr,
+  form, set, errors = {}, teamItems, phaseItems, priorityItems, statusItems, isAr,
 }: Props) {
   return (
     <div className="space-y-4">
@@ -52,8 +62,9 @@ export function PmTaskFormFields({
           value={form.title}
           onChange={e => set('title', e.target.value)}
           placeholder={isAr ? 'عنوان المهمة' : 'Task title'}
-          className={INPUT}
+          className={errors.title ? INPUT_ERROR : INPUT}
         />
+        {errors.title && <p className={ERROR_TEXT}>{errors.title}</p>}
       </div>
 
       {/* Description */}
@@ -78,10 +89,12 @@ export function PmTaskFormFields({
             items={teamItems}
             value={form.assigneeId}
             onChange={v => set('assigneeId', v)}
+            error={!!errors.assigneeId}
             placeholder={isAr ? 'اختر عضو' : 'Pick member'}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
+          {errors.assigneeId && <p className={ERROR_TEXT}>{errors.assigneeId}</p>}
         </div>
         <div>
           <label className={LABEL}>
@@ -92,9 +105,11 @@ export function PmTaskFormFields({
             items={priorityItems}
             value={form.priority}
             onChange={v => set('priority', v)}
+            error={!!errors.priority}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
+          {errors.priority && <p className={ERROR_TEXT}>{errors.priority}</p>}
         </div>
       </div>
 
@@ -109,8 +124,9 @@ export function PmTaskFormFields({
             type="date"
             value={form.dueDate}
             onChange={e => set('dueDate', e.target.value)}
-            className={INPUT}
+            className={errors.dueDate ? INPUT_ERROR : INPUT}
           />
+          {errors.dueDate && <p className={ERROR_TEXT}>{errors.dueDate}</p>}
         </div>
         <div>
           <label className={LABEL}>{isAr ? 'الساعات المقدرة' : 'Est. Hours'}</label>
@@ -148,10 +164,12 @@ export function PmTaskFormFields({
             items={phaseItems}
             value={form.phaseId}
             onChange={v => set('phaseId', v)}
+            error={!!errors.phaseId}
             placeholder={isAr ? 'اختر المرحلة' : 'Select stage'}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
+          {errors.phaseId && <p className={ERROR_TEXT}>{errors.phaseId}</p>}
         </div>
         <div>
           <label className={LABEL}>
@@ -162,9 +180,11 @@ export function PmTaskFormFields({
             items={statusItems}
             value={form.status}
             onChange={v => set('status', v)}
+            error={!!errors.status}
             searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
+          {errors.status && <p className={ERROR_TEXT}>{errors.status}</p>}
         </div>
       </div>
 

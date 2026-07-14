@@ -7,7 +7,7 @@ const INITIAL: AddSeoTaskForm = {
   title:            '',
   phase:            '',
   description:      '',
-  assignee:         '',
+  assignees:        [],
   priority:         'medium',
   dueDate:          '',
   estimatedHours:   '',
@@ -20,15 +20,19 @@ export function useAddSeoTask(
   campaignId: string,
   prefillUrl: string,
   onClose:    () => void,
+  isAr:       boolean,
 ) {
   const queryClient = useQueryClient();
   const [form,      setForm]     = useState<AddSeoTaskForm>({ ...INITIAL, targetUrl: prefillUrl });
   const [files,     setFiles]    = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [apiError,  setApiError] = useState<string | null>(null);
+  const [touched, setTouched]           = useState<Record<string, boolean>>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   function set<K extends keyof AddSeoTaskForm>(key: K, val: AddSeoTaskForm[K]) {
     setForm(prev => ({ ...prev, [key]: val }));
+    setTouched(prev => (prev[key] ? prev : { ...prev, [key]: true }));
     setApiError(null);
   }
 
@@ -37,7 +41,7 @@ export function useAddSeoTask(
       const payload = {
         title:            form.title.trim(),
         phase:            form.phase.trim(),
-        employee_ids:     [form.assignee],
+        employee_ids:     form.assignees,
         description:      form.description.trim() || undefined,
         priority:         form.priority || undefined,
         due_date:         form.dueDate            || undefined,
@@ -58,6 +62,8 @@ export function useAddSeoTask(
       setForm({ ...INITIAL, targetUrl: prefillUrl });
       setFiles([]);
       setFileError(null);
+      setTouched({});
+      setSubmitAttempted(false);
       onClose();
     },
 
@@ -69,6 +75,18 @@ export function useAddSeoTask(
     },
   });
 
+  const fieldErrors: Record<string, string> = {};
+  if (!form.title.trim())  fieldErrors.title    = isAr ? 'عنوان المهمة مطلوب' : 'Task title is required';
+  if (form.assignees.length === 0) fieldErrors.assignees = isAr ? 'اختر مسؤولاً واحداً على الأقل' : 'Select at least one assignee';
+  if (!form.phase.trim())  fieldErrors.phase    = isAr ? 'المرحلة مطلوبة' : 'Phase is required';
+
+  const isValid = Object.keys(fieldErrors).length === 0;
+
+  const errors: Record<string, string> = {};
+  for (const key of Object.keys(fieldErrors)) {
+    if (touched[key] || submitAttempted) errors[key] = fieldErrors[key];
+  }
+
   return {
     form,
     files,
@@ -77,8 +95,13 @@ export function useAddSeoTask(
     setFileError,
     apiError,
     set,
-    isValid:   !!form.title.trim() && !!form.assignee && !!form.phase.trim(),
+    isValid,
+    errors,
     isSaving:  mutation.isPending,
-    handleAdd: () => mutation.mutate(),
+    handleAdd: () => {
+      setSubmitAttempted(true);
+      if (!isValid || mutation.isPending) return;
+      mutation.mutate();
+    },
   };
 }

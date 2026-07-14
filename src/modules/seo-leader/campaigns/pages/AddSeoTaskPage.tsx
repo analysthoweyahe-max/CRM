@@ -24,7 +24,7 @@ export function AddSeoTaskPage() {
     fileError,
     setFileError,
     apiError,
-    isValid,
+    errors,
     isSaving,
     handleAdd,
     goBack,
@@ -66,6 +66,7 @@ export function AddSeoTaskPage() {
         <AddSeoTaskForm
           form={form}
           set={set}
+          errors={errors}
           teamItems={teamItems}
           isAr={isAr}
           files={files}
@@ -81,7 +82,7 @@ export function AddSeoTaskPage() {
         <div className="flex items-center gap-3 pt-6 mt-2 border-t border-gray-100 dark:border-gray-700/60">
           <Button
             variant="primary"
-            disabled={!isValid || isSaving}
+            disabled={isSaving}
             onClick={handleAdd}
           >
             {isSaving

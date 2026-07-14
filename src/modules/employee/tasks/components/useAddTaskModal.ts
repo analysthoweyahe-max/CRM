@@ -15,17 +15,28 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
   const { projects } = useEmpDashboard();
   const { mutate: create, isPending: creating } = useCreateSelfTask();
 
-  const [projectId,      setProjectId]      = useState('');
+  const [projectId,      setProjectIdState] = useState('');
   const [phaseId,        setPhaseId]        = useState('');
-  const [title,          setTitle]          = useState('');
+  const [title,          setTitleState]     = useState('');
   const [description,    setDescription]    = useState('');
   const [priority,       setPriority]       = useState<Priority>('normal');
   const [dueDate,        setDueDate]        = useState('');
   const [estimatedHours, setEstimatedHours] = useState('');
 
+  const [touched,         setTouched]         = useState<Record<string, boolean>>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  function markTouched(field: string) {
+    setTouched(prev => (prev[field] ? prev : { ...prev, [field]: true }));
+  }
+
+  function setProjectId(v: string) { setProjectIdState(v); markTouched('projectId'); }
+  function setTitle(v: string)     { setTitleState(v);     markTouched('title'); }
+
   function reset() {
-    setProjectId(''); setPhaseId(''); setTitle(''); setDescription('');
+    setProjectIdState(''); setPhaseId(''); setTitleState(''); setDescription('');
     setPriority('normal'); setDueDate(''); setEstimatedHours('');
+    setTouched({}); setSubmitAttempted(false);
   }
 
   function handleClose() { reset(); onClose(); }
@@ -55,9 +66,19 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
     { id: 'high',   label: isAr ? 'عالية'   : 'High'   },
   ];
 
-  const isValid = !!projectId && title.trim().length > 0;
+  const fieldErrors: Record<string, string> = {};
+  if (!projectId)         fieldErrors.projectId = isAr ? 'اختر المشروع' : 'Project is required';
+  if (!title.trim())      fieldErrors.title     = isAr ? 'العنوان مطلوب' : 'Title is required';
+
+  const isValid = Object.keys(fieldErrors).length === 0;
+
+  const errors: Record<string, string> = {};
+  for (const key of Object.keys(fieldErrors)) {
+    if (touched[key] || submitAttempted) errors[key] = fieldErrors[key];
+  }
 
   function handleSubmit() {
+    setSubmitAttempted(true);
     if (!isValid || creating) return;
 
     const payload: CreateSelfTaskPayload = {
@@ -89,7 +110,7 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
-    isValid, creating,
+    isValid, errors, creating,
     handleSubmit, handleClose,
   };
 }

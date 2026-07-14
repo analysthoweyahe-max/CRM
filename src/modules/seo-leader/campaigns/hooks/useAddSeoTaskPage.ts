@@ -48,6 +48,7 @@ export function useAddSeoTaskPage() {
     id,
     prefillUrl,
     () => navigate(detailsPath),
+    isAr,
   );
 
   return {

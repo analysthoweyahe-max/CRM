@@ -29,9 +29,9 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
     },
   });
 
-  const [projectId,      setProjectId]      = useState(options.initialProjectId ?? '');
-  const [title,          setTitle]          = useState('');
-  const [phase,          setPhase]          = useState('');
+  const [projectId,      setProjectIdState] = useState(options.initialProjectId ?? '');
+  const [title,          setTitleState]     = useState('');
+  const [phase,          setPhaseState]     = useState('');
   const [description,    setDescription]    = useState('');
   const [priority,       setPriority]       = useState<SeoTaskPriority>('normal');
   const [dueDate,        setDueDate]        = useState('');
@@ -39,15 +39,27 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
   const [files,          setFiles]          = useState<File[]>([]);
   const [fileError,      setFileError]      = useState<string | null>(null);
 
+  const [touched,         setTouched]         = useState<Record<string, boolean>>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  function markTouched(field: string) {
+    setTouched(prev => (prev[field] ? prev : { ...prev, [field]: true }));
+  }
+
+  function setProjectId(v: string) { setProjectIdState(v); markTouched('projectId'); }
+  function setTitle(v: string)     { setTitleState(v);     markTouched('title'); }
+  function setPhase(v: string)     { setPhaseState(v);     markTouched('phase'); }
+
   useEffect(() => {
-    if (options.initialProjectId) setProjectId(options.initialProjectId);
+    if (options.initialProjectId) setProjectIdState(options.initialProjectId);
   }, [options.initialProjectId]);
 
   function reset() {
-    setProjectId(options.lockProject ? (options.initialProjectId ?? '') : '');
-    setTitle(''); setPhase(''); setDescription('');
+    setProjectIdState(options.lockProject ? (options.initialProjectId ?? '') : '');
+    setTitleState(''); setPhaseState(''); setDescription('');
     setPriority('normal'); setDueDate(''); setEstimatedHours('');
     setFiles([]); setFileError(null);
+    setTouched({}); setSubmitAttempted(false);
   }
 
   function handleClose() { reset(); onClose(); }
@@ -63,9 +75,20 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
     { id: 'high',   label: isAr ? 'عالية'   : 'High'   },
   ];
 
-  const isValid = !!projectId && title.trim().length > 0 && phase.trim().length > 0;
+  const fieldErrors: Record<string, string> = {};
+  if (!projectId)      fieldErrors.projectId = isAr ? 'اختر المشروع' : 'Project is required';
+  if (!title.trim())   fieldErrors.title     = isAr ? 'العنوان مطلوب' : 'Title is required';
+  if (!phase.trim())   fieldErrors.phase     = isAr ? 'المرحلة مطلوبة' : 'Phase is required';
+
+  const isValid = Object.keys(fieldErrors).length === 0;
+
+  const errors: Record<string, string> = {};
+  for (const key of Object.keys(fieldErrors)) {
+    if (touched[key] || submitAttempted) errors[key] = fieldErrors[key];
+  }
 
   function handleSubmit() {
+    setSubmitAttempted(true);
     if (!isValid || creating) return;
 
     const payload: CreateSelfSeoTaskPayload = {
@@ -99,7 +122,7 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
     files, setFiles, fileError, setFileError,
-    isValid, creating,
+    isValid, errors, creating,
     handleSubmit, handleClose,
   };
 }

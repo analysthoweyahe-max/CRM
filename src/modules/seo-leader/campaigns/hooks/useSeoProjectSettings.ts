@@ -21,10 +21,10 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
     staleTime: 60_000,
   });
 
-  const [name, setName] = useState('');
+  const [name, setNameState] = useState('');
   const [startDate, setStartDate] = useState('');
   const [expectedEndDate, setExpectedEndDate] = useState('');
-  const [domain, setDomain] = useState('');
+  const [domain, setDomainState] = useState('');
   const [desc, setDesc] = useState('');
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
@@ -37,10 +37,10 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
 
   useEffect(() => {
     if (!settings) return;
-    setName(settings.name ?? '');
+    setNameState(settings.name ?? '');
     setStartDate(settings.startDate ?? '');
     setExpectedEndDate(settings.expectedEndDate ?? '');
-    setDomain(settings.targetDomain ?? '');
+    setDomainState(settings.targetDomain ?? '');
     setDesc(settings.description ?? '');
     setStatus(settings.status ?? '');
     setType(settings.campaignType ?? '');
@@ -128,13 +128,22 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
   const typeOptions:   SelectOption[] = settings?.campaignTypeOptions ?? [];
   const hasOptionalErrors = Object.keys(optionalFieldErrors).length > 0;
 
+  function clearFieldError(field: keyof ProjectOptionalFieldErrors) {
+    setOptionalFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
   return {
     isLoading,
     settings,
-    name, setName,
+    name, setName: (v: string) => { setNameState(v); clearFieldError('name'); },
     startDate, setStartDate,
     expectedEndDate, setExpectedEndDate,
-    domain, setDomain,
+    domain, setDomain: (v: string) => { setDomainState(v); clearFieldError('targetDomain'); },
     desc, setDesc,
     status, setStatus,
     type, setType,
