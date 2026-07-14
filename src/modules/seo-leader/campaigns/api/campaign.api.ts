@@ -11,6 +11,7 @@ import type { SeoCampaign }          from '../../dashboard/types/dashboard.types
 import type { CreateSeoTaskPayload } from '../components/AddSeoTaskModal.types';
 import type { SeoTaskDetail }        from '../components/SeoTaskModal.types';
 import { appendSeoTaskFiles, normalizeSeoAttachments, type SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
+import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 
 /** Unwraps a lookup payload regardless of nesting depth — confirmed the real
  *  backend wraps task-priorities as `{ data: { data: [...], total } }` (one
@@ -74,6 +75,11 @@ export interface SeoTask {
   completedAt?:    string | null;
   createdAt:       string;
   updatedAt:       string;
+  dueAt?:          string | null;
+  isOverdue?:      boolean;
+  isDelayed?:      boolean;
+  overdueLabel?:   string | null;
+  canExtend?:      boolean;
 }
 
 interface PhasedTasksResponse {
@@ -431,6 +437,12 @@ export const campaignApi = {
   updateTaskStatus(projectId: string | number, taskId: string | number, status: string) {
     return http.patch<ApiResponse<{ status: string }>>(
       `/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status }
+    );
+  },
+
+  extendTaskDeadline(projectId: string | number, taskId: string | number, payload: ExtendDeadlinePayload) {
+    return http.post<ApiResponse<SeoTaskDetail>>(
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/extend`, payload
     );
   },
 

@@ -134,9 +134,9 @@ export function getTasksQueryParams(
   return params;
 }
 
-/** Both PM and SEO tasks are addressed by integer id in routes and API paths. */
+/** Prefer the task UUID for route/API params when present, falling back to the numeric id. */
 export function getTaskRouteId(task: MyTask, _tasksRole: TasksApiRole): string | number {
-  return task.id;
+  return task.uuid ?? task.id;
 }
 
 interface RawTaskWire {
@@ -166,6 +166,11 @@ interface RawTaskWire {
   commentsCount?:    number;
   createdAt?:       string;
   updatedAt?:       string;
+  dueAt?:           string | null;
+  isOverdue?:       boolean;
+  isDelayed?:       boolean;
+  overdueLabel?:    string | null;
+  canExtend?:       boolean;
 }
 
 function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
@@ -204,6 +209,11 @@ function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
     commentsCount:    Number(raw.commentsCount ?? raw.comments_count ?? 0) || undefined,
     createdAt:        String(raw.createdAt ?? raw.created_at ?? ''),
     updatedAt:        String(raw.updatedAt ?? raw.updated_at ?? ''),
+    dueAt:            (raw.dueAt ?? raw.due_at ?? null) as string | null,
+    isOverdue:        Boolean(raw.isOverdue ?? raw.is_overdue),
+    isDelayed:        Boolean(raw.isDelayed ?? raw.is_delayed),
+    overdueLabel:     (raw.overdueLabel ?? raw.overdue_label ?? null) as string | null,
+    canExtend:        Boolean(raw.canExtend ?? raw.can_extend),
   };
 }
 
@@ -215,7 +225,10 @@ function readRecord(value: unknown): Record<string, unknown> | null {
 
 function normalizePhase(raw: RawTaskWire['phase']): MyTask['phase'] {
   if (!raw) return undefined;
-  if (typeof raw === 'string') return { id: 0, name: raw };
+  // SEO tasks carry a bare phase name with no id — use the name itself as
+  // the id so distinct phases don't all collapse into one "0" bucket when
+  // grouped into columns.
+  if (typeof raw === 'string') return { id: raw, name: raw };
   return { id: Number(raw.id), name: raw.name };
 }
 
@@ -260,6 +273,11 @@ function normalizeTask(raw: RawTaskWire | Record<string, unknown>): MyTask {
     commentsCount:    wire.commentsCount,
     createdAt:        wire.createdAt ?? '',
     updatedAt:        wire.updatedAt ?? '',
+    dueAt:            wire.dueAt ?? null,
+    isOverdue:        wire.isOverdue,
+    isDelayed:        wire.isDelayed,
+    overdueLabel:     wire.overdueLabel ?? null,
+    canExtend:        wire.canExtend,
   };
 }
 
@@ -318,6 +336,24 @@ export function normalizeGroupedTasks(payload: unknown): GroupedTasksData {
 
   const total = Number(data.total ?? countTasks(columns));
   return { columns, phases, total };
+}
+
+/** Backfill columns for every catalog status that has no current tasks, so
+ *  the board always shows the full admin-configured set instead of only
+ *  whichever statuses happen to have a task right now. Any status found on
+ *  a task but missing from the catalog (renamed/deactivated after the task
+ *  was created) is kept as a trailing extra column instead of being dropped. */
+export function fillCatalogColumns(
+  columns: MyTaskColumn[],
+  catalog: { key: string; label: string }[],
+): MyTaskColumn[] {
+  if (catalog.length === 0) return columns;
+  const byStatus = new Map(columns.map((c) => [c.status, c]));
+  const filled = catalog.map((c) =>
+    byStatus.get(c.key) ?? { status: c.key, statusLabel: c.label, tasks: [] },
+  );
+  const extras = columns.filter((c) => !catalog.some((cat) => cat.key === c.status));
+  return [...filled, ...extras];
 }
 
 function countTasks(columns: MyTaskColumn[]): number {

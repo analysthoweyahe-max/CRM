@@ -45,11 +45,16 @@ export function TaskDetailHeader({ task, isLoading, isAr, onBack, onEdit, canEdi
       </button>
 
       <div className="flex items-start justify-between gap-4">
-        <Badge
-          label={isAr ? status.ar : status.en}
-          variant={status.variant}
-          icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
-        />
+        <div className="flex items-center gap-1.5">
+          {(task.isOverdue || task.isDelayed) && (
+            <Badge label={task.overdueLabel || (isAr ? 'متأخرة' : 'Overdue')} variant="error" />
+          )}
+          <Badge
+            label={isAr ? status.ar : status.en}
+            variant={status.variant}
+            icon={<span className="w-1.5 h-1.5 rounded-full bg-current" />}
+          />
+        </div>
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
           {canEdit && (
             <button

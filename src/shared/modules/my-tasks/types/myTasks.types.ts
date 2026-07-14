@@ -20,7 +20,10 @@ export interface TaskProject {
 }
 
 export interface TaskPhase {
-  id:   number;
+  /** PM phases are real numeric ids; SEO has no phase-id catalog, so its
+   *  phase name doubles as the id — keep both to avoid distinct phases
+   *  colliding under the same key when grouped. */
+  id:   number | string;
   name: string;
 }
 
@@ -44,6 +47,11 @@ export interface MyTask {
   commentsCount?:    number;
   createdAt:        string;
   updatedAt:        string;
+  dueAt?:           string | null;
+  isOverdue?:       boolean;
+  isDelayed?:       boolean;
+  overdueLabel?:    string | null;
+  canExtend?:       boolean;
 }
 
 export interface MyTaskColumn {

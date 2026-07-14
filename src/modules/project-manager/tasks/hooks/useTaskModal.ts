@@ -7,6 +7,7 @@ import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import { useRemoveTaskLocally, useInvalidateProjectTasks } from '../store/taskStore';
 import { pmTaskApi } from '../api/task.api';
 import type { RawPmComment, RawPmTaskAttachment } from '../api/task.api';
+import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 import type { Task } from '../types/task.types';
 import type { TaskModalTab, TimeSession, TaskAttachment, TaskComment } from '../types/taskModal.types';
 
@@ -232,6 +233,27 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     }
   }
 
+  /* ── Extend deadline ── */
+  const [isExtendOpen, setIsExtendOpen] = useState(false);
+  const [extendingDeadline, setExtendingDeadline] = useState(false);
+  function openExtend()  { setIsExtendOpen(true);  }
+  function closeExtend() { setIsExtendOpen(false); }
+  async function extendDeadline(payload: ExtendDeadlinePayload) {
+    if (!task || !taskKey || extendingDeadline) return;
+    setExtendingDeadline(true);
+    try {
+      await pmTaskApi.extendDeadline(projectId, taskKey, payload);
+      invalidateProjectTasks();
+      invalidateDetail();
+      toast.success(isAr ? 'تم تمديد الموعد النهائي' : 'Deadline extended');
+      setIsExtendOpen(false);
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر تمديد الموعد' : 'Failed to extend deadline'));
+    } finally {
+      setExtendingDeadline(false);
+    }
+  }
+
   /* ── Delete modal — no confirmed delete endpoint yet, so this only hides
      the task from the current view (resets on refetch). ── */
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -258,6 +280,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     editEstMinutes, setEditEstMinutes,
     openEdit, closeEdit, saveEdit, savingEdit,
     changeStatus, changingStatus,
+    isExtendOpen, openExtend, closeExtend, extendDeadline, extendingDeadline,
     isDeleteOpen, openDelete, closeDelete, confirmDelete,
   };
 }

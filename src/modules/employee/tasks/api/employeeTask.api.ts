@@ -21,7 +21,7 @@ const PRIORITY_MAP: Record<string, EmpTaskPriority> = {
 
 function toEmployeeTask(task: MyTask): EmployeeTask {
   return {
-    id:        String(task.id),
+    id:        task.uuid ?? String(task.id),
     projectId: String(task.project?.id ?? ''),
     titleAr:   task.title,
     titleEn:   task.title,
@@ -32,6 +32,11 @@ function toEmployeeTask(task: MyTask): EmployeeTask {
     status:    STATUS_MAP[task.status] ?? 'pending',
     phaseId:   task.phase ? String(task.phase.id) : undefined,
     phaseName: task.phase?.name,
+    dueAt:        task.dueAt,
+    isOverdue:    task.isOverdue,
+    isDelayed:    task.isDelayed,
+    overdueLabel: task.overdueLabel,
+    canExtend:    task.canExtend,
   };
 }
 

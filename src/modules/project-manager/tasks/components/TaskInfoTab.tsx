@@ -1,5 +1,6 @@
-import { Pencil, Trash2 }   from 'lucide-react';
+import { Pencil, Trash2, CalendarClock }   from 'lucide-react';
 import { Button }            from '@/shared/components/ui/Button';
+import { Badge }             from '@/shared/components/ui/Badge';
 import { Combobox }          from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextView }      from '@/shared/components/form/RichTextView';
@@ -11,6 +12,7 @@ interface Props {
   task:            Task;
   onDeleteClick:   () => void;
   onEditClick:     () => void;
+  onExtendClick?:  () => void;
   onStatusChange:  (status: string) => void;
   changingStatus:  boolean;
   isAr:            boolean;
@@ -29,7 +31,7 @@ const PRIORITY_LABEL: Record<Task['priority'], { ar: string; en: string }> = {
   low:    { ar: 'منخفضة', en: 'Low'    },
 };
 
-export function TaskInfoTab({ task, onDeleteClick, onEditClick, onStatusChange, changingStatus, isAr }: Props) {
+export function TaskInfoTab({ task, onDeleteClick, onEditClick, onExtendClick, onStatusChange, changingStatus, isAr }: Props) {
   const { statuses } = usePmTaskLookups();
   const statusItems: ComboboxItem[] = statuses.map(s => ({ id: s.value, label: s.label }));
   const priorityLabel = PRIORITY_LABEL[task.priority];
@@ -37,9 +39,14 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, onStatusChange, 
   return (
     <div className="space-y-5">
       {/* Title */}
-      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-right">
-        {task.title}
-      </h2>
+      <div className="flex items-center justify-end gap-2 flex-wrap">
+        {(task.isOverdue || task.isDelayed) && (
+          <Badge label={task.overdueLabel || (isAr ? 'متأخرة' : 'Overdue')} variant="error" />
+        )}
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-right">
+          {task.title}
+        </h2>
+      </div>
 
       {/* Description */}
       <div className="space-y-1.5">
@@ -114,6 +121,11 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, onStatusChange, 
         <Button variant="danger" size="sm" startIcon={<Trash2 size={14} />} onClick={onDeleteClick}>
           {isAr ? 'حذف المهمة' : 'Delete Task'}
         </Button>
+        {task.canExtend && onExtendClick && (
+          <Button variant="secondary" size="sm" startIcon={<CalendarClock size={14} />} onClick={onExtendClick}>
+            {isAr ? 'تمديد الموعد' : 'Extend Deadline'}
+          </Button>
+        )}
         <Button variant="secondary" size="sm" startIcon={<Pencil size={14} />} onClick={onEditClick}>
           {isAr ? 'تعديل المهمة' : 'Edit Task'}
         </Button>

@@ -27,6 +27,11 @@ export function toTask(raw: RawPmTask, projectId: string): Task {
     estimatedMinutes: raw.estimatedMinutes != null ? Number(raw.estimatedMinutes) : undefined,
     status:          raw.status as TaskStatus,
     taskNumber:      `#${String(raw.taskNumber).padStart(3, '0')}`,
+    dueAt:           raw.dueAt ?? null,
+    isOverdue:       raw.isOverdue,
+    isDelayed:       raw.isDelayed,
+    overdueLabel:    raw.overdueLabel ?? null,
+    canExtend:       raw.canExtend,
   };
 }
 

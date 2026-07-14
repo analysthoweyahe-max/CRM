@@ -1,4 +1,5 @@
 import type { EmpTaskPriority, EmpTaskStatus } from './employeeTask.types';
+import type { MentionRef } from '@/shared/components/chat';
 
 export interface TaskDetail {
   id:             string;
@@ -12,6 +13,11 @@ export interface TaskDetail {
   priority:       EmpTaskPriority;
   status:         EmpTaskStatus;
   allocatedHours: number;
+  dueAt?:         string | null;
+  isOverdue?:     boolean;
+  isDelayed?:     boolean;
+  overdueLabel?:  string | null;
+  canExtend?:     boolean;
 }
 
 export interface UpdateTaskPayload {
@@ -31,6 +37,7 @@ export interface TaskComment {
   body:      string;
   createdAt: string;
   isMine:    boolean;
+  mentions?: MentionRef[];
 }
 
 export interface TaskSession {

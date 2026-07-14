@@ -6,10 +6,12 @@ import { TaskAttachmentsTab }    from './TaskAttachmentsTab';
 import { TaskCommentsTab }       from './TaskCommentsTab';
 import { Modal }                 from '@/shared/components/ui/Modal';
 import { Button }                from '@/shared/components/ui/Button';
+import { ExtendDeadlineModal }   from '@/shared/components/form/ExtendDeadlineModal';
 import { Combobox }              from '@/shared/components/form/Combobox';
 import { inputCls }              from '@/shared/components/form/FormField';
 import { usePmTaskLookups }      from '../../projects/hooks/usePmTaskLookups';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { taskResourceKey }       from '@/shared/utils/resourceKey.utils';
 import type { Task }             from '../types/task.types';
 import type { TaskModalTab }     from '../types/taskModal.types';
 
@@ -96,6 +98,7 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
               task={task}
               onDeleteClick={modal.openDelete}
               onEditClick={modal.openEdit}
+              onExtendClick={modal.openExtend}
               onStatusChange={modal.changeStatus}
               changingStatus={modal.changingStatus}
               isAr={isAr}
@@ -111,6 +114,7 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
               onAddTimeLog={modal.addTimeLog}
               loggingTime={modal.loggingTime}
               isAr={isAr}
+              timer={{ portal: 'pm', projectId, taskId: taskResourceKey(task), title: task.title }}
             />
           )}
           {modal.activeTab === 'attachments' && (
@@ -223,6 +227,15 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
           </div>
         </div>
       </Modal>
+
+      {/* ── Extend Deadline Modal ── */}
+      <ExtendDeadlineModal
+        open={modal.isExtendOpen}
+        onClose={modal.closeExtend}
+        onSubmit={modal.extendDeadline}
+        isSaving={modal.extendingDeadline}
+        isAr={isAr}
+      />
 
       {/* ── Delete Confirmation Modal ── */}
       <Modal

@@ -1,4 +1,5 @@
 import { http } from '@/shared/services/http.service';
+import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 
 /** POST /v1/pm/projects/{id}/tasks — accepts camelCase (preferred) or snake_case. */
 export interface PmCreateTaskPayload {
@@ -126,6 +127,11 @@ export interface RawPmTask {
   attachmentsCount: number;
   createdAt:        string;
   updatedAt:        string;
+  dueAt?:           string | null;
+  isOverdue?:       boolean;
+  isDelayed?:       boolean;
+  overdueLabel?:    string | null;
+  canExtend?:       boolean;
 }
 
 export interface RawPmTaskColumn {
@@ -241,6 +247,10 @@ export const pmTaskApi = {
 
   updateStatus(projectId: number | string, taskId: string, status: string) {
     return http.patch<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/status`, { status });
+  },
+
+  extendDeadline(projectId: number | string, taskId: string, payload: ExtendDeadlinePayload) {
+    return http.post<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/extend`, payload);
   },
 
   addTimeLog(projectId: number | string, taskId: string, payload: PmTimeLogPayload) {

@@ -1,11 +1,16 @@
 import { useState }              from 'react';
 import { X }                    from 'lucide-react';
+import { useNavigate }           from 'react-router-dom';
 import { useSeoTaskDrawer }      from './useSeoTaskDrawer';
 import { SeoTaskInfoTab }        from './SeoTaskInfoTab';
 import { SeoAttachmentsTab }     from './SeoAttachmentsTab';
 import { SeoEditTaskModal }      from './SeoEditTaskModal';
+import { ExtendDeadlineModal }   from '@/shared/components/form/ExtendDeadlineModal';
 import { TaskTimeTab }           from '@/modules/project-manager/tasks/components/TaskTimeTab';
 import { TaskCommentsTab }       from '@/modules/project-manager/tasks/components/TaskCommentsTab';
+import { useCreateSeoConversation } from '@/modules/seo-member/messages/hooks/useSeoMessages';
+import { ROUTES }                from '@/app/router/routes';
+import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import type { SeoDrawerTab }     from './SeoTaskModal.types';
 
 /* ── Tabs config ─────────────────────────────────────────────────────── */
@@ -41,10 +46,26 @@ interface Props {
 /* ── Component ───────────────────────────────────────────────────────── */
 export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
   const d = useSeoTaskDrawer(projectId, taskId, isAr);
+  const navigate = useNavigate();
+  const { mutateAsync: createConversation } = useCreateSeoConversation(isAr);
 
   const [editOpen, setEditOpen] = useState(false);
 
   if (!taskId) return null;
+
+  function getMentionInfo(ref: MentionRef): ResolvedMention | undefined {
+    const m = d.mentionables.find(x => x.id === ref.id && (x.type ?? 'employee') === ref.type);
+    return m ? { id: m.id, type: m.type ?? 'employee', name: m.name } : undefined;
+  }
+
+  async function handleMentionStartChat(ref: MentionRef) {
+    try {
+      const conv = await createConversation({ recipient_type: ref.type, recipient_id: ref.id });
+      navigate(`${ROUTES.SEO_LEADER.MESSAGES}?conversation=${conv.id}`);
+    } catch {
+      /* toast handled in hook */
+    }
+  }
 
   return (
     <>
@@ -157,6 +178,7 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                 isSaving={false}
                 onEdit={() => setEditOpen(true)}
                 onDelete={() => d.setDeleteOpen(true)}
+                onExtend={() => d.setExtendOpen(true)}
                 assigneeItems={d.assigneeItems}
                 assigneeId={d.assigneeId}               setAssigneeId={d.setAssigneeId}
               />
@@ -173,6 +195,7 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                 onAddTimeLog={d.addTimeLog}
                 loggingTime={d.loggingTime}
                 isAr={isAr}
+                timer={{ portal: 'seo', projectId, taskId: taskId!, title: d.task.title }}
               />
             )}
 
@@ -196,6 +219,8 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                 setText={d.setCommentText}
                 onSubmit={d.addComment}
                 isAr={isAr}
+                getMentionInfo={getMentionInfo}
+                onMentionStartChat={handleMentionStartChat}
               />
             )}
 
@@ -212,6 +237,15 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
           onClose={() => setEditOpen(false)}
         />
       )}
+
+      {/* Extend Deadline Modal */}
+      <ExtendDeadlineModal
+        open={d.extendOpen}
+        onClose={() => d.setExtendOpen(false)}
+        onSubmit={d.extendDeadline}
+        isSaving={d.extendingDeadline}
+        isAr={isAr}
+      />
 
       {/* Delete confirm */}
       {d.deleteOpen && (

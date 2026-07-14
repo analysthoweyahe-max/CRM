@@ -2,6 +2,7 @@ import { http } from '@/shared/services/http.service';
 import { getAvatarColor } from '@/shared/utils/avatar.utils';
 import type { TaskDetail, TaskComment, TaskSession, UpdateTaskPayload } from '../types/taskDetail.types';
 import type { EmpTaskStatus, EmpTaskPriority } from '../types/employeeTask.types';
+import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 
 /* ── Raw backend shape — GET /v1/pm/projects/{project_id}/tasks/{task_id} ──
    Same task resource confirmed for GET /v1/pm/projects/{id}/tasks. */
@@ -16,6 +17,11 @@ interface RawPmTaskDetail {
   phase:          { id: number; name: string } | null;
   project?:       { id: number; name: string } | null;
   createdAt:      string | null;
+  dueAt?:         string | null;
+  isOverdue?:     boolean;
+  isDelayed?:     boolean;
+  overdueLabel?:  string | null;
+  canExtend?:     boolean;
 }
 
 /** GET .../tasks/{task_id} wraps the task under a `task` key (alongside sibling `tabs` data). */
@@ -69,6 +75,11 @@ function toTaskDetail(raw: RawPmTaskDetail, projectId: string): TaskDetail {
     priority:       PRIORITY_MAP[raw.priority] ?? 'medium',
     status:         STATUS_MAP[raw.status]     ?? 'pending',
     allocatedHours: Number(raw.estimatedHours ?? 0),
+    dueAt:          raw.dueAt ?? null,
+    isOverdue:      raw.isOverdue,
+    isDelayed:      raw.isDelayed,
+    overdueLabel:   raw.overdueLabel ?? null,
+    canExtend:      raw.canExtend,
   };
 }
 
@@ -180,6 +191,11 @@ export const taskDetailApi = {
       due_date:        payload.deadline,
       estimated_hours: payload.allocatedHours,
     });
+    return { data: toTaskDetail(res.data.data, projectId) };
+  },
+
+  async extendDeadline(projectId: string, taskId: string, payload: ExtendDeadlinePayload): Promise<{ data: TaskDetail }> {
+    const res = await http.post<RawTaskMutationResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/extend`, payload);
     return { data: toTaskDetail(res.data.data, projectId) };
   },
 

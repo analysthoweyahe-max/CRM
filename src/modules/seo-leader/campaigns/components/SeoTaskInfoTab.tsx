@@ -1,9 +1,10 @@
-import { Pencil, Trash2, Plus, X as XIcon } from 'lucide-react';
+import { Pencil, Trash2, Plus, X as XIcon, CalendarClock } from 'lucide-react';
 import { Button }        from '@/shared/components/ui/Button';
+import { Badge }         from '@/shared/components/ui/Badge';
 import { Combobox }      from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
-import { useSeoTaskLookups } from '../hooks/useSeoTaskLookups';
+import { useSeoTaskLookups, SEO_TASK_PHASE_ITEMS } from '../hooks/useSeoTaskLookups';
 import type { SeoTaskFull } from './SeoTaskModal.types';
 
 /* ── Style tokens ─────────────────────────────────────────────────────── */
@@ -19,28 +20,7 @@ const LABEL = 'text-xs text-gray-400 dark:text-gray-500 mb-1 block text-end';
 const ROW   = 'flex items-center justify-between gap-4';
 
 /* ── Lookup data ──────────────────────────────────────────────────────── */
-const PHASE_ITEMS: ComboboxItem[] = [
-  { id: 'keyword_research',     label: 'بحث الكلمات المفتاحية' },
-  { id: 'on_page',              label: 'داخل الصفحة'            },
-  { id: 'technical',            label: 'تقنية'                  },
-  { id: 'content',              label: 'محتوى'                  },
-  { id: 'off_page',             label: 'خارج الصفحة'            },
-  { id: 'link_building',        label: 'بناء روابط'             },
-  { id: 'reporting',            label: 'تقارير'                 },
-  { id: 'content_optimization', label: 'تحسين المحتوى'          },
-  { id: 'technical_seo',        label: 'تحسين تقني'             },
-  { id: 'competitor_analysis',  label: 'تحليل المنافسين'         },
-  { id: 'on_page_seo',          label: 'تحسين على الصفحة'        },
-  { id: 'off_page_seo',         label: 'تحسين خارج الصفحة'       },
-];
-
-const STATUS_ITEMS: ComboboxItem[] = [
-  { id: 'pending',     label: 'قيد الانتظار' },
-  { id: 'in_progress', label: 'قيد التنفيذ'  },
-  { id: 'in_review',   label: 'مراجعة'       },
-  { id: 'completed',   label: 'مكتمل'        },
-  { id: 'blocked',     label: 'محظورة'       },
-];
+const PHASE_ITEMS = SEO_TASK_PHASE_ITEMS;
 
 const INTENT_ITEMS: ComboboxItem[] = [
   { id: 'informational',  label: 'معلوماتية'   },
@@ -172,6 +152,7 @@ export interface SeoTaskInfoTabProps {
   isSaving:          boolean;
   onEdit:            () => void;
   onDelete:          () => void;
+  onExtend?:         () => void;
   assigneeItems:     ComboboxItem[];
   assigneeId:        string;  setAssigneeId:    (v: string) => void;
 }
@@ -195,11 +176,12 @@ export function SeoTaskInfoTab({
   siteLinks, setSiteLinks,
   referenceLinks, setReferenceLinks,
   notes, setNotes,
-  isSaving, onEdit, onDelete,
+  isSaving, onEdit, onDelete, onExtend,
   assigneeItems, assigneeId, setAssigneeId,
 }: SeoTaskInfoTabProps) {
   const kd = Number(keywordDifficulty) || 0;
-  const { priorityItems } = useSeoTaskLookups(isAr);
+  const { priorityItems, statusOptions } = useSeoTaskLookups(isAr);
+  const statusItems: ComboboxItem[] = statusOptions.map(s => ({ id: s.key, label: s.label }));
 
   function addSiteLink(v: string)       { setSiteLinks([...siteLinks, v]);         }
   function removeSiteLink(i: number)    { setSiteLinks(siteLinks.filter((_,x)=>x!==i)); }
@@ -210,9 +192,14 @@ export function SeoTaskInfoTab({
     <div className="space-y-5 pb-4">
 
       {/* ── Title (read-only headline) ── */}
-      <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 text-end">
-        {task.title}
-      </h2>
+      <div className="flex items-center justify-end gap-2 flex-wrap">
+        {(task.isOverdue || task.isDelayed) && (
+          <Badge label={task.overdueLabel || (isAr ? 'متأخرة' : 'Overdue')} variant="error" />
+        )}
+        <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 text-end">
+          {task.title}
+        </h2>
+      </div>
 
       {/* ── Description ── */}
       <div className="space-y-1">
@@ -298,7 +285,7 @@ export function SeoTaskInfoTab({
         <div>
           <p className={LABEL}>{isAr ? 'الحالة' : 'Status'}</p>
           <Combobox
-            items={STATUS_ITEMS}
+            items={statusItems}
             value={status}
             onChange={setStatus}
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
@@ -453,6 +440,16 @@ export function SeoTaskInfoTab({
         >
           {isAr ? 'حذف المهمة' : 'Delete Task'}
         </Button>
+        {task.canExtend && onExtend && (
+          <Button
+            variant="secondary"
+            size="sm"
+            startIcon={<CalendarClock size={14} />}
+            onClick={onExtend}
+          >
+            {isAr ? 'تمديد الموعد' : 'Extend Deadline'}
+          </Button>
+        )}
         <Button
           variant="primary"
           size="sm"

@@ -7,6 +7,16 @@ import type { SeoComment }                       from '../api/campaign.api'; // 
 import type { SeoDrawerTab }                     from './SeoTaskModal.types';
 import type { ComboboxItem }                     from '@/shared/components/form/Combobox';
 import type { TaskComment, TimeSession }         from '@/modules/project-manager/tasks/types/taskModal.types';
+import type { ExtendDeadlinePayload }            from '@/shared/components/form/ExtendDeadlineModal';
+import type { MentionRef }                       from '@/shared/components/chat';
+
+function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
+  const refs = (raw ?? [])
+    .filter((m): m is { type: unknown; id: unknown } => !!m && typeof m === 'object')
+    .filter(m => typeof m.type === 'string' && (typeof m.id === 'string' || typeof m.id === 'number'))
+    .map(m => ({ type: m.type as string, id: String(m.id) }));
+  return refs.length ? refs : undefined;
+}
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 const AVATAR_COLORS = ['bg-violet-500','bg-sky-500','bg-amber-500','bg-rose-500','bg-teal-500','bg-indigo-500'];
@@ -44,6 +54,7 @@ function toTaskComment(c: SeoComment): TaskComment {
     authorColor:   colorFor(name),
     text:          c.body,
     dateLabel:     fmtDateLabel(c.sentAt),
+    mentions:      toMentionRefs(c.mentions),
   };
 }
 
@@ -58,6 +69,7 @@ export function useSeoTaskDrawer(
   /* ── Tab ───────────────────────────────────────────────────────────── */
   const [tab,        setTab]        = useState<SeoDrawerTab>('info');
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [extendOpen, setExtendOpen] = useState(false);
 
   /* ── Form state ─────────────────────────────────────────────────────── */
   const [description,       setDescription]       = useState('');
@@ -96,6 +108,15 @@ export function useSeoTaskDrawer(
   });
 
   const comments: TaskComment[] = extractComments(rawComments).map(toTaskComment);
+
+  /* ── Mentionables (for resolving @mention names/avatars in comments) ─── */
+  const { data: mentionablesRaw } = useQuery({
+    queryKey: ['seo-mentionables', projectId],
+    queryFn:  () => campaignApi.getMentionables(projectId).then(r => r.data.data.data ?? []),
+    enabled:  !!projectId,
+    staleTime: 60_000,
+  });
+  const mentionables = mentionablesRaw ?? [];
 
   /* ── Populate form ──────────────────────────────────────────────────── */
   useEffect(() => {
@@ -163,6 +184,31 @@ export function useSeoTaskDrawer(
       queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
     },
   });
+
+  /* ── Update status ─────────────────────────────────────────────────────
+     Fires immediately on select, independent of the bundled saveMutation
+     below (which the drawer's "Update Task" button no longer even goes
+     through — it opens SeoEditTaskModal instead). Uses the general
+     task-update endpoint with `status` in the body rather than the
+     dedicated PATCH .../status sub-route, matching the Kanban drag
+     handler: that route is manager-guarded to employee tokens only per
+     the backend's own Postman collection. */
+  const statusMutation = useMutation({
+    mutationFn: (newStatus: string) => campaignApi.updateTask(projectId, taskId!, { status: newStatus }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+      toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
+    },
+    onError: (err) => {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));
+    },
+  });
+
+  function changeStatus(newStatus: string) {
+    setStatus(newStatus);
+    statusMutation.mutate(newStatus);
+  }
 
   /* ── Update assignees ───────────────────────────────────────────────── */
   const assigneeMutation = useMutation({
@@ -247,6 +293,21 @@ export function useSeoTaskDrawer(
     },
   });
 
+  /* ── Extend deadline ────────────────────────────────────────────────── */
+  const extendMutation = useMutation({
+    mutationFn: (payload: ExtendDeadlinePayload) =>
+      campaignApi.extendTaskDeadline(projectId, taskId!, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+      toast.success(isAr ? 'تم تمديد الموعد النهائي' : 'Deadline extended');
+      setExtendOpen(false);
+    },
+    onError: (err) => {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر تمديد الموعد' : 'Failed to extend deadline'));
+    },
+  });
+
   /* ── Combined save ──────────────────────────────────────────────────── */
   function handleSave() {
     saveMutation.mutate();
@@ -266,10 +327,13 @@ export function useSeoTaskDrawer(
     task, isLoading,
     tab, setTab,
     deleteOpen, setDeleteOpen,
+    extendOpen, setExtendOpen,
+    extendDeadline: (payload: ExtendDeadlinePayload) => extendMutation.mutate(payload),
+    extendingDeadline: extendMutation.isPending,
     description,       setDescription,
     taskType,          setTaskType,
     priority,          setPriority,
-    status,            setStatus,
+    status,            setStatus: changeStatus,
     startDate,         setStartDate,
     dueDate,           setDueDate,
     assigneeId,        setAssigneeId,
@@ -293,6 +357,7 @@ export function useSeoTaskDrawer(
     isUploading: uploadMutation.isPending,
     deletingId: deleteMutation.isPending ? (deleteMutation.variables ?? null) : null,
     comments,
+    mentionables,
     commentText,
     setCommentText,
     addComment: handleAddComment,

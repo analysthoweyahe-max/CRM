@@ -20,4 +20,9 @@ export interface Task {
   estimatedMinutes?: number;
   status:           TaskStatus;
   taskNumber:       string;
+  dueAt?:           string | null;
+  isOverdue?:       boolean;
+  isDelayed?:       boolean;
+  overdueLabel?:    string | null;
+  canExtend?:       boolean;
 }

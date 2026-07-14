@@ -1,4 +1,7 @@
-export type SeoTaskStatus   = 'pending' | 'inProgress' | 'inReview' | 'completed' | 'blocked';
+/** The admin-configured `seo_task_statuses` catalog key — dynamic, not a
+ *  fixed set. Fetch labels/colors from `useSeoTaskLookups` (GET
+ *  /v1/seo/projects/lookups/task-statuses), never hardcode the option list. */
+export type SeoTaskStatus   = string;
 export type SeoTaskPriority = 'high' | 'normal' | 'low';
 
 export interface SeoTaskProjectRef {
@@ -21,6 +24,11 @@ export interface SeoTask {
   dueDate:       string | null;
   description:   string | null;
   project:       SeoTaskProjectRef | null;
+  dueAt?:        string | null;
+  isOverdue?:    boolean;
+  isDelayed?:    boolean;
+  overdueLabel?: string | null;
+  canExtend?:    boolean;
 }
 
 export interface CreateSelfSeoTaskPayload {

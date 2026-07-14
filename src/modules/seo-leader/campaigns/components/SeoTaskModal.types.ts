@@ -37,6 +37,11 @@ export interface SeoTaskFull {
   keywordDifficulty?:  number | null;
   metaTitle?:          string | null;
   metaDescription?:    string | null;
+  dueAt?:              string | null;
+  isOverdue?:          boolean;
+  isDelayed?:          boolean;
+  overdueLabel?:       string | null;
+  canExtend?:          boolean;
 }
 
 export interface SeoAssigneeDetail {
