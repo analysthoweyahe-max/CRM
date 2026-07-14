@@ -5,6 +5,9 @@ export interface SeoParticipant {
   id:             string;
   name:           string;
   type:           SeoParticipantType;
+  role?:          string | null;
+  roleLabel?:     string | null;
+  isManager?:     boolean;
   avatarUrl?:     string | null;
   avatarInitial?: string;
 }
@@ -21,6 +24,8 @@ export interface SeoConversation {
   participant?:      SeoParticipant | null;
   /** Members for group chats */
   participants?:     SeoParticipant[] | null;
+  /** Only group managers may add/remove members or assign new managers. */
+  canManageMembers?: boolean;
 }
 
 export interface SeoConversationListResponse {
@@ -85,6 +90,7 @@ export interface SeoMessage {
   replyTo?:    SeoMessageReplyPreview | null;
   reply_to?:   SeoMessageReplyPreview | null;
   reactions?:  SeoMessageReaction[];
+  mentions?:   SeoMentionRef[];
 }
 
 export interface SeoMentionRef {

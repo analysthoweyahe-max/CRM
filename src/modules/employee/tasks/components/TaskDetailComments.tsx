@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react';
 import { Bold, Italic, AtSign, Paperclip, Send } from 'lucide-react';
 import { useCreateComment } from '../hooks/useTaskDetail';
+import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
+import { MessageBodyText } from '@/shared/components/chat';
+import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import type { TaskComment } from '../types/taskDetail.types';
 
 interface Props {
@@ -13,6 +16,9 @@ interface Props {
   // Alternative persistence path for callers with their own comment API
   // (e.g. SEO task detail) — takes priority over projectId/taskId when set.
   onSend?:    (body: string) => Promise<unknown>;
+  // Resolves @mention refs found in comment.mentions to display info for the hover/click card.
+  getMentionInfo?:      (ref: MentionRef) => ResolvedMention | undefined;
+  onMentionStartChat?:  (ref: MentionRef) => void;
 }
 
 function Skeleton() {
@@ -34,14 +40,17 @@ function Skeleton() {
   );
 }
 
-export function TaskDetailComments({ comments: serverComments, isLoading, isAr, projectId, taskId, onSend }: Props) {
+export function TaskDetailComments({
+  comments: serverComments, isLoading, isAr, projectId, taskId, onSend,
+  getMentionInfo, onMentionStartChat,
+}: Props) {
   const canPersist = !!onSend || !!(projectId && taskId);
   const createCommentMutation = useCreateComment(projectId ?? '', taskId ?? '');
 
   const [localComments, setLocalComments] = useState<TaskComment[]>(serverComments);
   const comments = canPersist ? serverComments : localComments;
   const [text, setText]         = useState('');
-  const textareaRef             = useRef<HTMLTextAreaElement>(null);
+  const textareaRef             = useAutoResizeTextarea(text);
   const fileInputRef            = useRef<HTMLInputElement>(null);
   const selRef                  = useRef({ start: 0, end: 0 });
 
@@ -136,7 +145,14 @@ export function TaskDetailComments({ comments: serverComments, isLoading, isAr, 
                   {isAr ? c.authorAr : c.authorEn}
                 </span>
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{c.body}</p>
+              <MessageBodyText
+                text={c.body}
+                className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap wrap-break-word"
+                mentions={c.mentions}
+                getMentionInfo={getMentionInfo}
+                onMentionStartChat={onMentionStartChat}
+                isAr={isAr}
+              />
               <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
                 <button className="hover:text-gray-600 transition-colors">{isAr ? 'رد' : 'Reply'}</button>
                 {c.isMine && (
@@ -204,9 +220,9 @@ export function TaskDetailComments({ comments: serverComments, isLoading, isAr, 
                 sendComment();
               }
             }}
-            rows={2}
+            rows={1}
             placeholder={isAr ? 'أضف تعليقاً...' : 'Add a comment...'}
-            className="flex-1 resize-none outline-none text-sm text-gray-700 dark:text-gray-300 placeholder:text-gray-400 bg-transparent leading-relaxed"
+            className="flex-1 resize-none outline-none text-sm text-gray-700 dark:text-gray-300 placeholder:text-gray-400 bg-transparent leading-relaxed max-h-28 overflow-y-auto"
           />
           <button
             onClick={sendComment}

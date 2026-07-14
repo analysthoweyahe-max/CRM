@@ -14,6 +14,7 @@ import {
 import { useLang } from '@/app/providers/LanguageProvider';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { ChatAttachments, MessageBodyText } from '@/shared/components/chat';
+import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import { setOpenConversation } from '@/shared/realtime-messages';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
@@ -67,9 +68,10 @@ interface ChatProps {
   onConversationUpdate: (conv: SeoConversation) => void;
   onLeftGroup: () => void;
   onOpenSidebar?: () => void;
+  onMentionStartChat: (ref: MentionRef) => void;
 }
 
-function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftGroup, onOpenSidebar }: ChatProps) {
+function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftGroup, onOpenSidebar, onMentionStartChat }: ChatProps) {
   const { user }  = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
@@ -94,6 +96,18 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
   const { mutate: reactToMessage, isPending: reacting } = useReactSeoMessage(conversation.id);
   const { mutate: markRead } = useMarkSeoRead();
   const { data: mentionables = [] } = useSeoMentionables(showMentions);
+  /** Unfiltered, always-on fetch used to resolve names/avatars of @mentions already in message history. */
+  const { data: allMentionables = [] } = useSeoMentionables(true);
+
+  function getMentionInfo(ref: MentionRef): ResolvedMention | undefined {
+    const m = allMentionables.find(x => x.id === ref.id && x.type === ref.type);
+    if (!m) return undefined;
+    return {
+      id: m.id, type: m.type, name: m.name,
+      avatarUrl: m.avatarUrl, avatarInitial: m.avatarInitial,
+      roleLabel: m.role,
+    };
+  }
 
   useEffect(() => {
     setOpenConversation(conversation.id, 'company');
@@ -290,6 +304,13 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
                         linkClassName={isOwn
                           ? 'underline break-all text-gray-900 hover:opacity-80'
                           : 'underline break-all text-[#709028] dark:text-[#A0CD39] hover:opacity-80'}
+                        mentions={msg.mentions}
+                        getMentionInfo={getMentionInfo}
+                        onMentionStartChat={onMentionStartChat}
+                        isAr={isAr}
+                        mentionClassName={isOwn
+                          ? 'font-semibold text-gray-900 underline decoration-dotted hover:opacity-80'
+                          : 'font-semibold text-[#709028] dark:text-[#A0CD39] underline decoration-dotted hover:opacity-80'}
                       />
                     )}
 
@@ -538,12 +559,12 @@ export function SeoMemberMessagesPage() {
     if (fresh) setActiveConv(fresh);
   }, [conversations, activeConv?.id]);
 
-  async function handleStartChat(person: SeoMentionable) {
+  async function startChatWith(recipientType: string, recipientId: string) {
     if (creatingChat) return;
     try {
       const conv = await createConversation({
-        recipient_type: person.type,
-        recipient_id: person.id,
+        recipient_type: recipientType,
+        recipient_id: recipientId,
       });
       setActiveConv(conv);
       setShowNewChat(false);
@@ -551,6 +572,14 @@ export function SeoMemberMessagesPage() {
     } catch {
       /* toast in hook */
     }
+  }
+
+  function handleStartChat(person: SeoMentionable) {
+    return startChatWith(person.type, person.id);
+  }
+
+  function handleMentionStartChat(ref: MentionRef) {
+    return startChatWith(ref.type, ref.id);
   }
 
   return (
@@ -567,6 +596,7 @@ export function SeoMemberMessagesPage() {
             onConversationUpdate={setActiveConv}
             onLeftGroup={() => setActiveConv(null)}
             onOpenSidebar={() => setSidebarOpen(true)}
+            onMentionStartChat={handleMentionStartChat}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-400 select-none">

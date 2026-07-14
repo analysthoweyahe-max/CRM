@@ -189,6 +189,7 @@ export function useProjectMessages(projectId: string) {
     isSending:       sendMutation.isPending || fileMutation.isPending,
     apiError,
     showMentions,
+    mentionables,
     filteredMentions, insertMention,
     openMention,
     openFilePicker,  handleFileChange, sendFile,

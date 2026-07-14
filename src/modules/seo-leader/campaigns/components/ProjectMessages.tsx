@@ -1,10 +1,23 @@
 import { Search, Send, AtSign, Paperclip } from 'lucide-react';
 import { useState, useEffect }             from 'react';
+import { useNavigate }                     from 'react-router-dom';
 import { useProjectMessages }              from './useProjectMessages';
 import { env }                             from '@/app/config/env';
 import { TOKEN_KEY }                       from '@/app/config/constants';
 import { useAutoResizeTextarea }           from '@/shared/hooks/useAutoResizeTextarea';
 import { getPastedImageFile }              from '@/shared/utils/clipboardImage.utils';
+import { MessageBodyText }                 from '@/shared/components/chat';
+import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
+import { useCreateSeoConversation }        from '@/modules/seo-member/messages/hooks/useSeoMessages';
+import { ROUTES }                          from '@/app/router/routes';
+
+function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
+  const refs = (raw ?? [])
+    .filter((m): m is { type: unknown; id: unknown } => !!m && typeof m === 'object')
+    .filter(m => typeof m.type === 'string' && (typeof m.id === 'string' || typeof m.id === 'number'))
+    .map(m => ({ type: m.type as string, id: String(m.id) }));
+  return refs.length ? refs : undefined;
+}
 
 /* ── Build full URL (backend may return localhost URLs) ───────────────── */
 const API_ORIGIN = (() => {
@@ -74,12 +87,28 @@ export function ProjectMessages({ projectId, isAr }: Props) {
     search, setSearch,
     text, handleTextChange, handleKeyDown, handleSend, isSending,
     apiError,
-    showMentions, filteredMentions, insertMention, openMention,
+    showMentions, mentionables, filteredMentions, insertMention, openMention,
     openFilePicker, handleFileChange, sendFile, fileRef,
     bottomRef,
   } = useProjectMessages(projectId);
 
   const textareaRef = useAutoResizeTextarea(text);
+  const navigate = useNavigate();
+  const { mutateAsync: createConversation } = useCreateSeoConversation(isAr);
+
+  function getMentionInfo(ref: MentionRef): ResolvedMention | undefined {
+    const m = mentionables.find(x => x.id === ref.id && (x.type ?? 'employee') === ref.type);
+    return m ? { id: m.id, type: m.type ?? 'employee', name: m.name } : undefined;
+  }
+
+  async function handleMentionStartChat(ref: MentionRef) {
+    try {
+      const conv = await createConversation({ recipient_type: ref.type, recipient_id: ref.id });
+      navigate(`${ROUTES.SEO_LEADER.MESSAGES}?conversation=${conv.id}`);
+    } catch {
+      /* toast handled in hook */
+    }
+  }
 
   function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
     const file = getPastedImageFile(e);
@@ -152,7 +181,20 @@ export function ProjectMessages({ projectId, isAr }: Props) {
                     onClick={() => window.open(imgUrl, '_blank', 'noopener,noreferrer')}
                   />
                 ) : (
-                  <span className="wrap-break-word">{msg.body ?? ''}</span>
+                  <MessageBodyText
+                    text={msg.body ?? ''}
+                    className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word"
+                    mentions={toMentionRefs(msg.mentions)}
+                    getMentionInfo={getMentionInfo}
+                    onMentionStartChat={handleMentionStartChat}
+                    isAr={isAr}
+                    mentionClassName={isMine
+                      ? 'font-semibold text-white underline decoration-dotted hover:opacity-80'
+                      : 'font-semibold text-[#709028] dark:text-[#A0CD39] underline decoration-dotted hover:opacity-80'}
+                    linkClassName={isMine
+                      ? 'underline break-all text-white hover:opacity-80'
+                      : 'underline break-all text-[#709028] dark:text-[#A0CD39] hover:opacity-80'}
+                  />
                 )}
               </div>
             );

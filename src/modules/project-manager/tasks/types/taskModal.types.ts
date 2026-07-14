@@ -1,3 +1,5 @@
+import type { MentionRef } from '@/shared/components/chat';
+
 export type TaskModalTab = 'info' | 'time' | 'attachments' | 'comments';
 
 export interface TimeSession {
@@ -26,4 +28,5 @@ export interface TaskComment {
   authorColor:   string;
   text:          string;
   dateLabel:     string;
+  mentions?:     MentionRef[];
 }

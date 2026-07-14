@@ -5,6 +5,7 @@ import { Avatar }   from '@/shared/components/ui/Avatar';
 import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
 import { getPastedImageFile }    from '@/shared/utils/clipboardImage.utils';
 import { useProjectMessages } from '../hooks/useProjectMessages';
+import { MessageBodyText } from '@/shared/components/chat';
 import type { ChatMessage } from '../types/projectMessage.types';
 
 function MessageContent({ msg }: { msg: ChatMessage }) {
@@ -34,7 +35,15 @@ function MessageContent({ msg }: { msg: ChatMessage }) {
           </a>
         )
       ))}
-      {msg.text && <span>{msg.text}</span>}
+      {msg.text && (
+        <MessageBodyText
+          text={msg.text}
+          className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word"
+          linkClassName={msg.isOwn
+            ? 'underline break-all text-white hover:opacity-80'
+            : 'underline break-all text-[#709028] dark:text-[#A0CD39] hover:opacity-80'}
+        />
+      )}
     </>
   );
 }

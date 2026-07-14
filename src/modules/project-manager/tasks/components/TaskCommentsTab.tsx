@@ -1,6 +1,9 @@
-import { useRef }              from 'react';
 import { Bold, Italic, AtSign, Link, Reply } from 'lucide-react';
 import { Avatar }              from '@/shared/components/ui/Avatar';
+import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
+import { MentionPopover }      from '@/shared/components/chat';
+import { ensureHttpUrl }       from '@/shared/utils/format.utils';
+import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import type { TaskComment }    from '../types/taskModal.types';
 
 interface Props {
@@ -9,10 +12,36 @@ interface Props {
   setText:   (v: string) => void;
   onSubmit:  () => void;
   isAr:      boolean;
+  getMentionInfo?:     (ref: MentionRef) => ResolvedMention | undefined;
+  onMentionStartChat?: (ref: MentionRef) => void;
 }
 
-function renderFormatted(raw: string): React.ReactNode[] {
-  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|@\S+|\[[^\]]+\]\([^)]+\))/g;
+const URL_PATTERN = 'https?:\\/\\/[^\\s<]+|www\\.[^\\s<]+';
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function renderFormatted(
+  raw: string,
+  mentions: MentionRef[] | undefined,
+  getMentionInfo: ((ref: MentionRef) => ResolvedMention | undefined) | undefined,
+  onMentionStartChat: ((ref: MentionRef) => void) | undefined,
+  isAr: boolean,
+): React.ReactNode[] {
+  const mentionEntries = (mentions ?? [])
+    .map(ref => ({ ref, info: getMentionInfo?.(ref) }))
+    .filter((e): e is { ref: MentionRef; info: ResolvedMention } => !!e.info?.name)
+    .sort((a, b) => b.info.name.length - a.info.name.length);
+  const mentionAlt = mentionEntries.length
+    ? mentionEntries.map(e => escapeRegExp(e.info.name)).join('|')
+    : null;
+  const mentionPattern = mentionAlt ? `@(?:${mentionAlt})` : '@\\S+';
+
+  const regex = new RegExp(
+    `(\\*\\*[^*]+\\*\\*|\\*[^*]+\\*|\\[[^\\]]+\\]\\([^)]+\\)|${URL_PATTERN}|${mentionPattern})`,
+    'g',
+  );
   const parts: React.ReactNode[] = [];
   let last = 0, key = 0, m: RegExpExecArray | null;
 
@@ -21,16 +50,39 @@ function renderFormatted(raw: string): React.ReactNode[] {
     const t = m[0];
     if (t.startsWith('**')) {
       parts.push(<strong key={key++} className="font-bold">{t.slice(2, -2)}</strong>);
-    } else if (t.startsWith('*')) {
-      parts.push(<em key={key++} className="italic">{t.slice(1, -1)}</em>);
     } else if (t.startsWith('@')) {
-      parts.push(<span key={key++} className="text-[#709028] dark:text-[#A0CD39] font-semibold">{t}</span>);
+      const entry = mentionEntries.find(e => e.info.name === t.slice(1));
+      if (entry) {
+        parts.push(
+          <MentionPopover
+            key={key++}
+            refData={entry.ref}
+            label={t}
+            info={entry.info}
+            isAr={isAr}
+            onStartChat={onMentionStartChat}
+            className="font-semibold text-[#709028] dark:text-[#A0CD39] underline decoration-dotted hover:opacity-80"
+          />,
+        );
+      } else {
+        parts.push(<span key={key++} className="text-[#709028] dark:text-[#A0CD39] font-semibold">{t}</span>);
+      }
     } else if (t.startsWith('[')) {
       const lm = /\[([^\]]+)\]\(([^)]+)\)/.exec(t);
       if (lm) parts.push(
         <a key={key++} href={lm[2]} target="_blank" rel="noopener noreferrer"
            className="text-blue-500 hover:underline">{lm[1]}</a>
       );
+    } else if (t.startsWith('*')) {
+      parts.push(<em key={key++} className="italic">{t.slice(1, -1)}</em>);
+    } else {
+      const cleaned = t.replace(/[.,);!?]+$/, '');
+      const suffix = t.slice(cleaned.length);
+      parts.push(
+        <a key={key++} href={ensureHttpUrl(cleaned)} target="_blank" rel="noopener noreferrer"
+           className="text-blue-500 hover:underline break-all">{cleaned}</a>,
+      );
+      if (suffix) parts.push(suffix);
     }
     last = m.index + t.length;
   }
@@ -38,8 +90,10 @@ function renderFormatted(raw: string): React.ReactNode[] {
   return parts;
 }
 
-export function TaskCommentsTab({ comments, text, setText, onSubmit, isAr }: Props) {
-  const areaRef = useRef<HTMLTextAreaElement>(null);
+export function TaskCommentsTab({
+  comments, text, setText, onSubmit, isAr, getMentionInfo, onMentionStartChat,
+}: Props) {
+  const areaRef = useAutoResizeTextarea(text);
 
   function wrap(before: string, after: string) {
     const el = areaRef.current;
@@ -85,7 +139,7 @@ export function TaskCommentsTab({ comments, text, setText, onSubmit, isAr }: Pro
               </div>
               <div className="bg-gray-50 dark:bg-gray-700/40 rounded-2xl rounded-tr-sm px-4 py-3">
                 <p className="text-sm text-gray-700 dark:text-gray-300 text-right leading-relaxed">
-                  {renderFormatted(c.text)}
+                  {renderFormatted(c.text, c.mentions, getMentionInfo, onMentionStartChat, isAr)}
                 </p>
               </div>
               <div className="flex justify-end">
@@ -126,12 +180,12 @@ export function TaskCommentsTab({ comments, text, setText, onSubmit, isAr }: Pro
           </button>
           <textarea
             ref={areaRef}
-            rows={2}
+            rows={1}
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(); } }}
             placeholder={isAr ? 'أضف تعليقاً...' : 'Add a comment...'}
-            className="flex-1 resize-none text-sm bg-transparent text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none text-right"
+            className="flex-1 resize-none text-sm bg-transparent text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none text-right max-h-28 overflow-y-auto"
           />
         </div>
       </div>
