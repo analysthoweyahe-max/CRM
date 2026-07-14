@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { LogOut, UserMinus, UserPlus, Users, X } from 'lucide-react';
+import { LogOut, ShieldCheck, UserMinus, UserPlus, Users, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
+import { Badge } from '@/shared/components/ui/Badge';
 import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import {
   useAddSeoGroupMembers,
+  useAssignSeoGroupManagers,
   useLeaveSeoGroup,
   useRemoveSeoGroupMembers,
   useSeoMentionables,
@@ -55,9 +57,12 @@ export function SeoGroupMembersPanel({
     [participants],
   );
 
+  const canManageMembers = conversation.canManageMembers === true;
+
   const { data: mentionables = [], isLoading } = useSeoMentionables(adding);
   const { mutateAsync: addMembers, isPending: addingPending } = useAddSeoGroupMembers(conversation.id, isAr);
   const { mutateAsync: removeMembers, isPending: removingPending } = useRemoveSeoGroupMembers(conversation.id, isAr);
+  const { mutateAsync: assignManagers, isPending: assigningPending } = useAssignSeoGroupManagers(conversation.id, isAr);
   const { mutateAsync: leaveGroup, isPending: leavingPending } = useLeaveSeoGroup(isAr);
 
   const addableItems: ComboboxItem[] = useMemo(
@@ -101,6 +106,17 @@ export function SeoGroupMembersPanel({
     }
   }
 
+  async function handleAssignManager(member: SeoParticipant) {
+    try {
+      const updated = await assignManagers({
+        members: [{ type: member.type, id: member.id }],
+      });
+      onUpdated(updated);
+    } catch {
+      /* toast in hook */
+    }
+  }
+
   async function handleLeave() {
     try {
       await leaveGroup(conversation.id);
@@ -110,7 +126,7 @@ export function SeoGroupMembersPanel({
     }
   }
 
-  const busy = addingPending || removingPending || leavingPending;
+  const busy = addingPending || removingPending || assigningPending || leavingPending;
 
   return (
     <div className="absolute inset-y-0 inset-s-0 sm:inset-s-auto inset-e-0 z-20 flex flex-col
@@ -160,17 +176,36 @@ export function SeoGroupMembersPanel({
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-                    {member.name}
-                    {isSelf ? ` (${isAr ? 'أنت' : 'you'})` : ''}
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate flex items-center gap-1.5">
+                    <span className="truncate">
+                      {member.name}
+                      {isSelf ? ` (${isAr ? 'أنت' : 'you'})` : ''}
+                    </span>
+                    {member.isManager && (
+                      <Badge variant="brand" label={isAr ? 'مدير الجروب' : 'Manager'} />
+                    )}
                   </p>
                   <p className="text-[11px] text-gray-400">
-                    {member.type === 'admin'
-                      ? (isAr ? 'مدير' : 'Admin')
-                      : (isAr ? 'موظف' : 'Employee')}
+                    {member.roleLabel
+                      || (member.type === 'admin'
+                        ? (isAr ? 'مدير' : 'Admin')
+                        : (isAr ? 'موظف' : 'Employee'))}
                   </p>
                 </div>
-                {!isSelf && (
+                {canManageMembers && !member.isManager && !isSelf && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => handleAssignManager(member)}
+                    title={isAr ? 'تعيين كمدير' : 'Make manager'}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-[#709028]
+                               hover:bg-[#D8EBAE]/40 dark:hover:bg-[#A0CD39]/10
+                               disabled:opacity-40 transition-colors"
+                  >
+                    <ShieldCheck size={14} />
+                  </button>
+                )}
+                {canManageMembers && !member.isManager && !isSelf && (
                   <button
                     type="button"
                     disabled={busy}
@@ -190,7 +225,7 @@ export function SeoGroupMembersPanel({
       </div>
 
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 space-y-3">
-        {adding ? (
+        {canManageMembers && (adding ? (
           <div className="space-y-2">
             <MultiCombobox
               items={addableItems}
@@ -241,7 +276,7 @@ export function SeoGroupMembersPanel({
           >
             {isAr ? 'إضافة أعضاء' : 'Add members'}
           </Button>
-        )}
+        ))}
 
         <Button
           variant="danger"

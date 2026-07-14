@@ -56,6 +56,13 @@ export const seoMessagesApi = {
     );
   },
 
+  assignManagers(conversationId: string, payload: ManageSeoGroupMembersPayload) {
+    return http.post<SeoConversationSingleResponse>(
+      `${messengerBase()}/conversations/${conversationId}/managers`,
+      payload,
+    );
+  },
+
   leaveGroup(conversationId: string) {
     return http.post(`${messengerBase()}/conversations/${conversationId}/leave`);
   },

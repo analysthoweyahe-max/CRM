@@ -235,6 +235,20 @@ export function useRemoveSeoGroupMembers(conversationId: string, isAr: boolean) 
   });
 }
 
+export function useAssignSeoGroupManagers(conversationId: string, isAr: boolean) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ManageSeoGroupMembersPayload) =>
+      seoMessagesApi.assignManagers(conversationId, payload).then(r => r.data.data),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: CONV_KEY });
+      qc.setQueryData(convDetailKey(conversationId), data);
+      toast.success(isAr ? 'تم تعيين المدير' : 'Manager assigned');
+    },
+    onError: (err) => toast.error(extractApiError(err)),
+  });
+}
+
 export function useLeaveSeoGroup(isAr: boolean) {
   const qc = useQueryClient();
   return useMutation({
