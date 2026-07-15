@@ -16,14 +16,15 @@ export function useTaskDetailPage() {
 
   const { data: task,     isLoading: tl } = useTaskDetail(projectId, taskId);
   const { data: comments = [], isLoading: cl } = useTaskComments(projectId, taskId);
-  const { data: sessions = [], isLoading: sl } = useTaskSessions(projectId, taskId);
+  const { data: timeLogs, isLoading: sl } = useTaskSessions(projectId, taskId, task?.allocatedHours ?? 0);
+  const sessions = timeLogs?.sessions ?? [];
 
   const isLoading = tl || cl || sl;
 
   function goBack() { navigate(ROUTES.EMPLOYEE.TASKS); }
 
   return {
-    isAr, goBack, activeTab, setActiveTab, task, comments, sessions, isLoading, projectId, taskId,
+    isAr, goBack, activeTab, setActiveTab, task, comments, sessions, timeLogs, isLoading, projectId, taskId,
     isEditOpen, openEdit: () => setIsEditOpen(true), closeEdit: () => setIsEditOpen(false),
   };
 }

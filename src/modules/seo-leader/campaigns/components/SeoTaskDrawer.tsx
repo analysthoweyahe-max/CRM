@@ -221,6 +221,12 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                 text={d.commentText}
                 setText={d.setCommentText}
                 onSubmit={d.addComment}
+                onEdit={d.updateComment}
+                mentionables={d.mentionables.map(m => ({
+                  id: m.id,
+                  name: m.name,
+                  type: m.type ?? 'employee',
+                }))}
                 isAr={isAr}
                 getMentionInfo={getMentionInfo}
                 onMentionStartChat={handleMentionStartChat}

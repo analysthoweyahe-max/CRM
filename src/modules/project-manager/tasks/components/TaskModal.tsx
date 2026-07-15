@@ -15,6 +15,7 @@ import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey }       from '@/shared/utils/resourceKey.utils';
 import type { Task }             from '../types/task.types';
 import type { TaskModalTab }     from '../types/taskModal.types';
+import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 
 interface TabDef { key: TaskModalTab; ar: string; en: string; countProp?: 'attachments' | 'comments' }
 
@@ -45,6 +46,11 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
   }));
 
   const counts = { attachments: modal.attachments.length, comments: modal.comments.length };
+
+  function getMentionInfo(ref: MentionRef): ResolvedMention | undefined {
+    const m = modal.mentionables.find(x => x.id === ref.id && (x.type ?? 'employee') === ref.type);
+    return m ? { id: m.id, type: m.type ?? 'employee', name: m.name } : undefined;
+  }
 
   return (
     <>
@@ -135,7 +141,14 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
               text={modal.commentText}
               setText={modal.setCommentText}
               onSubmit={modal.addComment}
+              onEdit={modal.updateComment}
+              mentionables={modal.mentionables.map(m => ({
+                id: m.id,
+                name: m.name,
+                type: m.type ?? 'employee',
+              }))}
               isAr={isAr}
+              getMentionInfo={getMentionInfo}
             />
           )}
         </div>

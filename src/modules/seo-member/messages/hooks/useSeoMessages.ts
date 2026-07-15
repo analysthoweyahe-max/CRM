@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { extractApiError } from '@/shared/utils/error.utils';
+import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import { extractPaginatedList } from '@/shared/utils/apiList.utils';
 import { useEchoLive } from '@/shared/realtime-messages';
+import { conversationLastMessagePreview } from '@/shared/utils/messagePreview.utils';
+import { normalizeSeoMessage } from '@/shared/utils/chatNormalize.utils';
 import { seoMessagesApi } from '../api/messages.api';
 import type {
   CreateSeoGroupPayload,
@@ -13,6 +15,7 @@ import type {
   SeoMentionable,
   SeoMessage,
   SendSeoMessagePayload,
+  UpdateSeoMessagePayload,
 } from '../types/messages.types';
 
 const CONV_KEY = ['seo-member', 'messages', 'conversations'] as const;
@@ -77,7 +80,7 @@ export function useSeoMessages(conversationId: string | null) {
     queryKey: msgKey(conversationId ?? ''),
     queryFn:  async () => {
       const res = await seoMessagesApi.getMessages(conversationId!);
-      return extractPaginatedList<SeoMessage>(res.data);
+      return extractPaginatedList<SeoMessage>(res.data).map((m) => normalizeSeoMessage(m));
     },
     enabled:  !!conversationId,
     // Open chat: 2s fallback when Pusher isn't live; slower when Echo is connected.
@@ -106,11 +109,7 @@ export function useSendSeoMessage(conversationId: string) {
           const idx = prev.findIndex(c => c.id === conversationId);
           if (idx === -1) return prev;
           const existing = prev[idx]!;
-          const preview =
-            msg.body
-            ?? msg.attachments?.[0]?.name
-            ?? msg.attachments?.[0]?.fileName
-            ?? existing.lastMessage;
+          const preview = conversationLastMessagePreview(msg, existing.lastMessage);
           const updated: SeoConversation = {
             ...existing,
             lastMessage: preview,
@@ -122,6 +121,74 @@ export function useSendSeoMessage(conversationId: string) {
       );
     },
     onError: (err) => toast.error(extractApiError(err)),
+  });
+}
+
+export function useEditSeoMessage(conversationId: string, isAr = false) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, payload }: { messageId: number | string; payload: UpdateSeoMessagePayload }) =>
+      seoMessagesApi.updateMessage(conversationId, messageId, payload),
+    onMutate: async ({ messageId, payload }) => {
+      await qc.cancelQueries({ queryKey: msgKey(conversationId) });
+      const previous = qc.getQueryData<SeoMessage[]>(msgKey(conversationId));
+      const editedAt = new Date().toISOString();
+      qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) => {
+        if (!prev) return prev;
+        return prev.map(m =>
+          String(m.id) === String(messageId)
+            ? {
+                ...m,
+                body: payload.body,
+                mentions: payload.mentions ?? m.mentions,
+                isEdited: true,
+                editedAt,
+              }
+            : m,
+        );
+      });
+      return { previous, messageId, editedAt, body: payload.body };
+    },
+    onSuccess: (res, vars, ctx) => {
+      const msg = normalizeSeoMessage(res.data.data);
+      qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) => {
+        if (!prev) return prev;
+        return prev.map(m => (String(m.id) === String(msg.id ?? vars.messageId) ? { ...m, ...msg } : m));
+      });
+
+      // Sidebar preview when the edited message is the latest in the thread.
+      const thread = qc.getQueryData<SeoMessage[]>(msgKey(conversationId));
+      const last = thread?.[thread.length - 1];
+      if (last && String(last.id) === String(msg.id ?? vars.messageId)) {
+        const preview = conversationLastMessagePreview(msg, msg.body ?? vars.payload.body);
+        qc.setQueriesData<SeoConversation[]>(
+          { queryKey: CONV_KEY },
+          (prev) => {
+            if (!prev) return prev;
+            const idx = prev.findIndex(c => c.id === conversationId);
+            if (idx === -1) return prev;
+            const existing = prev[idx]!;
+            const updated: SeoConversation = { ...existing, lastMessage: preview };
+            return prev.map((c, i) => (i === idx ? updated : c));
+          },
+        );
+      }
+
+      // Dedupe key for realtime: keep editedAt from server when available.
+      void ctx;
+    },
+    onError: (err, vars, ctx) => {
+      if (ctx?.previous) {
+        qc.setQueryData(msgKey(conversationId), ctx.previous);
+      }
+      const status = extractApiStatus(err);
+      if (status === 404) {
+        qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) =>
+          prev?.filter(m => String(m.id) !== String(vars.messageId)),
+        );
+      }
+      toast.error(extractEditApiError(err, { isAr, kind: 'message' }));
+    },
   });
 }
 

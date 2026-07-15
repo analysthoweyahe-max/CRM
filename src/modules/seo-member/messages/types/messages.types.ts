@@ -70,27 +70,40 @@ export interface SeoMessageReaction {
   users?: Array<{ id?: string; name?: string }>;
 }
 
+export type SeoMessageType = 'text' | 'image' | 'file' | 'voice' | string;
+
 export interface SeoMessageReplyPreview {
-  id:     number | string;
-  body?:  string | null;
-  sender?: { id?: string; name?: string };
+  id:               number | string;
+  body?:            string | null;
+  type?:            SeoMessageType;
+  durationSeconds?: number | null;
+  sender?: {
+    id?:   string;
+    name?: string;
+    type?: string;
+  };
 }
 
 export interface SeoMessage {
-  id:          number | string;
-  body:        string | null;
-  type?:       string;
-  sender:      SeoMessageSender;
-  isMine?:     boolean;
-  attachments?: SeoMessageAttachment[];
-  sentAt?:     string;
-  sentTime?:   string;
-  created_at?: string;
+  id:               number | string;
+  body:             string | null;
+  type?:            SeoMessageType;
+  durationSeconds?: number | null;
+  duration_seconds?: number | null;
+  sender:           SeoMessageSender;
+  isMine?:          boolean;
+  attachments?:     SeoMessageAttachment[];
+  sentAt?:          string;
+  sentTime?:        string;
+  created_at?:      string;
+  editedAt?:        string | null;
+  edited_at?:       string | null;
+  isEdited?:        boolean;
   /** Quoted parent when this message is a reply */
-  replyTo?:    SeoMessageReplyPreview | null;
-  reply_to?:   SeoMessageReplyPreview | null;
-  reactions?:  SeoMessageReaction[];
-  mentions?:   SeoMentionRef[];
+  replyTo?:         SeoMessageReplyPreview | null;
+  reply_to?:        SeoMessageReplyPreview | null;
+  reactions?:       SeoMessageReaction[];
+  mentions?:        SeoMentionRef[];
 }
 
 export interface SeoMentionRef {
@@ -99,9 +112,15 @@ export interface SeoMentionRef {
 }
 
 export interface SendSeoMessagePayload {
-  body?:     string;
-  reply_to?: number | string;
-  file?:     File;
+  body?:              string;
+  reply_to?:          number | string;
+  file?:              File;
+  duration_seconds?:  number;
+  mentions?:          SeoMentionRef[];
+}
+
+export interface UpdateSeoMessagePayload {
+  body:     string;
   mentions?: SeoMentionRef[];
 }
 

@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast }        from 'sonner';
+import { useAuth }      from '@/modules/auth/context/AuthContext';
 import { getAvatarColor } from '@/shared/utils';
-import { extractApiError } from '@/shared/utils/error.utils';
+import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
+import { toMentionRefs } from '@/shared/utils/mentionComposer.utils';
+import {
+  isSameActorId,
+  normalizeTaskCommentFields,
+} from '@/shared/utils/chatNormalize.utils';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import { useRemoveTaskLocally, useInvalidateProjectTasks } from '../store/taskStore';
 import { pmTaskApi } from '../api/task.api';
+import { pmProjectMessagesApi } from '@/modules/project-manager/projects/api/messages.api';
 import type { RawPmComment, RawPmTaskAttachment } from '../api/task.api';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 import type { Task } from '../types/task.types';
@@ -37,7 +44,11 @@ function toAttachment(raw: RawPmTaskAttachment): TaskAttachment {
   };
 }
 
-function toComment(raw: RawPmComment): TaskComment {
+function toComment(
+  raw: RawPmComment,
+  user?: { id?: string | null; employeeId?: string | null } | null,
+): TaskComment {
+  const edit = normalizeTaskCommentFields(raw);
   return {
     id:            String(raw.id),
     author:        raw.sender.name,
@@ -45,10 +56,16 @@ function toComment(raw: RawPmComment): TaskComment {
     authorColor:   getAvatarColor(raw.sender.name),
     text:          raw.body,
     dateLabel:     raw.sentAt,
+    isMine:        isSameActorId(raw.sender.id, user),
+    mentions:      edit.mentions ?? toMentionRefs(raw.mentions),
+    isEdited:      edit.isEdited,
+    editedAt:      edit.editedAt,
+    replies:       (raw.replies ?? []).map(r => toComment(r, user)),
   };
 }
 
 export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => void, projectId: string) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TaskModalTab>('info');
   const [commentText, setCommentText] = useState('');
   const queryClient = useQueryClient();
@@ -104,12 +121,20 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   const commentsKey = ['pm-task-comments', projectId, taskKey];
   const { data: comments = [] } = useQuery({
     queryKey: commentsKey,
-    queryFn:  () => pmTaskApi.getComments(projectId, taskKey).then(r => r.data.data.data.map(toComment)),
+    queryFn:  () => pmTaskApi.getComments(projectId, taskKey).then(r => r.data.data.data.map(c => toComment(c, user))),
     enabled:  !!task && !!taskKey,
   });
 
+  const { data: mentionables = [] } = useQuery({
+    queryKey: ['pm-task-mentionables', projectId],
+    queryFn:  () => pmProjectMessagesApi.mentionables(projectId).then(r => r.data.data),
+    enabled:  !!projectId && !!task,
+    staleTime: 60_000,
+  });
+
   const commentMutation = useMutation({
-    mutationFn: (body: string) => pmTaskApi.createComment(projectId, taskKey, body),
+    mutationFn: ({ body, parentId, mentions }: { body: string; parentId?: string; mentions?: Array<{ type: string; id: string }> }) =>
+      pmTaskApi.createComment(projectId, taskKey, { body, parentId, mentions }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentsKey });
       invalidateDetail();
@@ -117,11 +142,33 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     onError: (err) => toast.error(extractApiError(err) || (isAr ? 'تعذر إرسال التعليق' : 'Failed to send comment')),
   });
 
-  function addComment() {
+  const updateCommentMutation = useMutation({
+    mutationFn: ({ id, body, mentions }: { id: string; body: string; mentions?: Array<{ type: string; id: string }> }) =>
+      pmTaskApi.updateComment(projectId, taskKey, id, { body, mentions }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentsKey });
+      invalidateDetail();
+    },
+    onError: (err) => {
+      if (extractApiStatus(err) === 404) {
+        queryClient.invalidateQueries({ queryKey: commentsKey });
+      }
+      toast.error(extractEditApiError(err, { isAr, kind: 'comment' }));
+    },
+  });
+
+  function addComment(parentId?: string, mentions?: Array<{ type: string; id: string }>) {
     const trimmed = commentText.trim();
     if (!trimmed || commentMutation.isPending) return;
     setCommentText('');
-    commentMutation.mutate(trimmed);
+    commentMutation.mutate({ body: trimmed, parentId, mentions });
+  }
+
+  function updateComment(id: string, body: string, mentions?: Array<{ type: string; id: string }>) {
+    const trimmed = body.trim();
+    if (!trimmed || updateCommentMutation.isPending) return;
+    setCommentText('');
+    updateCommentMutation.mutate({ id, body: trimmed, mentions });
   }
 
   /* ── Attachments ── */
@@ -273,7 +320,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     sessions, totalHours, estimatedHours, remainingHours, progress,
     addTimeLog, loggingTime,
     attachments, removeAttachment, addAttachment, downloadAttachment,
-    comments, commentText, setCommentText, addComment,
+    comments, commentText, setCommentText, addComment, updateComment, mentionables,
     isEditOpen, editTitle, setEditTitle,
     editPriority, setEditPriority,
     editDueDate, setEditDueDate, editEstHours, setEditEstHours,

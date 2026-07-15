@@ -54,6 +54,11 @@ export interface SeoTaskComment {
   mentions:    unknown[];
   attachments: unknown[];
   sentAt:      string;
+  editedAt?:   string | null;
+  edited_at?:  string | null;
+  isEdited?:   boolean;
+  is_edited?:  boolean;
+  replies?:    SeoTaskComment[];
 }
 
 export interface SeoTaskCommentsPage {

@@ -4,4 +4,5 @@ export { MentionPopover } from './MentionPopover';
 export type { MentionRef, ResolvedMention } from './mention.types';
 export { ChatAttachments } from './ChatAttachments';
 export type { ChatAttachmentLike } from './ChatAttachments';
+export { VoiceMessagePlayer } from './VoiceMessagePlayer';
 export { buildAuthMediaUrl } from './authMediaUrl';

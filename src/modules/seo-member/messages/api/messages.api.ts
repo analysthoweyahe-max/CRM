@@ -11,16 +11,20 @@ import type {
   ManageSeoGroupMembersPayload,
   SeoConversationListParams,
   SendSeoMessagePayload,
+  UpdateSeoMessagePayload,
 } from '../types/messages.types';
 
 /**
  * Company messenger (DMs + groups).
- * Admin/super-admin → /v1/seo/messages
  * Employee → /v1/employee/messenger  (same data; do NOT use /employee/messages — that is HR)
+ * Project manager → /v1/pm/messages
+ * SEO / HR / admin → /v1/seo/messages
  */
 function messengerBase(): string {
-  const actor = authService.getStoredUser()?.actor;
-  return actor === 'employee' ? '/v1/employee/messenger' : '/v1/seo/messages';
+  const user = authService.getStoredUser();
+  if (user?.actor === 'employee') return '/v1/employee/messenger';
+  if (user?.role === 'manager' || user?.section === 'pm') return '/v1/pm/messages';
+  return '/v1/seo/messages';
 }
 
 export const seoMessagesApi = {
@@ -76,12 +80,16 @@ export const seoMessagesApi = {
 
   sendMessage(conversationId: string, payload: SendSeoMessagePayload | string) {
     const data = typeof payload === 'string' ? { body: payload } : payload;
+    const needsMultipart = !!data.file || data.duration_seconds != null;
 
-    if (data.file) {
+    if (needsMultipart) {
       const fd = new FormData();
       if (data.body?.trim()) fd.append('body', data.body.trim());
       if (data.reply_to != null) fd.append('reply_to', String(data.reply_to));
-      fd.append('file', data.file);
+      if (data.duration_seconds != null) {
+        fd.append('duration_seconds', String(data.duration_seconds));
+      }
+      if (data.file) fd.append('file', data.file);
       data.mentions?.forEach((m, i) => {
         fd.append(`mentions[${i}][type]`, m.type);
         fd.append(`mentions[${i}][id]`, m.id);
@@ -99,6 +107,20 @@ export const seoMessagesApi = {
         body: data.body?.trim() ?? '',
         ...(data.reply_to != null ? { reply_to: data.reply_to } : {}),
         ...(data.mentions?.length ? { mentions: data.mentions } : {}),
+      },
+    );
+  },
+
+  updateMessage(
+    conversationId: string,
+    messageId: number | string,
+    payload: UpdateSeoMessagePayload,
+  ) {
+    return http.put<SeoMessageSendResponse>(
+      `${messengerBase()}/conversations/${conversationId}/messages/${messageId}`,
+      {
+        body: payload.body.trim(),
+        ...(payload.mentions?.length ? { mentions: payload.mentions } : {}),
       },
     );
   },

@@ -18,6 +18,8 @@ interface ComboboxProps {
   placeholder?:       string;
   searchPlaceholder?: string;
   noResultsText?:     string;
+  /** When false, closed trigger shows label only (detail stays in the dropdown). Default true. */
+  triggerShowsDetail?: boolean;
 }
 
 export function Combobox({
@@ -29,6 +31,7 @@ export function Combobox({
   placeholder       = 'Select…',
   searchPlaceholder = 'Search…',
   noResultsText     = 'No results',
+  triggerShowsDetail = true,
 }: ComboboxProps) {
   const [query, setQuery] = useState('');
   const [open,  setOpen]  = useState(false);
@@ -66,10 +69,10 @@ export function Combobox({
         className={`${inputCls(!!error)} flex items-center justify-between gap-2 text-start ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         {selected ? (
-          <span className="truncate text-gray-800 dark:text-gray-200">
-            {selected.label}
-            {selected.detail && (
-              <span className="text-gray-400 dark:text-gray-500 ms-2 text-xs">{selected.detail}</span>
+          <span className="flex items-baseline gap-2 min-w-0 truncate text-gray-800 dark:text-gray-200">
+            <span className="truncate font-medium">{selected.label}</span>
+            {triggerShowsDetail && selected.detail && (
+              <span className="text-gray-400 dark:text-gray-500 text-xs shrink-0">{selected.detail}</span>
             )}
           </span>
         ) : (
@@ -121,10 +124,10 @@ export function Combobox({
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50',
                   ].join(' ')}
                 >
-                  <span>
-                    <span className="font-medium">{item.label}</span>
+                  <span className="flex items-baseline gap-2 min-w-0">
+                    <span className="font-medium truncate">{item.label}</span>
                     {item.detail && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500 ms-2">{item.detail}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{item.detail}</span>
                     )}
                   </span>
                   {item.meta && (

@@ -95,12 +95,15 @@ export function DailyReportHistoryTable({ reports, isLoading, isAr }: Props) {
           return <span className="text-sm text-gray-400">—</span>;
         }
         return (
-          <ul className="space-y-1 text-start max-w-xs">
+          <ul className="space-y-1.5 text-start max-w-xs whitespace-normal">
             {tasks.map((t, i) => (
-              <li key={`${t.taskTitle}-${i}`} className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
-                <span className="font-medium">{t.taskTitle}</span>
-                <span className="text-xs text-gray-400 ms-1.5">
-                  {t.plannedHours}/{t.actualHours}{isAr ? 'س' : 'h'}
+              <li
+                key={`${t.taskTitle}-${i}`}
+                className="flex items-baseline gap-2 text-sm text-gray-700 dark:text-gray-300 leading-snug"
+              >
+                <span className="font-medium break-words min-w-0">{t.taskTitle}</span>
+                <span className="text-xs text-gray-400 tabular-nums shrink-0">
+                  {t.plannedHours} / {t.actualHours} {isAr ? 'س' : 'h'}
                 </span>
               </li>
             ))}

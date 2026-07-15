@@ -189,10 +189,16 @@ export interface RawPmCommentSender {
 }
 
 export interface RawPmComment {
-  id:     number;
-  body:   string;
-  sender: RawPmCommentSender;
-  sentAt: string;
+  id:        number;
+  body:      string;
+  sender:    RawPmCommentSender;
+  sentAt:    string;
+  mentions?: unknown[];
+  editedAt?: string | null;
+  edited_at?: string | null;
+  isEdited?: boolean;
+  is_edited?: boolean;
+  replies?:  RawPmComment[];
 }
 
 export interface PmCommentListResponse {
@@ -261,8 +267,34 @@ export const pmTaskApi = {
     return http.get<PmCommentListResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/comments`);
   },
 
-  createComment(projectId: number | string, taskId: string, body: string) {
-    return http.post<PmCommentCreateResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/comments`, { body });
+  createComment(
+    projectId: number | string,
+    taskId: string,
+    payload: { body: string; parentId?: string | number; mentions?: Array<{ type: string; id: string }> },
+  ) {
+    return http.post<PmCommentCreateResponse>(
+      `/v1/pm/projects/${projectId}/tasks/${taskId}/comments`,
+      {
+        body: payload.body,
+        ...(payload.parentId != null ? { parent_id: payload.parentId } : {}),
+        ...(payload.mentions?.length ? { mentions: payload.mentions } : {}),
+      },
+    );
+  },
+
+  updateComment(
+    projectId: number | string,
+    taskId: string,
+    commentId: string,
+    payload: { body: string; mentions?: Array<{ type: string; id: string }> },
+  ) {
+    return http.put<PmCommentCreateResponse>(
+      `/v1/pm/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+      {
+        body: payload.body,
+        ...(payload.mentions?.length ? { mentions: payload.mentions } : {}),
+      },
+    );
   },
 
   uploadAttachment(projectId: number | string, taskId: string, file: File) {

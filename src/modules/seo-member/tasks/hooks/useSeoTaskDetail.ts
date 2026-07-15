@@ -5,18 +5,16 @@ import { seoTaskDetailApi } from '../api/seoTaskDetail.api';
 import type { SeoUpdateTaskPayload } from '../api/seoTaskDetail.api';
 import type { SeoTaskStatus } from '../types/seoTask.types';
 import type { SeoTaskComment } from '../types/seoTaskDetail.types';
-import type { TaskComment, TaskSession } from '@/modules/employee/tasks/types/taskDetail.types';
+import type { TaskComment, EditCommentPayload, SendCommentPayload, TaskTimeLogSummary } from '@/modules/employee/tasks/types/taskDetail.types';
 import { extractSeoUploadErrors } from '@/shared/utils/seoTaskAttachment.utils';
-import { extractApiError } from '@/shared/utils/error.utils';
-import type { MentionRef } from '@/shared/components/chat';
-
-function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
-  const refs = (raw ?? [])
-    .filter((m): m is { type: unknown; id: unknown } => !!m && typeof m === 'object')
-    .filter(m => typeof m.type === 'string' && (typeof m.id === 'string' || typeof m.id === 'number'))
-    .map(m => ({ type: m.type as string, id: String(m.id) }));
-  return refs.length ? refs : undefined;
-}
+import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
+import { toMentionRefs } from '@/shared/utils/mentionComposer.utils';
+import {
+  isSameActorId,
+  normalizeTaskCommentFields,
+} from '@/shared/utils/chatNormalize.utils';
+import { normalizeTimeLogSummary } from '@/shared/utils/timeLog.utils';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 
 const detailKey = (projectId?: string, taskId?: string) =>
   ['seo-member', 'task-detail', projectId, taskId] as const;
@@ -137,26 +135,36 @@ export function useDeleteSeoTaskAttachment(
   };
 }
 
-function mapSeoComments(comments: SeoTaskComment[]): TaskComment[] {
-  return comments.map((c) => ({
-    id:        String(c.id),
-    authorAr:  c.sender.name,
-    authorEn:  c.sender.name,
-    initials:  c.sender.name.charAt(0).toUpperCase(),
-    avatarBg:  'bg-brand-500',
-    body:      c.body,
-    createdAt: c.sentAt,
-    isMine:    false,
-    mentions:  toMentionRefs(c.mentions),
-  }));
+function mapSeoComments(
+  comments: SeoTaskComment[],
+  user?: { id?: string | null; employeeId?: string | null } | null,
+): TaskComment[] {
+  return comments.map((c) => {
+    const edit = normalizeTaskCommentFields(c);
+    return {
+      id:        String(c.id),
+      authorAr:  c.sender.name,
+      authorEn:  c.sender.name,
+      initials:  c.sender.name.charAt(0).toUpperCase(),
+      avatarBg:  'bg-brand-500',
+      body:      c.body,
+      createdAt: c.sentAt,
+      isMine:    isSameActorId(c.sender.id, user),
+      mentions:  edit.mentions ?? toMentionRefs(c.mentions),
+      isEdited:  edit.isEdited,
+      editedAt:  edit.editedAt,
+      replies:   mapSeoComments(c.replies ?? [], user),
+    };
+  });
 }
 
 export function useSeoTaskComments(projectId: string | undefined, taskId: string | undefined) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['seo-member', 'task-comments', projectId, taskId],
     queryFn: async () => {
       const res = await seoTaskDetailApi.getComments(projectId!, taskId!);
-      return mapSeoComments(res.data.data?.data ?? []);
+      return mapSeoComments(res.data.data?.data ?? [], user);
     },
     enabled: !!projectId && !!taskId,
   });
@@ -165,7 +173,11 @@ export function useSeoTaskComments(projectId: string | undefined, taskId: string
 export function useAddSeoTaskComment(projectId: string | undefined, taskId: string | undefined, isAr: boolean) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) => seoTaskDetailApi.addComment(projectId!, taskId!, body),
+    mutationFn: (payload: SendCommentPayload) =>
+      seoTaskDetailApi.addComment(projectId!, taskId!, payload.body, {
+        parentId: payload.parentId,
+        mentions: payload.mentions,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['seo-member', 'task-comments', projectId, taskId] });
       qc.invalidateQueries({ queryKey: detailKey(projectId, taskId) });
@@ -174,24 +186,43 @@ export function useAddSeoTaskComment(projectId: string | undefined, taskId: stri
   });
 }
 
+export function useUpdateSeoTaskComment(projectId: string | undefined, taskId: string | undefined, isAr: boolean) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: EditCommentPayload) =>
+      seoTaskDetailApi.updateComment(projectId!, taskId!, payload.id, {
+        body: payload.body,
+        mentions: payload.mentions,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['seo-member', 'task-comments', projectId, taskId] });
+      qc.invalidateQueries({ queryKey: detailKey(projectId, taskId) });
+    },
+    onError: (err) => {
+      if (extractApiStatus(err) === 404) {
+        qc.invalidateQueries({ queryKey: ['seo-member', 'task-comments', projectId, taskId] });
+      }
+      toast.error(extractEditApiError(err, { isAr, kind: 'comment' }));
+    },
+  });
+}
+
 const sessionsKey = (projectId?: string, taskId?: string) =>
   ['seo-member', 'task-sessions', projectId, taskId] as const;
 
-export function useSeoTaskSessions(projectId: string | undefined, taskId: string | undefined) {
+export function useSeoTaskSessions(
+  projectId: string | undefined,
+  taskId: string | undefined,
+  fallbackEstimatedHours = 0,
+) {
   return useQuery({
-    queryKey: sessionsKey(projectId, taskId),
-    queryFn: async () => {
+    queryKey: [...sessionsKey(projectId, taskId), fallbackEstimatedHours],
+    queryFn: async (): Promise<TaskTimeLogSummary> => {
       const res = await seoTaskDetailApi.getTimeLogs(projectId!, taskId!);
-      const sessions: TaskSession[] = (res.data.data.sessions ?? []).map((s) => ({
-        id:            String(s.id),
-        date:          s.workDate,
-        from:          s.startedAt,
-        to:            s.endedAt,
-        durationHours: s.durationHours,
-      }));
-      return sessions;
+      return normalizeTimeLogSummary(res.data.data, fallbackEstimatedHours);
     },
     enabled: !!projectId && !!taskId,
+    refetchInterval: 15_000,
   });
 }
 

@@ -37,6 +37,9 @@ interface RawSeoTaskDetail extends RawSeoTask {
   metaTitle?:         string | null;
   metaDescription?:   string | null;
   allocatedHours?:    number;
+  estimatedHours?:    number;
+  estimated_hours?:   number;
+  allocated_hours?:   number;
   attachments?:       unknown[];
   attachmentsCount?:  number;
 }
@@ -82,7 +85,13 @@ function toSeoTaskDetail(raw: RawSeoTaskDetail): SeoTaskDetail {
     keywordDifficulty: raw.keywordDifficulty ?? null,
     metaTitle:         raw.metaTitle ?? null,
     metaDescription:   raw.metaDescription ?? null,
-    allocatedHours:    raw.allocatedHours ?? 0,
+    allocatedHours: Number(
+      raw.allocatedHours
+      ?? raw.estimatedHours
+      ?? raw.estimated_hours
+      ?? raw.allocated_hours
+      ?? 0,
+    ),
     attachments,
     attachmentsCount:  raw.attachmentsCount ?? attachments.length,
   };
@@ -211,18 +220,38 @@ export const seoTaskDetailApi = {
     );
   },
 
-  addComment(projectId: string, taskId: string, body: string) {
+  addComment(
+    projectId: string,
+    taskId: string,
+    body: string,
+    opts?: { parentId?: string | number; file?: File; mentions?: Array<{ type: string; id: string }> },
+  ) {
     const fd = new FormData();
     fd.append('body', body);
+    if (opts?.parentId != null) fd.append('parent_id', String(opts.parentId));
+    if (opts?.file) fd.append('file', opts.file);
+    opts?.mentions?.forEach((m, i) => {
+      fd.append(`mentions[${i}][type]`, m.type);
+      fd.append(`mentions[${i}][id]`, m.id);
+    });
     return http.post<{ status: string; message: string; data: { comment: SeoTaskComment } }>(
       `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`, fd,
       { headers: { 'Content-Type': undefined } },
     );
   },
 
-  updateComment(projectId: string, taskId: string, commentId: string | number, body: string) {
+  updateComment(
+    projectId: string,
+    taskId: string,
+    commentId: string | number,
+    payload: { body: string; mentions?: Array<{ type: string; id: string }> },
+  ) {
     return http.put<{ status: string; message: string; data: SeoTaskCommentsPage }>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { body },
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+      {
+        body: payload.body,
+        ...(payload.mentions?.length ? { mentions: payload.mentions } : {}),
+      },
     );
   },
 

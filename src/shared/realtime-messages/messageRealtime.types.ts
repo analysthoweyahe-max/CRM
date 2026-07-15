@@ -1,12 +1,26 @@
 /** FCM / Echo payload types for realtime chat (docs Realtime Messages). */
 export const REALTIME_MESSAGE_TYPES = [
   'seo_direct_message',
+  'seo_direct_message_updated',
   'seo_project_message',
   'seo_client_update',
   'pm_project_message',
   'pm_client_update',
   'hr_message',
 ] as const;
+
+/** Echo `.message.updated` / FCM edit events — patch existing bubbles, no toast. */
+export const REALTIME_MESSAGE_UPDATED_TYPES = [
+  'seo_direct_message_updated',
+] as const;
+
+export type RealtimeMessageUpdatedType = (typeof REALTIME_MESSAGE_UPDATED_TYPES)[number];
+
+export function isRealtimeMessageUpdatedType(
+  type: string | undefined | null,
+): type is RealtimeMessageUpdatedType {
+  return !!type && (REALTIME_MESSAGE_UPDATED_TYPES as readonly string[]).includes(type);
+}
 
 export type RealtimeMessageType = (typeof REALTIME_MESSAGE_TYPES)[number];
 

@@ -69,7 +69,11 @@ export function HeaderAttendanceTimer({ layoutScope }: HeaderAttendanceTimerProp
       </button>
 
       {open && (
-        <div className="absolute inset-e-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] z-50 [&>div]:shadow-xl">
+        <div
+          className="fixed inset-x-4 top-[4.5rem] z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto
+                     sm:absolute sm:inset-x-auto sm:inset-e-0 sm:top-full sm:mt-2 sm:w-80 sm:max-h-none
+                     [&>div]:shadow-xl"
+        >
           <WorkTimerCard variant="card" layoutScope={layoutScope} showExceptionLink />
         </div>
       )}

@@ -11,6 +11,7 @@ import { UserRoleBadges }             from '@/shared/components/auth';
 import { useNotifications }           from '@/shared/hooks/useNotifications';
 import { NotificationDropdown }       from './NotificationDropdown';
 import { HeaderAttendanceTimer }      from './HeaderAttendanceTimer';
+import { LogoutAttendanceChoiceModal } from '@/shared/modules/attendance/components/LogoutAttendanceChoiceModal';
 import type { AttendanceScope }       from '@/shared/modules/attendance/types/attendanceTimer.types';
 import { resolveNotificationPath, getMessagesRoute } from '@/shared/utils/notificationNavigation.utils';
 import { parseBackendTimestamp }      from '@/shared/utils/date.utils';
@@ -32,9 +33,26 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
   const qc                      = useQueryClient();
   const isAr = lang === 'ar';
 
-  const [open,          setOpen]          = useState(false);
-  const [notifOpen,     setNotifOpen]     = useState(false);
-  const [showChangePwd, setShowChangePwd] = useState(false);
+  const [open,           setOpen]           = useState(false);
+  const [notifOpen,      setNotifOpen]      = useState(false);
+  const [showChangePwd,  setShowChangePwd]  = useState(false);
+  const [showLogoutChoice, setShowLogoutChoice] = useState(false);
+
+  const needsAttendanceLogoutChoice = Boolean(layoutScope) && !user?.isSuperAdmin;
+
+  async function completeLogout() {
+    await logout();
+    navigate(ROUTES.AUTH.LOGIN);
+  }
+
+  function handleLogoutClick() {
+    setOpen(false);
+    if (needsAttendanceLogoutChoice) {
+      setShowLogoutChoice(true);
+      return;
+    }
+    void completeLogout();
+  }
 
   const { notifications, unreadCount, justArrived, markRead, markAllRead } = useNotifications();
   const [ringing, setRinging] = useState(false);
@@ -134,13 +152,12 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
           <Menu size={18} />
         </button>
 
-        <div className="hidden sm:flex flex-col leading-snug">
-          <span className="flex items-center gap-1"
-            style={{ fontSize: '12px', fontWeight: 400, color: '#595959' }}>
+        <div className="hidden sm:flex flex-col leading-snug min-w-0">
+          <span className="flex items-center gap-1 text-xs font-normal text-gray-500 dark:text-gray-400">
             {isAr ? 'مرحباً بعودتك' : 'Welcome back'}
-            <span style={{ color: '#A0CD39', fontSize: '14px' }}>👋</span>
+            <span className="text-sm text-[#A0CD39]" aria-hidden>👋</span>
           </span>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: '#1E293B' }}>
+          <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate max-w-[14rem]">
             {user?.fullName ?? ''}
           </span>
           <UserRoleBadges className="mt-0.5" />
@@ -279,7 +296,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
               <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
 
               <button type="button"
-                onClick={async () => { await logout(); navigate(ROUTES.AUTH.LOGIN); }}
+                onClick={handleLogoutClick}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm
                            text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                 <LogOut size={16} className="shrink-0" />
@@ -298,6 +315,16 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
       onClose={() => setShowChangePwd(false)}
       isAr={isAr}
     />
+
+    {needsAttendanceLogoutChoice && (
+      <LogoutAttendanceChoiceModal
+        open={showLogoutChoice}
+        onClose={() => setShowLogoutChoice(false)}
+        onComplete={completeLogout}
+        layoutScope={layoutScope}
+        isAr={isAr}
+      />
+    )}
     </>
   );
 }

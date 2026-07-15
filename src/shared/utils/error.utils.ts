@@ -56,3 +56,31 @@ export function extractApiError(error: unknown): string {
 
   return data?.message ?? 'An unexpected error occurred.';
 }
+
+/** Domain-specific toasts for messenger / task-comment edit failures. */
+export function extractEditApiError(
+  error: unknown,
+  opts: { isAr?: boolean; kind: 'message' | 'comment' },
+): string {
+  const status = extractApiStatus(error);
+  const isAr = !!opts.isAr;
+  const field = extractApiFieldErrors(error).body
+    ?? Object.values(extractApiFieldErrors(error))[0];
+
+  if (status === 403) {
+    return opts.kind === 'message'
+      ? (isAr ? 'يمكنك تعديل رسائلك فقط' : 'You can only edit your own messages')
+      : (isAr ? 'يمكنك تعديل تعليقاتك فقط' : 'You can only edit your own comments');
+  }
+  if (status === 404) {
+    return opts.kind === 'message'
+      ? (isAr ? 'الرسالة غير موجودة' : 'Message not found')
+      : (isAr ? 'التعليق غير موجود' : 'Comment not found');
+  }
+  if (status === 422) {
+    return field
+      ?? extractApiError(error)
+      ?? (isAr ? 'تعذر حفظ التعديل' : 'Could not save edit');
+  }
+  return extractApiError(error);
+}

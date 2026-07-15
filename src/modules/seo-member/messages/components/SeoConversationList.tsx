@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MessageSquare, Plus, UsersRound, X } from 'lucide-react';
 import { SearchInput } from '@/shared/components/form/SearchInput';
 import { matchesSearch } from '@/shared/utils/search.utils';
+import { voiceMessageLabel } from '@/shared/utils/messagePreview.utils';
 import type { SeoConversation, SeoConversationType } from '../types/messages.types';
 
 const AVATAR_COLORS = [
@@ -30,6 +31,15 @@ function conversationTitle(conv: SeoConversation, isAr: boolean) {
     return conv.name?.trim() || (isAr ? 'جروب' : 'Group');
   }
   return conv.participant?.name?.trim() || conv.name?.trim() || (isAr ? 'محادثة' : 'Chat');
+}
+
+function formatLastMessage(raw: string | null | undefined, isAr: boolean) {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (/^voice message$/i.test(trimmed) || trimmed === 'رسالة صوتية') {
+    return voiceMessageLabel(isAr);
+  }
+  return trimmed;
 }
 
 type TypeFilter = 'all' | SeoConversationType;
@@ -203,7 +213,7 @@ export function SeoConversationList({
             const title = conversationTitle(conv, isAr);
             const initial = title.charAt(0).toUpperCase();
             const color = avatarColor(conv.id);
-            const preview = conv.lastMessage ?? '';
+            const preview = formatLastMessage(conv.lastMessage, isAr);
             const time = fmtTime(conv.lastMessageAt, isAr);
             const unread = conv.unreadCount ?? 0;
             const isActive = activeId === conv.id;

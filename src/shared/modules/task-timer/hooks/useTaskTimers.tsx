@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { pmTaskTimerApi, seoTaskTimerApi } from '../api/taskTimer.api';
 import type { TaskTimeLog, TimerPortal } from '../types/taskTimer.types';
@@ -55,6 +56,7 @@ function toEntry(raw: TaskTimeLog, meta: TimerMeta): TimerEntry {
 }
 
 export function TaskTimersProvider({ children }: { children: ReactNode }) {
+  const qc = useQueryClient();
   const [timers, setTimers] = useState<Map<string, TimerEntry>>(new Map());
   // Keep a ref for async mutation callbacks so they always see the latest map
   // without closing over a stale render. Sync during render (not in an effect)
@@ -124,10 +126,19 @@ export function TaskTimersProvider({ children }: { children: ReactNode }) {
     try {
       await apiFor(entry.portal).stop(entry.projectId, taskId, entry.id);
       putTimer(taskId, null);
+      if (entry.portal === 'seo') {
+        qc.invalidateQueries({ queryKey: ['seo-member', 'task-sessions', entry.projectId, taskId] });
+        qc.invalidateQueries({ queryKey: ['seo-task-time-logs', entry.projectId, taskId] });
+        qc.invalidateQueries({ queryKey: ['seo-member', 'task-detail', entry.projectId, taskId] });
+      } else {
+        qc.invalidateQueries({ queryKey: ['task-sessions', entry.projectId, taskId] });
+        qc.invalidateQueries({ queryKey: ['task-detail', entry.projectId, taskId] });
+        qc.invalidateQueries({ queryKey: ['pm-task-detail', entry.projectId, taskId] });
+      }
     } catch {
       toast.error('Failed to stop timer');
     }
-  }, []);
+  }, [qc]);
 
   return (
     <TaskTimersContext.Provider value={{ timers, getTimer, startTimer, pauseTimer, resumeTimer, stopTimer }}>

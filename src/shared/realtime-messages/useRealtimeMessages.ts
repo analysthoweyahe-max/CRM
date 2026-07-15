@@ -14,7 +14,7 @@ import { parseRealtimeMessagePayload } from './refreshRealtimeMessages';
 
 /**
  * Pusher Echo listener:
- * Echo.private(`user.${actor}.${uuid}`).listen('.message.sent', handler)
+ * Echo.private(`user.${actor}.${uuid}`).listen('.message.sent' | '.message.updated', handler)
  *
  * Tracks subscription health so open chats can fall back to fast polling.
  */
@@ -60,15 +60,19 @@ export function useRealtimeMessages(
       markEchoSubscribed();
     });
 
-    channel.listen('.message.sent', (event: RealtimeMessagePayload) => {
-      if (env.isDev) console.log('[Echo] message.sent', event);
+    const onEvent = (label: string) => (event: RealtimeMessagePayload) => {
+      if (env.isDev) console.log(`[Echo] ${label}`, event);
       markEchoSubscribed();
       onMessageRef.current(parseRealtimeMessagePayload(event));
-    });
+    };
+
+    channel.listen('.message.sent', onEvent('message.sent'));
+    channel.listen('.message.updated', onEvent('message.updated'));
 
     return () => {
       try {
         channel.stopListening('.message.sent');
+        channel.stopListening('.message.updated');
         echo.leave(channelName);
       } catch {
         /* ignore teardown errors */

@@ -38,6 +38,22 @@ export interface TaskComment {
   createdAt: string;
   isMine:    boolean;
   mentions?: MentionRef[];
+  isEdited?: boolean;
+  editedAt?: string | null;
+  /** Nested replies (one level from API). */
+  replies?:  TaskComment[];
+}
+
+export interface SendCommentPayload {
+  body:      string;
+  parentId?: string;
+  mentions?: MentionRef[];
+}
+
+export interface EditCommentPayload {
+  id:        string;
+  body:      string;
+  mentions?: MentionRef[];
 }
 
 export interface TaskSession {
@@ -46,4 +62,13 @@ export interface TaskSession {
   from:          string;
   to:            string;
   durationHours: number;
+}
+
+/** Summary returned by GET .../time-logs — prefer over local sums when present. */
+export interface TaskTimeLogSummary {
+  sessions:         TaskSession[];
+  totalHours:       number;
+  estimatedHours:   number;
+  remainingHours:   number;
+  progressPercent:  number;
 }

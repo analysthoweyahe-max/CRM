@@ -1,5 +1,10 @@
 import { http } from '@/shared/services/http.service';
 import { getAvatarColor } from '@/shared/utils/avatar.utils';
+import { toMentionRefs } from '@/shared/utils/mentionComposer.utils';
+import {
+  isSameActorId,
+  normalizeTaskCommentFields,
+} from '@/shared/utils/chatNormalize.utils';
 import type { TaskDetail, TaskComment, TaskSession, UpdateTaskPayload } from '../types/taskDetail.types';
 import type { EmpTaskStatus, EmpTaskPriority } from '../types/employeeTask.types';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
@@ -133,10 +138,16 @@ interface RawCommentSender {
 }
 
 interface RawComment {
-  id:     number;
-  body:   string;
-  sender: RawCommentSender;
-  sentAt: string;
+  id:        number;
+  body:      string;
+  sender:    RawCommentSender;
+  sentAt:    string;
+  mentions?: unknown[];
+  editedAt?: string | null;
+  edited_at?: string | null;
+  isEdited?: boolean;
+  is_edited?: boolean;
+  replies?: RawComment[];
 }
 
 interface RawCommentListResponse {
@@ -156,7 +167,11 @@ interface RawCommentCreateResponse {
   data:    RawComment;
 }
 
-function toComment(raw: RawComment, currentUserId: string | undefined): TaskComment {
+function toComment(
+  raw: RawComment,
+  user?: { id?: string | null; employeeId?: string | null } | null,
+): TaskComment {
+  const edit = normalizeTaskCommentFields(raw);
   return {
     id:        String(raw.id),
     authorAr:  raw.sender.name,
@@ -165,7 +180,11 @@ function toComment(raw: RawComment, currentUserId: string | undefined): TaskComm
     avatarBg:  getAvatarColor(raw.sender.name),
     body:      raw.body,
     createdAt: raw.sentAt,
-    isMine:    !!currentUserId && raw.sender.id === currentUserId,
+    isMine:    isSameActorId(raw.sender.id, user),
+    mentions:  edit.mentions ?? toMentionRefs(raw.mentions),
+    isEdited:  edit.isEdited,
+    editedAt:  edit.editedAt,
+    replies:   (raw.replies ?? []).map(r => toComment(r, user)),
   };
 }
 
@@ -199,21 +218,52 @@ export const taskDetailApi = {
     return { data: toTaskDetail(res.data.data, projectId) };
   },
 
-  async getComments(projectId: string, taskId: string, currentUserId: string | undefined): Promise<{ data: TaskComment[] }> {
+  async getComments(
+    projectId: string,
+    taskId: string,
+    user?: { id?: string | null; employeeId?: string | null } | null,
+  ): Promise<{ data: TaskComment[] }> {
     const res = await http.get<RawCommentListResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/comments`);
-    return { data: res.data.data.data.map(c => toComment(c, currentUserId)) };
+    return { data: res.data.data.data.map(c => toComment(c, user)) };
   },
 
   async createComment(
-    projectId: string, taskId: string, body: string, currentUserId: string | undefined,
+    projectId: string,
+    taskId: string,
+    payload: { body: string; parentId?: string | number; mentions?: Array<{ type: string; id: string }> },
+    user?: { id?: string | null; employeeId?: string | null } | null,
   ): Promise<{ data: TaskComment }> {
-    const res = await http.post<RawCommentCreateResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/comments`, { body });
-    return { data: toComment(res.data.data, currentUserId) };
+    const res = await http.post<RawCommentCreateResponse>(
+      `/v1/pm/projects/${projectId}/tasks/${taskId}/comments`,
+      {
+        body: payload.body,
+        ...(payload.parentId != null ? { parent_id: payload.parentId } : {}),
+        ...(payload.mentions?.length ? { mentions: payload.mentions } : {}),
+      },
+    );
+    return { data: toComment(res.data.data, user) };
   },
 
-  async getSessions(projectId: string, taskId: string): Promise<{ data: TaskSession[] }> {
+  async updateComment(
+    projectId: string,
+    taskId: string,
+    commentId: string,
+    payload: { body: string; mentions?: Array<{ type: string; id: string }> },
+    user?: { id?: string | null; employeeId?: string | null } | null,
+  ): Promise<{ data: TaskComment }> {
+    const res = await http.put<RawCommentCreateResponse>(
+      `/v1/pm/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+      {
+        body: payload.body,
+        ...(payload.mentions?.length ? { mentions: payload.mentions } : {}),
+      },
+    );
+    return { data: toComment(res.data.data, user) };
+  },
+
+  async getSessions(projectId: string, taskId: string): Promise<{ data: unknown }> {
     const res = await http.get<RawTimeLogListResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/time-logs`);
-    return { data: res.data.data.sessions.map(toSession) };
+    return { data: res.data.data };
   },
 
   async createSession(

@@ -18,6 +18,7 @@ import {
   useUpdateSeoTaskStatus,
   useSeoTaskComments,
   useAddSeoTaskComment,
+  useUpdateSeoTaskComment,
   useSeoTaskSessions,
   useCreateSeoTaskSession,
   useDeleteSeoTaskSession,
@@ -45,7 +46,13 @@ export function SeoTaskDetailPage() {
 
   const { data: comments = [], isLoading: commentsLoading } = useSeoTaskComments(projectId, taskId);
   const { mutateAsync: addComment } = useAddSeoTaskComment(projectId, taskId, isAr);
-  const { data: sessions = [], isLoading: sessionsLoading } = useSeoTaskSessions(projectId, taskId);
+  const { mutateAsync: updateComment } = useUpdateSeoTaskComment(projectId, taskId, isAr);
+  const { data: timeLogs, isLoading: sessionsLoading } = useSeoTaskSessions(
+    projectId,
+    taskId,
+    detail?.allocatedHours ?? 0,
+  );
+  const sessions = timeLogs?.sessions ?? [];
   const createSessionMutation = useCreateSeoTaskSession(projectId ?? '', taskId ?? '');
   const deleteSessionMutation = useDeleteSeoTaskSession(projectId ?? '', taskId ?? '');
   const { mutate: changeStatus } = useUpdateSeoTaskStatus(projectId, taskId, isAr);
@@ -113,7 +120,7 @@ export function SeoTaskDetailPage() {
         onEdit={() => setEditOpen(true)}
       />
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-visible">
         <TaskDetailTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -126,6 +133,7 @@ export function SeoTaskDetailPage() {
             <TaskDetailTimeTracker
               task={taskDetailAdapter}
               sessions={sessions}
+              summary={timeLogs ?? null}
               isLoading={isLoading || sessionsLoading}
               isAr={isAr}
               projectId={projectId}
@@ -156,7 +164,13 @@ export function SeoTaskDetailPage() {
               comments={comments}
               isLoading={isLoading || commentsLoading}
               isAr={isAr}
-              onSend={(body) => addComment(body)}
+              onSend={(payload) => addComment(payload)}
+              onEdit={(payload) => updateComment(payload)}
+              mentionables={mentionables.map(m => ({
+                id: m.id,
+                name: m.name,
+                type: m.type ?? 'employee',
+              }))}
               getMentionInfo={getMentionInfo}
               onMentionStartChat={handleMentionStartChat}
             />

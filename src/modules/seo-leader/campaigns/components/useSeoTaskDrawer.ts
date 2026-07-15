@@ -1,7 +1,11 @@
 import { useState, useEffect }                  from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast }                                 from 'sonner';
-import { extractApiError }                       from '@/shared/utils/error.utils';
+import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
+import {
+  isSameActorId,
+  normalizeTaskCommentFields,
+} from '@/shared/utils/chatNormalize.utils';
 import { campaignApi }                           from '../api/campaign.api';
 import type { SeoComment }                       from '../api/campaign.api'; // used in extractComments + toTaskComment
 import type { SeoDrawerTab }                     from './SeoTaskModal.types';
@@ -9,6 +13,7 @@ import type { ComboboxItem }                     from '@/shared/components/form/
 import type { TaskComment, TimeSession }         from '@/modules/project-manager/tasks/types/taskModal.types';
 import type { ExtendDeadlinePayload }            from '@/shared/components/form/ExtendDeadlineModal';
 import type { MentionRef }                       from '@/shared/components/chat';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 
 function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
   const refs = (raw ?? [])
@@ -26,15 +31,6 @@ function colorFor(name: string) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
-function fmtDateLabel(iso?: string) {
-  if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleDateString('ar-EG', {
-      day: 'numeric', month: 'long', year: 'numeric',
-    });
-  } catch { return iso; }
-}
-
 /* Backend: { data: { data: [...comments], current_page, last_page, total } }
    After .then(r => r.data.data) the value is the paginated wrapper object.     */
 function extractComments(raw: unknown): SeoComment[] {
@@ -45,16 +41,24 @@ function extractComments(raw: unknown): SeoComment[] {
   return [];
 }
 
-function toTaskComment(c: SeoComment): TaskComment {
+function toTaskComment(
+  c: SeoComment,
+  user?: { id?: string | null; employeeId?: string | null } | null,
+): TaskComment {
   const name = c.sender?.name ?? 'مجهول';
+  const edit = normalizeTaskCommentFields(c);
   return {
     id:            String(c.id),
     author:        name,
     authorInitial: name[0]?.toUpperCase() ?? '?',
     authorColor:   colorFor(name),
     text:          c.body,
-    dateLabel:     fmtDateLabel(c.sentAt),
-    mentions:      toMentionRefs(c.mentions),
+    dateLabel:     c.sentAt ?? '',
+    isMine:        isSameActorId(c.sender?.id, user),
+    mentions:      edit.mentions ?? toMentionRefs(c.mentions),
+    isEdited:      edit.isEdited,
+    editedAt:      edit.editedAt,
+    replies:       (c.replies ?? []).map(r => toTaskComment(r, user)),
   };
 }
 
@@ -65,6 +69,7 @@ export function useSeoTaskDrawer(
   isAr:      boolean,
 ) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   /* ── Tab ───────────────────────────────────────────────────────────── */
   const [tab,        setTab]        = useState<SeoDrawerTab>('info');
@@ -107,7 +112,7 @@ export function useSeoTaskDrawer(
     refetchInterval: 15_000,
   });
 
-  const comments: TaskComment[] = extractComments(rawComments).map(toTaskComment);
+  const comments: TaskComment[] = extractComments(rawComments).map(c => toTaskComment(c, user));
 
   /* ── Mentionables (for resolving @mention names/avatars in comments) ─── */
   const { data: mentionablesRaw } = useQuery({
@@ -243,11 +248,26 @@ export function useSeoTaskDrawer(
 
   /* ── Add comment ────────────────────────────────────────────────────── */
   const commentMutation = useMutation({
-    mutationFn: (text: string) =>
-      campaignApi.addComment(projectId, taskId!, text),
+    mutationFn: ({ text, parentId, mentions }: { text: string; parentId?: string; mentions?: Array<{ type: string; id: string }> }) =>
+      campaignApi.addComment(projectId, taskId!, text, { parentId, mentions }),
     onSuccess: () => {
       setCommentText('');
       queryClient.invalidateQueries({ queryKey: ['seo-task-comments', projectId, taskId] });
+    },
+  });
+
+  const updateCommentMutation = useMutation({
+    mutationFn: ({ id, body, mentions }: { id: string; body: string; mentions?: Array<{ type: string; id: string }> }) =>
+      campaignApi.updateComment(projectId, taskId!, id, { body, mentions }),
+    onSuccess: () => {
+      setCommentText('');
+      queryClient.invalidateQueries({ queryKey: ['seo-task-comments', projectId, taskId] });
+    },
+    onError: (err) => {
+      if (extractApiStatus(err) === 404) {
+        queryClient.invalidateQueries({ queryKey: ['seo-task-comments', projectId, taskId] });
+      }
+      toast.error(extractEditApiError(err, { isAr, kind: 'comment' }));
     },
   });
 
@@ -317,10 +337,16 @@ export function useSeoTaskDrawer(
     }
   }
 
-  function handleAddComment() {
+  function handleAddComment(parentId?: string, mentions?: Array<{ type: string; id: string }>) {
     const trimmed = commentText.trim();
     if (!trimmed) return;
-    commentMutation.mutate(trimmed);
+    commentMutation.mutate({ text: trimmed, parentId, mentions });
+  }
+
+  function handleUpdateComment(id: string, body: string, mentions?: Array<{ type: string; id: string }>) {
+    const trimmed = body.trim();
+    if (!trimmed) return;
+    updateCommentMutation.mutate({ id, body: trimmed, mentions });
   }
 
   return {
@@ -361,7 +387,9 @@ export function useSeoTaskDrawer(
     commentText,
     setCommentText,
     addComment: handleAddComment,
+    updateComment: handleUpdateComment,
     isAddingComment: commentMutation.isPending,
+    isUpdatingComment: updateCommentMutation.isPending,
     sessions, totalHours, estimatedHours, remainingHours, progress,
     addTimeLog: (payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) =>
       timeLogMutation.mutate(payload),

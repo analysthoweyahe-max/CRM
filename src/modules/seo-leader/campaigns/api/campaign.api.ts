@@ -130,6 +130,11 @@ export interface SeoComment {
   mentions:    unknown[];
   attachments: unknown[];
   sentAt:      string;
+  editedAt?:   string | null;
+  edited_at?:  string | null;
+  isEdited?:   boolean;
+  is_edited?:  boolean;
+  replies?:    SeoComment[];
 }
 
 export interface SeoCommentsPage {
@@ -562,15 +567,34 @@ export const campaignApi = {
     );
   },
 
-  addComment(projectId: string | number, taskId: string | number, body: string) {
+  addComment(
+    projectId: string | number,
+    taskId: string | number,
+    body: string,
+    opts?: { parentId?: string | number; mentions?: Array<{ type: string; id: string }> },
+  ) {
     return http.post<ApiResponse<{ comment: SeoComment }>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`, { body }
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments`,
+      {
+        body,
+        ...(opts?.parentId != null ? { parent_id: opts.parentId } : {}),
+        ...(opts?.mentions?.length ? { mentions: opts.mentions } : {}),
+      },
     );
   },
 
-  updateComment(projectId: string | number, taskId: string | number, commentId: string | number, body: string) {
+  updateComment(
+    projectId: string | number,
+    taskId: string | number,
+    commentId: string | number,
+    payload: { body: string; mentions?: Array<{ type: string; id: string }> },
+  ) {
     return http.put<ApiResponse<SeoCommentsPage>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments/${commentId}`, { body }
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+      {
+        body: payload.body,
+        ...(payload.mentions?.length ? { mentions: payload.mentions } : {}),
+      },
     );
   },
 

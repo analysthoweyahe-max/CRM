@@ -1,9 +1,12 @@
 export {
   REALTIME_MESSAGE_TYPES,
+  REALTIME_MESSAGE_UPDATED_TYPES,
   isRealtimeMessageType,
+  isRealtimeMessageUpdatedType,
   type RealtimeMessagePayload,
   type RealtimeMessageType,
   type RealtimeMessageSender,
+  type RealtimeMessageUpdatedType,
 } from './messageRealtime.types';
 
 export {

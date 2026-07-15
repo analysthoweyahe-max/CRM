@@ -28,5 +28,10 @@ export interface TaskComment {
   authorColor:   string;
   text:          string;
   dateLabel:     string;
+  isMine?:       boolean;
   mentions?:     MentionRef[];
+  isEdited?:     boolean;
+  editedAt?:     string | null;
+  /** Nested replies (one level from API). */
+  replies?:      TaskComment[];
 }

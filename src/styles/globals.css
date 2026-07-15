@@ -27,8 +27,20 @@
   --color-card-border:     #F1F5F9;
   --color-page-bg:         #F8FAFC;
 
+  /* ── Scrollbar ──────────────────────────────────── */
+  --scrollbar-size:        8px;
+  --scrollbar-track:       #F1F5F9;
+  --scrollbar-thumb:       #C8D0DA;
+  --scrollbar-thumb-hover: #A0CD39;
+
   /* Base font scale — 18px instead of browser default 16px */
   font-size: 18px;
+}
+
+.dark {
+  --scrollbar-track:       #1f2937;
+  --scrollbar-thumb:       #4b5563;
+  --scrollbar-thumb-hover: #709028;
 }
 
 @keyframes fadeInUp {
@@ -68,4 +80,62 @@ body {
   font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Global custom scrollbar (no arrow buttons) ───── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-button:vertical:start:decrement,
+*::-webkit-scrollbar-button:vertical:end:increment,
+*::-webkit-scrollbar-button:horizontal:start:decrement,
+*::-webkit-scrollbar-button:horizontal:end:increment {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Hide scrollbar inside text areas (content still scrolls) */
+textarea {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+textarea::-webkit-scrollbar,
+textarea::-webkit-scrollbar-button,
+textarea::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-thumb {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }

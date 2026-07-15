@@ -29,7 +29,12 @@ export function parseRealtimeMessagePayload(
   out.conversationId = readId(out.conversationId, out.conversation_id);
   out.projectId = readId(out.projectId, out.project_id);
   out.phaseId = readId(out.phaseId, out.phase_id);
-  out.messageId = readId(out.messageId, out.message_id);
+  out.messageId = readId(out.messageId, out.message_id, out.id);
+
+  // Normalize edit fields for `.message.updated`
+  const editedAt = readId(out.editedAt, out.edited_at);
+  if (editedAt) out.editedAt = editedAt;
+  if (out.is_edited != null && out.isEdited == null) out.isEdited = out.is_edited;
 
   return out;
 }

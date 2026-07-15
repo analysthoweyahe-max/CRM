@@ -14,26 +14,10 @@ import type {
   RoleDetail,
 } from '@/modules/auth/types/auth.types';
 import { mapRolesToAppRole } from '@/shared/types/role.types';
-import type { Role } from '@/shared/types/role.types';
-import { attendanceTimerApi } from '@/shared/modules/attendance/api/attendanceTimer.api';
-import {
-  attendanceCheckOutPath,
-  canOfferCheckOut,
-  resolveAttendanceScope,
-  withAnytimeAttendanceActions,
-} from '@/shared/modules/attendance/utils/attendanceTimer.utils';
 import { resetFcmRegistration } from '@/shared/services/fcm.service';
 import { disconnectEcho } from '@/shared/realtime-messages';
 import { queryClient } from '@/app/providers/QueryProvider';
 import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
-
-/** Portals that use personal attendance (employee / PM / SEO). */
-const ATTENDANCE_LOGOUT_ROLES = new Set<Role>([
-  'employee',
-  'manager',
-  'seo-leader',
-  'seo-member',
-]);
 
 type AccountType = 'employee' | 'admin';
 
@@ -698,35 +682,9 @@ async function deleteAvatar(): Promise<AuthUser> {
   return user;
 }
 
-/**
- * Auto check-out when leaving any employee attendance portal so the session
- * is not left open after logout. Never blocks logout on failure.
- */
-async function checkOutBeforeLogout(user: AuthUser): Promise<void> {
-  if (user.isSuperAdmin) return;
-  if (!ATTENDANCE_LOGOUT_ROLES.has(user.role)) return;
-
-  const scope = resolveAttendanceScope(user.role, user.section);
-  try {
-    const res = await attendanceTimerApi.today(scope);
-    const today = res.data.data
-      ? withAnytimeAttendanceActions(res.data.data)
-      : null;
-    if (!canOfferCheckOut(today)) return;
-
-    const url = today?.checkOutUrl ?? attendanceCheckOutPath(scope);
-    await attendanceTimerApi.action(url);
-  } catch {
-    // Ignore — already checked out, not checked in, or network error.
-  }
-}
-
 async function logout(): Promise<void> {
   const stored = getStoredUser();
   try {
-    if (stored) {
-      await checkOutBeforeLogout(stored);
-    }
     if (stored?.actor === 'employee') {
       await authApi.employeeLogout();
     } else {

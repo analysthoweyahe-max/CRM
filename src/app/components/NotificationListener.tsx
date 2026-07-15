@@ -132,7 +132,7 @@ export function NotificationListener() {
 
     const result = applyRealtimeMessage(qc, payload, user?.id);
 
-    if (result.skippedOwn) {
+    if (result.skippedOwn || result.isUpdate) {
       handlePushRefresh();
       return;
     }

@@ -2,23 +2,30 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   AtSign,
+  Mic,
   MessageSquare,
   Menu,
   Paperclip,
+  Pencil,
   Reply,
   Send,
   Smile,
+  Square,
   Users,
   X,
 } from 'lucide-react';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { useAuth } from '@/modules/auth/context/AuthContext';
-import { ChatAttachments, MessageBodyText } from '@/shared/components/chat';
+import { ChatAttachments, MessageBodyText, VoiceMessagePlayer } from '@/shared/components/chat';
 import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import { setOpenConversation } from '@/shared/realtime-messages';
 import { extractApiError } from '@/shared/utils/error.utils';
+import { messageSnippet } from '@/shared/utils/messagePreview.utils';
+import { messageWasEdited } from '@/shared/utils/mentionComposer.utils';
 import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
+import { useVoiceRecorder } from '@/shared/hooks/useVoiceRecorder';
 import { getPastedImageFile } from '@/shared/utils/clipboardImage.utils';
+import { toast } from 'sonner';
 import { CreateSeoGroupModal } from '../components/CreateSeoGroupModal';
 import { NewSeoConversationModal } from '../components/NewSeoConversationModal';
 import { SeoConversationList } from '../components/SeoConversationList';
@@ -28,6 +35,7 @@ import {
   useSeoConversation,
   useSeoMessages,
   useSendSeoMessage,
+  useEditSeoMessage,
   useReactSeoMessage,
   useMarkSeoRead,
   useSeoMentionables,
@@ -62,6 +70,17 @@ function replyPreview(msg: SeoMessage) {
   return msg.replyTo ?? msg.reply_to ?? null;
 }
 
+function messageDuration(msg: SeoMessage): number | undefined {
+  const d = msg.durationSeconds ?? msg.duration_seconds;
+  return d != null ? Number(d) : undefined;
+}
+
+function formatRecordingTime(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 interface ChatProps {
   conversation: SeoConversation;
   isAr:         boolean;
@@ -75,6 +94,7 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
   const { user }  = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
+  const messageElRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   /** Backend sender.id is the actor UUID — match AuthUser.id, not employeeNumber. */
   const currentUserId = user?.id ?? '';
 
@@ -83,8 +103,11 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
   const [mentionRefs, setMentionRefs] = useState<SeoMentionable[]>([]);
   const [showMembers, setShowMembers] = useState(false);
   const [replyTo, setReplyTo] = useState<SeoMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<SeoMessage | null>(null);
   const [reactionFor, setReactionFor] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const textareaRef = useAutoResizeTextarea(text);
+  const voice = useVoiceRecorder();
 
   const isGroup = conversation.type === 'group';
 
@@ -93,6 +116,7 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
 
   const { data: messages = [], isLoading } = useSeoMessages(conversation.id);
   const { mutate: sendMessage, isPending: sending } = useSendSeoMessage(conversation.id);
+  const { mutate: editMessage, isPending: editing } = useEditSeoMessage(conversation.id, isAr);
   const { mutate: reactToMessage, isPending: reacting } = useReactSeoMessage(conversation.id);
   const { mutate: markRead } = useMarkSeoRead();
   const { data: mentionables = [] } = useSeoMentionables(showMentions);
@@ -128,8 +152,15 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
     setShowMentions(false);
     setMentionRefs([]);
     setReplyTo(null);
+    setEditingMessage(null);
     setReactionFor(null);
+    setHighlightId(null);
+    voice.cancel();
   }, [conversation.id]);
+
+  useEffect(() => {
+    if (voice.error) toast.error(voice.error);
+  }, [voice.error]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -146,15 +177,61 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
       .map(m => ({ type: m.type, id: m.id }));
   }
 
-  function handleSend() {
-    const body = text.trim();
-    if ((!body && !replyTo) || sending) return;
-    if (!body) return;
-    const mentions = activeMentions(body);
+  function scrollToMessage(id: number | string) {
+    const key = String(id);
+    const el = messageElRefs.current.get(key);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightId(key);
+    window.setTimeout(() => {
+      setHighlightId(prev => (prev === key ? null : prev));
+    }, 1600);
+  }
+
+  function clearComposer() {
     setText('');
     setMentionRefs([]);
-    const parentId = replyTo?.id;
     setReplyTo(null);
+    setEditingMessage(null);
+    setShowMentions(false);
+  }
+
+  function canEditMessage(msg: SeoMessage, isOwn: boolean) {
+    // Text-only: API returns 422 for voice / non-text. Hide edit when no editable body.
+    const type = msg.type ?? 'text';
+    return isOwn && type === 'text' && !!msg.body?.trim();
+  }
+
+  function startEdit(msg: SeoMessage) {
+    setReplyTo(null);
+    setEditingMessage(msg);
+    setText(msg.body ?? '');
+    const refs = (msg.mentions ?? [])
+      .map(m => allMentionables.find(x => x.id === m.id && x.type === m.type))
+      .filter((m): m is SeoMentionable => !!m);
+    setMentionRefs(refs);
+    setShowMentions(false);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }
+
+  function handleSend() {
+    const body = text.trim();
+    if (!body || sending || editing || voice.isRecording) return;
+    const mentions = activeMentions(body);
+
+    if (editingMessage) {
+      editMessage(
+        {
+          messageId: editingMessage.id,
+          payload: { body, ...(mentions.length ? { mentions } : {}) },
+        },
+        { onSuccess: () => clearComposer() },
+      );
+      return;
+    }
+
+    const parentId = replyTo?.id;
+    clearComposer();
     sendMessage({
       body,
       ...(parentId != null ? { reply_to: parentId } : {}),
@@ -172,14 +249,16 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
     setShowMentions(false);
   }
 
-  function sendFile(file: File) {
+  function sendFile(file: File, opts?: { durationSeconds?: number }) {
     if (sending) return;
     const body = text.trim();
+    const mentions = body ? activeMentions(body) : [];
     sendMessage({
       body: body || undefined,
       file,
+      ...(opts?.durationSeconds != null ? { duration_seconds: opts.durationSeconds } : {}),
       ...(replyTo?.id != null ? { reply_to: replyTo.id } : {}),
-      ...(body ? (activeMentions(body).length ? { mentions: activeMentions(body) } : {}) : {}),
+      ...(mentions.length ? { mentions } : {}),
     });
     setText('');
     setMentionRefs([]);
@@ -198,6 +277,20 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
     if (!file) return;
     e.preventDefault();
     sendFile(file);
+  }
+
+  async function handleMicClick() {
+    if (sending) return;
+    if (!voice.isRecording) {
+      const ok = await voice.start();
+      if (!ok) {
+        toast.error(isAr ? 'تعذر بدء التسجيل' : 'Could not start recording');
+      }
+      return;
+    }
+    const result = await voice.stop();
+    if (!result) return;
+    sendFile(result.file, { durationSeconds: result.durationSeconds });
   }
 
   function handleReact(messageId: number | string, emoji: string) {
@@ -266,15 +359,25 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
             const isOwn = msg.isMine ?? (msg.sender.id === currentUserId);
             const quoted = replyPreview(msg);
             const msgKey = String(msg.id);
+            const isVoice = msg.type === 'voice';
+            const isHighlighted = highlightId === msgKey;
 
             return (
-              <div key={msg.id} className={`group flex ${isOwn ? 'justify-start' : 'justify-end'}`}>
+              <div
+                key={msg.id}
+                ref={(el) => {
+                  if (el) messageElRefs.current.set(msgKey, el);
+                  else messageElRefs.current.delete(msgKey);
+                }}
+                className={`group flex ${isOwn ? 'justify-start' : 'justify-end'}`}
+              >
                 <div className="relative max-w-[70%]">
                   <div className={[
-                    'rounded-2xl px-4 py-2.5 shadow-sm',
+                    'rounded-2xl px-4 py-2.5 shadow-sm transition-shadow duration-300',
                     isOwn
                       ? 'bg-[#A0CD39] text-gray-900 rounded-ss-sm'
                       : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-700/60 rounded-se-sm',
+                    isHighlighted ? 'ring-2 ring-[#709028] shadow-md' : '',
                   ].join(' ')}>
                     {!isOwn && isGroup && (
                       <p className="text-[11px] font-semibold text-[#709028] dark:text-[#A0CD39] mb-0.5">
@@ -283,20 +386,33 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
                     )}
 
                     {quoted && (
-                      <div className={`mb-2 px-2.5 py-1.5 rounded-lg border-s-2 text-[11px] leading-snug
-                                      ${isOwn
-                                        ? 'bg-white/25 border-gray-700/40'
-                                        : 'bg-gray-50 dark:bg-gray-700/60 border-[#A0CD39]'}`}>
+                      <button
+                        type="button"
+                        onClick={() => scrollToMessage(quoted.id)}
+                        className={`mb-2 w-full text-start px-2.5 py-1.5 rounded-lg border-s-2 text-[11px] leading-snug
+                                    ${isOwn
+                                      ? 'bg-white/25 border-gray-700/40'
+                                      : 'bg-gray-50 dark:bg-gray-700/60 border-[#A0CD39]'}`}
+                      >
                         <p className="font-semibold opacity-80 truncate">
                           {quoted.sender?.name ?? (isAr ? 'رسالة' : 'Message')}
                         </p>
                         <p className="opacity-70 line-clamp-2 whitespace-pre-wrap">
-                          {quoted.body?.trim() || (isAr ? 'مرفق' : 'Attachment')}
+                          {messageSnippet(quoted, isAr)}
                         </p>
-                      </div>
+                      </button>
                     )}
 
-                    <ChatAttachments attachments={msg.attachments ?? []} isOwn={isOwn} />
+                    {isVoice ? (
+                      <VoiceMessagePlayer
+                        url={msg.attachments?.[0]?.url}
+                        durationSeconds={messageDuration(msg)}
+                        isOwn={isOwn}
+                        isAr={isAr}
+                      />
+                    ) : (
+                      <ChatAttachments attachments={msg.attachments ?? []} isOwn={isOwn} />
+                    )}
 
                     {msg.body && (
                       <MessageBodyText
@@ -335,6 +451,9 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
 
                     <p className={`text-[10px] mt-1 text-end ${isOwn ? 'text-gray-700/70' : 'text-gray-400'}`}>
                       {fmtTime(msg, isAr)}
+                      {messageWasEdited(msg) && (
+                        <span className="ms-1 opacity-70">{isAr ? '· تم التعديل' : '· edited'}</span>
+                      )}
                     </p>
                   </div>
 
@@ -349,6 +468,17 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
                     >
                       <Reply size={12} />
                     </button>
+                    {canEditMessage(msg, isOwn) && (
+                      <button
+                        type="button"
+                        title={isAr ? 'تعديل' : 'Edit'}
+                        onClick={() => startEdit(msg)}
+                        className="w-7 h-7 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600
+                                   shadow-sm flex items-center justify-center text-gray-500 hover:text-[#709028]"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    )}
                     <div className="relative" data-reaction-menu>
                       <button
                         type="button"
@@ -388,6 +518,28 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
 
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700/60
                       bg-white dark:bg-gray-900 relative">
+        {editingMessage && (
+          <div className="mb-2 flex items-start gap-2 px-3 py-2 rounded-xl
+                          bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40">
+            <Pencil size={14} className="shrink-0 mt-0.5 text-amber-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 truncate">
+                {isAr ? 'تعديل الرسالة' : 'Editing message'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                {editingMessage.body}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => clearComposer()}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {replyTo && (
           <div className="mb-2 flex items-start gap-2 px-3 py-2 rounded-xl
                           bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
@@ -397,10 +549,7 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
                 {isAr ? 'الرد على' : 'Replying to'} {replyTo.sender.name}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-                {replyTo.body?.trim()
-                  || replyTo.attachments?.[0]?.name
-                  || replyTo.attachments?.[0]?.fileName
-                  || (isAr ? 'مرفق' : 'Attachment')}
+                {messageSnippet(replyTo, isAr)}
               </p>
             </div>
             <button
@@ -413,16 +562,33 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
           </div>
         )}
 
+        {voice.isRecording && (
+          <div className="mb-2 flex items-center gap-3 px-3 py-2 rounded-xl
+                          bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/40">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+            <p className="text-xs font-medium text-red-600 dark:text-red-400 tabular-nums flex-1">
+              {isAr ? 'جاري التسجيل' : 'Recording'} · {formatRecordingTime(voice.elapsedSeconds)}
+            </p>
+            <button
+              type="button"
+              onClick={() => voice.cancel()}
+              className="text-xs text-red-500 hover:text-red-700 font-medium"
+            >
+              {isAr ? 'إلغاء' : 'Cancel'}
+            </button>
+          </div>
+        )}
+
         <div className="flex items-end gap-2">
           <button
             type="button"
             onClick={handleSend}
-            disabled={!text.trim() || sending}
+            disabled={!text.trim() || sending || editing || voice.isRecording}
             className="w-10 h-10 rounded-full bg-[#A0CD39] hover:bg-[#709028]
                        flex items-center justify-center transition-colors shrink-0
                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {sending ? (
+            {sending || editing ? (
               <span className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
             ) : (
               <Send size={16} className="text-gray-900" style={{ transform: isAr ? 'scaleX(-1)' : 'none' }} />
@@ -436,22 +602,29 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
             onKeyDown={handleKey}
             onPaste={handlePaste}
             rows={1}
-            placeholder={isAr ? 'اكتب رسالة...' : 'Type a message...'}
+            disabled={voice.isRecording}
+            placeholder={voice.isRecording
+              ? (isAr ? 'جاري التسجيل...' : 'Recording...')
+              : editingMessage
+                ? (isAr ? 'عدّل الرسالة...' : 'Edit message...')
+                : (isAr ? 'اكتب رسالة...' : 'Type a message...')}
             className="flex-1 resize-none py-2.5 px-3 text-sm rounded-xl
                        bg-gray-50 dark:bg-gray-800
                        border border-gray-200 dark:border-gray-700
                        text-gray-800 dark:text-gray-100
                        placeholder:text-gray-400 dark:placeholder:text-gray-500
                        focus:outline-none focus:ring-2 focus:ring-[#A0CD39]/40
-                       max-h-28 overflow-y-auto"
+                       max-h-28 overflow-y-auto disabled:opacity-60"
           />
 
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowMentions(o => !o)}
+              disabled={voice.isRecording}
               className="w-8 h-8 rounded-full flex items-center justify-center
-                         text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 transition-colors"
+                         text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 transition-colors
+                         disabled:opacity-40"
             >
               <AtSign size={16} />
             </button>
@@ -480,8 +653,24 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
 
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => { void handleMicClick(); }}
             disabled={sending}
+            title={voice.isRecording
+              ? (isAr ? 'إيقاف وإرسال' : 'Stop & send')
+              : (isAr ? 'رسالة صوتية' : 'Voice message')}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors
+                        disabled:opacity-50
+                        ${voice.isRecording
+                          ? 'bg-red-500 text-white hover:bg-red-600'
+                          : 'text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40'}`}
+          >
+            {voice.isRecording ? <Square size={14} fill="currentColor" /> : <Mic size={16} />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={sending || voice.isRecording}
             className="w-8 h-8 rounded-full flex items-center justify-center
                        text-gray-400 hover:text-[#709028] hover:bg-[#D8EBAE]/40 transition-colors
                        disabled:opacity-50"
@@ -491,7 +680,7 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
           <input
             ref={fileRef}
             type="file"
-            accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+            accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,audio/*"
             className="hidden"
             onChange={handleFile}
           />
