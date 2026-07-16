@@ -1,7 +1,13 @@
-import { useQuery }                from '@tanstack/react-query';
-import { seoLeaderDashboardApi }   from '../api/seoLeaderDashboard.api';
-import { useArchivedSeoProjects }  from '../../campaigns/store/seoArchivedStore';
-import type { SeoCampaign }        from '../types/dashboard.types';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/modules/auth/context/AuthContext';
+import { campaignApi } from '../../campaigns/api/campaign.api';
+import { seoTeamApi } from '../../team/api/seoTeam.api';
+import { filterSeoTeamMembers } from '@/shared/modules/team/utils/teamScope.utils';
+import { normalizeGroupedTasks } from '@/shared/modules/my-tasks/utils/myTasks.utils';
+import { seoLeaderDashboardApi } from '../api/seoLeaderDashboard.api';
+import { useArchivedSeoProjects } from '../../campaigns/store/seoArchivedStore';
+import type { SeoCampaign, SeoManagerStats } from '../types/dashboard.types';
 
 export interface CampaignViewModel {
   id:                number;
@@ -41,27 +47,81 @@ function toCampaignVM(c: SeoCampaign): CampaignViewModel {
   };
 }
 
+function countPendingTasks(payload: unknown): number {
+  const grouped = normalizeGroupedTasks(payload);
+  return grouped.columns
+    .filter(col => col.status === 'pending')
+    .reduce((sum, col) => sum + col.tasks.length, 0);
+}
+
 export function useSeoLeaderDashboard() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['seo-leader', 'projects'],
-    queryFn:  () => seoLeaderDashboardApi.getProjects().then(r => r.data.data),
+  const { user } = useAuth();
+  const archivedIds = useArchivedSeoProjects();
+
+  const projectsQuery = useQuery({
+    queryKey:  ['seo-leader', 'projects'],
+    queryFn:   () => seoLeaderDashboardApi.getProjects({ per_page: 100 }).then(r => r.data.data),
     staleTime: 2 * 60 * 1000,
   });
 
-  const archivedIds = useArchivedSeoProjects();
-
-  const campaigns = (data?.data ?? []).map(c => {
-    const vm = toCampaignVM(c);
-    if (archivedIds.has(c.id)) return { ...vm, status: 'archived', statusLabel: 'مؤرشفة' };
-    return vm;
+  const completedProjectsQuery = useQuery({
+    queryKey:  ['seo-leader', 'projects', 'completed'],
+    queryFn:   () =>
+      seoLeaderDashboardApi
+        .getProjects({ status: 'completed', per_page: 1 })
+        .then(r => r.data.data.total ?? 0),
+    staleTime: 2 * 60 * 1000,
   });
 
-  const stats = {
-    total_projects:     campaigns.length,
-    active_employees:   0,
-    pending_tasks:      campaigns.filter(c => c.status === 'not_started').length,
-    completed_projects: campaigns.filter(c => c.status === 'completed').length,
+  const teamQuery = useQuery({
+    queryKey:  ['seo-leader', 'dashboard', 'team'],
+    queryFn:   () => seoTeamApi.getTeam({ per_page: 100 }).then(r => r.data.data),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const pendingTasksQuery = useQuery({
+    queryKey:  ['seo-leader', 'dashboard', 'pending-tasks'],
+    queryFn:   async () => {
+      const res = await campaignApi.listAllTasks({ per_page: 100 });
+      return countPendingTasks(res.data);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const campaigns = useMemo(() => {
+    return (projectsQuery.data?.data ?? []).map(c => {
+      const vm = toCampaignVM(c);
+      if (archivedIds.has(c.id)) return { ...vm, status: 'archived', statusLabel: 'مؤرشفة' };
+      return vm;
+    });
+  }, [projectsQuery.data, archivedIds]);
+
+  const activeEmployees = useMemo(() => {
+    const members = teamQuery.data?.data ?? [];
+    const scoped = filterSeoTeamMembers(members, {
+      viewerId: user?.employeeId,
+      isAdmin:  user?.role === 'admin',
+    });
+    return scoped.filter(m => m.isActive || m.status === 'active').length;
+  }, [teamQuery.data, user?.employeeId, user?.role]);
+
+  const stats: SeoManagerStats = {
+    total_projects:     projectsQuery.data?.total ?? campaigns.length,
+    active_employees:   activeEmployees,
+    pending_tasks:      pendingTasksQuery.data ?? 0,
+    completed_projects: completedProjectsQuery.data ?? 0,
   };
 
-  return { isLoading, isError, stats, campaigns };
+  const isLoading =
+    projectsQuery.isLoading
+    || completedProjectsQuery.isLoading
+    || teamQuery.isLoading
+    || pendingTasksQuery.isLoading;
+
+  return {
+    isLoading,
+    isError: projectsQuery.isError,
+    stats,
+    campaigns,
+  };
 }

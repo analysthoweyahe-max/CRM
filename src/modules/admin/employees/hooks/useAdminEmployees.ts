@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { employeeApi } from '@/modules/hr/employees/api/employee.api';
@@ -9,19 +10,29 @@ import type { AdminEmployee } from '../types/adminEmployee.types';
 
 const PAGE_SIZE = 7;
 const EMPLOYEES_KEY = ['admin', 'employees', 'list'];
+const STATUS_FILTERS = new Set(['active', 'inactive', 'pending']);
 
 export function useAdminEmployees(isAr: boolean) {
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFromUrl = searchParams.get('status') ?? '';
+  const initialStatus = STATUS_FILTERS.has(statusFromUrl) ? statusFromUrl : '';
 
   const [search,     setSearchRaw]     = useState('');
   const [department, setDepartmentRaw] = useState('');
   const [role,       setRoleRaw]       = useState('');
-  const [status,     setStatusRaw]     = useState('');
+  const [status,     setStatusRaw]     = useState(initialStatus);
   const [page,       setPage]          = useState(1);
 
   const [selected,      setSelected]      = useState<Set<string>>(new Set());
   const [pendingDelete, setPendingDelete] = useState<AdminEmployee | null>(null);
   const [showBulkDelete, setShowBulkDelete] = useState(false);
+
+  useEffect(() => {
+    const next = STATUS_FILTERS.has(statusFromUrl) ? statusFromUrl : '';
+    setStatusRaw(next);
+    setPage(1);
+  }, [statusFromUrl]);
 
   // No server-side role/status filters exist yet — fetch a large page once and filter client-side.
   const { data, isLoading } = useQuery({
@@ -54,7 +65,16 @@ export function useAdminEmployees(isAr: boolean) {
   function setSearch(v: string)     { setSearchRaw(v);     setPage(1); }
   function setDepartment(v: string) { setDepartmentRaw(v); setPage(1); }
   function setRole(v: string)       { setRoleRaw(v);       setPage(1); }
-  function setStatus(v: string)     { setStatusRaw(v);     setPage(1); }
+  function setStatus(v: string) {
+    setStatusRaw(v);
+    setPage(1);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (v) next.set('status', v);
+      else next.delete('status');
+      return next;
+    }, { replace: true });
+  }
 
   function toggleOne(id: string) {
     setSelected(prev => {

@@ -10,6 +10,7 @@ import { Combobox }               from '@/shared/components/form/Combobox';
 import type { ComboboxItem }      from '@/shared/components/form/Combobox';
 import { ROUTES }                 from '@/app/router/routes';
 import { extractApiError }        from '@/shared/utils/error.utils';
+import { usePermission }          from '@/shared/hooks/usePermission';
 import { campaignApi }                       from '../api/campaign.api';
 import type { SeoTask }                      from '../api/campaign.api';
 import { SeoTaskDrawer }          from '../components/SeoTaskDrawer';
@@ -106,6 +107,7 @@ export function CampaignDetailsPage() {
   const { id = '' } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const canAddTask  = usePermission(['edit-seo-tasks', 'create-seo-project']);
 
   const tabParam = searchParams.get('tab');
   const initialTab: TabKey = tabParam === 'messages' ? 'messages' : 'tasks';
@@ -355,22 +357,32 @@ export function CampaignDetailsPage() {
             )}
           </div>
         </div>
-        {/* Tasks count + progress */}
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
-          <span>{isAr ? 'نسبة الإنجاز' : 'Progress'}</span>
-          <span>
-            <span className="font-semibold text-gray-800 dark:text-gray-100">{tasksDone}</span>
-            <span className="mx-1">/</span>
-            {tasksTotal}
-            <span className="ms-2 font-semibold text-gray-800 dark:text-gray-100">{progress}%</span>
-          </span>
-        </div>
-        <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-[#A0CD39] transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        {/* Tasks count + progress — only when there are real tasks */}
+        {tasksTotal > 0 && (
+          <>
+            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
+              <span>{isAr ? 'نسبة الإنجاز' : 'Progress'}</span>
+              <span
+                className="inline-flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100 tabular-nums"
+                dir="ltr"
+              >
+                <span aria-label={isAr ? 'المهام المكتملة من الإجمالي' : 'Completed of total'}>
+                  {tasksDone}/{tasksTotal}
+                </span>
+                <span className="text-gray-300 dark:text-gray-600 font-normal" aria-hidden>|</span>
+                <span aria-label={isAr ? 'نسبة الإنجاز' : 'Progress percent'}>
+                  {progress}%
+                </span>
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-[#A0CD39] transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </>
+        )}
       </Card>
 
       {/* Tabs + Add Task */}
@@ -394,7 +406,7 @@ export function CampaignDetailsPage() {
             );
           })}
         </div>
-        {activeTab === 'tasks' && (
+        {activeTab === 'tasks' && canAddTask && (
           <Button
             variant="primary"
             startIcon={<Plus size={16} />}

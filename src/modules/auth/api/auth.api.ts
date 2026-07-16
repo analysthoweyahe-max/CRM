@@ -23,7 +23,7 @@ export const authApi = {
 
   // `identifier` may be an email address or an admin user ID — the backend
   // expects the former under `email` and the latter under `admin_id`.
-  adminLogin(credentials: { identifier: string; password: string }) {
+  adminLogin(credentials: { identifier: string; password: string; remember?: boolean }) {
     const identifier = credentials.identifier.trim();
     const body = EMAIL_RE.test(identifier)
       ? { email: identifier }
@@ -32,6 +32,7 @@ export const authApi = {
     return http.post<AdminLoginApiResponse>('/v1/admin/auth/login', {
       ...body,
       password: credentials.password,
+      ...(credentials.remember != null ? { remember: credentials.remember } : {}),
     });
   },
 
@@ -44,7 +45,14 @@ export const authApi = {
   },
 
   // Verifies the OTP code emailed to a super-admin on each login attempt.
-  adminVerifyOtp(payload: { admin_id: string; adminId?: string; email?: string; code: string; otp?: string }) {
+  adminVerifyOtp(payload: {
+    admin_id: string;
+    adminId?: string;
+    email?:   string;
+    code:     string;
+    otp?:     string;
+    remember?: boolean;
+  }) {
     return http.post<AdminAuthSuccessApiResponse>('/v1/admin/auth/login/verify-otp', payload);
   },
 

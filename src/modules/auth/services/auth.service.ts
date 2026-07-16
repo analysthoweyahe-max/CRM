@@ -17,7 +17,17 @@ import { mapRolesToAppRole } from '@/shared/types/role.types';
 import { resetFcmRegistration } from '@/shared/services/fcm.service';
 import { disconnectEcho } from '@/shared/realtime-messages';
 import { queryClient } from '@/app/providers/QueryProvider';
-import { TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, ACCOUNT_TYPE_KEY } from '@/app/config/constants';
+import { ACCOUNT_TYPE_KEY } from '@/app/config/constants';
+import {
+  clearAuthSession,
+  getStoredAccessToken,
+  getStoredUser as readStoredUser,
+  readAccessTokenFromPayload,
+  readRefreshTokenFromPayload,
+  readRememberFromPayload,
+  storeAuthSession,
+  updateStoredUser as writeStoredUser,
+} from './tokenStorage';
 
 type AccountType = 'employee' | 'admin';
 
@@ -229,8 +239,7 @@ function parseAdminProfilePayload(data: unknown): ApiAdmin {
 }
 
 function readAccessToken(payload: Record<string, unknown>): string | undefined {
-  const token = payload.accessToken ?? payload.access_token;
-  return typeof token === 'string' ? token : undefined;
+  return readAccessTokenFromPayload(payload);
 }
 
 function unwrapLoginPayload(response: unknown): Record<string, unknown> {
@@ -323,6 +332,7 @@ async function resolveLoginUser(
   accessToken: string,
   payload: Record<string, unknown>,
   rememberMe: boolean,
+  refreshToken?: string | null,
 ): Promise<AuthUser> {
   const actorHint = readActorHint(payload);
   const { admin, employee } = parseLoginProfile(payload);
@@ -333,10 +343,10 @@ async function resolveLoginUser(
   if (admin) return buildAdminUser(admin);
 
   const [first, second] = profileFetchOrder(payload);
-  storeAuth(accessToken, normalizeStoredUser({
+  storeAuthSession(accessToken, normalizeStoredUser({
     id: '', employeeId: '', fullName: '', role: first === 'employee' ? 'employee' : 'admin',
     roles: [], permissions: [], actor: first,
-  }), rememberMe);
+  }), rememberMe, refreshToken);
 
   for (const actor of [first, second]) {
     try {
@@ -351,47 +361,38 @@ async function resolveLoginUser(
 
 function readAdminAuthSuccess(data: Record<string, unknown>) {
   const accessToken = readAccessToken(data);
+  const refreshToken = readRefreshTokenFromPayload(data);
   const { admin, employee } = parseLoginProfile(data);
   const redirect_path = typeof data.redirect_path === 'string' ? data.redirect_path : undefined;
-  return { accessToken, admin, employee, redirect_path };
-}
-
-function isRememberMe(): boolean {
-  return localStorage.getItem(REMEMBER_ME_KEY) === 'true';
+  return { accessToken, refreshToken, admin, employee, redirect_path };
 }
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 
-function storeAuth(token: string, user: AuthUser, rememberMe: boolean): void {
-  const storage = rememberMe ? localStorage : sessionStorage;
-  storage.setItem(TOKEN_KEY, token);
-  storage.setItem(USER_KEY, JSON.stringify(user));
-  localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
+function storeAuth(
+  token: string,
+  user: AuthUser,
+  rememberMe: boolean,
+  refreshToken?: string | null,
+): void {
+  storeAuthSession(token, user, rememberMe, refreshToken);
 }
 
 function updateStoredUser(user: AuthUser): void {
-  const storage = isRememberMe() ? localStorage : sessionStorage;
-  storage.setItem(USER_KEY, JSON.stringify(user));
+  writeStoredUser(user);
 }
 
 function clearAuth(): void {
-  localStorage.removeItem(TOKEN_KEY);
-  sessionStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  sessionStorage.removeItem(USER_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(REMEMBER_ME_KEY);
+  clearAuthSession();
 }
 
 function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
+  return getStoredAccessToken();
 }
 
 function getStoredUser(): AuthUser | null {
-  const raw = localStorage.getItem(USER_KEY) ?? sessionStorage.getItem(USER_KEY);
-  if (!raw) return null;
-  try { return normalizeStoredUser(JSON.parse(raw) as AuthUser); }
-  catch { return null; }
+  const user = readStoredUser();
+  return user ? normalizeStoredUser(user) : null;
 }
 
 async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
@@ -412,8 +413,13 @@ async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
 async function login(credentials: LoginCredentials): Promise<LoginResult> {
   const password = credentials.password;
   const identifier = credentials.email.trim();
+  const rememberFallback = credentials.rememberMe ?? false;
 
-  const { data } = await authApi.adminLogin({ identifier, password });
+  const { data } = await authApi.adminLogin({
+    identifier,
+    password,
+    remember: rememberFallback,
+  });
   const payload = unwrapLoginPayload(data);
 
   const accessToken = readAccessToken(payload);
@@ -421,9 +427,11 @@ async function login(credentials: LoginCredentials): Promise<LoginResult> {
     throw new Error('Invalid login response');
   }
 
+  const refreshToken = readRefreshTokenFromPayload(payload);
+  const rememberMe = readRememberFromPayload(payload, rememberFallback);
   const redirect_path = typeof payload.redirect_path === 'string' ? payload.redirect_path : undefined;
-  const user = await resolveLoginUser(accessToken, payload, credentials.rememberMe ?? false);
-  storeAuth(accessToken, user, credentials.rememberMe ?? false);
+  const user = await resolveLoginUser(accessToken, payload, rememberMe, refreshToken);
+  storeAuth(accessToken, user, rememberMe, refreshToken);
   setCachedAccountType(identifier, user.actor === 'employee' ? 'employee' : 'admin');
 
   return {
@@ -440,14 +448,16 @@ async function verifyAdminOtp(adminId: string, otp: string, rememberMe = false):
     adminId,
     code:     otp,
     otp,
+    remember: rememberMe,
   });
   const payload = unwrapLoginPayload(data);
-  const { accessToken, admin, redirect_path } = readAdminAuthSuccess(payload);
+  const { accessToken, refreshToken, admin, redirect_path } = readAdminAuthSuccess(payload);
   if (!accessToken || !admin) {
     throw new Error('Invalid OTP verification response');
   }
+  const remember = readRememberFromPayload(payload, rememberMe);
   const user = buildAdminUser(admin);
-  storeAuth(accessToken, user, rememberMe);
+  storeAuth(accessToken, user, remember, refreshToken);
   setCachedAccountType(adminId, 'admin');
   return { token: accessToken, user, redirectPath: redirect_path };
 }
@@ -468,12 +478,13 @@ async function resendAdminOtp(
 async function completeMagicLogin(token: string, rememberMe = true): Promise<AuthUser> {
   const { data } = await authApi.adminMagicLogin(token);
   const payload = unwrapLoginPayload(data);
-  const { accessToken, admin } = readAdminAuthSuccess(payload);
+  const { accessToken, refreshToken, admin } = readAdminAuthSuccess(payload);
   if (!accessToken || !admin) {
     throw new Error('Invalid magic login response');
   }
+  const remember = readRememberFromPayload(payload, rememberMe);
   const user = buildAdminUser(admin);
-  storeAuth(accessToken, user, rememberMe);
+  storeAuth(accessToken, user, remember, refreshToken);
   return user;
 }
 
@@ -494,20 +505,29 @@ async function setPassword(payload: SetPasswordPayload): Promise<AuthLoginRespon
 
   if (inviteType === 'admin') {
     const { data } = await authApi.setAdminPassword(token, apiPayload);
-    const payload = unwrapLoginPayload(data);
-    const { accessToken, admin, redirect_path } = readAdminAuthSuccess(payload);
+    const body = unwrapLoginPayload(data);
+    const { accessToken, refreshToken, admin, redirect_path } = readAdminAuthSuccess(body);
     if (!accessToken || !admin) {
       throw new Error('Invalid set-password response');
     }
+    const remember = readRememberFromPayload(body, rememberMe);
     const user = buildAdminUser(admin);
-    storeAuth(accessToken, user, rememberMe);
+    storeAuth(accessToken, user, remember, refreshToken);
     return { token: accessToken, user, redirectPath: redirect_path };
   }
 
   const { data } = await authApi.setEmployeePassword(token, apiPayload);
-  const { accessToken, employee, redirect_path } = data.data;
+  const body = unwrapLoginPayload(data);
+  const accessToken = readAccessToken(body);
+  const refreshToken = readRefreshTokenFromPayload(body);
+  const { employee } = parseLoginProfile(body);
+  if (!accessToken || !employee) {
+    throw new Error('Invalid set-password response');
+  }
+  const remember = readRememberFromPayload(body, rememberMe);
   const user = buildEmployeeUser(employee);
-  storeAuth(accessToken, user, rememberMe);
+  const redirect_path = typeof body.redirect_path === 'string' ? body.redirect_path : undefined;
+  storeAuth(accessToken, user, remember, refreshToken);
   return { token: accessToken, user, redirectPath: redirect_path };
 }
 

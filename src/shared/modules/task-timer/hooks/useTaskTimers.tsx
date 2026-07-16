@@ -1,6 +1,18 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useAuth } from '@/modules/auth/context/AuthContext';
+import { pauseAttendanceIfRunning } from '@/shared/modules/attendance/services/attendanceTimerBridge';
+import { resolveAttendanceScope } from '@/shared/modules/attendance/utils/attendanceTimer.utils';
+import type { AttendanceScope } from '@/shared/modules/attendance/types/attendanceTimer.types';
 import { pmTaskTimerApi, seoTaskTimerApi } from '../api/taskTimer.api';
 import type { TaskTimeLog, TimerPortal } from '../types/taskTimer.types';
 
@@ -38,8 +50,51 @@ interface TaskTimersState {
 
 const TaskTimersContext = createContext<TaskTimersState | null>(null);
 
+const STORAGE_PREFIX = 'hr_open_task_timers:';
+
 function apiFor(portal: TimerPortal) {
   return portal === 'seo' ? seoTaskTimerApi : pmTaskTimerApi;
+}
+
+function storageKey(scope: AttendanceScope) {
+  return `${STORAGE_PREFIX}${scope}`;
+}
+
+function persistTimers(scope: AttendanceScope, timers: Map<string, TimerEntry>) {
+  try {
+    const list = Array.from(timers.values());
+    if (list.length === 0) {
+      sessionStorage.removeItem(storageKey(scope));
+      return;
+    }
+    sessionStorage.setItem(storageKey(scope), JSON.stringify(list));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function loadPersistedTimers(scope: AttendanceScope): Map<string, TimerEntry> {
+  try {
+    const raw = sessionStorage.getItem(storageKey(scope));
+    if (!raw) return new Map();
+    const list = JSON.parse(raw) as TimerEntry[];
+    if (!Array.isArray(list)) return new Map();
+    const now = Date.now();
+    const map = new Map<string, TimerEntry>();
+    for (const entry of list) {
+      if (!entry?.taskId || !entry?.id) continue;
+      const syncedAt = typeof entry.syncedAt === 'number' ? entry.syncedAt : now;
+      const driftSec = entry.isPaused ? 0 : Math.max(0, Math.floor((now - syncedAt) / 1000));
+      map.set(entry.taskId, {
+        ...entry,
+        elapsedSeconds: (entry.elapsedSeconds ?? 0) + driftSec,
+        syncedAt: now,
+      });
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
 }
 
 /** Merge API payload with local meta — never spread a full entry over `raw` or
@@ -55,14 +110,25 @@ function toEntry(raw: TaskTimeLog, meta: TimerMeta): TimerEntry {
   };
 }
 
-export function TaskTimersProvider({ children }: { children: ReactNode }) {
+interface ProviderProps {
+  children: ReactNode;
+  /** Attendance scope for this portal layout — used to auto-pause work timer. */
+  attendanceScope?: AttendanceScope;
+}
+
+export function TaskTimersProvider({ children, attendanceScope }: ProviderProps) {
+  const { user } = useAuth();
   const qc = useQueryClient();
-  const [timers, setTimers] = useState<Map<string, TimerEntry>>(new Map());
-  // Keep a ref for async mutation callbacks so they always see the latest map
-  // without closing over a stale render. Sync during render (not in an effect)
-  // so the same tick as setState still has a consistent view inside putTimer.
+  const scope = attendanceScope
+    ?? resolveAttendanceScope(user?.role, user?.section);
+
+  const [timers, setTimers] = useState<Map<string, TimerEntry>>(() => loadPersistedTimers(scope));
   const timersRef = useRef(timers);
   timersRef.current = timers;
+
+  useEffect(() => {
+    persistTimers(scope, timers);
+  }, [scope, timers]);
 
   function putTimer(taskId: string, entry: TimerEntry | null) {
     setTimers((prev) => {
@@ -73,20 +139,74 @@ export function TaskTimersProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  // Read from state (not the ref) so consumers re-render with fresh pause/resume flags.
+  function replaceTimers(next: Map<string, TimerEntry>) {
+    setTimers(next);
+  }
+
   const getTimer = useCallback(
     (taskId: string) => timers.get(taskId),
     [timers],
   );
 
+  const invalidateTaskQueries = useCallback((entry: TimerEntry, taskId: string) => {
+    if (entry.portal === 'seo') {
+      qc.invalidateQueries({ queryKey: ['seo-member', 'task-sessions', entry.projectId, taskId] });
+      qc.invalidateQueries({ queryKey: ['seo-task-time-logs', entry.projectId, taskId] });
+      qc.invalidateQueries({ queryKey: ['seo-member', 'task-detail', entry.projectId, taskId] });
+    } else {
+      qc.invalidateQueries({ queryKey: ['task-sessions', entry.projectId, taskId] });
+      qc.invalidateQueries({ queryKey: ['task-detail', entry.projectId, taskId] });
+      qc.invalidateQueries({ queryKey: ['pm-task-detail', entry.projectId, taskId] });
+    }
+  }, [qc]);
+
+  /** Stop every other open timer in the Map (best-effort) when concurrency is not allowed. */
+  const stopOtherTimers = useCallback(async (keepTaskId: string) => {
+    const others = Array.from(timersRef.current.values()).filter(
+      (e) => e.taskId !== keepTaskId && e.isOpen,
+    );
+    await Promise.allSettled(
+      others.map(async (entry) => {
+        try {
+          await apiFor(entry.portal).stop(entry.projectId, entry.taskId, entry.id);
+        } catch {
+          /* backend may already have closed it */
+        }
+        putTimer(entry.taskId, null);
+        invalidateTaskQueries(entry, entry.taskId);
+      }),
+    );
+  }, [invalidateTaskQueries]);
+
   const startTimer = useCallback(async ({ portal, projectId, taskId, title }: StartArgs) => {
     try {
+      // Mutual exclusion with attendance: pause the work day while a task runs.
+      if (!user?.isSuperAdmin) {
+        try {
+          await pauseAttendanceIfRunning(qc, scope);
+        } catch {
+          /* don't block task start if attendance pause fails */
+        }
+      }
+
       const raw = await apiFor(portal).start(projectId, taskId);
-      putTimer(taskId, toEntry(raw, { taskId, projectId, portal, title }));
+      const entry = toEntry(raw, { taskId, projectId, portal, title });
+      const allowsConcurrent = raw.allowsConcurrentTimers === true;
+
+      if (!allowsConcurrent) {
+        // Stop sibling UI timers after a successful start so a failed start
+        // doesn't wipe other running sessions.
+        await stopOtherTimers(taskId);
+        const next = new Map<string, TimerEntry>();
+        next.set(taskId, entry);
+        replaceTimers(next);
+      } else {
+        putTimer(taskId, entry);
+      }
     } catch {
       toast.error('Failed to start timer');
     }
-  }, []);
+  }, [qc, scope, stopOtherTimers, user?.isSuperAdmin]);
 
   const pauseTimer = useCallback(async (taskId: string) => {
     const entry = timersRef.current.get(taskId);
@@ -108,6 +228,13 @@ export function TaskTimersProvider({ children }: { children: ReactNode }) {
     const entry = timersRef.current.get(taskId);
     if (!entry) return;
     try {
+      if (!user?.isSuperAdmin) {
+        try {
+          await pauseAttendanceIfRunning(qc, scope);
+        } catch {
+          /* ignore */
+        }
+      }
       const raw = await apiFor(entry.portal).resume(entry.projectId, taskId, entry.id);
       putTimer(taskId, toEntry(raw, {
         taskId: entry.taskId,
@@ -118,7 +245,7 @@ export function TaskTimersProvider({ children }: { children: ReactNode }) {
     } catch {
       toast.error('Failed to resume timer');
     }
-  }, []);
+  }, [qc, scope, user?.isSuperAdmin]);
 
   const stopTimer = useCallback(async (taskId: string) => {
     const entry = timersRef.current.get(taskId);
@@ -126,19 +253,11 @@ export function TaskTimersProvider({ children }: { children: ReactNode }) {
     try {
       await apiFor(entry.portal).stop(entry.projectId, taskId, entry.id);
       putTimer(taskId, null);
-      if (entry.portal === 'seo') {
-        qc.invalidateQueries({ queryKey: ['seo-member', 'task-sessions', entry.projectId, taskId] });
-        qc.invalidateQueries({ queryKey: ['seo-task-time-logs', entry.projectId, taskId] });
-        qc.invalidateQueries({ queryKey: ['seo-member', 'task-detail', entry.projectId, taskId] });
-      } else {
-        qc.invalidateQueries({ queryKey: ['task-sessions', entry.projectId, taskId] });
-        qc.invalidateQueries({ queryKey: ['task-detail', entry.projectId, taskId] });
-        qc.invalidateQueries({ queryKey: ['pm-task-detail', entry.projectId, taskId] });
-      }
+      invalidateTaskQueries(entry, taskId);
     } catch {
       toast.error('Failed to stop timer');
     }
-  }, [qc]);
+  }, [invalidateTaskQueries]);
 
   return (
     <TaskTimersContext.Provider value={{ timers, getTimer, startTimer, pauseTimer, resumeTimer, stopTimer }}>

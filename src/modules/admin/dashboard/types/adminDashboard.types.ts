@@ -1,9 +1,9 @@
 export interface AdminDashboardStats {
-  totalEmployees:   number;
-  activeEmployees:  number;
-  pendingEmployees: number;
-  activeProjects:   number;
-  totalProjects:    number;
+  totalEmployees:    number;
+  activeEmployees:   number;
+  inactiveEmployees: number;
+  activeProjects:    number;
+  totalProjects:     number;
 }
 
 export interface RoleDistributionItem {

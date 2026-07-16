@@ -68,9 +68,9 @@ export function useAdminDashboard(): AdminDashboardData & { isLoading: boolean }
   const seoTotal    = seoData?.total ?? seoProjects.length;
 
   const stats = useMemo(() => ({
-    totalEmployees:   employeesData?.total ?? employees.length,
-    activeEmployees:  employees.filter((e) => e.status === 'active').length,
-    pendingEmployees: employees.filter((e) => e.status === 'pending').length,
+    totalEmployees:    employeesData?.total ?? employees.length,
+    activeEmployees:   employees.filter((e) => e.status === 'active').length,
+    inactiveEmployees: employees.filter((e) => e.status === 'inactive').length,
     activeProjects:
       pmProjects.filter((p) => p.status === 'in_progress').length +
       seoProjects.filter((p) => p.status === 'in_progress').length,

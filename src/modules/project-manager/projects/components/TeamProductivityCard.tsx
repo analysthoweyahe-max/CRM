@@ -13,11 +13,14 @@ export function TeamProductivityCard({ tasks, isAr }: Props) {
   tasks.forEach(t => {
     if (t.estimatedHours || t.estimatedMinutes) {
       const hours = (t.estimatedHours ?? 0) + (t.estimatedMinutes ?? 0) / 60;
+      if (!t.assigneeName) return;
       teamMap.set(t.assigneeName, (teamMap.get(t.assigneeName) ?? 0) + hours);
     }
   });
   const labels = Array.from(teamMap.keys());
   const hours  = Array.from(teamMap.values());
+
+  if (labels.length === 0) return null;
 
   return (
     <Card className="p-5">

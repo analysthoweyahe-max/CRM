@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Plus, Info, FolderOpen } from 'lucide-react';import { GithubIcon } from '@/shared/components/icons/GithubIcon';
 import { ensureHttpUrl } from '@/shared/utils';
+import { usePermission } from '@/shared/hooks/usePermission';
 import { toast } from 'sonner';
 import { useLang }         from '@/app/providers/LanguageProvider';
 import { Card }            from '@/shared/components/ui/Card';
@@ -44,6 +45,8 @@ export function ProjectDetailsPage() {
 
   const { project, isLoading, isError, refetch } = useProjectDetails(id);
   const { statuses }                              = usePmProjectLookups();
+  const canAddTask = usePermission('edit-pm-tasks');
+  const canEditProject = usePermission('edit-pm-project');
   const projectKey = project
     ? (project.uuid || String(project.id))
     : (id ?? '');
@@ -204,16 +207,18 @@ export function ProjectDetailsPage() {
               <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
                 {isAr ? 'مسودة' : 'Draft'}
               </span>
-              <Button
-                variant="primary"
-                size="sm"
-                disabled={publishing}
-                onClick={handlePublish}
-              >
-                {publishing
-                  ? (isAr ? 'جاري النشر...' : 'Publishing…')
-                  : (isAr ? 'نشر المشروع' : 'Publish')}
-              </Button>
+              {canEditProject && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={publishing}
+                  onClick={handlePublish}
+                >
+                  {publishing
+                    ? (isAr ? 'جاري النشر...' : 'Publishing…')
+                    : (isAr ? 'نشر المشروع' : 'Publish')}
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -272,7 +277,7 @@ export function ProjectDetailsPage() {
         </div>
 
         {/* Add Task button — only on tasks tab */}
-        {activeTab === 'tasks' && (
+        {activeTab === 'tasks' && canAddTask && (
           <div className="pb-2 shrink-0">
             <Button
               variant="primary"
@@ -297,7 +302,7 @@ export function ProjectDetailsPage() {
       )}
       {activeTab === 'client'   && <ProjectClientUpdatesTab projectId={projectKey} isAr={isAr} />}
       {activeTab === 'team'     && <ProjectTeamTab projectId={projectKey} isAr={isAr} />}
-      {activeTab === 'progress' && <ProgressLogTab tasks={tasks} isAr={isAr} />}
+      {activeTab === 'progress' && <ProgressLogTab projectId={projectKey} tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && (
         <ProjectSettingsTab project={project} isAr={isAr} onPublished={refetch} />
       )}

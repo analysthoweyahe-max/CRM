@@ -22,9 +22,8 @@ function formatElapsed(totalSeconds: number): string {
 }
 
 /**
- * Remounted (via `key`) whenever the backend confirms a fresh elapsedSeconds,
- * so the local tick counter re-baselines from `useState`'s initial value
- * instead of being synced from props inside an effect.
+ * Local second ticker. Re-baselines from props when the server pushes a new
+ * elapsedSeconds / pause state — without remounting (remount caused visible snaps).
  */
 interface ElapsedDisplayProps {
   elapsedSeconds: number;
@@ -37,6 +36,10 @@ export function ElapsedDisplay({
   className = 'font-mono text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-200',
 }: ElapsedDisplayProps) {
   const [elapsed, setElapsed] = useState(elapsedSeconds);
+
+  useEffect(() => {
+    setElapsed(elapsedSeconds);
+  }, [elapsedSeconds, isPaused]);
 
   useEffect(() => {
     if (isPaused) return;
@@ -67,7 +70,6 @@ export function TimerControls({ portal, projectId, taskId, title, isAr, size = '
   return (
     <div className="flex items-center gap-2">
       <ElapsedDisplay
-        key={`${entry.id}-${entry.elapsedSeconds}-${entry.isPaused}`}
         elapsedSeconds={entry.elapsedSeconds}
         isPaused={entry.isPaused}
       />

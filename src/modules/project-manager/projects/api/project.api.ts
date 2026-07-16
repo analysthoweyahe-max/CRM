@@ -15,6 +15,7 @@ import type {
   PmProjectTypePayload,
   PmProjectPhase,
 } from '../types/project.types';
+import type { ProjectActivityApiResponse } from '../types/projectActivity.types';
 
 export const pmProjectsApi = {
   list(params: { search?: string; status?: string; is_draft?: boolean; per_page?: number; page?: number }) {
@@ -38,6 +39,12 @@ export const pmProjectsApi = {
     return http.get<{ status: string; message: string; data: PmProjectPhase[] }>(
       `/v1/pm/projects/${id}/phases`,
     );
+  },
+
+  getActivity(id: number | string, page = 1, perPage = 20) {
+    return http.get<ProjectActivityApiResponse>(`/v1/pm/projects/${id}/activity`, {
+      params: { page, per_page: perPage },
+    });
   },
 
   getSettings(id: number | string) {

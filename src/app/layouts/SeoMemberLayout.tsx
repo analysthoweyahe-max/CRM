@@ -27,7 +27,7 @@ export function SeoMemberLayout() {
   }, [collapsed, attendance.isActiveDay, isAr]);
 
   return (
-    <TaskTimersProvider>
+    <TaskTimersProvider attendanceScope="seo">
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AppSidebar
           variant="seo-member"

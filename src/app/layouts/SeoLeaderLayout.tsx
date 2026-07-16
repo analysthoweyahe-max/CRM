@@ -30,7 +30,7 @@ export function SeoLeaderLayout() {
   }, [collapsed, attendance.isActiveDay, isAr, isSuperAdmin]);
 
   return (
-    <TaskTimersProvider>
+    <TaskTimersProvider attendanceScope="seo">
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AppSidebar
           variant={user?.role === 'admin' ? 'admin' : 'seo'}

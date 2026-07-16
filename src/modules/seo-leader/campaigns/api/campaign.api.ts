@@ -8,6 +8,7 @@ import type {
   CampaignLookupItem,
 } from '../types/campaign.types';
 import type { SeoCampaign }          from '../../dashboard/types/dashboard.types';
+import type { ProjectActivityApiResponse } from '@/modules/project-manager/projects/types/projectActivity.types';
 import type { CreateSeoTaskPayload } from '../components/AddSeoTaskModal.types';
 import type { SeoTaskDetail }        from '../components/SeoTaskModal.types';
 import { appendSeoTaskFiles, normalizeSeoAttachments, type SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
@@ -268,30 +269,6 @@ export interface SeoUpdateTaskPayload {
   meta_description?: string;
 }
 
-export interface SeoActivityActor {
-  id:             string;
-  name:           string;
-  avatarUrl?:     string | null;
-  avatarInitial?: string;
-}
-
-export interface SeoActivityItem {
-  id:          number;
-  type:        string;
-  description: string;
-  actor:       SeoActivityActor;
-  createdAt:   string;
-  timeAgo:     string;
-}
-
-export interface SeoActivityPage {
-  data:        SeoActivityItem[];
-  total:       number;
-  currentPage: number;
-  lastPage:    number;
-  perPage:     number;
-}
-
 export const campaignApi = {
   /* ── Campaign ──────────────────────────────────────────────────────── */
   create(payload: CreateCampaignPayload) {
@@ -314,7 +291,7 @@ export const campaignApi = {
   },
 
   getActivity(id: string | number, page = 1, perPage = 20) {
-    return http.get<ApiResponse<SeoActivityPage>>(
+    return http.get<ProjectActivityApiResponse>(
       `/v1/seo/projects/${id}/activity`,
       { params: { page, per_page: perPage } },
     );

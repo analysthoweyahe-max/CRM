@@ -335,7 +335,7 @@ export function AppRouter() {
                     <Route path={ROUTES.SEO_LEADER.MY_PROJECTS} element={<MyProjectsPage module="seo" />} />
                     <Route path={ROUTES.SEO_LEADER.DETAILS()} element={<CampaignDetailsPage />} />
                   </Route>
-                  <Route element={<PermissionGuard permission="edit-seo-tasks" />}>
+                  <Route element={<PermissionGuard permission={['edit-seo-tasks', 'create-seo-project']} />}>
                     <Route path={ROUTES.SEO_LEADER.ADD_TASK()}  element={<AddSeoTaskPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission="create-seo-project" />}>
@@ -399,7 +399,7 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission="create-seo-project" />}>
                     <Route path={ROUTES.SEO_MEMBER.NEW}              element={<NewCampaignPage />} />
                   </Route>
-                  <Route element={<PermissionGuard permission="edit-seo-tasks" />}>
+                  <Route element={<PermissionGuard permission={['edit-seo-tasks', 'create-seo-project']} />}>
                     <Route path={ROUTES.SEO_MEMBER.ADD_TASK()}       element={<AddSeoTaskPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission="view-seo-tasks" />}>

@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { attendanceTimerApi } from '../api/attendanceTimer.api';
+import {
+  applyAttendanceActionResult,
+  attendanceTodayQueryKey,
+} from '../services/attendanceTimerBridge';
 import type { AttendanceScope, AttendanceTimer, AttendanceTodayData } from '../types/attendanceTimer.types';
 import {
   attendanceCheckInPath,
@@ -16,16 +20,11 @@ import {
   deriveWorkingHours,
   isActiveWorkDay,
   mergeDashboardCheckIn,
-  normalizeTodayPayload,
-  resolveAttendanceScope,
   withAnytimeAttendanceActions,
+  resolveAttendanceScope,
 } from '../utils/attendanceTimer.utils';
 
 const POLL_MS = 45_000;
-
-function queryKey(scope: AttendanceScope) {
-  return ['attendance', 'today', scope] as const;
-}
 
 export interface UseWorkTimerOptions {
   layoutScope?:  AttendanceScope;
@@ -75,7 +74,7 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
   }, []);
 
   const { data: today, isLoading, refetch } = useQuery({
-    queryKey: queryKey(scope),
+    queryKey: attendanceTodayQueryKey(scope),
     queryFn: async () => {
       const res = await attendanceTimerApi.today(scope);
       const raw = res.data.data;
@@ -84,6 +83,11 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
     staleTime: 30_000,
     retry: 1,
     enabled,
+    // One shared poll for all subscribers of this query key (header + sidebar + cards).
+    refetchInterval: (query) => {
+      const data = query.state.data as AttendanceTodayData | null | undefined;
+      return enabled && isActiveWorkDay(data ?? null) ? POLL_MS : false;
+    },
     placeholderData: () => {
       const merged = mergeDashboardCheckIn(null, options.initialData);
       return merged ? withAnytimeAttendanceActions(merged) : undefined;
@@ -94,25 +98,13 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
     if (today) applyToday(today);
   }, [today, applyToday]);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: queryKey(scope) });
-
   const actionMutation = useMutation({
     mutationFn: (url: string) => attendanceTimerApi.action(url),
     onSuccess: (res) => {
-      const normalized = normalizeTodayPayload(res.data.data) ?? res.data.data;
-      const patched = normalized ? withAnytimeAttendanceActions(normalized) : normalized;
-      qc.setQueryData(queryKey(scope), patched);
+      const patched = applyAttendanceActionResult(qc, scope, res.data.data);
       applyToday(patched);
-      invalidate();
     },
   });
-
-  const shouldPoll = enabled && isActiveWorkDay(today ?? null);
-  useEffect(() => {
-    if (!shouldPoll) return;
-    const id = setInterval(() => { refetch(); }, POLL_MS);
-    return () => clearInterval(id);
-  }, [shouldPoll, refetch]);
 
   const isPaused = Boolean(today?.isPaused || today?.workStatus === 'on_break');
 
@@ -189,6 +181,6 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
     checkOut: (onSuccess, onError) => runAction(checkOutUrl, onSuccess, onError),
     pause:    (onSuccess, onError) => runAction(pauseUrl, onSuccess, onError),
     resume:   (onSuccess, onError) => runAction(resumeUrl, onSuccess, onError),
-    refetch:  () => { invalidate(); },
+    refetch:  () => { void refetch(); },
   };
 }

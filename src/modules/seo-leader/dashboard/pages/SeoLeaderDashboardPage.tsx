@@ -29,6 +29,7 @@ export function SeoLeaderDashboardPage() {
           labelAr="إجمالي المشاريع"
           labelEn="Total Projects"
           isAr={isAr}
+          onClick={() => navigate(ROUTES.SEO_LEADER.MY_PROJECTS)}
         />
         <StatCard
           icon={<Users size={22} className="text-purple-600" />}
@@ -46,6 +47,7 @@ export function SeoLeaderDashboardPage() {
           labelAr="المهام المعلقة"
           labelEn="Pending Tasks"
           isAr={isAr}
+          onClick={() => navigate(ROUTES.SEO_LEADER.TASKS)}
         />
         <StatCard
           icon={<CheckCircle2 size={22} className="text-emerald-600" />}
@@ -54,6 +56,7 @@ export function SeoLeaderDashboardPage() {
           labelAr="المشاريع المكتملة"
           labelEn="Completed Projects"
           isAr={isAr}
+          onClick={() => navigate(ROUTES.SEO_LEADER.MY_PROJECTS)}
         />
       </div>
 

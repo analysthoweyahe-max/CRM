@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, Clock, FolderKanban, FolderOpenDot } from 'lucide-react';
+import { Users, UserCheck, UserX, FolderKanban, FolderOpenDot } from 'lucide-react';
 import { StatCard } from '@/shared/components/ui/StatCard';
 import { ROUTES } from '@/app/router/routes';
 import type { AdminDashboardStats } from '../types/adminDashboard.types';
@@ -9,15 +9,61 @@ interface Props {
   isAr:  boolean;
 }
 
+function employeesPath(status?: string) {
+  return status
+    ? `${ROUTES.ADMIN.EMPLOYEES}?status=${encodeURIComponent(status)}`
+    : ROUTES.ADMIN.EMPLOYEES;
+}
+
 export function AdminStatCards({ stats, isAr }: Props) {
   const navigate = useNavigate();
 
   const CARDS = [
-    { value: stats.totalEmployees,   labelAr: 'إجمالي الموظفين',   labelEn: 'Total Employees',   icon: Users,          iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20', iconColor: 'text-[#709028] dark:text-[#A0CD39]', to: ROUTES.ADMIN.EMPLOYEES },
-    { value: stats.activeEmployees,  labelAr: 'الموظفون النشطون', labelEn: 'Active Employees',  icon: UserCheck,      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30', iconColor: 'text-emerald-600', to: ROUTES.ADMIN.EMPLOYEES },
-    { value: stats.pendingEmployees, labelAr: 'قيد التفعيل',      labelEn: 'Pending Activation', icon: Clock,      iconBg: 'bg-amber-100 dark:bg-amber-900/30', iconColor: 'text-amber-600', to: ROUTES.ADMIN.EMPLOYEES },
-    { value: stats.activeProjects,   labelAr: 'المشاريع النشطة',  labelEn: 'Active Projects',   icon: FolderOpenDot,  iconBg: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600', to: ROUTES.PROJECT_MANAGER.DASHBOARD },
-    { value: stats.totalProjects,    labelAr: 'إجمالي المشاريع',  labelEn: 'Total Projects',    icon: FolderKanban,   iconBg: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600', to: ROUTES.PROJECT_MANAGER.DASHBOARD },
+    {
+      value: stats.totalEmployees,
+      labelAr: 'إجمالي الموظفين',
+      labelEn: 'Total Employees',
+      icon: Users,
+      iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20',
+      iconColor: 'text-[#709028] dark:text-[#A0CD39]',
+      to: employeesPath(),
+    },
+    {
+      value: stats.activeEmployees,
+      labelAr: 'الموظفون النشطون',
+      labelEn: 'Active Employees',
+      icon: UserCheck,
+      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+      iconColor: 'text-emerald-600',
+      to: employeesPath('active'),
+    },
+    {
+      value: stats.inactiveEmployees,
+      labelAr: 'الموظفون المعطلون',
+      labelEn: 'Inactive Employees',
+      icon: UserX,
+      iconBg: 'bg-rose-100 dark:bg-rose-900/30',
+      iconColor: 'text-rose-600',
+      to: employeesPath('inactive'),
+    },
+    {
+      value: stats.activeProjects,
+      labelAr: 'المشاريع النشطة',
+      labelEn: 'Active Projects',
+      icon: FolderOpenDot,
+      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+      iconColor: 'text-blue-600',
+      to: ROUTES.PROJECT_MANAGER.DASHBOARD,
+    },
+    {
+      value: stats.totalProjects,
+      labelAr: 'إجمالي المشاريع',
+      labelEn: 'Total Projects',
+      icon: FolderKanban,
+      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+      iconColor: 'text-blue-600',
+      to: ROUTES.PROJECT_MANAGER.DASHBOARD,
+    },
   ];
 
   return (

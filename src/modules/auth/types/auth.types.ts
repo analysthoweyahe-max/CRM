@@ -142,6 +142,11 @@ export interface AdminLoginApiResponse {
     accessToken?:        string;
     access_token?:       string;
     tokenType?:          string;
+    accessExpiresIn?:    number;
+    refreshToken?:       string;
+    refresh_token?:      string;
+    refreshExpiresIn?:   number;
+    remember?:           boolean;
     admin?:              AdminUser;
     employee?:           ApiEmployee;
     redirect_path?:      string;
@@ -167,10 +172,18 @@ export interface AdminOtpResendApiResponse {
 
 export interface AdminAuthSuccessApiResponse {
   data: {
-    accessToken?:   string;
-    access_token?:  string;
-    admin:          AdminUser;
-    redirect_path?: string;
+    accessToken?:      string;
+    access_token?:     string;
+    tokenType?:        string;
+    accessExpiresIn?:  number;
+    refreshToken?:     string;
+    refresh_token?:    string;
+    refreshExpiresIn?: number;
+    remember?:         boolean;
+    actorType?:        'admin' | 'employee';
+    admin?:            AdminUser;
+    employee?:         ApiEmployee;
+    redirect_path?:    string;
   };
 }
 
@@ -186,10 +199,15 @@ export interface EmployeeLoginApiResponse {
   status:  string;
   message: string;
   data: {
-    accessToken:   string;
-    tokenType:     string;
-    employee:      ApiEmployee;
-    redirect_path: string;
+    accessToken:       string;
+    tokenType?:        string;
+    accessExpiresIn?:  number;
+    refreshToken?:     string;
+    refreshExpiresIn?: number;
+    remember?:         boolean;
+    actorType?:        'admin' | 'employee';
+    employee:          ApiEmployee;
+    redirect_path:     string;
   };
 }
 

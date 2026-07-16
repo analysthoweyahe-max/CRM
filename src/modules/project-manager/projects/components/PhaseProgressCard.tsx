@@ -1,18 +1,20 @@
 import { Card } from '@/shared/components/ui/Card';
 import { C_GREEN } from './progressCharts.config';
 
-const PHASES = [
-  { label: 'متطلبات العمل', progress: 100 },
-  { label: 'التحليل',        progress: 100 },
-  { label: 'التصميم',         progress: 50  },
-  { label: 'التطوير',         progress: 0   },
-  { label: 'الاختبار',        progress: 0   },
-  { label: 'النشر',           progress: 0   },
-];
+export interface PhaseProgressItem {
+  label:    string;
+  progress: number;
+}
 
-interface Props { isAr: boolean }
+interface Props {
+  isAr:    boolean;
+  /** Real phase progress — omit or pass [] to hide the card. */
+  phases?: PhaseProgressItem[];
+}
 
-export function PhaseProgressCard({ isAr }: Props) {
+export function PhaseProgressCard({ isAr, phases }: Props) {
+  if (!phases?.length) return null;
+
   return (
     <Card className="p-5">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-5 text-end">
@@ -20,9 +22,9 @@ export function PhaseProgressCard({ isAr }: Props) {
       </h3>
 
       <div className="space-y-3.5">
-        {PHASES.map(phase => (
+        {phases.map(phase => (
           <div key={phase.label} className="flex items-center gap-3">
-            <span className="text-xs text-gray-600 dark:text-gray-300 w-28 shrink-0">
+            <span className="text-xs text-gray-600 dark:text-gray-300 w-28 shrink-0 truncate" title={phase.label}>
               {phase.label}
             </span>
             <div className="flex-1 h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
