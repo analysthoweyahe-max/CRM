@@ -193,16 +193,25 @@ function normalizeStoredUser(raw: AuthUser): AuthUser {
 
   const roleDetails = normalizeRoleDetails(raw.roleDetails)
     ?? (roleField.details.length > 0 ? roleField.details : undefined);
-  const permissions = raw.actor === 'admin'
+
+  const mappedRole = mapRolesToAppRole(roles, raw.role);
+  const actor = resolveProfileActor({
+    ...raw,
+    roles,
+    role: mappedRole,
+  });
+
+  const permissions = actor === 'admin'
     ? normalizePermissionSlugs(raw.permissions)
     : mergeEffectivePermissions(normalizePermissionSlugs(raw.permissions), roleDetails);
 
   return {
     ...raw,
+    role: mappedRole,
     roles,
     permissions,
     roleDetails,
-    actor: raw.actor ?? (raw.role === 'employee' || raw.role === 'seo-member' ? 'employee' : 'admin'),
+    actor,
   };
 }
 
@@ -252,11 +261,23 @@ function unwrapLoginPayload(response: unknown): Record<string, unknown> {
 }
 
 const EMPLOYEE_ROLE_SLUGS = new Set([
-  'employee', 'pm-employee', 'seo-employee', 'seo-member',
-  'project-manager', 'seo-leader', 'seo-manager',
+  'employee',
+  'pm-employee',
+  'seo-employee',
+  'seo-member',
 ]);
 
-const ADMIN_ROLE_SLUGS = new Set(['super-admin', 'admin', 'hr-manager', 'hr']);
+/** Spatie `admin` guard — managers (PM / SEO / HR) use admin auth + profile. */
+const ADMIN_ROLE_SLUGS = new Set([
+  'super-admin',
+  'admin',
+  'hr-manager',
+  'hr',
+  'project-manager',
+  'manager',
+  'seo-manager',
+  'seo-leader',
+]);
 
 function readActorHint(payload: Record<string, unknown>): AuthActor | null {
   const raw = payload.actorType ?? payload.actor_type ?? payload.guard_name ?? payload.guard;
@@ -268,9 +289,31 @@ function readActorHint(payload: Record<string, unknown>): AuthActor | null {
 function inferActorFromRoles(roles: string[]): AuthActor | null {
   const hasAdmin = roles.some((r) => ADMIN_ROLE_SLUGS.has(r));
   const hasEmployee = roles.some((r) => EMPLOYEE_ROLE_SLUGS.has(r));
-  if (hasAdmin && !hasEmployee) return 'admin';
-  if (hasEmployee && !hasAdmin) return 'employee';
+  // Admin guard wins when both appear — managers are never employee-profile users.
+  if (hasAdmin) return 'admin';
+  if (hasEmployee) return 'employee';
   return null;
+}
+
+/**
+ * Which profile endpoint to call.
+ * Admin / HR / SEO Manager / Project Manager → /v1/admin/auth/profile
+ * Employees (incl. Team Lead job title) → /v1/employee/auth/profile
+ * There is no `team-leader` role — Team Lead is a job title on employee records.
+ */
+function resolveProfileActor(user: Pick<AuthUser, 'actor' | 'role' | 'roles' | 'isSuperAdmin'>): AuthActor {
+  if (user.isSuperAdmin) return 'admin';
+
+  const fromRoles = inferActorFromRoles(user.roles ?? []);
+  if (fromRoles) return fromRoles;
+
+  // Portal role (mapped) — seo-member & employee only use the employee guard.
+  if (user.role === 'employee' || user.role === 'seo-member') return 'employee';
+  if (user.role === 'admin' || user.role === 'hr' || user.role === 'manager' || user.role === 'seo-leader') {
+    return 'admin';
+  }
+
+  return user.actor === 'employee' ? 'employee' : 'admin';
 }
 
 function isProfileRecord(value: unknown): value is Record<string, unknown> {
@@ -392,7 +435,13 @@ function getStoredToken(): string | null {
 
 function getStoredUser(): AuthUser | null {
   const user = readStoredUser();
-  return user ? normalizeStoredUser(user) : null;
+  if (!user) return null;
+  const normalized = normalizeStoredUser(user);
+  // Persist corrected actor for legacy sessions that mis-tagged managers as employees.
+  if (normalized.actor !== user.actor) {
+    writeStoredUser(normalized);
+  }
+  return normalized;
 }
 
 async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
@@ -402,6 +451,32 @@ async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
   }
   const { data } = await authApi.adminProfile();
   return buildAdminUser(parseAdminProfilePayload(data.data));
+}
+
+async function loadProfile(): Promise<AuthUser | null> {
+  const token = getStoredToken();
+  if (!token) return null;
+
+  const stored = getStoredUser();
+  if (!stored) return null;
+
+  const actor = resolveProfileActor(stored);
+
+  try {
+    const fresh = await fetchProfile(actor);
+    updateStoredUser(fresh);
+    return fresh;
+  } catch {
+    // If stored actor was wrong (legacy session), try the other guard once.
+    const other: AuthActor = actor === 'admin' ? 'employee' : 'admin';
+    try {
+      const fresh = await fetchProfile(other);
+      updateStoredUser(fresh);
+      return fresh;
+    } catch {
+      return stored;
+    }
+  }
 }
 
 // ── Auth operations ───────────────────────────────────────────────────────────
@@ -646,22 +721,6 @@ async function completeInviteLogin(
   return user;
 }
 
-async function loadProfile(): Promise<AuthUser | null> {
-  const token = getStoredToken();
-  if (!token) return null;
-
-  const stored = getStoredUser();
-  if (!stored) return null;
-
-  try {
-    const fresh = await fetchProfile(stored.actor);
-    updateStoredUser(fresh);
-    return fresh;
-  } catch {
-    return stored;
-  }
-}
-
 async function changePassword(payload: {
   currentPassword: string;
   newPassword:     string;
@@ -674,7 +733,7 @@ async function changePassword(payload: {
     new_password_confirmation: payload.confirmPassword,
   };
 
-  if (stored?.actor === 'employee') {
+  if (stored && resolveProfileActor(stored) === 'employee') {
     await authApi.employeeChangePassword(apiPayload);
   } else {
     await authApi.adminChangePassword(apiPayload);
@@ -705,7 +764,7 @@ async function deleteAvatar(): Promise<AuthUser> {
 async function logout(): Promise<void> {
   const stored = getStoredUser();
   try {
-    if (stored?.actor === 'employee') {
+    if (stored && resolveProfileActor(stored) === 'employee') {
       await authApi.employeeLogout();
     } else {
       await authApi.adminLogout();

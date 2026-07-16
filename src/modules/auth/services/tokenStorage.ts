@@ -47,8 +47,52 @@ export function getStoredUser(): AuthUser | null {
   }
 }
 
+/** Roles on the Spatie `admin` guard (profile/refresh via /admin/auth/*). */
+const ADMIN_ROLE_SLUGS = new Set([
+  'super-admin',
+  'admin',
+  'hr-manager',
+  'hr',
+  'project-manager',
+  'manager',
+  'seo-manager',
+  'seo-leader',
+]);
+
+/** Roles on the Spatie `employee`/`web` guard (profile/refresh via /employee/auth/*). */
+const EMPLOYEE_ROLE_SLUGS = new Set([
+  'employee',
+  'pm-employee',
+  'seo-employee',
+  'seo-member',
+]);
+
+/**
+ * Which auth guard the stored session belongs to.
+ * Admin / HR / SEO Manager / Project Manager → admin
+ * Employees (incl. Team Lead job title) → employee
+ */
 export function getStoredAuthActor(): AuthActor {
-  return getStoredUser()?.actor === 'employee' ? 'employee' : 'admin';
+  const user = getStoredUser();
+  if (!user) return 'admin';
+
+  if (user.isSuperAdmin) return 'admin';
+
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  if (roles.some((r) => ADMIN_ROLE_SLUGS.has(r))) return 'admin';
+  if (roles.some((r) => EMPLOYEE_ROLE_SLUGS.has(r))) return 'employee';
+
+  if (user.role === 'employee' || user.role === 'seo-member') return 'employee';
+  if (
+    user.role === 'admin'
+    || user.role === 'hr'
+    || user.role === 'manager'
+    || user.role === 'seo-leader'
+  ) {
+    return 'admin';
+  }
+
+  return user.actor === 'employee' ? 'employee' : 'admin';
 }
 
 /**

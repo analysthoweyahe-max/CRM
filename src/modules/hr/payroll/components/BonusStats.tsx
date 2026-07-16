@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { BadgeDollarSign, PenLine, Zap } from 'lucide-react';
 import { Card } from '@/shared/components/ui/Card';
+import { formatMoneyAmount } from '@/shared/utils/number.utils';
 
 interface BonusStatsProps {
-  total:   number;
+  total:   number | null | undefined;
   manualC: number;
   autoC:   number;
   isAr:    boolean;
@@ -15,7 +16,7 @@ export function BonusStats({ total, manualC, autoC, isAr }: BonusStatsProps) {
       <div className="divide-y divide-gray-100 dark:divide-gray-700">
         <StatRow
           label={isAr ? 'إجمالي المكافآت' : 'Total Bonuses'}
-          value={`${total.toLocaleString('ar-EG')} ${isAr ? 'ج.م' : 'EGP'}`}
+          value={formatMoneyAmount(total, isAr)}
           valueClass="text-xl font-bold text-brand-500 dark:text-brand-400"
           icon={<BadgeDollarSign size={17} className="text-brand-400" />}
         />

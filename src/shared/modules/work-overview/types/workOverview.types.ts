@@ -29,17 +29,17 @@ export interface WorkOverviewAttendance {
 
 export interface WorkOverviewTotals {
   count:       number;
-  totalAmount: number;
+  totalAmount: number | null;
 }
 
 export interface WorkOverviewSalary {
   financialMonth: string;
-  basicSalary:    number;
-  deductions:     number;
-  rewards:        number;
-  overtime:       number;
-  bonus:          number;
-  netSalary:      number;
+  basicSalary:    number | null;
+  deductions:     number | null;
+  rewards:        number | null;
+  overtime:       number | null;
+  bonus:          number | null;
+  netSalary:      number | null;
 }
 
 export interface WorkOverviewLinks {
@@ -67,7 +67,7 @@ export interface WorkOverviewResponse {
 
 export interface PersonalDeduction {
   id:                 string;
-  amount:             number;
+  amount:             number | null;
   deductionType?:     string;
   deductionTypeLabel?: string;
   type?:              { id?: string; code?: string; label?: string; source?: string } | null;
@@ -83,7 +83,7 @@ export interface PersonalDeduction {
 
 export interface PersonalBonus {
   id:                   string;
-  amount:               number;
+  amount:               number | null;
   adjustmentType?:      string;
   adjustmentTypeLabel?: string;
   type?:                { id?: string; code?: string; label?: string; source?: string } | null;

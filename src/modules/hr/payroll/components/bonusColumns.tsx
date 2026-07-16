@@ -3,6 +3,7 @@ import { Zap, PenLine } from 'lucide-react';
 import { Avatar }  from '@/shared/components/ui/Avatar';
 import { Badge }   from '@/shared/components/ui/Badge';
 import { getInitial, getAvatarColor } from '@/modules/hr/employees/types/employee.types';
+import { formatLocaleNumber } from '@/shared/utils/number.utils';
 import type { ApiBonus } from '../types/payroll.types';
 
 const col = createColumnHelper<ApiBonus>();
@@ -42,7 +43,7 @@ export function getBonusColumns(isAr: boolean) {
       header: isAr ? 'المبلغ' : 'Amount',
       cell:   (i) => (
         <span className="text-sm font-semibold text-[#709028] dark:text-[#A0CD39]">
-          +{i.getValue().toLocaleString('ar-EG')} {isAr ? 'ج.م' : 'EGP'}
+          +{formatLocaleNumber(i.getValue(), 'ar-EG')} {isAr ? 'ج.م' : 'EGP'}
         </span>
       ),
     }),

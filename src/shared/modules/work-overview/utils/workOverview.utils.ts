@@ -1,6 +1,7 @@
 import { ROUTES } from '@/app/router/routes';
 import { resolveAttendanceScope } from '@/shared/modules/attendance/utils/attendanceTimer.utils';
 import { utcClockToLocal } from '@/shared/utils/date.utils';
+import { formatLocaleNumber, formatMoneyAmount } from '@/shared/utils/number.utils';
 import type { Role } from '@/shared/types/role.types';
 import type { WorkAppRoutes, WorkScope } from '../types/workOverview.types';
 
@@ -45,17 +46,15 @@ export function formatTimeHHmm(time: string | null | undefined): string {
   return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
 }
 
-export function formatMoney(amount: number, isAr: boolean): string {
-  const formatted = amount.toLocaleString(isAr ? 'ar-EG' : 'en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return `${formatted} ${isAr ? 'ج.م' : 'EGP'}`;
+export function formatMoney(amount: number | null | undefined, isAr: boolean): string {
+  return formatMoneyAmount(amount, isAr);
 }
 
 export function formatWorkHours(hours: number | null | undefined): string {
-  if (hours == null || Number.isNaN(hours)) return '—';
-  return hours.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return formatLocaleNumber(hours, undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
 }
 
 export function currentMonth(): string {

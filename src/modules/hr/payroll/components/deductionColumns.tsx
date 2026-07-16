@@ -3,6 +3,7 @@ import { Zap, PenLine } from 'lucide-react';
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge }  from '@/shared/components/ui/Badge';
 import { getInitial, getAvatarColor } from '@/modules/hr/employees/types/employee.types';
+import { formatLocaleNumber } from '@/shared/utils/number.utils';
 import type { ApiDeduction } from '../types/payroll.types';
 
 const col = createColumnHelper<ApiDeduction>();
@@ -42,7 +43,7 @@ export function getDeductionColumns(isAr: boolean) {
       header: isAr ? 'المبلغ' : 'Amount',
       cell:   (i) => (
         <span className="text-sm font-semibold text-red-500 dark:text-red-400">
-          {i.getValue().toLocaleString('ar-EG')} {isAr ? 'ج.م' : 'EGP'}
+          {formatLocaleNumber(i.getValue(), 'ar-EG')} {isAr ? 'ج.م' : 'EGP'}
         </span>
       ),
     }),

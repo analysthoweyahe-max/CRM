@@ -1,5 +1,7 @@
-export function formatCurrency(amount: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+import { toSafeNumber } from './number.utils';
+
+export function formatCurrency(amount: number | null | undefined, currency = 'USD'): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(toSafeNumber(amount));
 }
 
 export function formatFullName(firstName: string, lastName: string): string {

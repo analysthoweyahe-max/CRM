@@ -1,9 +1,10 @@
 import { type ReactElement } from 'react';
 import { BadgeDollarSign, Zap, PenLine } from 'lucide-react';
 import { Card } from '@/shared/components/ui/Card';
+import { formatMoneyAmount } from '@/shared/utils/number.utils';
 
 interface DeductionStatsProps {
-  total:   number;
+  total:   number | null | undefined;
   autoC:   number;
   manualC: number;
   isAr:    boolean;
@@ -15,7 +16,7 @@ export function DeductionStats({ total, autoC, manualC, isAr }: DeductionStatsPr
       <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y sm:divide-y-0 divide-x-reverse divide-gray-100 dark:divide-gray-700">
         <StatItem
           label={isAr ? 'إجمالي الخصومات' : 'Total Deductions'}
-          value={`${total.toLocaleString('ar-EG')} ${isAr ? 'ج.م' : 'EGP'}`}
+          value={formatMoneyAmount(total, isAr)}
           valueClass="text-red-500 dark:text-red-400"
           icon={<BadgeDollarSign size={17} className="text-red-400" />}
         />

@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { Avatar } from '@/shared/components/ui/Avatar';
+import { formatMoneyAmount } from '@/shared/utils/number.utils';
 import type { ApiSalaryRow } from '../types/payroll.types';
 
 const col = createColumnHelper<ApiSalaryRow>();
@@ -15,14 +16,8 @@ function avatarColor(name: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-function formatMoney(amount: number, isAr: boolean): string {
-  const n = Number(amount);
-  const safe = Number.isFinite(n) ? n : 0;
-  const formatted = safe.toLocaleString(isAr ? 'ar-EG' : 'en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return `${formatted} ${isAr ? 'ج.م' : 'EGP'}`;
+function formatMoney(amount: number | null | undefined, isAr: boolean): string {
+  return formatMoneyAmount(amount, isAr);
 }
 
 function moneyCell(amount: number, isAr: boolean, tone?: 'danger' | 'success' | 'net') {

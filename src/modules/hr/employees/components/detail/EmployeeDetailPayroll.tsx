@@ -1,6 +1,7 @@
 import { useEmployeeDeductions } from '@/modules/hr/payroll/hooks/useDeductions';
 import { useEmployeeBonuses } from '@/modules/hr/payroll/hooks/useBonuses';
 import { translateDeductionType } from '@/modules/hr/payroll/utils/deductionType.i18n';
+import { formatLocaleNumber } from '@/shared/utils/number.utils';
 
 interface Props {
   employeeId: string;
@@ -18,7 +19,7 @@ interface Row {
   statusLabel: string | null;
 }
 
-const fmt = (n: number) => n.toLocaleString('ar-EG');
+const fmt = (n: number | null | undefined) => formatLocaleNumber(n, 'ar-EG');
 
 function StatusBadge({ status, statusLabel }: { status: string; statusLabel: string }) {
   const isPending = status === 'pending';
