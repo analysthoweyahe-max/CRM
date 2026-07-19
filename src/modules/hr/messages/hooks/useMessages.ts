@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { extractPaginatedList } from '@/shared/utils/apiList.utils';
+import { toChronologicalMessages } from '@/shared/utils/chatNormalize.utils';
 import { messagesApi } from '../api/messages.api';
 import {
   conversationMessageId,
@@ -10,16 +11,6 @@ import type { ApiConversation, ApiEmployeeLookup, ApiMessage } from '../types/me
 
 const CONV_KEY = ['hr', 'messages', 'conversations'] as const;
 const msgKey = (uuid: string) => ['hr', 'messages', 'thread', uuid] as const;
-
-function parseMessagesResponse(
-  res: Awaited<ReturnType<typeof messagesApi.getMessages>>,
-): ApiMessage[] {
-  return extractPaginatedList<ApiMessage>(res.data)
-    .filter((msg): msg is ApiMessage => !!msg && typeof msg === 'object')
-    .map(normalizeApiMessage)
-    .slice()
-    .reverse(); // oldest first
-}
 
 function appendMessage(prev: ApiMessage[] | undefined, msg: ApiMessage): ApiMessage[] {
   const normalized = normalizeApiMessage(msg);
@@ -59,8 +50,15 @@ export function useMessages(conversation: ApiConversation | null) {
 
   return useQuery({
     queryKey: msgKey(uuid ?? ''),
-    queryFn:  () => messagesApi.getMessages(uuid!, { per_page: 30 }),
-    select:   parseMessagesResponse,
+    queryFn:  async () => {
+      const res = await messagesApi.getMessages(uuid!, { per_page: 30, page: 1 });
+      // Page 1 = newest first (DESC) → chronological for UI.
+      return toChronologicalMessages(
+        extractPaginatedList<ApiMessage>(res.data)
+          .filter((msg): msg is ApiMessage => !!msg && typeof msg === 'object')
+          .map(normalizeApiMessage),
+      );
+    },
     enabled:  !!uuid,
     retry:    2,
     refetchInterval: 5_000,
@@ -75,10 +73,10 @@ export function useSendMessage(conversation: ApiConversation) {
   return useMutation({
     mutationFn: (body: string) => messagesApi.sendMessage(uuid, body),
     onSuccess: (res) => {
-      qc.setQueryData<ApiMessage[]>(msgKey(uuid), (prev) =>
-        appendMessage(prev, res.data.data),
-      );
-      qc.invalidateQueries({ queryKey: msgKey(uuid) });
+      const msg = res.data?.data;
+      if (msg?.id) {
+        qc.setQueryData<ApiMessage[]>(msgKey(uuid), (prev) => appendMessage(prev, msg));
+      }
       qc.invalidateQueries({ queryKey: CONV_KEY });
     },
   });
@@ -91,10 +89,10 @@ export function useSendMedia(conversation: ApiConversation) {
   return useMutation({
     mutationFn: (file: File) => messagesApi.sendMedia(uuid, file),
     onSuccess: (res) => {
-      qc.setQueryData<ApiMessage[]>(msgKey(uuid), (prev) =>
-        appendMessage(prev, res.data.data),
-      );
-      qc.invalidateQueries({ queryKey: msgKey(uuid) });
+      const msg = res.data?.data;
+      if (msg?.id) {
+        qc.setQueryData<ApiMessage[]>(msgKey(uuid), (prev) => appendMessage(prev, msg));
+      }
       qc.invalidateQueries({ queryKey: CONV_KEY });
     },
   });

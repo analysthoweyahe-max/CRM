@@ -155,6 +155,15 @@ export function normalizeSeoMessage<T extends { id: string | number; body: strin
   };
 }
 
+/**
+ * Messages list page 1 is newest-first (DESC).
+ * Reverse so the UI stays chronological (oldest → newest, top → bottom).
+ */
+export function toChronologicalMessages<T>(msgs: T[] | null | undefined): T[] {
+  if (!msgs?.length) return [];
+  return [...msgs].reverse();
+}
+
 export function normalizeTaskCommentFields(raw: {
   isEdited?: boolean | null;
   is_edited?: boolean | null;

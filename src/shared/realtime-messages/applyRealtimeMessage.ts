@@ -1,7 +1,12 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { SeoConversation, SeoMessage, SeoParticipant } from '@/modules/seo-member/messages/types/messages.types';
+import type { SeoConversation, SeoMessage } from '@/modules/seo-member/messages/types/messages.types';
 import type { RealtimeMessagePayload } from './messageRealtime.types';
-import { isRealtimeMessageType, isRealtimeMessageUpdatedType } from './messageRealtime.types';
+import {
+  isChatBubbleType,
+  isNotificationOnlyType,
+  isRealtimeMessageType,
+  isRealtimeMessageUpdatedType,
+} from './messageRealtime.types';
 import { isConversationOpen } from './activeConversation.store';
 import {
   isRealtimeChatOpen,
@@ -17,6 +22,27 @@ import { conversationLastMessagePreview } from '@/shared/utils/messagePreview.ut
 
 export const COMPANY_CONV_KEY = ['seo-member', 'messages', 'conversations'] as const;
 export const companyMsgKey = (id: string) => ['seo-member', 'messages', 'messages', id] as const;
+
+type CompanyMessagesCache = {
+  messages: SeoMessage[];
+  lastPage: number;
+};
+
+function readCachedMessages(cache: CompanyMessagesCache | SeoMessage[] | undefined): SeoMessage[] {
+  if (!cache) return [];
+  if (Array.isArray(cache)) return cache;
+  return cache.messages ?? [];
+}
+
+function writeCachedMessages(
+  prev: CompanyMessagesCache | SeoMessage[] | undefined,
+  messages: SeoMessage[],
+): CompanyMessagesCache {
+  if (prev && !Array.isArray(prev)) {
+    return { ...prev, messages };
+  }
+  return { messages, lastPage: 1 };
+}
 
 const HR_CONV_KEY = ['hr', 'messages', 'conversations'] as const;
 const hrMsgKey = (id: string) => ['hr', 'messages', 'thread', id] as const;
@@ -39,58 +65,50 @@ function senderType(payload: RealtimeMessagePayload): string | undefined {
   return payload.sender.type;
 }
 
-/** Notification body is often "Name: preview" — prefer preview for chat bubble. */
-function messageBodyFromPayload(payload: RealtimeMessagePayload): string {
-  const raw = String(payload.body ?? '').trim();
-  if (!raw) return '';
-  const name = senderName(payload);
-  if (name && raw.startsWith(`${name}:`)) {
-    return raw.slice(name.length + 1).trim();
-  }
-  return raw;
+/** Generic notification titles that must never become chat bubble text. */
+const GENERIC_NOTIFICATION_TITLES = new Set([
+  'رسالة جديدة',
+  'new message',
+  'إشعار جديد',
+  'new notification',
+]);
+
+function isGenericNotificationCopy(text: string): boolean {
+  return GENERIC_NOTIFICATION_TITLES.has(text.trim().toLowerCase());
 }
 
-function isOwnSender(payload: RealtimeMessagePayload, currentUserId: string | undefined): boolean {
+/**
+ * Chat bubble text from Echo — prefer messageBody / preview.
+ * Never use title ("رسالة جديدة"). Toast may still use title/body separately.
+ */
+function messageBodyFromPayload(payload: RealtimeMessagePayload): string {
+  const candidates = [
+    payload.messageBody,
+    payload.message_body,
+    payload.preview,
+    payload.body,
+  ];
+  for (const candidate of candidates) {
+    const raw = String(candidate ?? '').trim();
+    if (!raw || isGenericNotificationCopy(raw)) continue;
+    const name = senderName(payload);
+    if (name && raw.startsWith(`${name}:`)) {
+      const stripped = raw.slice(name.length + 1).trim();
+      if (stripped && !isGenericNotificationCopy(stripped)) return stripped;
+    }
+    return raw;
+  }
+  return '';
+}
+
+function resolveIsMine(
+  payload: RealtimeMessagePayload,
+  currentUserId: string | undefined,
+): boolean {
+  if (payload.isMine === true || payload.echoToSender === true) return true;
   if (!currentUserId) return false;
   const id = senderId(payload);
   return !!id && id === currentUserId;
-}
-
-function appendMessage<T extends { id: string | number }>(
-  prev: T[] | undefined,
-  msg: T,
-): T[] {
-  const list = prev ?? [];
-  if (list.some(m => String(m.id) === String(msg.id))) return list;
-  return [...list, msg];
-}
-
-function conversationFromPayload(
-  payload: RealtimeMessagePayload,
-  opts: { isOpen: boolean; body: string },
-): SeoConversation | null {
-  const conversationId = payload.conversationId;
-  if (!conversationId) return null;
-
-  const sid = senderId(payload);
-  const participant: SeoParticipant | null = sid
-    ? {
-        id:   sid,
-        name: senderName(payload) || '…',
-        type: (senderType(payload) === 'employee' ? 'employee' : 'admin'),
-      }
-    : null;
-
-  return {
-    id:             conversationId,
-    type:           payload.conversationType === 'group' ? 'group' : 'direct',
-    name:           payload.conversationName ?? null,
-    lastMessage:    opts.body || null,
-    lastMessageAt:  new Date().toISOString(),
-    unreadCount:    opts.isOpen ? 0 : 1,
-    participant,
-    participants:   payload.conversationType === 'group' && participant ? [participant] : null,
-  };
 }
 
 function upsertCompanyConversation(
@@ -106,8 +124,8 @@ function upsertCompanyConversation(
   const now = new Date().toISOString();
 
   if (idx === -1) {
-    const seeded = conversationFromPayload(payload, opts);
-    return seeded ? [seeded, ...list] : list;
+    // Do not invent a fake sidebar row (empty / red placeholder) — caller refetches list.
+    return list;
   }
 
   const existing = list[idx]!;
@@ -177,8 +195,10 @@ function applyCompanyMessengerUpdate(
   }) || true;
   const mentions = normalizeMentions(payload.mentions);
 
-  const existingList = qc.getQueryData<SeoMessage[]>(companyMsgKey(conversationId));
-  const existing = existingList?.find(m => String(m.id) === messageId);
+  const existingList = readCachedMessages(
+    qc.getQueryData<CompanyMessagesCache | SeoMessage[]>(companyMsgKey(conversationId)),
+  );
+  const existing = existingList.find(m => String(m.id) === messageId);
 
   // Already applied (e.g. optimistic HTTP success) — skip duplicate patch.
   if (
@@ -191,7 +211,7 @@ function applyCompanyMessengerUpdate(
     return { handled: true, chatOpen };
   }
 
-  if (!existingList || !existing) {
+  if (!existingList.length || !existing) {
     // Partial / missing local cache → refetch active thread only.
     void qc.refetchQueries({ queryKey: companyMsgKey(conversationId), type: 'active' });
   } else {
@@ -202,9 +222,12 @@ function applyCompanyMessengerUpdate(
       editedAt: editedAt ?? existing.editedAt ?? new Date().toISOString(),
       ...(mentions ? { mentions: mentions as SeoMessage['mentions'] } : {}),
     };
-    qc.setQueryData<SeoMessage[]>(companyMsgKey(conversationId), (prev) => {
-      if (!prev) return prev;
-      return prev.map(m => (String(m.id) === messageId ? patched : m));
+    qc.setQueryData<CompanyMessagesCache | SeoMessage[]>(companyMsgKey(conversationId), (prev) => {
+      const list = readCachedMessages(prev);
+      return writeCachedMessages(
+        prev,
+        list.map(m => (String(m.id) === messageId ? patched : m)),
+      );
     });
 
     // If this was the latest message, refresh sidebar preview.
@@ -224,9 +247,13 @@ function applyCompanyMessengerUpdate(
 function applyCompanyMessenger(
   qc: QueryClient,
   payload: RealtimeMessagePayload,
+  currentUserId: string | undefined,
 ): { handled: boolean; chatOpen: boolean; needsListRefetch: boolean } {
-  const conversationId = payload.conversationId;
-  if (!conversationId) {
+  const conversationId = payload.conversationId ? String(payload.conversationId) : undefined;
+  const messageId = payload.messageId ? String(payload.messageId) : undefined;
+
+  // Pure notification-looking payloads without chat ids — never invent bubbles.
+  if (!conversationId || !messageId) {
     qc.invalidateQueries({ queryKey: COMPANY_CONV_KEY });
     return { handled: true, chatOpen: false, needsListRefetch: true };
   }
@@ -235,11 +262,10 @@ function applyCompanyMessenger(
   const chatOpen = isConversationOpen(conversationId, 'company')
     || qc.getQueryCache().findAll({ queryKey: companyMsgKey(conversationId), type: 'active' }).length > 0;
 
-  // Prefer refetch so replyTo / durationSeconds / attachments are complete —
-  // websocket payloads are often partial.
+  const isMine = resolveIsMine(payload, currentUserId);
   const partialBody = body || null;
   const msg: SeoMessage = {
-    id:      payload.messageId ?? `rt-${Date.now()}`,
+    id:      messageId,
     body:    partialBody,
     type:    typeof payload.messageType === 'string' ? payload.messageType : undefined,
     sender:  {
@@ -247,13 +273,22 @@ function applyCompanyMessenger(
       name: senderName(payload) || '…',
       type: senderType(payload),
     },
-    isMine:  false,
+    isMine,
     sentAt:  new Date().toISOString(),
   };
 
-  // Always keep thread cache warm so opening the chat shows the new message.
-  qc.setQueryData<SeoMessage[]>(companyMsgKey(conversationId), (prev) => appendMessage(prev, msg));
-  void qc.refetchQueries({ queryKey: companyMsgKey(conversationId), type: 'active' });
+  // Append when thread is open/cached; de-dupe by messageId (POST 201 + Echo).
+  const hasThreadCache = qc.getQueryData(companyMsgKey(conversationId)) != null;
+  if (chatOpen || hasThreadCache) {
+    qc.setQueryData<CompanyMessagesCache | SeoMessage[]>(companyMsgKey(conversationId), (prev) => {
+      const list = readCachedMessages(prev);
+      if (list.some(m => String(m.id) === String(msg.id))) {
+        return writeCachedMessages(prev, list);
+      }
+      return writeCachedMessages(prev, [...list, msg]);
+    });
+    void qc.refetchQueries({ queryKey: companyMsgKey(conversationId), type: 'active' });
+  }
 
   const listPreview =
     msg.type === 'voice'
@@ -261,24 +296,29 @@ function applyCompanyMessenger(
       : (partialBody || '…');
 
   const matching = qc.getQueriesData<SeoConversation[]>({ queryKey: COMPANY_CONV_KEY });
-  if (matching.length === 0) {
-    // Query never succeeded (e.g. list API error) — seed the default "all" list.
-    qc.setQueryData<SeoConversation[]>(
-      [...COMPANY_CONV_KEY, 'all', ''],
-      upsertCompanyConversation(undefined, payload, { isOpen: chatOpen, body: listPreview }),
-    );
-  } else {
+  let knownConversation = false;
+  for (const [, list] of matching) {
+    if (list?.some(c => c.id === conversationId)) {
+      knownConversation = true;
+      break;
+    }
+  }
+
+  if (knownConversation) {
     qc.setQueriesData<SeoConversation[]>(
       { queryKey: COMPANY_CONV_KEY },
-      (prev) => upsertCompanyConversation(prev, payload, { isOpen: chatOpen, body: listPreview }),
+      (prev) => upsertCompanyConversation(prev, payload, {
+        isOpen: chatOpen || isMine,
+        body: listPreview,
+      }),
     );
   }
 
-  // Soft-refetch in background; don't wipe seeded data on failure.
+  // Soft-refetch sidebar (covers unknown conversations without inventing rows).
   qc.invalidateQueries({ queryKey: COMPANY_CONV_KEY, refetchType: 'none' });
   void qc.refetchQueries({ queryKey: COMPANY_CONV_KEY, type: 'active' });
 
-  return { handled: true, chatOpen, needsListRefetch: false };
+  return { handled: true, chatOpen: chatOpen || isMine, needsListRefetch: !knownConversation };
 }
 
 function applyHrMessenger(
@@ -316,10 +356,9 @@ export interface ApplyRealtimeResult {
 
 /**
  * Apply a realtime message event to React Query caches.
- * - Skips when sender is the current user (UI already showed POST response) — except edits
- *   (editor's other tabs still need `.message.updated`; dedupe handles double-apply)
- * - Appends into open company thread
- * - Upserts conversation list lastMessage / unreadCount / order (even if list API failed)
+ * - Appends echoToSender / isMine echoes into the open thread (de-dupe by messageId vs POST 201)
+ * - Never treats notification-only types (leave/request/instruction) as chat bubbles
+ * - Upserts known conversation list lastMessage / unreadCount — never invents blank sidebar rows
  */
 export function applyRealtimeMessage(
   qc: QueryClient,
@@ -327,6 +366,11 @@ export function applyRealtimeMessage(
   currentUserId: string | undefined,
 ): ApplyRealtimeResult {
   const payload = parseRealtimeMessagePayload(raw);
+
+  // Requests / alerts on `.message.sent` — leave to notification handler.
+  if (isNotificationOnlyType(payload.type)) {
+    return { handled: false, chatOpen: false, skippedOwn: false };
+  }
 
   if (!isRealtimeMessageType(payload.type)) {
     return { handled: false, chatOpen: false, skippedOwn: false };
@@ -337,24 +381,35 @@ export function applyRealtimeMessage(
     return { handled: result.handled, chatOpen: result.chatOpen, skippedOwn: false, isUpdate: true };
   }
 
-  if (isOwnSender(payload, currentUserId)) {
-    return { handled: true, chatOpen: false, skippedOwn: true };
+  // Non-chat types that somehow share REALTIME_MESSAGE_TYPES — toast only.
+  if (!isChatBubbleType(payload.type)) {
+    return { handled: false, chatOpen: false, skippedOwn: false };
   }
 
   if (payload.type === 'seo_direct_message') {
-    const result = applyCompanyMessenger(qc, payload);
-    return { handled: result.handled, chatOpen: result.chatOpen, skippedOwn: false };
+    const result = applyCompanyMessenger(qc, payload, currentUserId);
+    const isMine = resolveIsMine(payload, currentUserId);
+    return {
+      handled: result.handled,
+      chatOpen: result.chatOpen,
+      // Own echo is applied via de-dupe; skip toast when it is a self-echo.
+      skippedOwn: isMine,
+    };
   }
 
   if (payload.type === 'hr_message') {
     const result = applyHrMessenger(qc, payload);
-    return { handled: result.handled, chatOpen: result.chatOpen, skippedOwn: false };
+    return {
+      handled: result.handled,
+      chatOpen: result.chatOpen,
+      skippedOwn: resolveIsMine(payload, currentUserId),
+    };
   }
 
   refreshRealtimeMessages(qc, payload);
   return {
     handled: true,
     chatOpen: isRealtimeChatOpen(qc, payload),
-    skippedOwn: false,
+    skippedOwn: resolveIsMine(payload, currentUserId),
   };
 }

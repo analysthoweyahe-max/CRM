@@ -90,7 +90,13 @@ export function useMessagesMonitor(isAr: boolean) {
       }
       const next = applyRealtimeToConversations(prev, {
         conversationId,
-        body: typeof payload.body === 'string' ? payload.body : undefined,
+        body: typeof payload.messageBody === 'string'
+          ? payload.messageBody
+          : (typeof payload.message_body === 'string'
+            ? payload.message_body
+            : (typeof payload.preview === 'string'
+              ? payload.preview
+              : (typeof payload.body === 'string' ? payload.body : undefined))),
         isObserver: typeof payload.isObserver === 'boolean'
           ? payload.isObserver
           : undefined,

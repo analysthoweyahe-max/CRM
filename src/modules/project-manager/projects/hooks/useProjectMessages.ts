@@ -35,8 +35,14 @@ export function useProjectMessages(projectId: string) {
 
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['pm-project-messages', projectId, search],
-    queryFn:  () => pmProjectMessagesApi.list(projectId, { per_page: 30, search: search.trim() || undefined })
-      .then(r => r.data.data.data.map(m => mapProjectMessage(m, user?.id) as ChatMessage)),
+    queryFn:  async () => {
+      const rows = await pmProjectMessagesApi.list(projectId, {
+        per_page: 30,
+        search: search.trim() || undefined,
+      }).then(r => r.data.data.data.map(m => mapProjectMessage(m, user?.id) as ChatMessage));
+      // Page 1 = newest first (DESC) → chronological for chat UI.
+      return [...rows].reverse();
+    },
     refetchInterval: 5_000,
     enabled: !!projectId,
   });
@@ -48,9 +54,22 @@ export function useProjectMessages(projectId: string) {
   const sendMutation = useMutation({
     mutationFn: (payload: { body?: string; file?: File }) =>
       pmProjectMessagesApi.send(projectId, payload),
-    onSuccess: () => {
+    onSuccess: (res) => {
       setSendError(null);
-      queryClient.invalidateQueries({ queryKey: ['pm-project-messages', projectId] });
+      const raw = res.data?.data;
+      if (raw) {
+        const mapped = mapProjectMessage(raw, user?.id) as ChatMessage;
+        queryClient.setQueryData<ChatMessage[]>(
+          ['pm-project-messages', projectId, search],
+          (prev) => {
+            const list = prev ?? [];
+            if (list.some(m => m.id === mapped.id)) return list;
+            return [...list, mapped];
+          },
+        );
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['pm-project-messages', projectId] });
+      }
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string }; status?: number } })?.response;

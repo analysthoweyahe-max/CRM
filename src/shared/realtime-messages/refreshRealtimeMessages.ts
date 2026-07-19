@@ -29,7 +29,21 @@ export function parseRealtimeMessagePayload(
   out.conversationId = readId(out.conversationId, out.conversation_id);
   out.projectId = readId(out.projectId, out.project_id);
   out.phaseId = readId(out.phaseId, out.phase_id);
-  out.messageId = readId(out.messageId, out.message_id, out.id);
+  // Prefer explicit message ids — do not fall back to notification `id`.
+  out.messageId = readId(out.messageId, out.message_id);
+
+  const messageBody = readId(out.messageBody, out.message_body);
+  if (messageBody) out.messageBody = messageBody;
+
+  const messageType = readId(out.messageType, out.message_type);
+  if (messageType) out.messageType = messageType;
+
+  if (out.echo_to_sender != null && out.echoToSender == null) {
+    out.echoToSender = Boolean(out.echo_to_sender);
+  }
+  if (out.is_mine != null && out.isMine == null) {
+    out.isMine = Boolean(out.is_mine);
+  }
 
   // Normalize edit fields for `.message.updated`
   const editedAt = readId(out.editedAt, out.edited_at);

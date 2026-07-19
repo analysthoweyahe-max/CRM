@@ -22,9 +22,12 @@ export function useProjectMessages(projectId: string) {
   /* ── Messages list ───────────────────────────────────────────────────── */
   const { data: messagesData, isLoading } = useQuery({
     queryKey: ['seo-messages', projectId, search],
-    queryFn:  () =>
-      campaignApi.getMessages(projectId, search ? { search } : undefined)
-        .then(r => toApiArray<SeoMessage>(r.data.data)),
+    queryFn:  async () => {
+      const rows = await campaignApi.getMessages(projectId, search ? { search } : undefined)
+        .then(r => toApiArray<SeoMessage>(r.data.data));
+      // Page 1 = newest first (DESC) → chronological for chat UI.
+      return [...rows].reverse();
+    },
     refetchInterval: 10_000,
     staleTime:       5_000,
   });
@@ -55,10 +58,14 @@ export function useProjectMessages(projectId: string) {
       campaignApi.sendMessage(projectId, content, mentions),
     onSuccess: (res) => {
       const msg = res.data.data;
-      if (msg) {
+      if (msg?.id) {
         queryClient.setQueryData(
           ['seo-messages', projectId, search],
-          (old: SeoMessage[] | undefined) => [...(old ?? []), msg],
+          (old: SeoMessage[] | undefined) => {
+            const list = old ?? [];
+            if (list.some(m => String(m.id) === String(msg.id))) return list;
+            return [...list, msg];
+          },
         );
       } else {
         queryClient.invalidateQueries({ queryKey: ['seo-messages', projectId] });
@@ -80,10 +87,14 @@ export function useProjectMessages(projectId: string) {
     mutationFn: (file: File) => campaignApi.sendMedia(projectId, file),
     onSuccess: (res) => {
       const msg = res.data.data;
-      if (msg) {
+      if (msg?.id) {
         queryClient.setQueryData(
           ['seo-messages', projectId, search],
-          (old: SeoMessage[] | undefined) => [...(old ?? []), msg],
+          (old: SeoMessage[] | undefined) => {
+            const list = old ?? [];
+            if (list.some(m => String(m.id) === String(msg.id))) return list;
+            return [...list, msg];
+          },
         );
       } else {
         queryClient.invalidateQueries({ queryKey: ['seo-messages', projectId] });

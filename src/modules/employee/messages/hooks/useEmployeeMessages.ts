@@ -1,10 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { toChronologicalMessages } from '@/shared/utils/chatNormalize.utils';
 import { empMessagesApi } from '../api/messages.api';
+import type { EmpMessage } from '../types/messages.types';
 
 /* ── Keys ── */
 const CONV_KEY  = ['employee', 'messages', 'conversations'] as const;
 const msgKey    = (uuid: string) => ['employee', 'messages', 'messages', uuid] as const;
+
+function appendEmpMessage(prev: EmpMessage[] | undefined, msg: EmpMessage): EmpMessage[] {
+  const list = prev ?? [];
+  if (list.some(m => String(m.id) === String(msg.id))) return list;
+  return [...list, { ...msg, isMine: true }];
+}
 
 /* ── Conversations list ── */
 export function useEmpConversations(params?: { search?: string; status?: string }) {
@@ -38,8 +46,11 @@ export function useEmpMessages(uuid: string | null) {
 
   return useQuery({
     queryKey: msgKey(uuid ?? ''),
-    queryFn:  () => empMessagesApi.getMessages(uuid!, { per_page: 30 }),
-    select:   res  => (res.data.data.data ?? []).slice().reverse(), // oldest first
+    queryFn:  async () => {
+      const res = await empMessagesApi.getMessages(uuid!, { per_page: 30, page: 1 });
+      // Page 1 = newest first (DESC) → chronological for UI.
+      return toChronologicalMessages(res.data.data.data ?? []);
+    },
     enabled:  !!uuid,
     refetchInterval: 30_000,
     staleTime: 2_000,
@@ -51,8 +62,13 @@ export function useEmpSendMessage(uuid: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: string) => empMessagesApi.sendMessage(uuid, body),
-    onSuccess:  () => {
-      qc.invalidateQueries({ queryKey: msgKey(uuid) });
+    onSuccess:  (res) => {
+      const msg = res.data?.data;
+      if (msg?.id) {
+        qc.setQueryData<EmpMessage[]>(msgKey(uuid), (prev) => appendEmpMessage(prev, msg));
+      } else {
+        qc.invalidateQueries({ queryKey: msgKey(uuid) });
+      }
       qc.invalidateQueries({ queryKey: CONV_KEY });
     },
   });
@@ -63,8 +79,13 @@ export function useEmpSendMedia(uuid: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (file: File) => empMessagesApi.sendMedia(uuid, file),
-    onSuccess:  () => {
-      qc.invalidateQueries({ queryKey: msgKey(uuid) });
+    onSuccess:  (res) => {
+      const msg = res.data?.data;
+      if (msg?.id) {
+        qc.setQueryData<EmpMessage[]>(msgKey(uuid), (prev) => appendEmpMessage(prev, msg));
+      } else {
+        qc.invalidateQueries({ queryKey: msgKey(uuid) });
+      }
       qc.invalidateQueries({ queryKey: CONV_KEY });
     },
   });

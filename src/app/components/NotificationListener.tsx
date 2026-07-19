@@ -7,6 +7,8 @@ import { useFirebaseMessaging } from '@/shared/hooks/useFirebaseMessaging';
 import { useNotifications } from '@/shared/hooks/useNotifications';
 import {
   applyRealtimeMessage,
+  isChatBubbleType,
+  isNotificationOnlyType,
   isRealtimeMessageType,
   parseRealtimeMessagePayload,
   useRealtimeMessages,
@@ -29,16 +31,12 @@ import { isEmployeeLeaveStatusNotification, isHrLeaveSubmittedNotification, isPe
 import { playNotificationSound } from '@/shared/utils/sound.utils';
 import type { AppNotification } from '@/shared/types/notification.types';
 
-/** HR leave / attendance-exception realtime types — never append to chat. */
-const HR_ACTIVITY_TYPES = new Set([
-  'hr_leave_submitted',
-  'hr_leave_status_updated',
-  'hr_attendance_exception_submitted',
-  'hr_attendance_exception_status_updated',
-]);
+function isToastOnlyRealtimeType(type: string | undefined | null): boolean {
+  return isNotificationOnlyType(type);
+}
 
-function isHrActivityType(type: string | undefined | null): boolean {
-  return !!type && HR_ACTIVITY_TYPES.has(type);
+function canApplyAsChat(type: string | undefined | null): boolean {
+  return isRealtimeMessageType(type) && isChatBubbleType(type) && !isToastOnlyRealtimeType(type);
 }
 
 function readFcmField(data: Record<string, unknown>, key: string): string {
@@ -136,10 +134,11 @@ export function NotificationListener() {
 
     invalidateHrActivityQueries(notification.type);
 
-    if (isRealtimeMessageType(notification.type) && !isHrActivityType(notification.type)) {
+    if (canApplyAsChat(notification.type)) {
       const data = typeof notification.data === 'object' && notification.data
         ? notification.data
         : {};
+      // Pass chat ids from data only — never seed bubble text from notification title/body.
       applyRealtimeMessage(qc, { ...data, type: notification.type }, user?.id);
     }
   }
@@ -155,7 +154,7 @@ export function NotificationListener() {
 
     const now = Date.now();
     if (lastRealtimeRef.current?.key === dedupKey && now - lastRealtimeRef.current.at < 5_000) {
-      if (isRealtimeMessageType(type) && !isHrActivityType(type)) {
+      if (canApplyAsChat(type)) {
         applyRealtimeMessage(qc, payload, user?.id);
       }
       invalidateHrActivityQueries(type);
@@ -164,9 +163,9 @@ export function NotificationListener() {
     }
     lastRealtimeRef.current = { key: dedupKey, at: now };
 
-    // HR leave/exception payloads may also arrive on `.message.sent` for compat —
+    // HR leave/exception / request payloads may also arrive on `.message.sent` —
     // treat them as notifications, never as chat messages.
-    const result = (isRealtimeMessageType(type) && !isHrActivityType(type))
+    const result = canApplyAsChat(type)
       ? applyRealtimeMessage(qc, payload, user?.id)
       : { handled: false, chatOpen: false, skippedOwn: false as const };
 
@@ -247,8 +246,8 @@ export function NotificationListener() {
       body:  String(body || ''),
     });
 
-    // Chat messages + HR activity types (leave/exception) share the same handler.
-    if (isRealtimeMessageType(realtime.type) || isHrActivityType(realtime.type)) {
+    // Chat messages + request/alert types (leave/exception/instruction) share the same handler.
+    if (isRealtimeMessageType(realtime.type) || isToastOnlyRealtimeType(realtime.type)) {
       handleRealtimeEvent(realtime);
       return;
     }
@@ -359,17 +358,16 @@ export function NotificationListener() {
       seenIdsRef.current = new Set(allIds);
       initialisedRef.current = true;
 
-      // Seed messenger caches from unread message notifications (no toast).
-      // Covers the case where the conversations list API failed but FCM/DB
-      // already delivered the alert.
+      // Seed messenger caches from unread chat notifications (no toast).
+      // Never pass notification title/body as bubble text ("رسالة جديدة").
       notifications.forEach((n) => {
-        if (n.readAt || !isRealtimeMessageType(n.type)) return;
+        if (n.readAt || !canApplyAsChat(n.type)) return;
         const data = typeof n.data === 'object' && n.data
           ? n.data
           : (typeof n.data === 'string'
             ? (() => { try { return JSON.parse(n.data) as Record<string, unknown>; } catch { return {}; } })()
             : {});
-        applyRealtimeMessage(qc, { ...data, type: n.type, title: n.title, body: n.body }, user?.id);
+        applyRealtimeMessage(qc, { ...data, type: n.type }, user?.id);
       });
       return;
     }

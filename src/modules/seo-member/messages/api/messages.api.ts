@@ -103,10 +103,10 @@ export const seoMessagesApi = {
     return http.post(`${messengerBase()}/conversations/${conversationId}/leave`);
   },
 
-  getMessages(conversationId: string, params?: { page?: number }) {
+  getMessages(conversationId: string, params?: { page?: number; per_page?: number }) {
     return http.get<SeoMessageListResponse>(
       `${messengerBase()}/conversations/${conversationId}/messages`,
-      { params },
+      { params: { per_page: 30, ...params } },
     );
   },
 

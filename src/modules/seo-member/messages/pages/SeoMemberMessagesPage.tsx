@@ -98,6 +98,7 @@ function SeoMemberChatWindow({
 }: ChatProps) {
   const { user }  = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef  = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
   const messageElRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   /** Backend sender.id is the actor UUID — match AuthUser.id, not employeeNumber. */
@@ -119,7 +120,13 @@ function SeoMemberChatWindow({
   const { data: detail } = useSeoConversation(conversation.id, isGroup && showMembers);
   const liveConversation = detail ?? conversation;
 
-  const { data: messages = [], isLoading } = useSeoMessages(conversation.id);
+  const {
+    data: messages = [],
+    isLoading,
+    hasMoreOlder,
+    isFetchingOlder,
+    loadOlder,
+  } = useSeoMessages(conversation.id);
   const { mutate: sendMessage, isPending: sending } = useSendSeoMessage(conversation.id);
   const { mutate: editMessage, isPending: editing } = useEditSeoMessage(conversation.id, isAr);
   const { mutate: reactToMessage, isPending: reacting } = useReactSeoMessage(conversation.id);
@@ -150,7 +157,20 @@ function SeoMemberChatWindow({
   useEffect(() => {
     if (focusMessageId) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, focusMessageId]);
+  }, [messages.length, focusMessageId]);
+
+  function handleThreadScroll() {
+    const el = scrollRef.current;
+    if (!el || !hasMoreOlder || isFetchingOlder) return;
+    if (el.scrollTop > 64) return;
+    const prevHeight = el.scrollHeight;
+    void loadOlder().then(() => {
+      requestAnimationFrame(() => {
+        if (!scrollRef.current) return;
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+      });
+    });
+  }
 
   useEffect(() => {
     if (!focusMessageId || messages.length === 0) return;
@@ -360,7 +380,16 @@ function SeoMemberChatWindow({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50 dark:bg-gray-950">
+      <div
+        ref={scrollRef}
+        onScroll={handleThreadScroll}
+        className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50 dark:bg-gray-950"
+      >
+        {isFetchingOlder && (
+          <p className="text-[11px] text-center text-gray-400 py-1">
+            {isAr ? 'جاري تحميل رسائل أقدم…' : 'Loading older messages…'}
+          </p>
+        )}
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'} animate-pulse`}>

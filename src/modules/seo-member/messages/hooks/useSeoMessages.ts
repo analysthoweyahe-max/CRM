@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import { extractPaginatedList } from '@/shared/utils/apiList.utils';
 import { useEchoLive } from '@/shared/realtime-messages';
 import { conversationLastMessagePreview } from '@/shared/utils/messagePreview.utils';
-import { excludeSelfFromActors, normalizeSeoMessage } from '@/shared/utils/chatNormalize.utils';
+import { excludeSelfFromActors, normalizeSeoMessage, toChronologicalMessages } from '@/shared/utils/chatNormalize.utils';
 import { seoMessagesApi } from '../api/messages.api';
 import type {
   CreateSeoGroupPayload,
@@ -22,11 +22,59 @@ import type {
 const CONV_KEY = ['seo-member', 'messages', 'conversations'] as const;
 const msgKey   = (id: string) => ['seo-member', 'messages', 'messages', id] as const;
 const convDetailKey = (id: string) => ['seo-member', 'messages', 'conversation', id] as const;
+const PAGE_SIZE = 30;
+
+/** Page-1 cache shape (newest page, already chronological). */
+export type SeoMessagesCache = {
+  messages: SeoMessage[];
+  lastPage: number;
+};
+
+function appendCachedMessage(
+  prev: SeoMessagesCache | undefined,
+  msg: SeoMessage,
+): SeoMessagesCache {
+  const messages = prev?.messages ?? [];
+  if (messages.some(m => String(m.id) === String(msg.id))) {
+    return prev ?? { messages, lastPage: 1 };
+  }
+  return {
+    messages: [...messages, msg],
+    lastPage: prev?.lastPage ?? 1,
+  };
+}
+
+function patchCachedMessage(
+  prev: SeoMessagesCache | undefined,
+  messageId: string | number,
+  patch: Partial<SeoMessage> | ((m: SeoMessage) => SeoMessage),
+): SeoMessagesCache | undefined {
+  if (!prev) return prev;
+  return {
+    ...prev,
+    messages: prev.messages.map((m) => {
+      if (String(m.id) !== String(messageId)) return m;
+      return typeof patch === 'function' ? patch(m) : { ...m, ...patch };
+    }),
+  };
+}
 
 /** Fast poll while Echo is down; relax when websocket is live. */
 function pollMs(echoLive: boolean, openChat: boolean): number {
   if (echoLive) return openChat ? 15_000 : 45_000;
   return openChat ? 2_000 : 5_000;
+}
+
+function mergeChronological(older: SeoMessage[], recent: SeoMessage[]): SeoMessage[] {
+  const seen = new Set<string>();
+  const out: SeoMessage[] = [];
+  for (const m of [...older, ...recent]) {
+    const id = String(m.id);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(m);
+  }
+  return out;
 }
 
 export function useSeoConversations(opts?: { search?: string; type?: SeoConversationType | 'all' }) {
@@ -59,6 +107,16 @@ export function useSeoConversation(conversationId: string | null, enabled = true
 export function useSeoMessages(conversationId: string | null) {
   const qc = useQueryClient();
   const echoLive = useEchoLive();
+  const [olderMessages, setOlderMessages] = useState<SeoMessage[]>([]);
+  const [loadedPage, setLoadedPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+
+  useEffect(() => {
+    setOlderMessages([]);
+    setLoadedPage(1);
+    setLastPage(1);
+  }, [conversationId]);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -77,11 +135,20 @@ export function useSeoMessages(conversationId: string | null) {
     };
   }, [conversationId, qc]);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: msgKey(conversationId ?? ''),
     queryFn:  async () => {
-      const res = await seoMessagesApi.getMessages(conversationId!);
-      return extractPaginatedList<SeoMessage>(res.data).map((m) => normalizeSeoMessage(m));
+      // Page 1 = newest first (DESC). Reverse for chronological UI (oldest → newest).
+      const res = await seoMessagesApi.getMessages(conversationId!, {
+        page: 1,
+        per_page: PAGE_SIZE,
+      });
+      return {
+        messages: toChronologicalMessages(
+          extractPaginatedList<SeoMessage>(res.data).map((m) => normalizeSeoMessage(m)),
+        ),
+        lastPage: res.data.data.last_page ?? 1,
+      };
     },
     enabled:  !!conversationId,
     // Open chat: 2s fallback when Pusher isn't live; slower when Echo is connected.
@@ -89,6 +156,47 @@ export function useSeoMessages(conversationId: string | null) {
     staleTime: 500,
     refetchIntervalInBackground: false,
   });
+
+  useEffect(() => {
+    if (query.data?.lastPage != null) setLastPage(query.data.lastPage);
+  }, [query.data?.lastPage]);
+
+  const loadOlder = useCallback(async () => {
+    if (!conversationId || isFetchingOlder || loadedPage >= lastPage) return;
+    const nextPage = loadedPage + 1;
+    setIsFetchingOlder(true);
+    try {
+      const res = await seoMessagesApi.getMessages(conversationId, {
+        page: nextPage,
+        per_page: PAGE_SIZE,
+      });
+      const batch = toChronologicalMessages(
+        extractPaginatedList<SeoMessage>(res.data).map((m) => normalizeSeoMessage(m)),
+      );
+      setOlderMessages((prev) => [...batch, ...prev]);
+      setLoadedPage(nextPage);
+      setLastPage(res.data.data.last_page ?? lastPage);
+    } catch (err) {
+      toast.error(extractApiError(err));
+    } finally {
+      setIsFetchingOlder(false);
+    }
+  }, [conversationId, isFetchingOlder, loadedPage, lastPage]);
+
+  const recentMessages = query.data?.messages ?? [];
+
+  const messages = useMemo(
+    () => mergeChronological(olderMessages, recentMessages),
+    [olderMessages, recentMessages],
+  );
+
+  return {
+    ...query,
+    data: messages,
+    hasMoreOlder: loadedPage < lastPage,
+    isFetchingOlder,
+    loadOlder,
+  };
 }
 
 export function useSendSeoMessage(conversationId: string) {
@@ -97,12 +205,15 @@ export function useSendSeoMessage(conversationId: string) {
     mutationFn: (payload: SendSeoMessagePayload | string) =>
       seoMessagesApi.sendMessage(conversationId, payload),
     onSuccess: (res) => {
-      const msg = res.data.data;
-      qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) => {
-        const list = prev ?? [];
-        if (list.some(m => String(m.id) === String(msg.id))) return list;
-        return [...list, { ...msg, isMine: true }];
-      });
+      const raw = res.data?.data;
+      if (!raw?.id) {
+        qc.invalidateQueries({ queryKey: msgKey(conversationId) });
+        return;
+      }
+      const msg = normalizeSeoMessage({ ...raw, isMine: true });
+      qc.setQueryData<SeoMessagesCache>(msgKey(conversationId), (prev) =>
+        appendCachedMessage(prev, msg),
+      );
       qc.setQueriesData<SeoConversation[]>(
         { queryKey: CONV_KEY },
         (prev) => {
@@ -132,33 +243,27 @@ export function useEditSeoMessage(conversationId: string, isAr = false) {
       seoMessagesApi.updateMessage(conversationId, messageId, payload),
     onMutate: async ({ messageId, payload }) => {
       await qc.cancelQueries({ queryKey: msgKey(conversationId) });
-      const previous = qc.getQueryData<SeoMessage[]>(msgKey(conversationId));
+      const previous = qc.getQueryData<SeoMessagesCache>(msgKey(conversationId));
       const editedAt = new Date().toISOString();
-      qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) => {
-        if (!prev) return prev;
-        return prev.map(m =>
-          String(m.id) === String(messageId)
-            ? {
-                ...m,
-                body: payload.body,
-                mentions: payload.mentions ?? m.mentions,
-                isEdited: true,
-                editedAt,
-              }
-            : m,
-        );
-      });
+      qc.setQueryData<SeoMessagesCache>(msgKey(conversationId), (prev) =>
+        patchCachedMessage(prev, messageId, (m) => ({
+          ...m,
+          body: payload.body,
+          mentions: payload.mentions ?? m.mentions,
+          isEdited: true,
+          editedAt,
+        })),
+      );
       return { previous, messageId, editedAt, body: payload.body };
     },
     onSuccess: (res, vars, ctx) => {
       const msg = normalizeSeoMessage(res.data.data);
-      qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) => {
-        if (!prev) return prev;
-        return prev.map(m => (String(m.id) === String(msg.id ?? vars.messageId) ? { ...m, ...msg } : m));
-      });
+      qc.setQueryData<SeoMessagesCache>(msgKey(conversationId), (prev) =>
+        patchCachedMessage(prev, msg.id ?? vars.messageId, (m) => ({ ...m, ...msg })),
+      );
 
       // Sidebar preview when the edited message is the latest in the thread.
-      const thread = qc.getQueryData<SeoMessage[]>(msgKey(conversationId));
+      const thread = qc.getQueryData<SeoMessagesCache>(msgKey(conversationId))?.messages;
       const last = thread?.[thread.length - 1];
       if (last && String(last.id) === String(msg.id ?? vars.messageId)) {
         const preview = conversationLastMessagePreview(msg, msg.body ?? vars.payload.body);
@@ -184,9 +289,13 @@ export function useEditSeoMessage(conversationId: string, isAr = false) {
       }
       const status = extractApiStatus(err);
       if (status === 404) {
-        qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) =>
-          prev?.filter(m => String(m.id) !== String(vars.messageId)),
-        );
+        qc.setQueryData<SeoMessagesCache>(msgKey(conversationId), (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: prev.messages.filter(m => String(m.id) !== String(vars.messageId)),
+          };
+        });
       }
       toast.error(extractEditApiError(err, { isAr, kind: 'message' }));
     },
@@ -200,12 +309,12 @@ export function useReactSeoMessage(conversationId: string) {
       seoMessagesApi.reactToMessage(conversationId, messageId, emoji),
     onSuccess: (res) => {
       const updated = res.data.data;
-      qc.setQueryData<SeoMessage[]>(msgKey(conversationId), (prev) => {
-        if (!prev) return prev;
-        return prev.map(m => (String(m.id) === String(updated.id) ? { ...m, ...updated } : m));
-      });
-      // Some backends return only the reaction payload — refresh thread as fallback.
-      if (!updated?.id) {
+      if (updated?.id) {
+        qc.setQueryData<SeoMessagesCache>(msgKey(conversationId), (prev) =>
+          patchCachedMessage(prev, updated.id, (m) => ({ ...m, ...updated })),
+        );
+      } else {
+        // Some backends return only the reaction payload — refresh thread as fallback.
         qc.invalidateQueries({ queryKey: msgKey(conversationId) });
       }
     },
