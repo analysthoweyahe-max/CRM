@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pause, Play, Square } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
-import { useTaskTimers } from '../hooks/useTaskTimers';
+import { liveElapsedSeconds, useTaskTimers } from '../hooks/useTaskTimers';
 import type { TimerPortal } from '../types/taskTimer.types';
 
 interface Props {
@@ -22,32 +22,41 @@ function formatElapsed(totalSeconds: number): string {
 }
 
 /**
- * Local second ticker. Re-baselines from props when the server pushes a new
- * elapsedSeconds / pause state — without remounting (remount caused visible snaps).
+ * Local second ticker based on a wall-clock baseline.
+ * Re-baselines when the server / parent pushes a new elapsedSeconds or syncKey
+ * (e.g. after remount when expanding the floating list).
  */
 interface ElapsedDisplayProps {
   elapsedSeconds: number;
   isPaused:       boolean;
+  /** Changes when the entry was last synced — keeps remounts accurate. */
+  syncKey?:       number | string;
   className?:     string;
 }
 
 export function ElapsedDisplay({
-  elapsedSeconds, isPaused,
+  elapsedSeconds, isPaused, syncKey,
   className = 'font-mono text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-200',
 }: ElapsedDisplayProps) {
-  const [elapsed, setElapsed] = useState(elapsedSeconds);
+  const baseRef = useRef({ elapsed: elapsedSeconds, wall: Date.now() });
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    setElapsed(elapsedSeconds);
-  }, [elapsedSeconds, isPaused]);
+    baseRef.current = { elapsed: elapsedSeconds, wall: Date.now() };
+    setTick((t) => t + 1);
+  }, [elapsedSeconds, isPaused, syncKey]);
 
   useEffect(() => {
     if (isPaused) return;
-    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, [isPaused]);
 
-  return <span className={className}>{formatElapsed(elapsed)}</span>;
+  const display = isPaused
+    ? baseRef.current.elapsed
+    : baseRef.current.elapsed + Math.max(0, Math.floor((Date.now() - baseRef.current.wall) / 1000));
+
+  return <span className={className}>{formatElapsed(display)}</span>;
 }
 
 export function TimerControls({ portal, projectId, taskId, title, isAr, size = 'sm' }: Props) {
@@ -70,8 +79,9 @@ export function TimerControls({ portal, projectId, taskId, title, isAr, size = '
   return (
     <div className="flex items-center gap-2">
       <ElapsedDisplay
-        elapsedSeconds={entry.elapsedSeconds}
+        elapsedSeconds={liveElapsedSeconds(entry)}
         isPaused={entry.isPaused}
+        syncKey={entry.syncedAt}
       />
       {entry.canPause && (
         <Button variant="secondary" size={size} startIcon={<Pause size={13} />} onClick={() => pauseTimer(taskId)}>

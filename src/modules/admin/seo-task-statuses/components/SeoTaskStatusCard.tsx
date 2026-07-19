@@ -34,7 +34,7 @@ export function SeoTaskStatusCard({ status, isAr, isLocked, onEdit, onDelete }: 
             <Pencil size={15} />
           </Button>
         </div>
-        <div className="w-9 h-9 rounded-lg shrink-0" style={{ backgroundColor: status.color }} />
+        <div className="w-9 h-9 rounded-lg shrink-0" style={{ backgroundColor: status.color || '#6366f1' }} />
       </div>
 
       <div className="text-end">

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { ShieldCheck, Check } from 'lucide-react';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { useLang } from '@/app/providers/LanguageProvider';
@@ -6,13 +5,9 @@ import { Card } from '@/shared/components/ui/Card';
 import { getPermissionLabel } from '@/shared/permissions/permissionLabel.utils';
 
 export function MyPermissionsCard() {
-  const { user, isSuperAdmin, refreshUser } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { lang } = useLang();
   const isAr = lang === 'ar';
-
-  useEffect(() => {
-    void refreshUser();
-  }, [refreshUser]);
 
   if (!user) return null;
 

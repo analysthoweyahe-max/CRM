@@ -5,6 +5,7 @@ import {
   isSameActorId,
   normalizeTaskCommentFields,
 } from '@/shared/utils/chatNormalize.utils';
+import { parseImportantLinks } from '@/shared/utils/importantLinks.utils';
 import type { TaskDetail, TaskComment, TaskSession, UpdateTaskPayload } from '../types/taskDetail.types';
 import type { EmpTaskStatus, EmpTaskPriority } from '../types/employeeTask.types';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
@@ -27,6 +28,8 @@ interface RawPmTaskDetail {
   isDelayed?:     boolean;
   overdueLabel?:  string | null;
   canExtend?:     boolean;
+  importantLinks?: string[];
+  important_links?: string[];
 }
 
 /** GET .../tasks/{task_id} wraps the task under a `task` key (alongside sibling `tabs` data). */
@@ -85,6 +88,7 @@ function toTaskDetail(raw: RawPmTaskDetail, projectId: string): TaskDetail {
     isDelayed:      raw.isDelayed,
     overdueLabel:   raw.overdueLabel ?? null,
     canExtend:      raw.canExtend,
+    importantLinks: parseImportantLinks(raw),
   };
 }
 
@@ -209,6 +213,9 @@ export const taskDetailApi = {
       priority:        REVERSE_PRIORITY_MAP[payload.priority],
       due_date:        payload.deadline,
       estimated_hours: payload.allocatedHours,
+      ...(payload.importantLinks !== undefined
+        ? { importantLinks: payload.importantLinks }
+        : {}),
     });
     return { data: toTaskDetail(res.data.data, projectId) };
   },

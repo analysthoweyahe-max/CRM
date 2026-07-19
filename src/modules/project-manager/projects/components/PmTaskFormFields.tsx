@@ -1,6 +1,7 @@
 import { Combobox }    from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
+import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -22,15 +23,16 @@ const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5
 const ERROR_TEXT = 'mt-1 text-xs text-red-500';
 
 export interface PmTaskFormState {
-  title:          string;
-  description:    string;
-  priority:       string;
-  status:         string;
-  assigneeId:     string;
+  title:            string;
+  description:      string;
+  priority:         string;
+  status:           string;
+  assigneeId:       string;
   dueDate:          string;
   estimatedHours:   string;
   estimatedMinutes: string;
   phaseId:          string;
+  importantLinks:   string[];
 }
 
 interface Props {
@@ -187,6 +189,13 @@ export function PmTaskFormFields({
           {errors.status && <p className={ERROR_TEXT}>{errors.status}</p>}
         </div>
       </div>
+
+      <ImportantLinksField
+        values={form.importantLinks}
+        onChange={v => set('importantLinks', v)}
+        isAr={isAr}
+        error={errors.importantLinks}
+      />
 
     </div>
   );

@@ -19,10 +19,12 @@ import { PmTaskFormFields, type PmTaskFormState } from '../components/PmTaskForm
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { toApiArray } from '@/shared/utils/apiList.utils';
 import { extractApiError } from '@/shared/utils/error.utils';
+import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 
 const INITIAL: PmTaskFormState = {
   title: '', description: '', priority: '', status: '',
   assigneeId: '', dueDate: '', estimatedHours: '', estimatedMinutes: '', phaseId: '',
+  importantLinks: [],
 };
 
 export function AddPmTaskPage() {
@@ -119,6 +121,8 @@ export function AddPmTaskPage() {
   if (!form.status)       fieldErrors.status     = isAr ? 'اختر الحالة الابتدائية' : 'Initial status is required';
   if (!form.dueDate)      fieldErrors.dueDate    = isAr ? 'تاريخ التسليم مطلوب' : 'Due date is required';
   if (!form.phaseId)      fieldErrors.phaseId    = isAr ? 'اختر المرحلة' : 'Stage is required';
+  const linksError = validateImportantLinks(form.importantLinks, isAr);
+  if (linksError) fieldErrors.importantLinks = linksError;
 
   const isValid = Object.keys(fieldErrors).length === 0;
 
@@ -136,6 +140,7 @@ export function AddPmTaskPage() {
     }
     setSubmitting(true);
     try {
+      const importantLinks = normalizeImportantLinks(form.importantLinks);
       await pmTaskApi.create(id, {
         title:           form.title.trim(),
         description:     form.description.trim() || undefined,
@@ -147,6 +152,7 @@ export function AddPmTaskPage() {
         estimatedMinutes: form.estimatedMinutes ? Number(form.estimatedMinutes) : undefined,
         phaseId:         Number(form.phaseId),
         status:          form.status,
+        ...(importantLinks.length ? { importantLinks } : {}),
       });
       invalidateTasks();
       toast.success(isAr ? 'تمت إضافة المهمة' : 'Task added');

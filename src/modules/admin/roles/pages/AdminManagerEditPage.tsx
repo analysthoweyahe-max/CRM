@@ -34,17 +34,21 @@ function toDeptIds(ids: string[]): number[] {
     .filter((n) => !Number.isNaN(n));
 }
 
-function toFormValues(raw: ApiAdminManager, registered: Set<string>): ManagerFormValues {
+function toFormValues(raw: ApiAdminManager, registered: Set<string> | undefined): ManagerFormValues {
   const role = extractRoleSlug(raw.roles?.[0]) ?? '';
   const perms = raw.permissions ?? [];
+  const jobTitleId = managerLookupId(raw.jobTitle)
+    || managerLookupId(raw.job_title)
+    || (raw.job_title_id != null ? String(raw.job_title_id) : '');
   return {
     name:          raw.name ?? '',
     email:         raw.email ?? '',
     phone:         raw.phone ?? '',
     departmentIds: managerDepartmentIds(raw),
-    jobTitleId:    managerLookupId(raw.jobTitle),
+    jobTitleId,
     status:        (raw.status as ManagerStatus) || 'active',
     role,
+    // `undefined` registered set keeps the manager's permissions as-is (HR edit).
     permissions:   filterRegisteredPermissions(perms, registered),
   };
 }
@@ -67,7 +71,7 @@ function buildPartialPayload(
   initial: ManagerFormValues,
   current: ManagerFormValues,
   includePermissions: boolean,
-  registered: Set<string>,
+  registered: Set<string> | undefined,
 ): UpdateAdminPayload {
   const payload: UpdateAdminPayload = {};
 
@@ -123,7 +127,11 @@ export function AdminManagerEditPage() {
   const { mutate: updateAdmin, isPending: saving } = useUpdateAdmin();
   const { data: allRoles = [] } = useRoleList();
   const { data: allPermissions } = usePermissionList();
-  const registered = useMemo(() => toPermissionNameSet(allPermissions), [allPermissions]);
+  // Only super-admins load the catalog; pass undefined so HR edit keeps raw permission slugs.
+  const registered = useMemo(
+    () => (isSuperAdmin ? toPermissionNameSet(allPermissions) : undefined),
+    [isSuperAdmin, allPermissions],
+  );
 
   const managerRoles = useMemo(() => assignableRoles(allRoles), [allRoles]);
   const roleNames = isSuperAdmin
@@ -142,15 +150,20 @@ export function AdminManagerEditPage() {
     .filter(Boolean);
   const mayEdit = canCreate && raw && canEditManager({ isSuperAdmin, roles: user?.roles }, targetRoles);
 
+  // Reset every field to the loaded manager once the payload (and permissions catalog, for SA) is ready.
   useEffect(() => {
-    if (!raw || allPermissions === undefined) return;
+    if (!raw) return;
+    // Super-admin permission filter needs the catalog; HR edit must not wait on it
+    // (usePermissionList is disabled for non-SA, so allPermissions stays undefined forever).
+    if (isSuperAdmin && allPermissions === undefined) return;
+
     const form = toFormValues(raw, registered);
     setValues(form);
     setInitial(form);
     setPreserveCustomPerms(true);
     lastRoleForDefaults.current = form.role || null;
     setErrors({});
-  }, [raw, registered, allPermissions]);
+  }, [raw, registered, allPermissions, isSuperAdmin]);
 
   const isDirty = useMemo(() => {
     if (!values || !initial) return false;
@@ -345,6 +358,7 @@ export function AdminManagerEditPage() {
 
       <Card padding="lg">
         <ManagerForm
+          key={raw.id}
           mode="edit"
           values={values}
           onChange={handleChange}

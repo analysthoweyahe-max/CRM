@@ -105,6 +105,7 @@ export function SeoActionsCard({
       queryClient.invalidateQueries({ queryKey: ['campaign-detail', String(campaignId)] });
       queryClient.invalidateQueries({ queryKey: ['seo-project-settings', String(campaignId)] });
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
       onPublished?.();
     } catch (err) {

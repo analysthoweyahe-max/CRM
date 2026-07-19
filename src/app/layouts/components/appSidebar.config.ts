@@ -50,7 +50,7 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
     sectionEn: 'HR Dashboard',
 
-    permissions: ['view-employees', 'view-attendance', 'view-leave', 'view-payroll'],
+    permissions: ['view-employees', 'manage-attendance', 'view-leave', 'view-payroll'],
 
     items: [
 
@@ -90,17 +90,17 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
         key: 'hr-attendance', labelAr: 'الحضور والإجازات', labelEn: 'Attendance & Leaves', icon: Clock,
 
-        permissions: ['view-attendance', 'view-leave'],
+        permissions: ['manage-attendance', 'view-leave', 'approve-leave'],
 
         children: [
 
-          { key: 'hr-att-daily', labelAr: 'الحضور اليومي',  labelEn: 'Daily Attendance', path: ROUTES.ATTENDANCE.DAILY, icon: Clock,        permission: 'view-attendance' },
+          { key: 'hr-att-daily', labelAr: 'الحضور اليومي',  labelEn: 'Daily Attendance', path: ROUTES.ATTENDANCE.DAILY, icon: Clock,        permission: 'manage-attendance' },
 
-          { key: 'hr-att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'view-attendance' },
+          { key: 'hr-att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'manage-attendance' },
 
-          { key: 'hr-att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'view-attendance' },
+          { key: 'hr-att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'manage-attendance' },
 
-          { key: 'hr-leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays, permission: 'view-leave' },
+          { key: 'hr-leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays, permission: ['view-leave', 'approve-leave'] },
 
         ],
 
@@ -146,7 +146,7 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
       { key: 'pm-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',        icon: FolderKanban,    path: ROUTES.PROJECT_MANAGER.MY_PROJECTS, permission: 'view-pm-projects' },
 
-      { key: 'pm-messages', labelAr: 'الرسائل',                  labelEn: 'Messages',           icon: MessageSquare,   path: ROUTES.PROJECT_MANAGER.MESSAGES, permission: ['view-pm-messages', 'view-messages'] },
+      { key: 'pm-messages', labelAr: 'الرسائل',                  labelEn: 'Messages',           icon: MessageSquare,   path: ROUTES.PROJECT_MANAGER.MESSAGES },
 
       { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',         icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW,      permission: 'create-pm-project' },
 
@@ -157,6 +157,8 @@ export const ADMIN_NAV: NavSectionDef[] = [
       { key: 'pm-templates', labelAr: 'قوالب مشاريع PM', labelEn: 'PM Project Templates', icon: ListChecks, path: ROUTES.ADMIN.PROJECT_TEMPLATES, role: 'super-admin' },
 
       { key: 'admin-project-types', labelAr: 'أنواع المشاريع', labelEn: 'Project Types', icon: FolderKanban, path: ROUTES.ADMIN.PROJECT_TYPES, role: 'super-admin' },
+
+      { key: 'admin-pm-task-statuses', labelAr: 'حالات مهام PM', labelEn: 'PM Task Statuses', icon: Tags, path: ROUTES.ADMIN.PM_TASK_STATUSES, permission: ['edit-pm-project', 'create-pm-project'] },
 
     ],
 
@@ -176,7 +178,7 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
       { key: 'seo-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',         icon: FolderKanban,    path: ROUTES.SEO_LEADER.MY_PROJECTS,    permission: 'view-seo-projects' },
 
-      { key: 'seo-messages', labelAr: 'الرسائل',                  labelEn: 'Messages',            icon: MessageSquare,   path: ROUTES.SEO_LEADER.MESSAGES, permission: 'view-seo-messages' },
+      { key: 'seo-messages', labelAr: 'الرسائل',                  labelEn: 'Messages',            icon: MessageSquare,   path: ROUTES.SEO_LEADER.MESSAGES },
 
       { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',          icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW,           permission: 'create-seo-project' },
 
@@ -186,7 +188,7 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
       { key: 'seo-templates', labelAr: 'قوالب مشاريع SEO', labelEn: 'SEO Project Templates', icon: ListChecks, path: ROUTES.ADMIN.SEO_PROJECT_TEMPLATES, role: 'super-admin' },
 
-      { key: 'admin-seo-task-statuses', labelAr: 'حالات مهام SEO', labelEn: 'SEO Task Statuses', icon: Tags,            path: ROUTES.ADMIN.SEO_TASK_STATUSES, role: 'super-admin' },
+      { key: 'admin-seo-task-statuses', labelAr: 'حالات مهام SEO', labelEn: 'SEO Task Statuses', icon: Tags, path: ROUTES.ADMIN.SEO_TASK_STATUSES, permission: ['edit-seo-project', 'create-seo-project'] },
 
     ],
 
@@ -234,17 +236,17 @@ export const HR_NAV: NavSectionDef[] = [
 
         key: 'attendance', labelAr: 'الحضور والإجازات', labelEn: 'Attendance & Leaves', icon: Clock,
 
-        permissions: ['view-attendance', 'view-leave'],
+        permissions: ['manage-attendance', 'view-leave', 'approve-leave'],
 
         children: [
 
-          { key: 'att-daily', labelAr: 'الحضور اليومي',  labelEn: 'Daily Attendance', path: ROUTES.ATTENDANCE.DAILY, icon: Clock,        permission: 'view-attendance' },
+          { key: 'att-daily', labelAr: 'الحضور اليومي',  labelEn: 'Daily Attendance', path: ROUTES.ATTENDANCE.DAILY, icon: Clock,        permission: 'manage-attendance' },
 
-          { key: 'att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'view-attendance' },
+          { key: 'att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'manage-attendance' },
 
-          { key: 'att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'view-attendance' },
+          { key: 'att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'manage-attendance' },
 
-          { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays, permission: 'view-leave' },
+          { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays, permission: ['view-leave', 'approve-leave'] },
 
         ],
 
@@ -319,11 +321,11 @@ const HR_OPERATIONS_ITEMS: NavSectionDef['items'] = [
   },
   {
     key: 'attendance', labelAr: 'الحضور والإجازات', labelEn: 'Attendance & Leaves', icon: Clock,
-    permissions: ['view-attendance', 'view-leave', 'approve-leave'],
+    permissions: ['manage-attendance', 'view-leave', 'approve-leave'],
     children: [
-      { key: 'att-daily', labelAr: 'الحضور اليومي',  labelEn: 'Daily Attendance', path: ROUTES.ATTENDANCE.DAILY, icon: Clock,        permission: 'view-attendance' },
-      { key: 'att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'view-attendance' },
-      { key: 'att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'view-attendance' },
+      { key: 'att-daily', labelAr: 'الحضور اليومي',  labelEn: 'Daily Attendance', path: ROUTES.ATTENDANCE.DAILY, icon: Clock,        permission: 'manage-attendance' },
+      { key: 'att-log',   labelAr: 'سجل الحضور',     labelEn: 'Attendance Log',   path: ROUTES.ATTENDANCE.LOG,   icon: FileText,     permission: 'manage-attendance' },
+      { key: 'att-exceptions', labelAr: 'طلبات الاستثناء', labelEn: 'Exception Requests', path: ROUTES.ATTENDANCE.EXCEPTIONS, icon: FileText, permission: 'manage-attendance' },
       { key: 'leaves',    labelAr: 'إدارة الإجازات', labelEn: 'Leave Management', path: ROUTES.LEAVES.LIST,      icon: CalendarDays, permission: ['view-leave', 'approve-leave'] },
     ],
   },
@@ -342,7 +344,7 @@ const HR_OPERATIONS_ITEMS: NavSectionDef['items'] = [
 const HR_OPERATIONS_SECTION: NavSectionDef = {
   sectionAr:   'الموارد البشرية',
   sectionEn:   'Human Resources',
-  permissions: ['view-employees', 'view-attendance', 'view-leave', 'approve-leave', 'view-payroll', 'manage-payroll'],
+  permissions: ['view-employees', 'manage-attendance', 'view-leave', 'approve-leave', 'view-payroll', 'manage-payroll'],
   items:       HR_OPERATIONS_ITEMS,
 };
 
@@ -356,10 +358,12 @@ export const PM_NAV: NavSectionDef[] = [
       { key: 'pm-dash',    labelAr: 'الرئيسية',                 labelEn: 'Dashboard',         icon: LayoutDashboard, path: ROUTES.PROJECT_MANAGER.DASHBOARD },
       { key: 'pm-projects', labelAr: 'مشاريعي',                 labelEn: 'My Projects',       icon: FolderKanban,    path: ROUTES.PROJECT_MANAGER.MY_PROJECTS, permission: 'view-pm-projects' },
       { key: 'pm-tasks',   labelAr: 'مهامي',                   labelEn: 'My Tasks',          icon: CheckSquare,     path: ROUTES.PROJECT_MANAGER.TASKS,    permission: 'view-pm-tasks' },
+      { key: 'pm-messages', labelAr: 'الرسائل',                labelEn: 'Messages',          icon: MessageSquare,   path: ROUTES.PROJECT_MANAGER.MESSAGES },
       { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',        labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW,       permission: 'create-pm-project' },
       { key: 'pm-team',    labelAr: 'فريق العمل',               labelEn: 'Team',               icon: Users,           path: ROUTES.PROJECT_MANAGER.TEAM,     permission: 'view-pm-projects' },
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات',labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS,  permission: 'view-pm-projects' },
       { key: 'pm-templates', labelAr: 'قوالب المشاريع', labelEn: 'Project Templates', icon: ListChecks, path: ROUTES.PROJECT_MANAGER.TEMPLATES, permission: 'edit-pm-project' },
+      { key: 'pm-task-statuses', labelAr: 'حالات المهام', labelEn: 'Task Statuses', icon: Tags, path: ROUTES.PROJECT_MANAGER.TASK_STATUSES },
     ],
   },
   {
@@ -368,6 +372,7 @@ export const PM_NAV: NavSectionDef[] = [
     items: [
       { key: 'work_overview', labelAr: 'نظرة عامة على العمل', labelEn: 'Work Overview', icon: BarChart2,     path: ROUTES.PROJECT_MANAGER.WORK_OVERVIEW },
       { key: 'attendance',    labelAr: 'الحضور والانصراف',   labelEn: 'Attendance',    icon: Clock,        path: ROUTES.PROJECT_MANAGER.ATTENDANCE },
+      { key: 'att-exceptions', labelAr: 'طلبات الاستثناء',  labelEn: 'Exception Requests', icon: FileText, path: ROUTES.PROJECT_MANAGER.ATTENDANCE_EXCEPTIONS, permission: 'view-attendance' },
       { key: 'deductions',    labelAr: 'خصوماتي',            labelEn: 'My Deductions', icon: TrendingDown, path: ROUTES.PROJECT_MANAGER.DEDUCTIONS },
       { key: 'bonuses',       labelAr: 'مكافآتي',            labelEn: 'My Bonuses',    icon: Gift,         path: ROUTES.PROJECT_MANAGER.BONUSES },
     ],
@@ -395,11 +400,13 @@ export const EMPLOYEE_NAV: NavSectionDef[] = [
 
       { key: 'emp-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.EMPLOYEE.TASKS,        permission: 'view-pm-tasks' },
 
-      { key: 'emp-msg',     labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.EMPLOYEE.MESSAGES,     permission: 'view-messages' },
+      { key: 'emp-msg',     labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.EMPLOYEE.MESSAGES },
 
       { key: 'emp-alerts',  labelAr: 'التنبيهات',          labelEn: 'Alerts',         icon: Megaphone,       path: ROUTES.EMPLOYEE.ALERTS        },
 
-      { key: 'emp-req',     labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS,     permission: 'view-leave' },
+      { key: 'emp-admin-req', labelAr: 'طلباتى',           labelEn: 'My Requests',    icon: ClipboardList,   path: ROUTES.EMPLOYEE.ADMIN_REQUESTS, permission: 'view-requests' },
+
+      { key: 'emp-req',     labelAr: 'إجازاتي',            labelEn: 'My Leave',       icon: FileText,        path: ROUTES.EMPLOYEE.REQUESTS,     permission: 'view-leave' },
 
       { key: 'emp-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.EMPLOYEE.DAILY_REPORTS },
 
@@ -413,6 +420,7 @@ export const EMPLOYEE_NAV: NavSectionDef[] = [
     items: [
       { key: 'work_overview', labelAr: 'نظرة عامة على العمل', labelEn: 'Work Overview', icon: BarChart2,     path: ROUTES.EMPLOYEE.WORK_OVERVIEW },
       { key: 'attendance',    labelAr: 'الحضور والانصراف',   labelEn: 'Attendance',    icon: Clock,        path: ROUTES.EMPLOYEE.ATTENDANCE },
+      { key: 'att-exceptions', labelAr: 'طلبات الاستثناء',  labelEn: 'Exception Requests', icon: FileText, path: ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS, permission: 'view-attendance' },
       { key: 'deductions',    labelAr: 'خصوماتي',            labelEn: 'My Deductions', icon: TrendingDown, path: ROUTES.EMPLOYEE.DEDUCTIONS },
       { key: 'bonuses',       labelAr: 'مكافآتي',            labelEn: 'My Bonuses',    icon: Gift,         path: ROUTES.EMPLOYEE.BONUSES },
     ],
@@ -434,10 +442,12 @@ export const SEO_NAV: NavSectionDef[] = [
       { key: 'seo-dash',    labelAr: 'الرئيسية',                  labelEn: 'Dashboard',         icon: LayoutDashboard, path: ROUTES.SEO_LEADER.DASHBOARD },
       { key: 'seo-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',       icon: FolderKanban,    path: ROUTES.SEO_LEADER.MY_PROJECTS, permission: 'view-seo-projects' },
       { key: 'seo-tasks',   labelAr: 'مهامي',                    labelEn: 'My Tasks',          icon: CheckSquare,     path: ROUTES.SEO_LEADER.TASKS,       permission: 'view-seo-tasks' },
+      { key: 'seo-messages', labelAr: 'الرسائل',                 labelEn: 'Messages',          icon: MessageSquare,   path: ROUTES.SEO_LEADER.MESSAGES },
       { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW,         permission: 'create-seo-project' },
       { key: 'seo-team',    labelAr: 'فريق العمل',                labelEn: 'Team',               icon: Users,           path: ROUTES.SEO_LEADER.TEAM,     permission: 'view-seo-projects' },
       { key: 'seo-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.SEO_LEADER.REPORTS,  permission: 'view-seo-projects' },
       { key: 'seo-templates', labelAr: 'قوالب مشاريع SEO', labelEn: 'SEO Project Templates', icon: ListChecks, path: ROUTES.SEO_LEADER.TEMPLATES, permission: 'edit-seo-project' },
+      { key: 'seo-task-statuses', labelAr: 'حالات المهام', labelEn: 'Task Statuses', icon: Tags, path: ROUTES.SEO_LEADER.TASK_STATUSES },
     ],
   },
   {
@@ -446,6 +456,7 @@ export const SEO_NAV: NavSectionDef[] = [
     items: [
       { key: 'work_overview', labelAr: 'نظرة عامة على العمل', labelEn: 'Work Overview', icon: BarChart2,     path: ROUTES.SEO_LEADER.WORK_OVERVIEW },
       { key: 'attendance',    labelAr: 'الحضور والانصراف',   labelEn: 'Attendance',    icon: Clock,        path: ROUTES.SEO_LEADER.ATTENDANCE },
+      { key: 'att-exceptions', labelAr: 'طلبات الاستثناء',  labelEn: 'Exception Requests', icon: FileText, path: ROUTES.SEO_LEADER.ATTENDANCE_EXCEPTIONS, permission: 'view-attendance' },
       { key: 'deductions',    labelAr: 'خصوماتي',            labelEn: 'My Deductions', icon: TrendingDown, path: ROUTES.SEO_LEADER.DEDUCTIONS },
       { key: 'bonuses',       labelAr: 'مكافآتي',            labelEn: 'My Bonuses',    icon: Gift,         path: ROUTES.SEO_LEADER.BONUSES },
     ],
@@ -473,9 +484,11 @@ export const SEO_MEMBER_NAV: NavSectionDef[] = [
 
       { key: 'seo-m-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.SEO_MEMBER.TASKS,         permission: 'view-seo-tasks' },
 
-      { key: 'seo-m-messages',labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.SEO_MEMBER.MESSAGES,      permission: 'view-seo-messages' },
+      { key: 'seo-m-messages',labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.SEO_MEMBER.MESSAGES },
 
-      { key: 'seo-m-requests',labelAr: 'طلباتى',            labelEn: 'My Requests',    icon: FileText,        path: ROUTES.SEO_MEMBER.REQUESTS,      permission: 'view-leave' },
+      { key: 'seo-m-admin-req', labelAr: 'طلباتى',          labelEn: 'My Requests',    icon: ClipboardList,   path: ROUTES.SEO_MEMBER.ADMIN_REQUESTS, permission: 'view-requests' },
+
+      { key: 'seo-m-requests',labelAr: 'إجازاتي',           labelEn: 'My Leave',       icon: FileText,        path: ROUTES.SEO_MEMBER.REQUESTS,      permission: 'view-leave' },
 
       { key: 'seo-m-daily',   labelAr: 'التقارير اليومية',  labelEn: 'Daily Reports',  icon: BarChart2,       path: ROUTES.SEO_MEMBER.DAILY_REPORTS, permission: 'view-seo-reports' },
 
@@ -489,6 +502,7 @@ export const SEO_MEMBER_NAV: NavSectionDef[] = [
     items: [
       { key: 'work_overview', labelAr: 'نظرة عامة على العمل', labelEn: 'Work Overview', icon: BarChart2,     path: ROUTES.SEO_MEMBER.WORK_OVERVIEW },
       { key: 'attendance',    labelAr: 'الحضور والانصراف',   labelEn: 'Attendance',    icon: Clock,        path: ROUTES.SEO_MEMBER.ATTENDANCE },
+      { key: 'att-exceptions', labelAr: 'طلبات الاستثناء',  labelEn: 'Exception Requests', icon: FileText, path: ROUTES.SEO_MEMBER.ATTENDANCE_EXCEPTIONS, permission: 'view-attendance' },
       { key: 'deductions',    labelAr: 'خصوماتي',            labelEn: 'My Deductions', icon: TrendingDown, path: ROUTES.SEO_MEMBER.DEDUCTIONS },
       { key: 'bonuses',       labelAr: 'مكافآتي',            labelEn: 'My Bonuses',    icon: Gift,         path: ROUTES.SEO_MEMBER.BONUSES },
     ],

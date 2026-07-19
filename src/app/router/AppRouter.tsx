@@ -11,6 +11,7 @@ import { ProjectManagerLayout }  from '@/app/layouts/ProjectManagerLayout';
 import { EmployeeLayout }        from '@/app/layouts/EmployeeLayout';
 import { SeoLeaderLayout }       from '@/app/layouts/SeoLeaderLayout';
 import { SeoMemberLayout }       from '@/app/layouts/SeoMemberLayout';
+import { PortalLayoutByRole }    from '@/app/layouts/PortalLayoutByRole';
 import { GuestGuard }            from '@/app/guards/GuestGuard';
 import { AuthGuard }             from '@/app/guards/AuthGuard';
 import { RoleGuard }             from '@/app/guards/RoleGuard';
@@ -36,6 +37,7 @@ const AdminDepartmentsPage = lazyImport(() => import('@/modules/admin/department
 const AdminJobTitlesPage = lazyImport(() => import('@/modules/admin/job-titles/pages/AdminJobTitlesPage').then(m => ({ default: m.AdminJobTitlesPage })));
 const AdminPermissionsPage = lazyImport(() => import('@/modules/admin/permissions/pages/AdminPermissionsPage').then(m => ({ default: m.AdminPermissionsPage })));
 const AdminSeoTaskStatusesPage = lazyImport(() => import('@/modules/admin/seo-task-statuses/pages/AdminSeoTaskStatusesPage').then(m => ({ default: m.AdminSeoTaskStatusesPage })));
+const PmTaskStatusesPage = lazyImport(() => import('@/modules/project-manager/task-statuses/pages/PmTaskStatusesPage').then(m => ({ default: m.PmTaskStatusesPage })));
 const AdminProjectTypesPage = lazyImport(() => import('@/modules/admin/project-types/pages/AdminProjectTypesPage').then(m => ({ default: m.AdminProjectTypesPage })));
 const AdminInstructionsPage = lazyImport(() => import('@/modules/admin/instructions/pages/AdminInstructionsPage').then(m => ({ default: m.AdminInstructionsPage })));
 const AdminMessagesMonitorPage = lazyImport(() => import('@/modules/admin/messages-monitor/pages/AdminMessagesMonitorPage').then(m => ({ default: m.AdminMessagesMonitorPage })));
@@ -105,6 +107,7 @@ const SeoMemberProfilePage       = lazyImport(() => import('@/modules/seo-member
 /* ── Employee ─────────────────────────────────────────────────────── */
 const EmployeeDashboardPage    = lazyImport(() => import('@/modules/employee/dashboard/pages/EmployeeDashboardPage')       .then(m => ({ default: m.EmployeeDashboardPage })));
 const EmployeeRequestsPage     = lazyImport(() => import('@/modules/employee/requests/pages/EmployeeRequestsPage')         .then(m => ({ default: m.EmployeeRequestsPage })));
+const MyAdminRequestsPage      = lazyImport(() => import('@/shared/modules/admin-requests/pages/MyAdminRequestsPage')      .then(m => ({ default: m.MyAdminRequestsPage })));
 const EmployeeReportsPage      = lazyImport(() => import('@/modules/employee/reports/pages/EmployeeReportsPage')           .then(m => ({ default: m.EmployeeReportsPage })));
 const AttendanceTimerPage      = lazyImport(() => import('@/shared/modules/attendance/pages/AttendanceTimerPage')           .then(m => ({ default: m.AttendanceTimerPage })));
 const WorkOverviewPage         = lazyImport(() => import('@/shared/modules/work-overview/pages/WorkOverviewPage')           .then(m => ({ default: m.WorkOverviewPage })));
@@ -150,6 +153,46 @@ export function AppRouter() {
             <Route element={<AuthGuard />}>
               <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
 
+              {/*
+                Shared HR ops live once, outside exclusive portal RoleGuards.
+                Duplicating /employees|/attendance|/payroll under admin/hr first
+                made RoleGuard bounce seo-leader/manager users (who have the
+                Spatie permissions) back to their home dashboard.
+              */}
+              <Route element={<RoleGuard allowedRoles={['admin', 'hr', 'manager', 'seo-leader']} />}>
+                <Route element={<PortalLayoutByRole />}>
+                  <Route element={<PermissionGuard permission="view-employees" />}>
+                    <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
+                    <Route path={ROUTES.EMPLOYEES.DETAIL()}     element={<EmployeeDetailPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission="edit-employee" />}>
+                    <Route path={ROUTES.EMPLOYEES.EDIT()}       element={<EmployeeEditPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission="create-employee" />}>
+                    <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission="manage-attendance" />}>
+                    <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
+                    <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
+                    <Route path={ROUTES.ATTENDANCE.EXCEPTIONS}  element={<AttendanceExceptionsPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission={['view-leave', 'approve-leave']} />}>
+                    <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />
+                    <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission={['view-payroll', 'manage-payroll']} />}>
+                    <Route path={ROUTES.PAYROLL.SALARY_SHEET}   element={<SalarySheetPage />} />
+                    <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
+                    <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
+                    <Route path={ROUTES.PAYROLL.TYPES}          element={<PayrollTypesPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission="manage-payroll" />}>
+                    <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
+                    <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
+                  </Route>
+                </Route>
+              </Route>
+
               <Route element={<RoleGuard allowedRoles={['admin', 'hr']} />}>
                 <Route element={<DashboardLayout />}>
                   <Route path={ROUTES.DASHBOARD}              element={<DashboardPage />} />
@@ -172,8 +215,13 @@ export function AppRouter() {
                     <Route path={ROUTES.ADMIN.EMPLOYEE_ROLES}      element={<AdminEmployeeRolesPage />} />
                     <Route path={ROUTES.ADMIN.EMPLOYEE_ROLES_EDIT()} element={<AdminEmployeeRoleEditPage />} />
                   </Route>
-                  <Route element={<PermissionGuard role="super-admin" />}>
+                  <Route element={<PermissionGuard permission={['edit-seo-project', 'create-seo-project']} />}>
                     <Route path={ROUTES.ADMIN.SEO_TASK_STATUSES} element={<AdminSeoTaskStatusesPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission={['edit-pm-project', 'create-pm-project']} />}>
+                    <Route path={ROUTES.ADMIN.PM_TASK_STATUSES} element={<PmTaskStatusesPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard role="super-admin" />}>
                     <Route path={ROUTES.ADMIN.PROJECT_TYPES}    element={<AdminProjectTypesPage />} />
                     <Route path={ROUTES.ADMIN.PROJECT_TEMPLATES} element={<TemplatesPage module="pm" />} />
                     <Route path={ROUTES.ADMIN.SEO_PROJECT_TEMPLATES} element={<TemplatesPage module="seo" />} />
@@ -186,38 +234,9 @@ export function AppRouter() {
                     <Route path={ROUTES.ADMIN.MESSAGES_MONITOR}  element={<AdminMessagesMonitorPage />} />
                   </Route>
 
-                  <Route element={<PermissionGuard permission="view-employees" />}>
-                    <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
-                    <Route path={ROUTES.EMPLOYEES.DETAIL()}     element={<EmployeeDetailPage />} />
-                    <Route path={ROUTES.EMPLOYEES.EDIT()}       element={<EmployeeEditPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission="create-employee" />}>
-                    <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />
-                  </Route>
-
-                  <Route element={<PermissionGuard permission="view-attendance" />}>
-                    <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
-                    <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
-                    <Route path={ROUTES.ATTENDANCE.EXCEPTIONS}  element={<AttendanceExceptionsPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission="view-leave" />}>
-                    <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />
-                    <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
-                  </Route>
-
-                  <Route element={<PermissionGuard permission={['view-payroll', 'manage-payroll']} />}>
-                    <Route path={ROUTES.PAYROLL.SALARY_SHEET}   element={<SalarySheetPage />} />
-                    <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
-                    <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
-                    <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
-                    <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
-                    <Route path={ROUTES.PAYROLL.TYPES}          element={<PayrollTypesPage />} />
-                  </Route>
-
                   <Route path={ROUTES.PROFILE}                element={<ProfilePage />} />
-                  <Route element={<PermissionGuard permission={['view-messages', 'view-pm-messages', 'view-seo-messages']} />}>
-                    <Route path={ROUTES.MESSAGES}               element={<SeoMemberMessagesPage />} />
-                  </Route>                  <Route path={ROUTES.SETTINGS}               element={<SettingsPage />} />
+                  <Route path={ROUTES.MESSAGES}               element={<SeoMemberMessagesPage />} />
+                  <Route path={ROUTES.SETTINGS}               element={<SettingsPage />} />
                 </Route>
               </Route>
 
@@ -226,9 +245,6 @@ export function AppRouter() {
                   <Route path={ROUTES.PROJECT_MANAGER.DASHBOARD} element={<ProjectDashboardPage />} />
                   <Route element={<PermissionGuard permission="view-pm-tasks" />}>
                     <Route path={ROUTES.PROJECT_MANAGER.TASKS}        element={<MyTasksPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission={['view-pm-messages', 'view-messages']} />}>
-                    <Route path={ROUTES.PROJECT_MANAGER.MESSAGES}     element={<SeoMemberMessagesPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission="view-pm-projects" />}>
                     <Route path={ROUTES.PROJECT_MANAGER.MY_PROJECTS} element={<MyProjectsPage module="pm" />} />
@@ -249,7 +265,10 @@ export function AppRouter() {
                     <Route path={ROUTES.PROJECT_MANAGER.REPORTS}   element={<ProjectReportsPage />} />
                   </Route>
                   <Route path={ROUTES.PROJECT_MANAGER.WORK_OVERVIEW} element={<WorkOverviewPage layoutScope="pm" />} />
-                  <Route path={ROUTES.PROJECT_MANAGER.ATTENDANCE} element={<AttendanceTimerPage layoutScope="pm" />} />
+                  <Route path={ROUTES.PROJECT_MANAGER.ATTENDANCE} element={<AttendanceTimerPage layoutScope="pm" exceptionHref={ROUTES.PROJECT_MANAGER.ATTENDANCE_EXCEPTIONS} />} />
+                  <Route element={<PermissionGuard permission="view-attendance" />}>
+                    <Route path={ROUTES.PROJECT_MANAGER.ATTENDANCE_EXCEPTIONS} element={<EmployeeAttendanceExceptionsPage attendancePath={ROUTES.PROJECT_MANAGER.ATTENDANCE} />} />
+                  </Route>
                   <Route path={ROUTES.PROJECT_MANAGER.DEDUCTIONS} element={<PersonalDeductionsPage layoutScope="pm" />} />
                   <Route path={ROUTES.PROJECT_MANAGER.DEDUCTION_DETAIL()} element={<PersonalDeductionDetailPage layoutScope="pm" />} />
                   <Route path={ROUTES.PROJECT_MANAGER.BONUSES} element={<PersonalBonusesPage layoutScope="pm" />} />
@@ -257,33 +276,12 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission="edit-pm-project" />}>
                     <Route path={ROUTES.PROJECT_MANAGER.TEMPLATES} element={<TemplatesPage module="pm" />} />
                   </Route>
+                  {/* Portal role is enough — PMs may not have every Spatie slug assigned. */}
+                  <Route element={<RoleGuard allowedRoles={['manager', 'admin']} />}>
+                    <Route path={ROUTES.PROJECT_MANAGER.TASK_STATUSES} element={<PmTaskStatusesPage />} />
+                    <Route path={ROUTES.PROJECT_MANAGER.MESSAGES}     element={<SeoMemberMessagesPage />} />
+                  </Route>
                   <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
-
-                  <Route element={<PermissionGuard permission="view-employees" />}>
-                    <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
-                    <Route path={ROUTES.EMPLOYEES.DETAIL()}     element={<EmployeeDetailPage />} />
-                    <Route path={ROUTES.EMPLOYEES.EDIT()}       element={<EmployeeEditPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission="create-employee" />}>
-                    <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission="view-attendance" />}>
-                    <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
-                    <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
-                    <Route path={ROUTES.ATTENDANCE.EXCEPTIONS}  element={<AttendanceExceptionsPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission={['view-leave', 'approve-leave']} />}>
-                    <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />
-                    <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission={['view-payroll', 'manage-payroll']} />}>
-                    <Route path={ROUTES.PAYROLL.SALARY_SHEET}   element={<SalarySheetPage />} />
-                    <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
-                    <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
-                    <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
-                    <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
-                    <Route path={ROUTES.PAYROLL.TYPES}          element={<PayrollTypesPage />} />
-                  </Route>
                 </Route>
               </Route>
 
@@ -293,17 +291,23 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission="view-pm-projects" />}>
                     <Route path={ROUTES.EMPLOYEE.MY_PROJECTS}   element={<MyProjectsPage module="pm" />} />
                   </Route>
-                  <Route element={<PermissionGuard permission="view-messages" />}>
+                  <Route element={<RoleGuard allowedRoles={['employee', 'admin']} />}>
                     <Route path={ROUTES.EMPLOYEE.MESSAGES}      element={<SeoMemberMessagesPage />} />
                   </Route>
                   <Route path={ROUTES.EMPLOYEE.HR_MESSAGES}   element={<EmployeeMessagesPage />} />
                   <Route element={<PermissionGuard permission="view-leave" />}>
                     <Route path={ROUTES.EMPLOYEE.REQUESTS}      element={<EmployeeRequestsPage />} />
+                    <Route path={ROUTES.EMPLOYEE.LEAVE}         element={<EmployeeRequestsPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission="view-requests" />}>
+                    <Route path={ROUTES.EMPLOYEE.ADMIN_REQUESTS} element={<MyAdminRequestsPage namespace="pm" />} />
                   </Route>
                   <Route path={ROUTES.EMPLOYEE.REPORTS}       element={<EmployeeReportsPage />} />
                   <Route path={ROUTES.EMPLOYEE.WORK_OVERVIEW}          element={<WorkOverviewPage layoutScope="employee" />} />
-                  <Route path={ROUTES.EMPLOYEE.ATTENDANCE}             element={<AttendanceTimerPage layoutScope="employee" />} />
-                  <Route path={ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS} element={<EmployeeAttendanceExceptionsPage />} />
+                  <Route path={ROUTES.EMPLOYEE.ATTENDANCE}             element={<AttendanceTimerPage layoutScope="employee" exceptionHref={ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS} />} />
+                  <Route element={<PermissionGuard permission="view-attendance" />}>
+                    <Route path={ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS} element={<EmployeeAttendanceExceptionsPage attendancePath={ROUTES.EMPLOYEE.ATTENDANCE} />} />
+                  </Route>
                   <Route path={ROUTES.EMPLOYEE.DEDUCTIONS}             element={<PersonalDeductionsPage layoutScope="employee" />} />
                   <Route path={ROUTES.EMPLOYEE.DEDUCTION_DETAIL()}     element={<PersonalDeductionDetailPage layoutScope="employee" />} />
                   <Route path={ROUTES.EMPLOYEE.BONUSES}                element={<PersonalBonusesPage layoutScope="employee" />} />
@@ -350,42 +354,21 @@ export function AppRouter() {
                   <Route element={<PermissionGuard permission="edit-seo-project" />}>
                     <Route path={ROUTES.SEO_LEADER.TEMPLATES} element={<TemplatesPage module="seo" />} />
                   </Route>
+                  {/* Portal role is enough — SEO leaders may not have every Spatie slug assigned. */}
+                  <Route element={<RoleGuard allowedRoles={['seo-leader', 'admin']} />}>
+                    <Route path={ROUTES.SEO_LEADER.TASK_STATUSES} element={<AdminSeoTaskStatusesPage />} />
+                    <Route path={ROUTES.SEO_LEADER.MESSAGES}  element={<SeoMemberMessagesPage />} />
+                  </Route>
                   <Route path={ROUTES.SEO_LEADER.WORK_OVERVIEW} element={<WorkOverviewPage layoutScope="seo" seoRouteVariant="leader" />} />
-                  <Route path={ROUTES.SEO_LEADER.ATTENDANCE} element={<AttendanceTimerPage layoutScope="seo" />} />
+                  <Route path={ROUTES.SEO_LEADER.ATTENDANCE} element={<AttendanceTimerPage layoutScope="seo" exceptionHref={ROUTES.SEO_LEADER.ATTENDANCE_EXCEPTIONS} />} />
+                  <Route element={<PermissionGuard permission="view-attendance" />}>
+                    <Route path={ROUTES.SEO_LEADER.ATTENDANCE_EXCEPTIONS} element={<EmployeeAttendanceExceptionsPage attendancePath={ROUTES.SEO_LEADER.ATTENDANCE} />} />
+                  </Route>
                   <Route path={ROUTES.SEO_LEADER.DEDUCTIONS} element={<PersonalDeductionsPage layoutScope="seo" seoRouteVariant="leader" />} />
                   <Route path={ROUTES.SEO_LEADER.DEDUCTION_DETAIL()} element={<PersonalDeductionDetailPage layoutScope="seo" seoRouteVariant="leader" />} />
                   <Route path={ROUTES.SEO_LEADER.BONUSES} element={<PersonalBonusesPage layoutScope="seo" seoRouteVariant="leader" />} />
                   <Route path={ROUTES.SEO_LEADER.BONUS_DETAIL()} element={<PersonalBonusDetailPage layoutScope="seo" seoRouteVariant="leader" />} />
-                  <Route element={<PermissionGuard permission="view-seo-messages" />}>
-                    <Route path={ROUTES.SEO_LEADER.MESSAGES}  element={<SeoMemberMessagesPage />} />
-                  </Route>
                   <Route path={ROUTES.SEO_LEADER.PROFILE}   element={<SeoProfilePage />} />
-
-                  <Route element={<PermissionGuard permission="view-employees" />}>
-                    <Route path={ROUTES.EMPLOYEES.LIST}         element={<EmployeeListPage />} />
-                    <Route path={ROUTES.EMPLOYEES.DETAIL()}     element={<EmployeeDetailPage />} />
-                    <Route path={ROUTES.EMPLOYEES.EDIT()}       element={<EmployeeEditPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission="create-employee" />}>
-                    <Route path={ROUTES.EMPLOYEES.NEW}          element={<NewEmployeePage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission="view-attendance" />}>
-                    <Route path={ROUTES.ATTENDANCE.DAILY}       element={<AttendancePage />} />
-                    <Route path={ROUTES.ATTENDANCE.LOG}         element={<AttendanceLogPage />} />
-                    <Route path={ROUTES.ATTENDANCE.EXCEPTIONS}  element={<AttendanceExceptionsPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission={['view-leave', 'approve-leave']} />}>
-                    <Route path={ROUTES.LEAVES.LIST}            element={<LeavesPage />} />
-                    <Route path={ROUTES.LEAVES.DETAIL()}        element={<LeaveDetailPage />} />
-                  </Route>
-                  <Route element={<PermissionGuard permission={['view-payroll', 'manage-payroll']} />}>
-                    <Route path={ROUTES.PAYROLL.SALARY_SHEET}   element={<SalarySheetPage />} />
-                    <Route path={ROUTES.PAYROLL.DEDUCTIONS}     element={<DeductionsPage />} />
-                    <Route path={ROUTES.PAYROLL.DEDUCTIONS_NEW} element={<AddDeductionPage />} />
-                    <Route path={ROUTES.PAYROLL.BONUSES}        element={<BonusesPage />} />
-                    <Route path={ROUTES.PAYROLL.BONUSES_NEW}    element={<AddBonusPage />} />
-                    <Route path={ROUTES.PAYROLL.TYPES}          element={<PayrollTypesPage />} />
-                  </Route>
                 </Route>
               </Route>
 
@@ -409,17 +392,24 @@ export function AppRouter() {
                     <Route path="/seo-member/tasks" element={<MyTasksPage />} />
                     <Route path="/seo-member/tasks/:projectId/:taskId" element={<SeoTaskDetailPage />} />
                   </Route>
-                  <Route element={<PermissionGuard permission="view-seo-messages" />}>
+                  <Route element={<RoleGuard allowedRoles={['seo-member', 'admin']} />}>
                     <Route path={ROUTES.SEO_MEMBER.MESSAGES}      element={<SeoMemberMessagesPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission="view-leave" />}>
                     <Route path={ROUTES.SEO_MEMBER.REQUESTS}      element={<SeoMemberRequestsPage />} />
+                    <Route path={ROUTES.SEO_MEMBER.LEAVE}         element={<SeoMemberRequestsPage />} />
+                  </Route>
+                  <Route element={<PermissionGuard permission="view-requests" />}>
+                    <Route path={ROUTES.SEO_MEMBER.ADMIN_REQUESTS} element={<MyAdminRequestsPage namespace="seo" />} />
                   </Route>
                   <Route element={<PermissionGuard permission="view-seo-reports" />}>
                     <Route path={ROUTES.SEO_MEMBER.REPORTS}       element={<SeoMemberReportsPage />} />
                   </Route>
                   <Route path={ROUTES.SEO_MEMBER.WORK_OVERVIEW} element={<WorkOverviewPage layoutScope="seo" seoRouteVariant="member" />} />
-                  <Route path={ROUTES.SEO_MEMBER.ATTENDANCE}    element={<AttendanceTimerPage layoutScope="seo" />} />
+                  <Route path={ROUTES.SEO_MEMBER.ATTENDANCE}    element={<AttendanceTimerPage layoutScope="seo" exceptionHref={ROUTES.SEO_MEMBER.ATTENDANCE_EXCEPTIONS} />} />
+                  <Route element={<PermissionGuard permission="view-attendance" />}>
+                    <Route path={ROUTES.SEO_MEMBER.ATTENDANCE_EXCEPTIONS} element={<EmployeeAttendanceExceptionsPage attendancePath={ROUTES.SEO_MEMBER.ATTENDANCE} />} />
+                  </Route>
                   <Route path={ROUTES.SEO_MEMBER.DEDUCTIONS}    element={<PersonalDeductionsPage layoutScope="seo" seoRouteVariant="member" />} />
                   <Route path={ROUTES.SEO_MEMBER.DEDUCTION_DETAIL()} element={<PersonalDeductionDetailPage layoutScope="seo" seoRouteVariant="member" />} />
                   <Route path={ROUTES.SEO_MEMBER.BONUSES}       element={<PersonalBonusesPage layoutScope="seo" seoRouteVariant="member" />} />

@@ -1,14 +1,19 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { getAvatarColor } from '@/shared/utils';
-import { seoRequestsApi } from '../api/requests.api';
-import type { RawSeoRequest } from '../api/requests.api';
+import {
+  useAdminRequestList,
+  useApproveAdminRequest,
+  useRejectAdminRequest,
+} from '@/shared/modules/admin-requests/hooks/useAdminRequests';
+import type { AdminRequest } from '@/shared/modules/admin-requests/types/adminRequest.types';
 import type { RequestItem, FilterKey } from '@/shared/modules/team-reports/types/teamReport.types';
 
-const QUERY_KEY = ['seo-requests'];
+function toRequestItem(r: AdminRequest): RequestItem {
+  const dateLabel =
+    r.startDate && r.endDate && r.startDate !== r.endDate
+      ? `${r.startDate} - ${r.endDate}`
+      : (r.startDate || r.endDate || r.requestDate || '–');
 
-function toRequestItem(r: RawSeoRequest): RequestItem {
   return {
     id:            r.id,
     memberName:    r.employee.name,
@@ -18,48 +23,39 @@ function toRequestItem(r: RawSeoRequest): RequestItem {
     typeEn:        r.requestTypeLabel,
     bodyAr:        r.description || r.title,
     bodyEn:        r.description || r.title,
-    targetDate:    r.startDate === r.endDate ? r.startDate : `${r.startDate} - ${r.endDate}`,
+    title:         r.title,
+    targetDate:    dateLabel,
     submittedDate: r.submittedAt,
     status:        r.status,
     comment:       r.reviewerComment ?? undefined,
+    canApprove:    r.actions?.canApprove ?? r.status === 'pending',
+    canReject:     r.actions?.canReject  ?? r.status === 'pending',
   };
 }
 
-export function useSeoRequests(isAr: boolean) {
+export function useSeoRequests(isAr: boolean, enabled = true) {
   const [filter, setFilter] = useState<FilterKey>('all');
-  const queryClient = useQueryClient();
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: QUERY_KEY,
-    queryFn:  () => seoRequestsApi.list({ per_page: 100 }).then(r => r.data.data.data.map(toRequestItem)),
-  });
-
-  const visible = filter === 'all' ? items : items.filter(r => r.status === filter);
-
-  const approveMutation = useMutation({
-    mutationFn: (id: string) => seoRequestsApi.approve(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      toast.success(isAr ? 'تمت الموافقة على الطلب' : 'Request approved');
+  const { data, isLoading } = useAdminRequestList(
+    'seo',
+    {
+      status:   filter === 'all' ? undefined : filter,
+      per_page: 100,
     },
-    onError: () => toast.error(isAr ? 'تعذّرت الموافقة على الطلب' : 'Failed to approve request'),
-  });
+    enabled,
+  );
 
-  const rejectMutation = useMutation({
-    mutationFn: (id: string) => seoRequestsApi.reject(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      toast.success(isAr ? 'تم رفض الطلب' : 'Request rejected');
-    },
-    onError: () => toast.error(isAr ? 'تعذّر رفض الطلب' : 'Failed to reject request'),
-  });
+  const approveMutation = useApproveAdminRequest('seo', isAr);
+  const rejectMutation  = useRejectAdminRequest('seo', isAr);
+
+  const visible = (data?.data ?? []).map(toRequestItem);
 
   return {
     visible,
     filter,
     setFilter,
-    isLoading,
-    approve: (id: string) => approveMutation.mutate(id),
-    reject:  (id: string) => rejectMutation.mutate(id),
+    isLoading: enabled && isLoading,
+    approve: (id: string, comment?: string) => approveMutation.mutate({ id, comment }),
+    reject:  (id: string, comment?: string) => rejectMutation.mutate({ id, comment }),
   };
 }

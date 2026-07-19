@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/modules/auth/context/AuthContext';
-import { campaignApi } from '../../campaigns/api/campaign.api';
-import { seoTeamApi } from '../../team/api/seoTeam.api';
-import { filterSeoTeamMembers } from '@/shared/modules/team/utils/teamScope.utils';
-import { normalizeGroupedTasks } from '@/shared/modules/my-tasks/utils/myTasks.utils';
+import { getAvatarColor } from '@/shared/utils';
 import { seoLeaderDashboardApi } from '../api/seoLeaderDashboard.api';
 import { useArchivedSeoProjects } from '../../campaigns/store/seoArchivedStore';
-import type { SeoCampaign, SeoManagerStats } from '../types/dashboard.types';
+import type { SeoDashboardProject, SeoManagerStats } from '../types/dashboard.types';
+
+export const SEO_LEADER_DASHBOARD_KEY = ['seo-leader', 'dashboard'] as const;
 
 export interface CampaignViewModel {
   id:                number;
@@ -27,101 +25,88 @@ export interface CampaignViewModel {
   githubLink:        string | null;
 }
 
-function toCampaignVM(c: SeoCampaign): CampaignViewModel {
-  return {
-    id:                c.id,
-    name:              c.name,
-    description:       c.description,
-    campaignType:      c.campaignType,
-    campaignTypeLabel: c.campaignTypeLabel,
-    status:            c.status,
-    statusLabel:       c.statusLabel,
-    isDraft:           c.isDraft === true,
-    startDate:         c.startDate,
-    expectedEndDate:   c.expectedEndDate,
-    progress:          0,
-    tasks_completed:   0,
-    tasks_total:       0,
-    team:              [],
-    githubLink:        c.githubLink ?? null,
-  };
+function calcProgress(completed: number, total: number, reported?: number | null): number {
+  if (reported != null && !Number.isNaN(reported)) {
+    return Math.min(100, Math.max(0, Math.round(reported)));
+  }
+  if (!total) return 0;
+  return Math.min(100, Math.max(0, Math.round((completed / total) * 100)));
 }
 
-function countPendingTasks(payload: unknown): number {
-  const grouped = normalizeGroupedTasks(payload);
-  return grouped.columns
-    .filter(col => col.status === 'pending')
-    .reduce((sum, col) => sum + col.tasks.length, 0);
+function toCampaignVM(p: SeoDashboardProject): CampaignViewModel {
+  const completed = p.tasksCompleted ?? 0;
+  const total     = p.tasksTotal ?? 0;
+  return {
+    id:                p.id,
+    name:              p.name,
+    description:       p.description ?? '',
+    campaignType:      '',
+    campaignTypeLabel: p.campaignTypeLabel ?? p.projectTypeLabel ?? '',
+    status:            p.status,
+    statusLabel:       p.statusLabel,
+    isDraft:           p.isDraft === true,
+    startDate:         p.startDate ?? '',
+    expectedEndDate:   p.expectedEndDate ?? null,
+    progress:          calcProgress(completed, total, p.progressPercent),
+    tasks_completed:   completed,
+    tasks_total:       total,
+    githubLink:        p.githubLink ?? null,
+    team: (p.teamMembers ?? []).map(m => ({
+      name:    m.name,
+      initial: m.avatarInitial || m.name.charAt(0),
+      color:   getAvatarColor(m.id),
+    })),
+  };
 }
 
 export function useSeoLeaderDashboard() {
-  const { user } = useAuth();
   const archivedIds = useArchivedSeoProjects();
 
-  const projectsQuery = useQuery({
-    queryKey:  ['seo-leader', 'projects'],
-    queryFn:   () => seoLeaderDashboardApi.getProjects({ per_page: 100 }).then(r => r.data.data),
-    staleTime: 2 * 60 * 1000,
+  const dashboardQuery = useQuery({
+    queryKey:  SEO_LEADER_DASHBOARD_KEY,
+    queryFn:   () => seoLeaderDashboardApi.get().then(r => r.data.data),
+    staleTime: 60_000,
   });
 
-  const completedProjectsQuery = useQuery({
-    queryKey:  ['seo-leader', 'projects', 'completed'],
-    queryFn:   () =>
-      seoLeaderDashboardApi
-        .getProjects({ status: 'completed', per_page: 1 })
-        .then(r => r.data.data.total ?? 0),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const teamQuery = useQuery({
-    queryKey:  ['seo-leader', 'dashboard', 'team'],
-    queryFn:   () => seoTeamApi.getTeam({ per_page: 100 }).then(r => r.data.data),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const pendingTasksQuery = useQuery({
-    queryKey:  ['seo-leader', 'dashboard', 'pending-tasks'],
-    queryFn:   async () => {
-      const res = await campaignApi.listAllTasks({ per_page: 100 });
-      return countPendingTasks(res.data);
-    },
-    staleTime: 2 * 60 * 1000,
-  });
+  const sections = dashboardQuery.data?.projects?.sections ?? [];
+  const summary  = dashboardQuery.data?.summary;
 
   const campaigns = useMemo(() => {
-    return (projectsQuery.data?.data ?? []).map(c => {
-      const vm = toCampaignVM(c);
-      if (archivedIds.has(c.id)) return { ...vm, status: 'archived', statusLabel: 'مؤرشفة' };
+    const flat = sections.flatMap(s => s.projects ?? []);
+    return flat.map(p => {
+      const vm = toCampaignVM(p);
+      if (archivedIds.has(p.id)) {
+        return { ...vm, status: 'archived', statusLabel: 'مؤرشفة' };
+      }
       return vm;
     });
-  }, [projectsQuery.data, archivedIds]);
-
-  const activeEmployees = useMemo(() => {
-    const members = teamQuery.data?.data ?? [];
-    const scoped = filterSeoTeamMembers(members, {
-      viewerId: user?.employeeId,
-      isAdmin:  user?.role === 'admin',
-    });
-    return scoped.filter(m => m.isActive || m.status === 'active').length;
-  }, [teamQuery.data, user?.employeeId, user?.role]);
+  }, [sections, archivedIds]);
 
   const stats: SeoManagerStats = {
-    total_projects:     projectsQuery.data?.total ?? campaigns.length,
-    active_employees:   activeEmployees,
-    pending_tasks:      pendingTasksQuery.data ?? 0,
-    completed_projects: completedProjectsQuery.data ?? 0,
+    total_projects:     campaigns.filter(c => c.status !== 'archived').length,
+    active_employees:   0,
+    pending_tasks:      campaigns
+      .filter(c => c.status === 'in_progress')
+      .reduce((sum, c) => sum + Math.max(0, c.tasks_total - c.tasks_completed), 0),
+    completed_projects: summary?.completed
+      ?? campaigns.filter(c => c.status === 'completed').length,
   };
 
-  const isLoading =
-    projectsQuery.isLoading
-    || completedProjectsQuery.isLoading
-    || teamQuery.isLoading
-    || pendingTasksQuery.isLoading;
+  // Prefer summary counts for the "total projects" when available
+  if (summary) {
+    stats.total_projects =
+      (summary.inProgress ?? 0)
+      + (summary.completed ?? 0)
+      + (summary.onHold ?? 0)
+      + (summary.notStarted ?? 0);
+  }
 
   return {
-    isLoading,
-    isError: projectsQuery.isError,
+    isLoading: dashboardQuery.isLoading,
+    isError:   dashboardQuery.isError,
     stats,
     campaigns,
+    summary,
+    checkIn: dashboardQuery.data?.checkIn ?? null,
   };
 }

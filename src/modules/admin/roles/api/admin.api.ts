@@ -13,13 +13,52 @@ import type {
 } from '../types/adminManager.types';
 import { normalizeManagerRoleSlugs, resolveAssignableRoleName } from '../utils/role.utils';
 
-function normalizeManager(raw: ApiAdminManager): ApiAdminManager {
+function asLookup(value: unknown): ApiAdminManager['department'] {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, unknown>;
+  if (record.id == null) return null;
+  return value as NonNullable<ApiAdminManager['department']>;
+}
+
+function asLookupList(value: unknown): NonNullable<ApiAdminManager['departments']> {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => asLookup(item))
+    .filter((item): item is NonNullable<ApiAdminManager['department']> => item != null);
+}
+
+/** Normalize list/detail payloads so edit forms can always read camelCase lookups. */
+export function normalizeManager(raw: ApiAdminManager): ApiAdminManager {
+  const record = raw as ApiAdminManager & {
+    job_title?: ApiAdminManager['jobTitle'];
+    job_title_id?: number | string | null;
+    department_ids?: Array<number | string> | null;
+  };
   const roles = normalizeManagerRoleSlugs(raw.roles);
+
+  const departments = asLookupList(raw.departments);
+  const department = asLookup(raw.department)
+    ?? (departments[0] ?? null);
+
+  const jobTitle = asLookup(raw.jobTitle)
+    ?? asLookup(record.job_title)
+    ?? (record.job_title_id != null
+      ? { id: record.job_title_id, name: String(record.job_title_id) }
+      : null);
+
+  // Prefer nested departments; fall back to bare ids from older payloads.
+  const departmentsFromIds = !departments.length && record.department_ids?.length
+    ? record.department_ids.map((id) => ({ id, name: String(id) }))
+    : departments;
+
   return {
     ...raw,
     roles: roles.length > 0 ? roles : (Array.isArray(raw.roles)
       ? raw.roles.filter((r): r is string => typeof r === 'string')
       : []),
+    department,
+    departments: departmentsFromIds.length ? departmentsFromIds : (department ? [department] : []),
+    jobTitle,
   };
 }
 

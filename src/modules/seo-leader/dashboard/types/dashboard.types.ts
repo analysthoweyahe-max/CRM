@@ -1,3 +1,5 @@
+import type { AttendanceTimer } from '@/shared/modules/attendance/types/attendanceTimer.types';
+
 export interface SeoCampaign {
   id:               number;
   uuid?:            string;
@@ -13,14 +15,73 @@ export interface SeoCampaign {
   expectedEndDate:  string | null;
   targetKeywords:   string[];
   referenceLinks:   string[];
-  // Consistent with the rest of this response's camelCase convention
-  // (confirmed against the equivalent PM project response).
   githubLink?:              string | null;
   driveLink?:               string | null;
   contractDurationMonths?:  number | null;
   createdBy:                { id: string; name: string };
   createdAt:        string;
   updatedAt:        string;
+  /** Present on dashboard project cards */
+  tasksTotal?:      number;
+  tasksCompleted?:  number;
+  progressPercent?: number;
+  teamMembers?:     SeoDashboardTeamMember[];
+  teamMembersCount?: number;
+  lastActivityAt?:  string;
+  workspaceUrl?:    string;
+}
+
+export interface SeoDashboardTeamMember {
+  id:            string;
+  name:          string;
+  avatarUrl:     string | null;
+  avatarInitial: string;
+}
+
+export interface SeoDashboardProject {
+  id:               number;
+  name:             string;
+  status:           string;
+  statusLabel:      string;
+  tasksTotal:       number;
+  tasksCompleted:   number;
+  progressPercent:  number;
+  teamMembers:      SeoDashboardTeamMember[];
+  teamMembersCount: number;
+  lastActivityAt:   string;
+  workspaceUrl?:    string;
+  projectTypeLabel?: string;
+  campaignTypeLabel?: string;
+  description?:     string;
+  startDate?:       string | null;
+  expectedEndDate?: string | null;
+  githubLink?:      string | null;
+  isDraft?:         boolean;
+}
+
+export interface SeoDashboardProjectSection {
+  key:             string;
+  label:           string;
+  defaultExpanded: boolean;
+  total:           number;
+  projects:        SeoDashboardProject[];
+}
+
+export interface SeoDashboardSummary {
+  inProgress: number;
+  completed:  number;
+  onHold:     number;
+  notStarted: number;
+}
+
+export interface SeoLeaderDashboardData {
+  summary?:  SeoDashboardSummary;
+  checkIn?:  Partial<AttendanceTimer>;
+  projects?: {
+    sections: SeoDashboardProjectSection[];
+  };
+  header?: unknown;
+  sidebar?: unknown;
 }
 
 export interface SeoManagerStats {

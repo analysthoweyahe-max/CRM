@@ -69,18 +69,15 @@ const EMPLOYEE_ROLE_SLUGS = new Set([
 
 /**
  * Which auth guard the stored session belongs to.
- * Admin / HR / SEO Manager / Project Manager → admin
- * Employees (incl. Team Lead job title) → employee
+ * Portal role wins over raw Spatie slugs (same rules as resolveProfileActor).
+ * Employee / SEO member → employee
+ * Admin / HR / PM / SEO leader → admin
  */
 export function getStoredAuthActor(): AuthActor {
   const user = getStoredUser();
   if (!user) return 'admin';
 
   if (user.isSuperAdmin) return 'admin';
-
-  const roles = Array.isArray(user.roles) ? user.roles : [];
-  if (roles.some((r) => ADMIN_ROLE_SLUGS.has(r))) return 'admin';
-  if (roles.some((r) => EMPLOYEE_ROLE_SLUGS.has(r))) return 'employee';
 
   if (user.role === 'employee' || user.role === 'seo-member') return 'employee';
   if (
@@ -92,7 +89,13 @@ export function getStoredAuthActor(): AuthActor {
     return 'admin';
   }
 
-  return user.actor === 'employee' ? 'employee' : 'admin';
+  if (user.actor === 'employee') return 'employee';
+
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  if (roles.some((r) => EMPLOYEE_ROLE_SLUGS.has(r))) return 'employee';
+  if (roles.some((r) => ADMIN_ROLE_SLUGS.has(r))) return 'admin';
+
+  return 'admin';
 }
 
 /**

@@ -33,17 +33,24 @@ export interface WorkTimerCardProps extends UseWorkTimerOptions {
   className?: string;
   /** Show link to employee exception requests list */
   showExceptionLink?: boolean;
+  /** Override default exception list path */
+  exceptionHref?: string;
+  /** Called when the exception link is clicked (e.g. close a parent dropdown) */
+  onExceptionNavigate?: () => void;
 }
 
 export function WorkTimerCard({
   variant = 'card',
   className = '',
   showExceptionLink = false,
+  exceptionHref = ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS,
+  onExceptionNavigate,
   ...timerOptions
 }: WorkTimerCardProps) {
   const { lang } = useLang();
   const isAr = lang === 'ar';
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, can } = useAuth();
+  const canViewExceptions = can('view-attendance');
   const { data: orgSettings } = useOrgSettingsData();
   const windowConfig = useMemo(() => ({
     normalStartWindowFrom: orgSettings?.normalStartWindowFrom ?? orgSettings?.workStartTime,
@@ -190,8 +197,8 @@ export function WorkTimerCard({
           message={isAr
             ? 'تسجيلك بعد نافذة الحضور الطبيعي يُسجَّل كتأخير، لكن المؤقت يبدأ فوراً من لحظة الحضور.'
             : 'Check-in after the normal window is marked late, but the timer starts immediately from check-in.'}
-          cta={isAr ? 'طلب بدء متأخر' : 'Request Late Start'}
-          onCta={() => openException('late_start')}
+          cta={canViewExceptions ? (isAr ? 'طلب بدء متأخر' : 'Request Late Start') : undefined}
+          onCta={canViewExceptions ? () => openException('late_start') : undefined}
           compact={isCompact}
         />
       )}
@@ -275,9 +282,17 @@ export function WorkTimerCard({
         </div>
       )}
 
-      {showExceptionLink && !isCompact && (
-        <Link to={ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS}
-          className="inline-flex items-center gap-1.5 text-xs text-[#709028] hover:underline">
+      {showExceptionLink && canViewExceptions && !isCompact && (
+        <Link
+          to={exceptionHref}
+          onClick={(e) => {
+            if (onExceptionNavigate) {
+              e.preventDefault();
+              onExceptionNavigate();
+            }
+          }}
+          className="inline-flex items-center gap-1.5 text-xs text-[#709028] hover:underline"
+        >
           <FileText size={13} />
           {isAr ? 'طلبات الاستثناء' : 'My exception requests'}
         </Link>
@@ -313,8 +328,8 @@ function Banner({
   variant: 'warning' | 'info';
   icon: React.ReactNode;
   message: string;
-  cta: string;
-  onCta: () => void;
+  cta?: string;
+  onCta?: () => void;
   compact: boolean;
 }) {
   const colors = variant === 'warning'
@@ -327,10 +342,12 @@ function Banner({
         <span className="mt-0.5 shrink-0">{icon}</span>
         <p className="leading-relaxed">{message}</p>
       </div>
-      <button type="button" onClick={onCta}
-        className="text-xs font-semibold underline underline-offset-2 hover:opacity-80">
-        {cta}
-      </button>
+      {cta && onCta && (
+        <button type="button" onClick={onCta}
+          className="text-xs font-semibold underline underline-offset-2 hover:opacity-80">
+          {cta}
+        </button>
+      )}
     </div>
   );
 }

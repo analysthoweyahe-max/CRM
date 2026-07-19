@@ -30,6 +30,7 @@ export const ROUTES = {
     MANAGER_EDIT:    (id = ':id') => `/admin-managers/${id}/edit`,
     PERMISSIONS:     '/admin-permissions',
     SEO_TASK_STATUSES: '/admin-seo-task-statuses',
+    PM_TASK_STATUSES:  '/admin-pm-task-statuses',
     PROJECT_TYPES:   '/admin-project-types',
     PROJECT_TEMPLATES: '/admin-project-templates',
     SEO_PROJECT_TEMPLATES: '/admin-seo-project-templates',
@@ -78,11 +79,13 @@ export const ROUTES = {
     REPORTS:   '/project-manager/reports',
     WORK_OVERVIEW: '/project-manager/work-overview',
     ATTENDANCE:    '/project-manager/attendance',
+    ATTENDANCE_EXCEPTIONS: '/project-manager/attendance-exceptions',
     DEDUCTIONS:    '/project-manager/deductions',
     DEDUCTION_DETAIL: (id = ':id') => `/project-manager/deductions/${id}`,
     BONUSES:       '/project-manager/bonuses',
     BONUS_DETAIL:  (id = ':id') => `/project-manager/bonuses/${id}`,
     TEMPLATES: '/project-manager/templates',
+    TASK_STATUSES: '/project-manager/task-statuses',
     MESSAGES:  '/project-manager/messages',
     PROFILE:   '/project-manager/profile',
   },
@@ -97,6 +100,7 @@ export const ROUTES = {
     REPORTS:   '/seo-leader/reports',
     WORK_OVERVIEW: '/seo-leader/work-overview',
     ATTENDANCE:    '/seo-leader/attendance',
+    ATTENDANCE_EXCEPTIONS: '/seo-leader/attendance-exceptions',
     DEDUCTIONS:    '/seo-leader/deductions',
     DEDUCTION_DETAIL: (id = ':id') => `/seo-leader/deductions/${id}`,
     BONUSES:       '/seo-leader/bonuses',
@@ -104,6 +108,7 @@ export const ROUTES = {
     MESSAGES:  '/seo-leader/messages',
     PROFILE:   '/seo-leader/profile',
     TEMPLATES: '/seo-leader/templates',
+    TASK_STATUSES: '/seo-leader/task-statuses',
   },
   EMPLOYEE: {
     DASHBOARD:     '/employee',
@@ -113,6 +118,10 @@ export const ROUTES = {
     /** HR support tickets — /api/v1/employee/messages (not company messenger) */
     HR_MESSAGES:   '/employee/messages',
     REQUESTS:      '/employee/requests',
+    /** Formal HR leave (balance-tracked) */
+    LEAVE:         '/employee/leave',
+    /** Admin requests to PM manager — /v1/pm/requests */
+    ADMIN_REQUESTS:'/employee/admin-requests',
     REPORTS:       '/employee/reports',
     WORK_OVERVIEW:        '/employee/work-overview',
     ATTENDANCE:           '/employee/attendance',
@@ -143,9 +152,14 @@ export const ROUTES = {
       `/seo/projects/${projectId}/tasks/${taskId}`,
     MESSAGES:      '/seo-member/messages',
     REQUESTS:      '/seo-member/requests',
+    /** Formal leave (balance-tracked) */
+    LEAVE:         '/seo-member/leave',
+    /** Admin requests to SEO manager — /v1/seo/requests */
+    ADMIN_REQUESTS:'/seo-member/admin-requests',
     REPORTS:       '/seo-member/reports',
     WORK_OVERVIEW: '/seo-member/work-overview',
     ATTENDANCE:    '/seo-member/attendance',
+    ATTENDANCE_EXCEPTIONS: '/seo-member/attendance-exceptions',
     DEDUCTIONS:    '/seo-member/deductions',
     DEDUCTION_DETAIL: (id = ':id') => `/seo-member/deductions/${id}`,
     BONUSES:       '/seo-member/bonuses',

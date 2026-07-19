@@ -13,6 +13,7 @@ import {
   normalizeSeoAttachments,
   type SeoTaskAttachment,
 } from '@/shared/utils/seoTaskAttachment.utils';
+import { appendImportantLinks, parseImportantLinks } from '@/shared/utils/importantLinks.utils';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 
 interface RawSeoAssignee {
@@ -28,6 +29,8 @@ interface RawSeoTaskDetail extends RawSeoTask {
   startDate?:         string | null;
   siteLinks?:         string[];
   referenceLinks?:    string[];
+  importantLinks?:    string[];
+  important_links?:   string[];
   notes?:             string | null;
   targetUrl?:         string | null;
   targetKeyword?:     string | null;
@@ -45,9 +48,10 @@ interface RawSeoTaskDetail extends RawSeoTask {
 }
 
 export interface SeoUpdateTaskPayload {
-  title?:    string;
-  priority?: string;
-  dueDate?:  string;
+  title?:           string;
+  priority?:        string;
+  dueDate?:         string;
+  importantLinks?:  string[];
 }
 
 interface SeoTaskUploadResponse {
@@ -77,6 +81,7 @@ function toSeoTaskDetail(raw: RawSeoTaskDetail): SeoTaskDetail {
     startDate:         raw.startDate ?? null,
     siteLinks:         raw.siteLinks ?? [],
     referenceLinks:    raw.referenceLinks ?? [],
+    importantLinks:    parseImportantLinks(raw),
     notes:             raw.notes ?? null,
     targetUrl:         raw.targetUrl ?? null,
     targetKeyword:     raw.targetKeyword ?? null,
@@ -158,6 +163,7 @@ export const seoTaskDetailApi = {
       if (payload.description)      fd.append('description', payload.description);
       if (payload.due_date)         fd.append('due_date', payload.due_date);
       if (payload.estimated_hours != null) fd.append('estimated_hours', String(payload.estimated_hours));
+      appendImportantLinks(fd, payload.importantLinks);
       appendSeoTaskFiles(fd, files);
       return http.post<SeoTaskDetailResponse>(
         `/v1/seo/employee/projects/${projectId}/tasks/self`, fd,

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, useNavigate }      from 'react-router-dom';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { ArrowRight, ArrowLeft, Check, Mail, Phone, User, Briefcase, DollarSign, Wallet, Activity, Clock } from 'lucide-react';
@@ -19,9 +19,11 @@ import {
   employeeDepartmentIds,
   titleDepartmentId,
   toDepartmentIds,
+  type ApiEmployee,
   type EmploymentType,
   type EmployeeStatus,
 } from '../types/employee.types';
+import { CURRENCIES, resolveCurrency } from '../components/NewEmployeeForm/newEmployeeForm.types';
 import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
 
 /* ── form values ──────────────────────────────────────── */
@@ -34,9 +36,26 @@ interface EditFormValues {
   jobTitle:       string;
   employmentType: string;
   basicSalary:    string;
+  currency:       string;
   managerId:      string;
   status:         string;
   workingHours:   string;
+}
+
+function toEditFormValues(emp: ApiEmployee): EditFormValues {
+  return {
+    fullName:       emp.name,
+    email:          emp.email,
+    phone:          emp.phone ?? '',
+    departmentIds:  employeeDepartmentIds(emp),
+    jobTitle:       String(emp.jobTitle?.id ?? ''),
+    employmentType: emp.employmentType ?? '',
+    basicSalary:    String(emp.salary ?? ''),
+    currency:       resolveCurrency(emp.currency),
+    managerId:      String(emp.manager?.id ?? 'none'),
+    status:         emp.status ?? 'active',
+    workingHours:   String(emp.workingHours ?? 8),
+  };
 }
 
 /* ── page ─────────────────────────────────────────────── */
@@ -52,20 +71,18 @@ export function EmployeeEditPage() {
   const { data: departments = [] } = useDepartments();
   const { data: allJobTitles = [], isLoading: titlesLoading } = useJobTitles();
 
-  const { register, control, handleSubmit, setValue, formState: { isSubmitting, errors } } = useForm<EditFormValues>({
-    values: emp ? {
-      fullName:       emp.name,
-      email:          emp.email,
-      phone:          emp.phone ?? '',
-      departmentIds:  employeeDepartmentIds(emp),
-      jobTitle:       String(emp.jobTitle?.id ?? ''),
-      employmentType: emp.employmentType ?? '',
-      basicSalary:    String(emp.salary ?? ''),
-      managerId:      String(emp.manager?.id ?? 'none'),
-      status:         emp.status ?? 'active',
-      workingHours:   String(emp.workingHours ?? 8),
-    } : undefined,
+  const { register, control, handleSubmit, reset, setValue, formState: { isSubmitting, errors } } = useForm<EditFormValues>({
+    defaultValues: {
+      fullName: '', email: '', phone: '', departmentIds: [], jobTitle: '',
+      employmentType: '', basicSalary: '', currency: 'EGP', managerId: 'none',
+      status: 'active', workingHours: '8',
+    },
   });
+
+  // Reset every field — including currency — once the employee payload arrives.
+  useEffect(() => {
+    if (emp) reset(toEditFormValues(emp));
+  }, [emp, reset]);
 
   const selectedDeptIds                = useWatch({ control, name: 'departmentIds' }) ?? [];
   const selectedJobTitle               = useWatch({ control, name: 'jobTitle' }) ?? '';
@@ -131,6 +148,7 @@ export function EmployeeEditPage() {
         status:          data.status as EmployeeStatus,
         employment_type: data.employmentType as EmploymentType,
         salary:          parseFloat(data.basicSalary) || undefined,
+        currency:        data.currency || undefined,
         working_hours:   Number(data.workingHours) || 8,
       }),
 
@@ -259,9 +277,25 @@ export function EmployeeEditPage() {
               )} />
             </FormField>
 
-            {/* Basic salary */}
-            <FormField label={isAr ? 'الراتب الأساسي (ج.م)' : 'Basic Salary (EGP)'} icon={<DollarSign size={15} className="text-gray-400" />}>
-              <Input {...register('basicSalary')} type="number" min={0} endIcon={<Wallet size={15} />} placeholder="0" />
+            {/* Basic salary + currency */}
+            <FormField label={isAr ? 'الراتب الأساسي' : 'Basic Salary'} icon={<DollarSign size={15} className="text-gray-400" />}>
+              <div className="flex gap-2">
+                <div className="flex-1 min-w-0">
+                  <Input {...register('basicSalary')} type="number" min={0} endIcon={<Wallet size={15} />} placeholder="0" />
+                </div>
+                <div className="w-32 shrink-0">
+                  <Controller name="currency" control={control} render={({ field }) => (
+                    <Combobox
+                      items={CURRENCIES}
+                      value={field.value ?? 'EGP'}
+                      onChange={field.onChange}
+                      triggerShowsDetail={false}
+                      searchPlaceholder={isAr ? 'ابحث عن عملة...' : 'Search currency...'}
+                      noResultsText={isAr ? 'لا نتائج' : 'No results'}
+                    />
+                  )} />
+                </div>
+              </div>
             </FormField>
 
             {/* Manager */}

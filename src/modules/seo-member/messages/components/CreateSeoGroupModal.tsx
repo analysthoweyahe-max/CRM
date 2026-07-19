@@ -4,8 +4,9 @@ import { Modal } from '@/shared/components/ui/Modal';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useCreateSeoGroup, useSeoMentionables } from '../hooks/useSeoMessages';
-import type { SeoConversation, SeoGroupMemberRef, SeoParticipantType } from '../types/messages.types';
+import type { SeoConversation, SeoGroupMemberRef, SeoMentionable, SeoParticipantType } from '../types/messages.types';
 
 function memberKey(type: string, id: string) {
   return `${type}:${id}`;
@@ -20,6 +21,20 @@ function parseMemberKey(key: string): SeoGroupMemberRef | null {
   return { type, id };
 }
 
+function toItem(m: SeoMentionable, isAr: boolean): ComboboxItem {
+  return {
+    id:    memberKey(m.type, m.id),
+    label: m.name,
+    detail: m.type === 'admin'
+      ? (m.role === 'super-admin' ? (isAr ? 'سوبر أدمن' : 'Super Admin')
+        : m.role === 'seo-manager' ? (isAr ? 'مدير SEO' : 'SEO Manager')
+        : m.role === 'hr-manager' ? (isAr ? 'مدير HR' : 'HR Manager')
+        : m.role === 'project-manager' ? (isAr ? 'مدير مشاريع' : 'Project Manager')
+        : (isAr ? 'مدير' : 'Manager'))
+      : (m.department || (isAr ? 'موظف' : 'Employee')),
+  };
+}
+
 interface Props {
   open:    boolean;
   isAr:    boolean;
@@ -32,30 +47,46 @@ export function CreateSeoGroupModal({ open, isAr, onClose, onCreated }: Props) {
   const [message, setMessage] = useState('');
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [nameError, setNameError] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [selectedCache, setSelectedCache] = useState<ComboboxItem[]>([]);
 
-  const { data: mentionables = [], isLoading: loadingMentionables, isError: mentionablesError } = useSeoMentionables(open);
+  const debouncedSearch = useDebounce(memberSearch, 300);
+  const {
+    data: mentionables = [],
+    isLoading: loadingMentionables,
+    isFetching,
+    isError: mentionablesError,
+  } = useSeoMentionables(open, debouncedSearch);
+
   const { mutateAsync: createGroup, isPending } = useCreateSeoGroup(isAr);
 
-  const items: ComboboxItem[] = useMemo(
-    () =>
-      mentionables.map(m => ({
-        id:    memberKey(m.type, m.id),
-        label: m.name,
-        detail: m.type === 'admin'
-          ? (m.role === 'super-admin' ? (isAr ? 'سوبر أدمن' : 'Super Admin')
-            : m.role === 'seo-manager' ? (isAr ? 'مدير SEO' : 'SEO Manager')
-            : m.role === 'hr-manager' ? (isAr ? 'مدير HR' : 'HR Manager')
-            : m.role === 'project-manager' ? (isAr ? 'مدير مشاريع' : 'Project Manager')
-            : (isAr ? 'مدير' : 'Manager'))
-          : (m.department || (isAr ? 'موظف' : 'Employee')),
-      })),
-    [mentionables, isAr],
-  );
+  const items: ComboboxItem[] = useMemo(() => {
+    const fromApi = mentionables.map(m => toItem(m, isAr));
+    const byId = new Map(fromApi.map(i => [i.id, i]));
+    for (const cached of selectedCache) {
+      if (selectedKeys.includes(cached.id) && !byId.has(cached.id)) {
+        byId.set(cached.id, cached);
+      }
+    }
+    return Array.from(byId.values());
+  }, [mentionables, isAr, selectedCache, selectedKeys]);
+
+  function handleMembersChange(keys: string[]) {
+    setSelectedKeys(keys);
+    setSelectedCache(prev => {
+      const keep = prev.filter(i => keys.includes(i.id));
+      const keepIds = new Set(keep.map(i => i.id));
+      const additions = items.filter(i => keys.includes(i.id) && !keepIds.has(i.id));
+      return [...keep, ...additions];
+    });
+  }
 
   function reset() {
     setName('');
     setMessage('');
     setSelectedKeys([]);
+    setSelectedCache([]);
+    setMemberSearch('');
     setNameError(false);
   }
 
@@ -129,16 +160,16 @@ export function CreateSeoGroupModal({ open, isAr, onClose, onCreated }: Props) {
           <MultiCombobox
             items={items}
             values={selectedKeys}
-            onChange={setSelectedKeys}
-            disabled={loadingMentionables || mentionablesError}
+            onChange={handleMembersChange}
+            onSearchChange={setMemberSearch}
+            loading={loadingMentionables || isFetching}
+            disabled={mentionablesError}
             placeholder={
-              loadingMentionables
-                ? (isAr ? 'جاري التحميل...' : 'Loading...')
-                : mentionablesError
-                  ? (isAr ? 'تعذّر تحميل الأعضاء' : 'Failed to load members')
-                  : (isAr ? 'اختر أعضاء...' : 'Select members...')
+              mentionablesError
+                ? (isAr ? 'تعذّر تحميل الأعضاء' : 'Failed to load members')
+                : (isAr ? 'ابحث واختر أعضاء...' : 'Search and select members...')
             }
-            searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
+            searchPlaceholder={isAr ? 'بحث بالاسم...' : 'Search by name...'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
         </FormField>

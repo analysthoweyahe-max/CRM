@@ -11,6 +11,7 @@ import { EditEmploymentTypeModal } from '../edit-modals/EditEmploymentTypeModal'
 import { EditSalaryModal }         from '../edit-modals/EditSalaryModal';
 import { EditWorkScheduleModal }   from '../edit-modals/EditWorkScheduleModal';
 import { EditDepartmentModal }     from '../edit-modals/EditDepartmentModal';
+import { resolveCurrency }         from '../NewEmployeeForm/newEmployeeForm.types';
 
 type ModalKey = 'employmentType' | 'salary' | 'workSchedule' | 'department' | null;
 
@@ -19,6 +20,7 @@ interface Props { emp: ApiEmployee; isAr: boolean }
 export function EmployeeDetailEmployment({ emp, isAr }: Props) {
   const [openModal, setOpenModal] = useState<ModalKey>(null);
   const depts = employeeDepartmentsList(emp);
+  const currency = resolveCurrency(emp.currency);
 
   return (
     <>
@@ -38,7 +40,7 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
         >
           <Field icon={<Wallet size={15} />} label={isAr ? 'الراتب الأساسي' : 'Basic Salary'}>
             {emp.salary != null
-              ? `${emp.salary.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`
+              ? `${emp.salary.toLocaleString()} ${currency}`
               : '–'}
           </Field>
         </Section>
@@ -99,6 +101,7 @@ export function EmployeeDetailEmployment({ emp, isAr }: Props) {
         onClose={() => setOpenModal(null)}
         employeeId={emp.id}
         current={emp.salary}
+        currency={currency}
         isAr={isAr}
       />
       <EditWorkScheduleModal

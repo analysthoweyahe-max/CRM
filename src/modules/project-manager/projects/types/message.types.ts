@@ -69,5 +69,6 @@ export interface PmMentionable {
 export interface PmMentionablesResponse {
   status:  string;
   message: string;
-  data:    PmMentionable[];
+  /** Flat array or paginated `{ data: [...] }` — normalize with `toApiArray`. */
+  data:    PmMentionable[] | { data: PmMentionable[] };
 }

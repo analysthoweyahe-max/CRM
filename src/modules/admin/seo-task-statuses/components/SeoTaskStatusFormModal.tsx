@@ -16,7 +16,8 @@ interface Props {
 }
 
 const EMPTY: CreateSeoTaskStatusPayload = {
-  key: '', label_en: '', label_ar: '', color: '#6366f1', sort_order: 0, is_active: true,
+  key: '', label_en: '', label_ar: '', color: '#6366f1',
+  sort_order: 0, is_active: true, marks_completed: false,
 };
 
 export function SeoTaskStatusFormModal({ open, onClose, onSubmit, initial, isLoading, isAr }: Props) {
@@ -25,12 +26,13 @@ export function SeoTaskStatusFormModal({ open, onClose, onSubmit, initial, isLoa
   useEffect(() => {
     if (!open) return;
     setForm(initial ? {
-      key:        initial.key,
-      label_en:   initial.labelEn,
-      label_ar:   initial.labelAr,
-      color:      initial.color,
-      sort_order: initial.sortOrder,
-      is_active:  initial.isActive,
+      key:             initial.key,
+      label_en:        initial.labelEn,
+      label_ar:        initial.labelAr,
+      color:           initial.color || '#6366f1',
+      sort_order:      initial.sortOrder,
+      is_active:       initial.isActive,
+      marks_completed: initial.marksCompleted,
     } : EMPTY);
   }, [open, initial]);
 
@@ -98,6 +100,17 @@ export function SeoTaskStatusFormModal({ open, onClose, onSubmit, initial, isLoa
             ariaLabel={isAr ? 'مفعّلة' : 'Active'} />
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             {isAr ? 'مفعّلة' : 'Active'}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 pt-1">
+          <Switch
+            checked={form.marks_completed}
+            onChange={() => set('marks_completed', !form.marks_completed)}
+            ariaLabel={isAr ? 'تعني إنجاز المهمة' : 'Marks task completed'}
+          />
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            {isAr ? 'تعني إنجاز المهمة' : 'Marks completed'}
           </p>
         </div>
       </div>

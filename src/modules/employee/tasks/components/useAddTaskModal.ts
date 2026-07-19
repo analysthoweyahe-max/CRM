@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { toApiArray } from '@/shared/utils/apiList.utils';
+import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { useEmpDashboard } from '@/modules/employee/dashboard/hooks/useEmpDashboard';
 import { pmProjectsApi } from '@/modules/project-manager/projects/api/project.api';
 import type { PmProjectPhase } from '@/modules/project-manager/projects/types/project.types';
@@ -22,6 +23,7 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
   const [priority,       setPriority]       = useState<Priority>('normal');
   const [dueDate,        setDueDate]        = useState('');
   const [estimatedHours, setEstimatedHours] = useState('');
+  const [importantLinks, setImportantLinks] = useState<string[]>([]);
 
   const [touched,         setTouched]         = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -36,6 +38,7 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
   function reset() {
     setProjectIdState(''); setPhaseId(''); setTitleState(''); setDescription('');
     setPriority('normal'); setDueDate(''); setEstimatedHours('');
+    setImportantLinks([]);
     setTouched({}); setSubmitAttempted(false);
   }
 
@@ -69,6 +72,8 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
   const fieldErrors: Record<string, string> = {};
   if (!projectId)         fieldErrors.projectId = isAr ? 'اختر المشروع' : 'Project is required';
   if (!title.trim())      fieldErrors.title     = isAr ? 'العنوان مطلوب' : 'Title is required';
+  const linksError = validateImportantLinks(importantLinks, isAr);
+  if (linksError) fieldErrors.importantLinks = linksError;
 
   const isValid = Object.keys(fieldErrors).length === 0;
 
@@ -81,6 +86,7 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
     setSubmitAttempted(true);
     if (!isValid || creating) return;
 
+    const links = normalizeImportantLinks(importantLinks);
     const payload: CreateSelfTaskPayload = {
       title: title.trim(),
       priority,
@@ -88,6 +94,7 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
       ...(dueDate            ? { dueDate } : {}),
       ...(estimatedHours     ? { estimatedHours: Number(estimatedHours) } : {}),
       ...(phaseId            ? { phaseId: Number(phaseId) } : {}),
+      ...(links.length       ? { importantLinks: links } : {}),
     };
 
     create(
@@ -110,6 +117,7 @@ export function useAddTaskModal(onClose: () => void, isAr: boolean) {
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
+    importantLinks, setImportantLinks,
     isValid, errors, creating,
     handleSubmit, handleClose,
   };

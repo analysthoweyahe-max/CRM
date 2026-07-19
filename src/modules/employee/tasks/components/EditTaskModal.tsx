@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Modal }     from '@/shared/components/ui/Modal';
@@ -7,6 +7,8 @@ import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
+import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
+import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { useUpdateTask } from '../hooks/useTaskDetail';
 import type { TaskDetail } from '../types/taskDetail.types';
 import type { EmpTaskPriority } from '../types/employeeTask.types';
@@ -40,10 +42,16 @@ export function EditTaskModal({ open, onClose, task, isAr }: Props) {
   const { register, control, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: formDefaults(task),
   });
+  const [importantLinks, setImportantLinks] = useState<string[]>(task.importantLinks ?? []);
+  const [linksError, setLinksError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) reset(formDefaults(task));
-  }, [open]);
+    if (open) {
+      reset(formDefaults(task));
+      setImportantLinks(task.importantLinks ?? []);
+      setLinksError(null);
+    }
+  }, [open, task, reset]);
 
   const mutation = useUpdateTask(task.projectId, task.id);
 
@@ -54,12 +62,19 @@ export function EditTaskModal({ open, onClose, task, isAr }: Props) {
   ];
 
   function onSubmit(data: FormValues) {
+    const err = validateImportantLinks(importantLinks, isAr);
+    if (err) {
+      setLinksError(err);
+      return;
+    }
+    setLinksError(null);
     mutation.mutate({
       title:          data.title.trim(),
       description:    data.description.trim(),
       priority:       data.priority,
       deadline:       data.deadline,
       allocatedHours: Number(data.allocatedHours) || 0,
+      importantLinks: normalizeImportantLinks(importantLinks),
     }, {
       onSuccess: () => {
         toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
@@ -123,6 +138,13 @@ export function EditTaskModal({ open, onClose, task, isAr }: Props) {
         <FormField label={isAr ? 'الساعات المقدرة' : 'Estimated Hours'}>
           <Input {...register('allocatedHours')} type="number" min={0} placeholder="0" />
         </FormField>
+
+        <ImportantLinksField
+          values={importantLinks}
+          onChange={(v) => { setImportantLinks(v); setLinksError(null); }}
+          isAr={isAr}
+          error={linksError ?? undefined}
+        />
       </div>
     </Modal>
   );

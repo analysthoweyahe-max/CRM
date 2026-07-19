@@ -4,8 +4,13 @@ import { Modal }               from '@/shared/components/ui/Modal';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox }            from '@/shared/components/form/Combobox';
 import { RichTextEditor }      from '@/shared/components/form/RichTextEditor';
+import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
 import { SeoTaskFilesInput }   from '@/modules/seo-leader/campaigns/components/SeoTaskFilesInput';
+import { SEO_TASK_PHASE_ITEMS } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import { useAddSelfSeoTask }   from './useAddSelfSeoTask';
+
+/** Phase is a free-text API field — store the display label, not the slug id. */
+const PHASE_ITEMS = SEO_TASK_PHASE_ITEMS.map(({ label }) => ({ id: label, label }));
 
 interface Props {
   open:              boolean;
@@ -31,6 +36,7 @@ export function AddSelfSeoTaskModal({
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
+    importantLinks, setImportantLinks,
     files, setFiles, fileError, setFileError,
     errors, creating,
     handleSubmit, handleClose,
@@ -87,11 +93,14 @@ export function AddSelfSeoTaskModal({
         </FormField>
 
         <FormField label={isAr ? 'المرحلة' : 'Phase'} required error={errors.phase}>
-          <input
+          <Combobox
+            items={PHASE_ITEMS}
             value={phase}
-            onChange={(e) => setPhase(e.target.value)}
-            placeholder={isAr ? 'مثال: On-Page SEO' : 'e.g. On-Page SEO'}
-            className={inputCls(!!errors.phase)}
+            onChange={setPhase}
+            error={!!errors.phase}
+            placeholder={isAr ? 'اختر المرحلة' : 'Select phase'}
+            searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
+            noResultsText={isAr ? 'لا نتائج' : 'No results'}
           />
         </FormField>
 
@@ -141,6 +150,13 @@ export function AddSelfSeoTaskModal({
             <Clock size={15} className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
         </FormField>
+
+        <ImportantLinksField
+          values={importantLinks}
+          onChange={setImportantLinks}
+          isAr={isAr}
+          error={errors.importantLinks}
+        />
 
         <SeoTaskFilesInput
           files={files}

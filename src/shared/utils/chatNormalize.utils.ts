@@ -38,6 +38,16 @@ export function isSameActorId(
   return false;
 }
 
+/** Drop the signed-in user from mention / add-member pickers. */
+export function excludeSelfFromActors<T extends { id: string | number }>(
+  items: T[] | null | undefined,
+  user: { id?: string | null; employeeId?: string | null } | null | undefined,
+): T[] {
+  if (!items?.length) return [];
+  if (!user) return [...items];
+  return items.filter(item => !isSameActorId(item.id, user));
+}
+
 export function normalizeMentions(raw: unknown): MentionRef[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   return toMentionRefs(raw);

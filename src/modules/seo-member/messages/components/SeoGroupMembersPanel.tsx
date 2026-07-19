@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/Button';
 import { Badge } from '@/shared/components/ui/Badge';
 import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { useDebounce } from '@/shared/hooks/useDebounce';
 import {
   useAddSeoGroupMembers,
   useAssignSeoGroupManagers,
@@ -50,6 +51,7 @@ export function SeoGroupMembersPanel({
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [memberSearch, setMemberSearch] = useState('');
 
   const participants = conversation.participants ?? [];
   const memberIds = useMemo(
@@ -59,7 +61,8 @@ export function SeoGroupMembersPanel({
 
   const canManageMembers = conversation.canManageMembers === true;
 
-  const { data: mentionables = [], isLoading } = useSeoMentionables(adding);
+  const debouncedSearch = useDebounce(memberSearch, 300);
+  const { data: mentionables = [], isLoading, isFetching } = useSeoMentionables(adding, debouncedSearch);
   const { mutateAsync: addMembers, isPending: addingPending } = useAddSeoGroupMembers(conversation.id, isAr);
   const { mutateAsync: removeMembers, isPending: removingPending } = useRemoveSeoGroupMembers(conversation.id, isAr);
   const { mutateAsync: assignManagers, isPending: assigningPending } = useAssignSeoGroupManagers(conversation.id, isAr);
@@ -88,6 +91,7 @@ export function SeoGroupMembersPanel({
       const updated = await addMembers({ members });
       onUpdated(updated);
       setSelectedKeys([]);
+      setMemberSearch('');
       setAdding(false);
     } catch {
       /* toast in hook */
@@ -231,13 +235,11 @@ export function SeoGroupMembersPanel({
               items={addableItems}
               values={selectedKeys}
               onChange={setSelectedKeys}
-              disabled={isLoading || busy}
-              placeholder={
-                isLoading
-                  ? (isAr ? 'جاري التحميل...' : 'Loading...')
-                  : (isAr ? 'اختر أعضاء...' : 'Select members...')
-              }
-              searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
+              onSearchChange={setMemberSearch}
+              loading={isLoading || isFetching}
+              disabled={busy}
+              placeholder={isAr ? 'ابحث واختر أعضاء...' : 'Search and select members...'}
+              searchPlaceholder={isAr ? 'بحث بالاسم...' : 'Search by name...'}
               noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
             />
             <div className="flex gap-2">

@@ -52,6 +52,7 @@ export interface MyTask {
   isDelayed?:       boolean;
   overdueLabel?:    string | null;
   canExtend?:       boolean;
+  importantLinks?:  string[];
 }
 
 export interface MyTaskColumn {

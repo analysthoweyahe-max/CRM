@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAvatarColor } from '@/shared/utils';
+import { parseImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { pmTaskApi } from '../api/task.api';
 import type { RawPmTask } from '../api/task.api';
 import type { Task, TaskPriority, TaskStatus } from '../types/task.types';
@@ -32,6 +33,7 @@ export function toTask(raw: RawPmTask, projectId: string): Task {
     isDelayed:       raw.isDelayed,
     overdueLabel:    raw.overdueLabel ?? null,
     canExtend:       raw.canExtend,
+    importantLinks:  parseImportantLinks(raw),
   };
 }
 

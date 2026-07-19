@@ -2,13 +2,17 @@ import { useState }          from 'react';
 import { useQuery }           from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLang }            from '@/app/providers/LanguageProvider';
+import { useAuth }            from '@/modules/auth/context/AuthContext';
 import { usePermission }      from '@/shared/hooks/usePermission';
 import { ROUTES }             from '@/app/router/routes';
+import { toApiArray }         from '@/shared/utils/apiList.utils';
+import { excludeSelfFromActors } from '@/shared/utils/chatNormalize.utils';
 import { TaskDetailTabs }     from '@/modules/employee/tasks/components/TaskDetailTabs';
 import { TaskDetailTimeTracker }  from '@/modules/employee/tasks/components/TaskDetailTimeTracker';
 import { TaskDetailComments }     from '@/modules/employee/tasks/components/TaskDetailComments';
 import { SeoAttachmentsTab }      from '@/modules/seo-leader/campaigns/components/SeoAttachmentsTab';
 import { campaignApi }            from '@/modules/seo-leader/campaigns/api/campaign.api';
+import type { Mentionable }       from '@/modules/seo-leader/campaigns/api/campaign.api';
 import { useCreateSeoConversation } from '@/modules/seo-member/messages/hooks/useSeoMessages';
 import type { TabId }             from '@/modules/employee/tasks/components/TaskDetailTabs';
 import type { TaskDetail }        from '@/modules/employee/tasks/types/taskDetail.types';
@@ -34,6 +38,7 @@ export function SeoTaskDetailPage() {
   const navigate    = useNavigate();
   const { lang }    = useLang();
   const isAr        = lang === 'ar';
+  const { user }    = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>('time');
   const [editOpen, setEditOpen]   = useState(false);
@@ -61,7 +66,8 @@ export function SeoTaskDetailPage() {
 
   const { data: mentionables = [] } = useQuery({
     queryKey: ['seo-member', 'task-mentionables', projectId],
-    queryFn:  () => campaignApi.getMentionables(projectId!).then(r => r.data.data.data),
+    queryFn:  () => campaignApi.getMentionables(projectId!)
+      .then(r => excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user)),
     enabled:  !!projectId,
     staleTime: 60_000,
   });

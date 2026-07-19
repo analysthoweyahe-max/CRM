@@ -34,6 +34,8 @@ export interface ApiEmployee {
   employmentType?:     EmploymentType | null;
   employmentTypeLabel?: string | null;
   salary?:             number | null;
+  /** ISO currency code next to salary (EGP | USD | EUR | SAR | AED | GBP | QAR | KWD). */
+  currency?:           string | null;
   workingHours?:       number | null;
   onboardingStep?:     number;
   manager?:            ApiLookup | null;
@@ -114,6 +116,7 @@ export interface UpdateEmployeePayload {
   status?:          EmployeeStatus;
   employment_type?: EmploymentType;
   salary?:          number;
+  currency?:        string;
   working_hours?:   number;
 }
 

@@ -14,6 +14,7 @@ export interface SeoTaskDetail extends SeoTask {
   startDate:         string | null;
   siteLinks:         string[];
   referenceLinks:    string[];
+  importantLinks:    string[];
   notes:             string | null;
   targetUrl:         string | null;
   targetKeyword:     string | null;

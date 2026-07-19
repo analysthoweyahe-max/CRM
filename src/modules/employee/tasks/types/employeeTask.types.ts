@@ -18,6 +18,7 @@ export interface EmployeeTask {
   isDelayed?:    boolean;
   overdueLabel?: string | null;
   canExtend?:    boolean;
+  importantLinks?: string[];
 }
 
 export interface EmpTaskListResponse {
@@ -33,4 +34,5 @@ export interface CreateSelfTaskPayload {
   estimatedHours?:  number;
   phaseId?:         number;
   file?:            File;
+  importantLinks?:  string[];
 }

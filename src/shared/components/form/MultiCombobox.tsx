@@ -12,6 +12,9 @@ interface MultiComboboxProps {
   placeholder?:       string;
   searchPlaceholder?: string;
   noResultsText?:     string;
+  /** When set, search is driven by the parent (e.g. server-side `?search=`). Local filtering is skipped. */
+  onSearchChange?:    (query: string) => void;
+  loading?:           boolean;
 }
 
 export function MultiCombobox({
@@ -23,33 +26,44 @@ export function MultiCombobox({
   placeholder       = 'Select…',
   searchPlaceholder = 'Search…',
   noResultsText     = 'No results',
+  onSearchChange,
+  loading           = false,
 }: MultiComboboxProps) {
   const [query, setQuery] = useState('');
   const [open,  setOpen]  = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const serverSearch = Boolean(onSearchChange);
 
   const selectedSet = new Set(values);
   const selectedItems = items.filter((i) => selectedSet.has(i.id));
 
-  const filtered = items.filter((item) => {
-    const q = query.toLowerCase();
-    return (
-      (item.label ?? '').toLowerCase().includes(q) ||
-      String(item.id ?? '').toLowerCase().includes(q) ||
-      (item.detail ?? '').toLowerCase().includes(q)
-    );
-  });
+  const filtered = serverSearch
+    ? items
+    : items.filter((item) => {
+        const q = query.toLowerCase();
+        return (
+          (item.label ?? '').toLowerCase().includes(q) ||
+          String(item.id ?? '').toLowerCase().includes(q) ||
+          (item.detail ?? '').toLowerCase().includes(q)
+        );
+      });
+
+  function handleQueryChange(next: string) {
+    setQuery(next);
+    onSearchChange?.(next);
+  }
 
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
         setQuery('');
+        onSearchChange?.('');
       }
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [onSearchChange]);
 
   function toggle(id: string) {
     if (selectedSet.has(id)) {
@@ -114,7 +128,7 @@ export function MultiCombobox({
               <input
                 autoFocus
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => handleQueryChange(e.target.value)}
                 placeholder={searchPlaceholder}
                 className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-600
                            bg-gray-50 dark:bg-gray-700/50 ps-9 pe-3
@@ -127,6 +141,9 @@ export function MultiCombobox({
           </div>
 
           <ul className="max-h-52 overflow-auto py-1">
+            {loading && (
+              <li className="px-3 py-4 text-center text-sm text-gray-400">…</li>
+            )}
             {filtered.length === 0 ? (
               <li className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 text-center">
                 {noResultsText}

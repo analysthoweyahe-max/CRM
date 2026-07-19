@@ -174,6 +174,10 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     }) => myTasksApi.updateStatus(tasksRole!, pid, taskId, status),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-tasks', tasksRole] });
+      qc.invalidateQueries({ queryKey: ['pm-dashboard'] });
+      qc.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
+      qc.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
+      qc.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
     },
   });
 

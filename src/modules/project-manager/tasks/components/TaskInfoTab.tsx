@@ -4,6 +4,7 @@ import { Badge }             from '@/shared/components/ui/Badge';
 import { Combobox }          from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextView }      from '@/shared/components/form/RichTextView';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { formatEstimatedTime } from '@/shared/utils/format.utils';
 import type { Task, TaskStatus } from '../types/task.types';
 import { usePmTaskLookups } from '../../projects/hooks/usePmTaskLookups';
@@ -61,6 +62,10 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, onExtendClick, o
           }
         </div>
       </div>
+
+      {!!task.importantLinks?.length && (
+        <ImportantLinksDisplay links={task.importantLinks} isAr={isAr} />
+      )}
 
       {/* Stage row */}
       {task.phaseName && (

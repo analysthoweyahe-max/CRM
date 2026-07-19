@@ -33,7 +33,7 @@ export const employeeApi = {
     return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/employment-type`, payload);
   },
 
-  updateSalary(id: string, payload: { salary: number }) {
+  updateSalary(id: string, payload: { salary: number; currency?: string }) {
     return http.put<EmployeeSingleResponse>(`/v1/employees/${id}/salary`, payload);
   },
 

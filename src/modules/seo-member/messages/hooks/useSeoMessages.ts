@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import { extractPaginatedList } from '@/shared/utils/apiList.utils';
 import { useEchoLive } from '@/shared/realtime-messages';
 import { conversationLastMessagePreview } from '@/shared/utils/messagePreview.utils';
-import { normalizeSeoMessage } from '@/shared/utils/chatNormalize.utils';
+import { excludeSelfFromActors, normalizeSeoMessage } from '@/shared/utils/chatNormalize.utils';
 import { seoMessagesApi } from '../api/messages.api';
 import type {
   CreateSeoGroupPayload,
@@ -220,13 +221,24 @@ export function useMarkSeoRead() {
   });
 }
 
-export function useSeoMentionables(enabled: boolean, search?: string) {
+export function useSeoMentionables(
+  enabled: boolean,
+  search?: string,
+  options?: { excludeSelf?: boolean },
+) {
+  const { user } = useAuth();
+  const excludeSelf = options?.excludeSelf !== false;
   const q = search?.trim() || undefined;
   return useQuery({
-    queryKey: ['seo-member', 'messages', 'mentionables', q ?? ''],
+    queryKey: [
+      'seo-member', 'messages', 'mentionables', q ?? '',
+      excludeSelf ? 'no-self' : 'all',
+      user?.id ?? '', user?.employeeId ?? '',
+    ],
     queryFn:  async () => {
       const res = await seoMessagesApi.mentionables(q);
-      return extractPaginatedList<SeoMentionable>(res.data);
+      const list = extractPaginatedList<SeoMentionable>(res.data);
+      return excludeSelf ? excludeSelfFromActors(list, user) : list;
     },
     enabled,
     staleTime: 30_000,

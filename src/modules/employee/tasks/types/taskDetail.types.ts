@@ -18,6 +18,7 @@ export interface TaskDetail {
   isDelayed?:     boolean;
   overdueLabel?:  string | null;
   canExtend?:     boolean;
+  importantLinks?: string[];
 }
 
 export interface UpdateTaskPayload {
@@ -26,6 +27,7 @@ export interface UpdateTaskPayload {
   priority:       EmpTaskPriority;
   deadline:       string;
   allocatedHours: number;
+  importantLinks?: string[];
 }
 
 export interface TaskComment {

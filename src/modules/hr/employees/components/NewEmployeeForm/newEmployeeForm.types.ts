@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { LucideIcon } from 'lucide-react';
 import { Briefcase, Clock, FileText, Home, GraduationCap } from 'lucide-react';
 
-/* ─── Currencies ─────────────────────────────────── */
+/* ─── Currencies (matches backend Currency enum) ─── */
 export const CURRENCIES = [
   { id: 'EGP', label: 'EGP', detail: 'جنيه مصري'    },
   { id: 'USD', label: 'USD', detail: 'دولار أمريكي'  },
@@ -12,7 +12,16 @@ export const CURRENCIES = [
   { id: 'GBP', label: 'GBP', detail: 'جنيه إسترليني' },
   { id: 'QAR', label: 'QAR', detail: 'ريال قطري'     },
   { id: 'KWD', label: 'KWD', detail: 'دينار كويتي'   },
-];
+] as const;
+
+export type CurrencyCode = (typeof CURRENCIES)[number]['id'];
+
+/** Normalize API/form currency into a known CURRENCIES id. Defaults to EGP. */
+export function resolveCurrency(value: string | null | undefined): CurrencyCode {
+  const code = value?.trim().toUpperCase();
+  if (code && CURRENCIES.some((c) => c.id === code)) return code as CurrencyCode;
+  return 'EGP';
+}
 
 export const EMPLOYMENT_TYPE_ICONS: Record<string, LucideIcon> = {
   full_time:  Briefcase,

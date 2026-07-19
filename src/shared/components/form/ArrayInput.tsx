@@ -17,12 +17,25 @@ export interface ArrayInputProps {
   onAdd:        () => void;
   onUpdate:     (i: number, v: string) => void;
   onRemove:     (i: number) => void;
+  /** Keep at least this many rows (default 1 — campaign keywords/links). Use 0 for optional lists. */
+  minItems?:    number;
+  dir?:         'ltr' | 'rtl';
+  error?:       boolean;
 }
 
 export function ArrayInput({
   values, type = 'text', placeholder, addLabel,
   onAdd, onUpdate, onRemove,
+  minItems = 1,
+  dir,
+  error,
 }: ArrayInputProps) {
+  const inputClass = [
+    INPUT,
+    'flex-1',
+    error ? 'border-red-400 dark:border-red-500 focus:ring-red-400/40' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <div className="space-y-2.5">
       {values.map((val, i) => (
@@ -32,9 +45,10 @@ export function ArrayInput({
             value={val}
             onChange={e => onUpdate(i, e.target.value)}
             placeholder={placeholder}
-            className={`${INPUT} flex-1`}
+            className={inputClass}
+            dir={dir}
           />
-          {values.length > 1 && (
+          {values.length > minItems && (
             <Button variant="icon-danger" onClick={() => onRemove(i)}>
               <Trash2 size={15} />
             </Button>

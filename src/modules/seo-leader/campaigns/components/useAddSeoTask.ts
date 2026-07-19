@@ -2,6 +2,7 @@ import { useState }                        from 'react';
 import { useMutation, useQueryClient }      from '@tanstack/react-query';
 import { campaignApi }                      from '../api/campaign.api';
 import type { AddSeoTaskForm }              from './AddSeoTaskModal.types';
+import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 
 const INITIAL: AddSeoTaskForm = {
   title:            '',
@@ -14,6 +15,7 @@ const INITIAL: AddSeoTaskForm = {
   estimatedMinutes: '',
   targetKeyword:    '',
   targetUrl:        '',
+  importantLinks:   [],
 };
 
 export function useAddSeoTask(
@@ -38,6 +40,7 @@ export function useAddSeoTask(
 
   const mutation = useMutation({
     mutationFn: () => {
+      const importantLinks = normalizeImportantLinks(form.importantLinks);
       const payload = {
         title:            form.title.trim(),
         phase:            form.phase.trim(),
@@ -49,6 +52,7 @@ export function useAddSeoTask(
         estimated_minutes: form.estimatedMinutes ? Number(form.estimatedMinutes) : undefined,
         target_keyword:   form.targetKeyword.trim() || undefined,
         target_url:       form.targetUrl.trim()     || undefined,
+        ...(importantLinks.length ? { importantLinks } : {}),
       };
       return campaignApi.createTask(campaignId, payload, files.length ? files : undefined);
     },
@@ -79,6 +83,8 @@ export function useAddSeoTask(
   if (!form.title.trim())  fieldErrors.title    = isAr ? 'عنوان المهمة مطلوب' : 'Task title is required';
   if (form.assignees.length === 0) fieldErrors.assignees = isAr ? 'اختر مسؤولاً واحداً على الأقل' : 'Select at least one assignee';
   if (!form.phase.trim())  fieldErrors.phase    = isAr ? 'المرحلة مطلوبة' : 'Phase is required';
+  const linksError = validateImportantLinks(form.importantLinks, isAr);
+  if (linksError) fieldErrors.importantLinks = linksError;
 
   const isValid = Object.keys(fieldErrors).length === 0;
 

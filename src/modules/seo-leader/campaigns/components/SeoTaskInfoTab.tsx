@@ -4,6 +4,7 @@ import { Badge }         from '@/shared/components/ui/Badge';
 import { Combobox }      from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { useSeoTaskLookups, SEO_TASK_PHASE_ITEMS } from '../hooks/useSeoTaskLookups';
 import type { SeoTaskFull } from './SeoTaskModal.types';
 
@@ -213,6 +214,10 @@ export function SeoTaskInfoTab({
           placeholder={isAr ? 'وصف تفصيلي للمهمة...' : 'Task description...'}
         />
       </div>
+
+      {!!task.importantLinks?.length && (
+        <ImportantLinksDisplay links={task.importantLinks} isAr={isAr} />
+      )}
 
       {/* ── Phase row ── */}
       <div className={ROW}>

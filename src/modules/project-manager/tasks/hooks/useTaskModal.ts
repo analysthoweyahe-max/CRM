@@ -10,6 +10,9 @@ import {
   normalizeTaskCommentFields,
 } from '@/shared/utils/chatNormalize.utils';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
+import { normalizeImportantLinks, parseImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
+import { toApiArray } from '@/shared/utils/apiList.utils';
+import { excludeSelfFromActors } from '@/shared/utils/chatNormalize.utils';
 import { useRemoveTaskLocally, useInvalidateProjectTasks } from '../store/taskStore';
 import { pmTaskApi } from '../api/task.api';
 import { pmProjectMessagesApi } from '@/modules/project-manager/projects/api/messages.api';
@@ -17,6 +20,7 @@ import type { RawPmComment, RawPmTaskAttachment } from '../api/task.api';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 import type { Task } from '../types/task.types';
 import type { TaskModalTab, TimeSession, TaskAttachment, TaskComment } from '../types/taskModal.types';
+import type { PmMentionable } from '@/modules/project-manager/projects/types/message.types';
 
 function formatSize(bytes?: number): string {
   if (!bytes) return '';
@@ -127,7 +131,8 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
 
   const { data: mentionables = [] } = useQuery({
     queryKey: ['pm-task-mentionables', projectId],
-    queryFn:  () => pmProjectMessagesApi.mentionables(projectId).then(r => r.data.data),
+    queryFn:  () => pmProjectMessagesApi.mentionables(projectId)
+      .then(r => excludeSelfFromActors(toApiArray<PmMentionable>(r.data.data), user)),
     enabled:  !!projectId && !!task,
     staleTime: 60_000,
   });
@@ -210,7 +215,13 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   const [editDueDate,  setEditDueDate]  = useState(task?.dueDate ?? '');
   const [editEstHours, setEditEstHours] = useState(String(task?.estimatedHours ?? 10));
   const [editEstMinutes, setEditEstMinutes] = useState(String(task?.estimatedMinutes ?? ''));
+  const [editImportantLinks, setEditImportantLinks] = useState<string[]>(task?.importantLinks ?? []);
+  const [editLinksError, setEditLinksError] = useState<string | null>(null);
   const [savingEdit,   setSavingEdit]   = useState(false);
+
+  const detailImportantLinks = detail?.task
+    ? parseImportantLinks(detail.task)
+    : (task?.importantLinks ?? []);
 
   function openEdit() {
     setEditTitle(task?.title ?? '');
@@ -218,20 +229,31 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     setEditDueDate(task?.dueDate ?? '');
     setEditEstHours(String(task?.estimatedHours ?? 10));
     setEditEstMinutes(task?.estimatedMinutes != null ? String(task.estimatedMinutes) : '');
+    setEditImportantLinks(detailImportantLinks.length ? detailImportantLinks : (task?.importantLinks ?? []));
+    setEditLinksError(null);
     setIsEditOpen(true);
   }
   function closeEdit() { setIsEditOpen(false); }
 
   async function saveEdit() {
     if (!task || !taskKey || !editTitle.trim() || savingEdit) return;
+    const linksErr = validateImportantLinks(editImportantLinks, isAr);
+    if (linksErr) {
+      setEditLinksError(linksErr);
+      return;
+    }
+    setEditLinksError(null);
     setSavingEdit(true);
     try {
+      const links = normalizeImportantLinks(editImportantLinks);
+      const baselineLinks = detailImportantLinks;
       const next = {
         title:           editTitle.trim(),
         priority:        editPriority || undefined,
         dueDate:         editDueDate || undefined,
         estimatedHours:  editEstHours ? Number(editEstHours) : undefined,
         estimatedMinutes: editEstMinutes ? Number(editEstMinutes) : undefined,
+        importantLinks:  links,
       };
       const baseline = {
         title:           task.title,
@@ -239,9 +261,16 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
         dueDate:         task.dueDate || undefined,
         estimatedHours:  task.estimatedHours,
         estimatedMinutes: task.estimatedMinutes,
+        importantLinks:  baselineLinks,
       };
       const payload = Object.fromEntries(
-        Object.entries(next).filter(([key, value]) => value !== undefined && value !== baseline[key as keyof typeof baseline]),
+        Object.entries(next).filter(([key, value]) => {
+          const prev = baseline[key as keyof typeof baseline];
+          if (Array.isArray(value) && Array.isArray(prev)) {
+            return JSON.stringify(value) !== JSON.stringify(prev);
+          }
+          return value !== undefined && value !== prev;
+        }),
       );
       if (Object.keys(payload).length === 0) {
         closeEdit();
@@ -272,6 +301,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
       await pmTaskApi.update(projectId, taskKey, { status });
       invalidateProjectTasks();
       invalidateDetail();
+      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));
@@ -325,6 +355,8 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     editPriority, setEditPriority,
     editDueDate, setEditDueDate, editEstHours, setEditEstHours,
     editEstMinutes, setEditEstMinutes,
+    editImportantLinks, setEditImportantLinks, editLinksError,
+    detailImportantLinks,
     openEdit, closeEdit, saveEdit, savingEdit,
     changeStatus, changingStatus,
     isExtendOpen, openExtend, closeExtend, extendDeadline, extendingDeadline,

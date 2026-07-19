@@ -1,6 +1,7 @@
 import { Calendar, MessageSquare, Paperclip } from 'lucide-react';
 import type { MyTask } from '../types/myTasks.types';
 import { isTaskOverdue, PRIORITY_BADGE } from '../utils/myTasks.utils';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 
 interface Props {
   task:            MyTask;
@@ -44,6 +45,12 @@ export function MyTaskCard({ task, isAr, showProjectName, onOpen }: Props) {
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-2 truncate">
           {task.phase.name}
         </p>
+      )}
+
+      {!!task.importantLinks?.length && (
+        <div className="mb-2">
+          <ImportantLinksDisplay links={task.importantLinks} isAr={isAr} compact />
+        </div>
       )}
 
       <div className="flex items-center justify-between gap-2 mt-2">

@@ -4,6 +4,7 @@ import { Modal }               from '@/shared/components/ui/Modal';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox }            from '@/shared/components/form/Combobox';
 import { RichTextEditor }      from '@/shared/components/form/RichTextEditor';
+import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
 import { useAddTaskModal }     from './useAddTaskModal';
 import type { AddTaskModalProps } from './AddTaskModal.types';
 
@@ -16,6 +17,7 @@ export function AddTaskModal({ open, onClose, isAr }: AddTaskModalProps) {
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
     estimatedHours, setEstimatedHours,
+    importantLinks, setImportantLinks,
     errors, creating,
     handleSubmit, handleClose,
   } = useAddTaskModal(onClose, isAr);
@@ -118,6 +120,13 @@ export function AddTaskModal({ open, onClose, isAr }: AddTaskModalProps) {
             </div>
           </FormField>
         </div>
+
+        <ImportantLinksField
+          values={importantLinks}
+          onChange={setImportantLinks}
+          isAr={isAr}
+          error={errors.importantLinks}
+        />
 
       </div>
     </Modal>

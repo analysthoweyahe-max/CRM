@@ -16,14 +16,46 @@ import type {
 
 /**
  * Company messenger (DMs + groups).
- * Employee → /v1/employee/messenger  (same data; do NOT use /employee/messages — that is HR)
- * Project manager → /v1/pm/messages
- * SEO / HR / admin → /v1/seo/messages
+ * Prefer the chat URL first so each portal page hits its API family,
+ * then fall back to the mapped portal role.
+ *
+ * /project-manager/... -> /v1/pm/messages
+ * /employee/messenger  -> /v1/employee/messenger
+ * /messages, /seo-leader|seo-member -> /v1/seo/messages
+ *
+ * Do NOT use /employee/messages for company chat - that path is HR support tickets.
  */
 function messengerBase(): string {
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname;
+    // Whole PM portal (incl. admin/super-admin browsing it) -> PM messenger
+    if (path.startsWith('/project-manager')) return '/v1/pm/messages';
+    if (path.startsWith('/employee/messenger')) return '/v1/employee/messenger';
+    if (
+      path === '/messages'
+      || path.startsWith('/seo-leader')
+      || path.startsWith('/seo-member')
+    ) {
+      return '/v1/seo/messages';
+    }
+  }
+
   const user = authService.getStoredUser();
+  // Prefer mapped portal role — check seo-member BEFORE actor===employee
+  // (seo members are employee-guard sessions but use the SEO messenger).
+  if (user?.role === 'manager') return '/v1/pm/messages';
+  if (
+    user?.role === 'seo-leader'
+    || user?.role === 'seo-member'
+    || user?.role === 'hr'
+    || user?.role === 'admin'
+  ) {
+    return '/v1/seo/messages';
+  }
+  if (user?.role === 'employee') return '/v1/employee/messenger';
+  if (user?.section === 'pm') return '/v1/pm/messages';
+  if (user?.section === 'seo') return '/v1/seo/messages';
   if (user?.actor === 'employee') return '/v1/employee/messenger';
-  if (user?.role === 'manager' || user?.section === 'pm') return '/v1/pm/messages';
   return '/v1/seo/messages';
 }
 

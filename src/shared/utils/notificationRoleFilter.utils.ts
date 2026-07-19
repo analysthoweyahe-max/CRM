@@ -14,8 +14,9 @@ export function isHrLeaveSubmittedNotification(notification: AppNotification): b
   return notification.type === 'hr_leave_submitted';
 }
 
-/** Personal "assigned to you" alerts — for the assignee employee only.
- * Super-admin / admin mirrors must not show these as if they were the recipient.
+/** Personal "assigned to you" alerts — for the assignee only.
+ * Admin/HR mirrors must not show these as if they were the recipient.
+ * PM managers and SEO leaders receive these on their own portals and should keep them.
  */
 export function isPersonalAssigneeNotification(notification: AppNotification): boolean {
   const type = notification.type ?? '';
@@ -29,7 +30,10 @@ export function isPersonalAssigneeNotification(notification: AppNotification): b
   );
 }
 
-const REVIEWER_ROLES = new Set<Role>(['admin', 'hr', 'manager', 'seo-leader']);
+/** Admin/HR only — hide employee-personal noise that can leak into reviewer inboxes. */
+const ADMIN_REVIEWER_ROLES = new Set<Role>(['admin', 'hr']);
+/** Portal managers — keep assignment alerts; still hide employee leave-status updates. */
+const PORTAL_MANAGER_ROLES = new Set<Role>(['manager', 'seo-leader']);
 const EMPLOYEE_ROLES = new Set<Role>(['employee', 'seo-member']);
 
 /** Hide notifications that were routed to the wrong role by the backend. */
@@ -45,11 +49,15 @@ export function filterNotificationsForRole(
     return items.filter((n) => !isHrLeaveSubmittedNotification(n));
   }
 
-  if (REVIEWER_ROLES.has(role)) {
+  if (ADMIN_REVIEWER_ROLES.has(role)) {
     return items.filter((n) =>
       !isEmployeeLeaveStatusNotification(n)
       && !isPersonalAssigneeNotification(n),
     );
+  }
+
+  if (PORTAL_MANAGER_ROLES.has(role)) {
+    return items.filter((n) => !isEmployeeLeaveStatusNotification(n));
   }
 
   return items;

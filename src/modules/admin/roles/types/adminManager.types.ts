@@ -39,10 +39,11 @@ export function managerLookupId(lookup?: ApiLookup | null): string {
   return String(lookup.id);
 }
 
-/** Prefill department multi-select from API (departments[] with department fallback). */
+/** Prefill department multi-select from API (departments[] / department / department_ids). */
 export function managerDepartmentIds(raw: {
-  departments?: ApiLookup[] | null;
-  department?:  ApiLookup | null;
+  departments?:    ApiLookup[] | null;
+  department?:     ApiLookup | null;
+  department_ids?: Array<number | string> | null;
 }): string[] {
   if (raw.departments?.length) {
     return raw.departments
@@ -50,7 +51,11 @@ export function managerDepartmentIds(raw: {
       .filter(Boolean);
   }
   const single = managerLookupId(raw.department);
-  return single ? [single] : [];
+  if (single) return [single];
+  if (raw.department_ids?.length) {
+    return raw.department_ids.map(String).filter(Boolean);
+  }
+  return [];
 }
 
 export function formatManagerDepartments(
@@ -114,7 +119,12 @@ export interface ApiAdminManager {
   department?:   ApiLookup | null;
   /** All assigned departments. */
   departments?:  ApiLookup[];
+  /** Bare ids when nested `departments` is omitted. */
+  department_ids?: Array<number | string> | null;
   jobTitle?:     ApiLookup | null;
+  /** Snake_case aliases some admin payloads still return. */
+  job_title?:    ApiLookup | null;
+  job_title_id?: number | string | null;
   status?:       string;
   emailVerified?: boolean;
   lastLoginAt?:  string | null;

@@ -253,7 +253,12 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
       const newId = res.data?.data?.id;
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
       queryClient.invalidateQueries({ queryKey: ['seo-member-dashboard'] });
-      queryClient.invalidateQueries({ queryKey: module === 'pm' ? ['pm-dashboard'] : ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({
+        queryKey: module === 'pm' ? ['pm-dashboard'] : ['seo-leader', 'dashboard'],
+      });
+      if (module !== 'pm') {
+        queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      }
       setSavedAsDraft(asDraft);
       setSaved(true);
       if (newId == null) {

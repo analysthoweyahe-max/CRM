@@ -1,11 +1,12 @@
-import { Check, X }  from 'lucide-react';
-import { Avatar }     from '@/shared/components/ui/Avatar';
+import { Check, X } from 'lucide-react';
+import { Avatar } from '@/shared/components/ui/Avatar';
 import type { RequestItem, RequestStatus } from '../types/teamReport.types';
 
 const STATUS_CFG: Record<RequestStatus, { ar: string; en: string; dot: string; text: string }> = {
-  pending:  { ar: 'قيد المراجعة', en: 'Under Review', dot: 'bg-amber-400',   text: 'text-amber-600 dark:text-amber-400'    },
-  approved: { ar: 'موافق عليه',   en: 'Approved',     dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' },
-  rejected: { ar: 'مرفوض',        en: 'Rejected',     dot: 'bg-red-500',     text: 'text-red-500 dark:text-red-400'         },
+  pending:   { ar: 'قيد المراجعة', en: 'Under Review', dot: 'bg-amber-400',   text: 'text-amber-600 dark:text-amber-400'    },
+  approved:  { ar: 'موافق عليه',   en: 'Approved',     dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' },
+  rejected:  { ar: 'مرفوض',        en: 'Rejected',     dot: 'bg-red-500',     text: 'text-red-500 dark:text-red-400'         },
+  cancelled: { ar: 'ملغى',         en: 'Cancelled',    dot: 'bg-gray-400',    text: 'text-gray-500 dark:text-gray-400'       },
 };
 
 interface Props {
@@ -16,12 +17,13 @@ interface Props {
 }
 
 export function RequestCard({ item, onApprove, onReject, isAr }: Props) {
-  const s = STATUS_CFG[item.status];
+  const s = STATUS_CFG[item.status] ?? STATUS_CFG.pending;
+  const showActions =
+    item.status === 'pending' &&
+    (item.canApprove !== false || item.canReject !== false);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 space-y-3">
-
-      {/* Top row */}
       <div className="flex items-center justify-between gap-3">
         <span className={`flex items-center gap-1.5 text-xs font-medium ${s.text}`}>
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
@@ -38,8 +40,10 @@ export function RequestCard({ item, onApprove, onReject, isAr }: Props) {
         </div>
       </div>
 
-      {/* Body */}
       <div className="space-y-1 text-end">
+        {item.title && (
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.title}</p>
+        )}
         <p className="text-sm text-gray-700 dark:text-gray-300">
           {isAr ? item.bodyAr : item.bodyEn}
         </p>
@@ -55,27 +59,30 @@ export function RequestCard({ item, onApprove, onReject, isAr }: Props) {
         )}
       </div>
 
-      {/* Actions — only for pending */}
-      {item.status === 'pending' && (
+      {showActions && (
         <div className="flex items-center gap-2 pt-0.5">
-          <button
-            type="button"
-            onClick={() => onReject(item.id)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg
-                       bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-colors"
-          >
-            <X size={13} />
-            {isAr ? 'رفض' : 'Reject'}
-          </button>
-          <button
-            type="button"
-            onClick={() => onApprove(item.id)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg
-                       bg-[#A0CD39] hover:bg-[#709028] text-white text-xs font-semibold transition-colors"
-          >
-            <Check size={13} />
-            {isAr ? 'موافقة' : 'Approve'}
-          </button>
+          {item.canReject !== false && (
+            <button
+              type="button"
+              onClick={() => onReject(item.id)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg
+                         bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-colors"
+            >
+              <X size={13} />
+              {isAr ? 'رفض' : 'Reject'}
+            </button>
+          )}
+          {item.canApprove !== false && (
+            <button
+              type="button"
+              onClick={() => onApprove(item.id)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg
+                         bg-[#A0CD39] hover:bg-[#709028] text-white text-xs font-semibold transition-colors"
+            >
+              <Check size={13} />
+              {isAr ? 'موافقة' : 'Approve'}
+            </button>
+          )}
         </div>
       )}
     </div>

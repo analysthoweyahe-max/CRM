@@ -3,11 +3,13 @@ import { useMutation, useQueryClient }  from '@tanstack/react-query';
 import { X }                            from 'lucide-react';
 import { Button }                       from '@/shared/components/ui/Button';
 import { Combobox }                     from '@/shared/components/form/Combobox';
+import { ImportantLinksField }          from '@/shared/components/form/ImportantLinksField';
 import { campaignApi }                  from '../api/campaign.api';
 import { useSeoTaskLookups }            from '../hooks/useSeoTaskLookups';
 import type { SeoTaskFull }             from './SeoTaskModal.types';
 import { taskResourceKey }              from '@/shared/utils/resourceKey.utils';
 import { extractApiError }              from '@/shared/utils/error.utils';
+import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { toast }                        from 'sonner';
 
 const INPUT = [
@@ -34,22 +36,29 @@ export function SeoEditTaskModal({ task, projectId, isAr, onClose }: Props) {
   const [title,    setTitle]    = useState('');
   const [priority, setPriority] = useState('');
   const [dueDate,  setDueDate]  = useState('');
+  const [importantLinks, setImportantLinks] = useState<string[]>([]);
+  const [linksError, setLinksError] = useState<string | null>(null);
 
   useEffect(() => {
     setTitle(task.title       ?? '');
     setPriority(task.priority ?? 'medium');
     setDueDate(task.dueDate   ?? '');
+    setImportantLinks(task.importantLinks ?? []);
+    setLinksError(null);
   }, [task]);
 
   const taskKey = taskResourceKey(task);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      campaignApi.updateTask(projectId, taskKey, {
+    mutationFn: () => {
+      const links = normalizeImportantLinks(importantLinks);
+      return campaignApi.updateTask(projectId, taskKey, {
         title:    title.trim() || undefined,
         priority: priority     || undefined,
         dueDate:  dueDate      || undefined,
-      }),
+        importantLinks: links,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskKey] });
       queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
@@ -59,6 +68,16 @@ export function SeoEditTaskModal({ task, projectId, isAr, onClose }: Props) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر حفظ التعديلات' : 'Failed to save changes'));
     },
   });
+
+  function handleSave() {
+    const err = validateImportantLinks(importantLinks, isAr);
+    if (err) {
+      setLinksError(err);
+      return;
+    }
+    setLinksError(null);
+    mutation.mutate();
+  }
 
   return (
     <>
@@ -123,6 +142,13 @@ export function SeoEditTaskModal({ task, projectId, isAr, onClose }: Props) {
               />
             </div>
 
+            <ImportantLinksField
+              values={importantLinks}
+              onChange={(v) => { setImportantLinks(v); setLinksError(null); }}
+              isAr={isAr}
+              error={linksError ?? undefined}
+            />
+
           </div>
 
           {/* Footer */}
@@ -138,7 +164,7 @@ export function SeoEditTaskModal({ task, projectId, isAr, onClose }: Props) {
             <Button
               variant="primary"
               disabled={!title.trim() || mutation.isPending}
-              onClick={() => mutation.mutate()}
+              onClick={handleSave}
             >
               {mutation.isPending
                 ? (isAr ? 'جاري الحفظ...' : 'Saving…')

@@ -1,25 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/context/AuthContext';
-import { adminApi } from '../api/admin.api';
+import { adminApi, normalizeManager } from '../api/admin.api';
 import { toManagerVM } from './useAdminManagers';
-import { normalizeManagerRoleSlugs } from '../utils/role.utils';
 import type { ApiAdminManager } from '../types/adminManager.types';
 
 interface Options {
   /** HR managers pass manager data via route state — they cannot call GET /admins/{id}. */
   fallback?: ApiAdminManager;
-}
-
-function normalizeFallback(raw: ApiAdminManager | undefined): ApiAdminManager | undefined {
-  if (!raw) return undefined;
-  const roles = normalizeManagerRoleSlugs(raw.roles);
-  return {
-    ...raw,
-    roles: roles.length > 0
-      ? roles
-      : (Array.isArray(raw.roles) ? raw.roles.filter((r): r is string => typeof r === 'string') : []),
-  };
 }
 
 export function useAdminManagerDetail(options: Options = {}) {
@@ -28,7 +16,9 @@ export function useAdminManagerDetail(options: Options = {}) {
   const { isSuperAdmin } = useAuth();
 
   const stateManager = (location.state as { manager?: ApiAdminManager } | null)?.manager;
-  const fallback = normalizeFallback(options.fallback ?? stateManager);
+  const fallback = (options.fallback ?? stateManager)
+    ? normalizeManager(options.fallback ?? stateManager!)
+    : undefined;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin', 'managers', 'detail', id],

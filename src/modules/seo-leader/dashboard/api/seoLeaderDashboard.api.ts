@@ -1,16 +1,15 @@
-import { http }             from '@/shared/services/http.service';
-import type { ApiResponse }  from '@/shared/types/api.types';
-import type { PaginatedProjects } from '../types/dashboard.types';
-
-export interface SeoProjectsListParams {
-  status?:   string;
-  per_page?: number;
-  page?:     number;
-  is_draft?: 0 | 1;
-}
+import { http } from '@/shared/services/http.service';
+import type { ApiResponse } from '@/shared/types/api.types';
+import type { PaginatedProjects, SeoLeaderDashboardData } from '../types/dashboard.types';
 
 export const seoLeaderDashboardApi = {
-  getProjects(params?: SeoProjectsListParams) {
-    return http.get<ApiResponse<PaginatedProjects>>('/v1/seo/projects', { params });
+  /** SEO leader / manager home — projects with progress from dashboard payload. */
+  get() {
+    return http.get<ApiResponse<SeoLeaderDashboardData>>('/v1/seo/manager/dashboard');
+  },
+
+  /** Paginated project list (admin dashboard counts, etc.). */
+  getProjects() {
+    return http.get<ApiResponse<PaginatedProjects>>('/v1/seo/projects');
   },
 };

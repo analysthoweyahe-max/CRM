@@ -1,9 +1,13 @@
 import { Card }                    from '@/shared/components/ui/Card';
 import { usePermission }            from '@/shared/hooks/usePermission';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 import { useTaskDetailPage }        from './useTaskDetailPage';
 import { empProjectMessagesApi }    from '@/modules/employee/projects/api/projectMessages.api';
+import { toApiArray } from '@/shared/utils/apiList.utils';
+import { excludeSelfFromActors } from '@/shared/utils/chatNormalize.utils';
 import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
+import type { PmMentionable } from '@/modules/employee/projects/types/projectMessage.types';
 import { TaskDetailHeader }         from '../components/TaskDetailHeader';
 import { TaskDetailTabs }           from '../components/TaskDetailTabs';
 import { TaskDetailComments }       from '../components/TaskDetailComments';
@@ -18,11 +22,13 @@ export function TaskDetailPage() {
     isEditOpen, openEdit, closeEdit,
   } = useTaskDetailPage();
 
+  const { user } = useAuth();
   const canEdit = usePermission('edit-pm-tasks');
 
   const { data: mentionables = [] } = useQuery({
     queryKey: ['emp-task-mentionables', projectId],
-    queryFn:  () => empProjectMessagesApi.mentionables(projectId).then(r => r.data.data),
+    queryFn:  () => empProjectMessagesApi.mentionables(projectId)
+      .then(r => excludeSelfFromActors(toApiArray<PmMentionable>(r.data.data), user)),
     enabled:  !!projectId,
     staleTime: 60_000,
   });

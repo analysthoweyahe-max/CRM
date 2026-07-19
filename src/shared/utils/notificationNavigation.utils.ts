@@ -48,6 +48,13 @@ function isLeaveNotification(notification: AppNotification): boolean {
   return /leave|إجاز/.test(haystack);
 }
 
+function isAdminRequestNotification(notification: AppNotification): boolean {
+  const haystack = `${notification.type} ${notification.title} ${notification.body}`.toLowerCase();
+  if (/leave|إجاز|exception|استثناء|attendance/.test(haystack)) return false;
+  return /admin.?request|employee.?request|طلب إداري|request_type|permission request|support request/.test(haystack)
+    || notification.type.toLowerCase().includes('adminrequest');
+}
+
 function isMessageNotification(notification: AppNotification): boolean {
   if (notification.type === 'PmMentionNotification') return true;
   const haystack = `${notification.type} ${notification.title} ${notification.body}`.toLowerCase();
@@ -63,6 +70,16 @@ function leavePath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | u
   return null;
 }
 
+function adminRequestPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
+  if (user?.role === 'employee')    return ROUTES.EMPLOYEE.ADMIN_REQUESTS;
+  if (user?.role === 'seo-member')  return ROUTES.SEO_MEMBER.ADMIN_REQUESTS;
+  if (user?.role === 'manager')     return ROUTES.PROJECT_MANAGER.REPORTS;
+  if (user?.role === 'seo-leader')  return ROUTES.SEO_LEADER.REPORTS;
+  if (user?.section === 'seo')      return ROUTES.SEO_MEMBER.ADMIN_REQUESTS;
+  if (user?.section === 'pm')       return ROUTES.EMPLOYEE.ADMIN_REQUESTS;
+  return null;
+}
+
 function messagesPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
   if (user?.role === 'employee')    return ROUTES.EMPLOYEE.MESSAGES;
   if (user?.role === 'seo-member')  return ROUTES.SEO_MEMBER.MESSAGES;
@@ -70,6 +87,9 @@ function messagesPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null 
   if (user?.role === 'seo-leader')  return ROUTES.SEO_LEADER.MESSAGES;
   if (user?.role === 'hr')          return ROUTES.MESSAGES;
   if (user?.role === 'admin')       return ROUTES.MESSAGES;
+  // Section fallback when portal role isn't set yet
+  if (user?.section === 'seo')      return ROUTES.SEO_MEMBER.MESSAGES;
+  if (user?.section === 'pm')       return ROUTES.EMPLOYEE.MESSAGES;
   if (user?.actor === 'employee')   return ROUTES.EMPLOYEE.MESSAGES;
   return null;
 }
@@ -120,10 +140,30 @@ function resolveMessagesPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> 
   return messagesPath(user) ?? ROUTES.MESSAGES;
 }
 
-/** Topbar / nav shortcut to the role's messages inbox. */
+/** Topbar / nav shortcut to the role's messages inbox.
+ *  When `layoutScope` is set (or the URL is under a portal), prefer that
+ *  portal's chat so admin/super-admin in the PM layout open PM messages.
+ */
 export function getMessagesRoute(
   user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined,
+  layoutScope?: 'employee' | 'pm' | 'seo' | null,
 ): string {
+  if (layoutScope === 'pm') return ROUTES.PROJECT_MANAGER.MESSAGES;
+  if (layoutScope === 'seo') {
+    return user?.role === 'seo-member'
+      ? ROUTES.SEO_MEMBER.MESSAGES
+      : ROUTES.SEO_LEADER.MESSAGES;
+  }
+  if (layoutScope === 'employee') return ROUTES.EMPLOYEE.MESSAGES;
+
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname;
+    if (path.startsWith('/project-manager')) return ROUTES.PROJECT_MANAGER.MESSAGES;
+    if (path.startsWith('/seo-leader')) return ROUTES.SEO_LEADER.MESSAGES;
+    if (path.startsWith('/seo-member')) return ROUTES.SEO_MEMBER.MESSAGES;
+    if (path.startsWith('/employee')) return ROUTES.EMPLOYEE.MESSAGES;
+  }
+
   return resolveMessagesPath(user);
 }
 
@@ -313,6 +353,10 @@ export function resolveNotificationPath(
       return ROUTES.LEAVES.DETAIL(String(leaveId));
     }
     return leavePath(user);
+  }
+
+  if (isAdminRequestNotification(notification)) {
+    return adminRequestPath(user);
   }
 
   if (isMessageNotification(notification)) {

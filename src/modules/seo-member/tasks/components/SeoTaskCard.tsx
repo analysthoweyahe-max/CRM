@@ -2,6 +2,7 @@ import { Tag, FolderOpen, CalendarClock } from 'lucide-react';
 import { Badge }        from '@/shared/components/ui/Badge';
 import { Button }       from '@/shared/components/ui/Button';
 import { Card }         from '@/shared/components/ui/Card';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { TimerControls } from '@/shared/modules/task-timer/components/TimerControls';
 import { useTaskTimers } from '@/shared/modules/task-timer/hooks/useTaskTimers';
 import { useSeoTaskCard } from './useSeoTaskCard';
@@ -60,6 +61,10 @@ export function SeoTaskCard({ task, isAr, onDetails }: SeoTaskCardProps) {
             </span>
           )}
         </div>
+
+        {!!task.importantLinks?.length && (
+          <ImportantLinksDisplay links={task.importantLinks} isAr={isAr} compact />
+        )}
 
         {/* Row 3: priority + deadline | timer + details */}
         <div className="flex items-center justify-between gap-4 pt-1">

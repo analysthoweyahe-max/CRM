@@ -11,6 +11,7 @@ import {
   type EmploymentType,
 } from '../../types/employee.types';
 import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
+import { resolveCurrency } from '../NewEmployeeForm/newEmployeeForm.types';
 import type { FormValues, EditEmployeeModalProps } from './EditEmployeeModal.types';
 
 function formDefaults(emp: EditEmployeeModalProps['emp']): FormValues {
@@ -22,6 +23,7 @@ function formDefaults(emp: EditEmployeeModalProps['emp']): FormValues {
     jobTitle:       String(emp.jobTitle?.id ?? ''),
     employmentType: emp.employmentType ?? '',
     salary:         String(emp.salary ?? ''),
+    currency:       resolveCurrency(emp.currency),
     workingHours:   String(emp.workingHours ?? 8),
     managerId:      String(emp.manager?.id ?? 'none'),
   };
@@ -101,6 +103,7 @@ export function useEditEmployeeModal({ open, onClose, emp, isAr }: EditEmployeeM
         ...(onboardingLocked ? {} : {
           employment_type: data.employmentType as EmploymentType || undefined,
           salary:          parseFloat(data.salary) || undefined,
+          currency:        data.currency || undefined,
           working_hours:     Number(data.workingHours) || 8,
         }),
       }),

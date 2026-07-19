@@ -104,6 +104,7 @@ export function useNewCampaign() {
     }),
     onSuccess: (_data, asDraft) => {
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
       setSavedAsDraft(asDraft);
       setSaved(true);
       setTimeout(() => navigate(ROUTES.SEO_LEADER.DASHBOARD), 1500);

@@ -37,6 +37,7 @@ function toEmployeeTask(task: MyTask): EmployeeTask {
     isDelayed:    task.isDelayed,
     overdueLabel: task.overdueLabel,
     canExtend:    task.canExtend,
+    importantLinks: task.importantLinks,
   };
 }
 

@@ -16,12 +16,14 @@ export const attendanceApi = {
     return http.get<DailyAttendanceResponse>('/v1/hr/attendance/daily', { params });
   },
 
+  /** HR-only — requires `manage-attendance`. Never call from self portals. */
   employeeRecent(employeeId: string) {
     return http.get<AttendanceRecentResponse>(
       `/v1/hr/employees/${employeeId}/attendance/recent`,
     );
   },
 
+  /** HR-only — requires `manage-attendance`. Never call from self portals. */
   employeeHistory(employeeId: string, params?: AttendanceHistoryParams) {
     return http.get<AttendanceHistoryResponse>(
       `/v1/hr/employees/${employeeId}/attendance/history`,
@@ -45,6 +47,7 @@ export const attendanceApi = {
     return http.get<AttendanceRecentResponse>('/v1/employee/attendance/recent');
   },
 
+  /** Self history for the employee portal — PM/SEO use attendanceTimerApi with scope paths. */
   employeeSelfHistory(params?: EmployeeSelfHistoryParams) {
     return http.get<AttendanceHistoryResponse>('/v1/employee/attendance/history', { params });
   },

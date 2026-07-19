@@ -6,6 +6,7 @@ import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
 import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
+import { CURRENCIES } from '../NewEmployeeForm/newEmployeeForm.types';
 import { useEditEmployeeModal } from './useEditEmployeeModal';
 import type { EditEmployeeModalProps } from './EditEmployeeModal.types';
 
@@ -150,8 +151,24 @@ export function EditEmployeeModal(props: EditEmployeeModalProps) {
             <StepDivider step={3}
               labelAr="تحديث الراتب" labelEn="Update Salary" optional isAr={isAr} />
 
-            <FormField label={isAr ? 'الراتب الأساسي (ج.م)' : 'Basic Salary (EGP)'} icon={<DollarSign size={15} className="text-gray-400" />}>
-              <Input {...register('salary')} type="number" min={0} endIcon={<Wallet size={15} />} placeholder="0" />
+            <FormField label={isAr ? 'الراتب الأساسي' : 'Basic Salary'} icon={<DollarSign size={15} className="text-gray-400" />}>
+              <div className="flex gap-2">
+                <div className="flex-1 min-w-0">
+                  <Input {...register('salary')} type="number" min={0} endIcon={<Wallet size={15} />} placeholder="0" />
+                </div>
+                <div className="w-32 shrink-0">
+                  <Controller name="currency" control={control} render={({ field }) => (
+                    <Combobox
+                      items={CURRENCIES}
+                      value={field.value ?? 'EGP'}
+                      onChange={field.onChange}
+                      triggerShowsDetail={false}
+                      searchPlaceholder={isAr ? 'ابحث عن عملة...' : 'Search currency...'}
+                      noResultsText={isAr ? 'لا نتائج' : 'No results'}
+                    />
+                  )} />
+                </div>
+              </div>
             </FormField>
 
             {/* ── Step 4: Work Schedule ────────────────────── */}

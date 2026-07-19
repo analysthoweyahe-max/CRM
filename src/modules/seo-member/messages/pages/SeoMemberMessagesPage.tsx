@@ -121,7 +121,7 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
   const { mutate: markRead } = useMarkSeoRead();
   const { data: mentionables = [] } = useSeoMentionables(showMentions);
   /** Unfiltered, always-on fetch used to resolve names/avatars of @mentions already in message history. */
-  const { data: allMentionables = [] } = useSeoMentionables(true);
+  const { data: allMentionables = [] } = useSeoMentionables(true, undefined, { excludeSelf: false });
 
   function getMentionInfo(ref: MentionRef): ResolvedMention | undefined {
     const m = allMentionables.find(x => x.id === ref.id && x.type === ref.type);

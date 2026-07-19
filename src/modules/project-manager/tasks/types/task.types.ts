@@ -25,4 +25,5 @@ export interface Task {
   isDelayed?:       boolean;
   overdueLabel?:    string | null;
   canExtend?:       boolean;
+  importantLinks?:  string[];
 }

@@ -1,6 +1,8 @@
 import { http } from '@/shared/services/http.service';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 
+import { appendImportantLinks } from '@/shared/utils/importantLinks.utils';
+
 /** POST /v1/pm/projects/{id}/tasks — accepts camelCase (preferred) or snake_case. */
 export interface PmCreateTaskPayload {
   title:            string;
@@ -14,6 +16,7 @@ export interface PmCreateTaskPayload {
   estimatedMinutes?: number;
   phaseId?:         number;
   status?:          string;
+  importantLinks?:  string[];
 }
 
 export interface PmCreateSelfTaskPayload {
@@ -24,6 +27,7 @@ export interface PmCreateSelfTaskPayload {
   estimatedHours?:  number;
   phaseId?:         number;
   file?:            File;
+  importantLinks?:  string[];
 }
 
 function buildSelfTaskFormData(payload: PmCreateSelfTaskPayload): FormData {
@@ -35,6 +39,7 @@ function buildSelfTaskFormData(payload: PmCreateSelfTaskPayload): FormData {
   if (payload.estimatedHours != null) fd.append('estimatedHours', String(payload.estimatedHours));
   if (payload.phaseId != null)        fd.append('phaseId', String(payload.phaseId));
   if (payload.file)           fd.append('file', payload.file);
+  appendImportantLinks(fd, payload.importantLinks);
   return fd;
 }
 
@@ -58,6 +63,7 @@ export interface PmUpdateTaskPayload {
   phaseId?:         number;
   phase_id?:        number;
   status?:          string;
+  importantLinks?:  string[];
 }
 
 export interface PmTaskApiResponse {
@@ -132,6 +138,8 @@ export interface RawPmTask {
   isDelayed?:       boolean;
   overdueLabel?:    string | null;
   canExtend?:       boolean;
+  importantLinks?:  string[];
+  important_links?: string[];
 }
 
 export interface RawPmTaskColumn {

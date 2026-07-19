@@ -1,4 +1,5 @@
 import { http } from '@/shared/services/http.service';
+import { parseImportantLinks } from '@/shared/utils/importantLinks.utils';
 import type { SeoTask, SeoTaskPriority } from '../types/seoTask.types';
 
 /* Raw backend shape — GET /v1/seo/employee/tasks?mine=1 and
@@ -30,6 +31,8 @@ export interface RawSeoTask {
   isDelayed?:     boolean;
   overdueLabel?:  string | null;
   canExtend?:     boolean;
+  importantLinks?: string[];
+  important_links?: string[];
 }
 
 export interface RawSeoTaskPhaseGroup {
@@ -74,6 +77,7 @@ export function toSeoTask(raw: RawSeoTask): SeoTask {
     isDelayed:     raw.isDelayed,
     overdueLabel:  raw.overdueLabel ?? null,
     canExtend:     raw.canExtend,
+    importantLinks: parseImportantLinks(raw),
   };
 }
 

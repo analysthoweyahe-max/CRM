@@ -289,31 +289,95 @@ function readActorHint(payload: Record<string, unknown>): AuthActor | null {
 function inferActorFromRoles(roles: string[]): AuthActor | null {
   const hasAdmin = roles.some((r) => ADMIN_ROLE_SLUGS.has(r));
   const hasEmployee = roles.some((r) => EMPLOYEE_ROLE_SLUGS.has(r));
-  // Admin guard wins when both appear — managers are never employee-profile users.
-  if (hasAdmin) return 'admin';
+  // Employee guard wins for profile when both appear — seo/pm employees must
+  // use /v1/employee/auth/profile even if a stray admin slug is present.
   if (hasEmployee) return 'employee';
+  if (hasAdmin) return 'admin';
   return null;
 }
 
 /**
  * Which profile endpoint to call.
- * Admin / HR / SEO Manager / Project Manager → /v1/admin/auth/profile
- * Employees (incl. Team Lead job title) → /v1/employee/auth/profile
- * There is no `team-leader` role — Team Lead is a job title on employee records.
+ * Portal role wins — it is what RoleGuard used to place the user.
+ * Employee / SEO member → /v1/employee/auth/profile
+ * Admin / HR / PM / SEO leader → /v1/admin/auth/profile
  */
 function resolveProfileActor(user: Pick<AuthUser, 'actor' | 'role' | 'roles' | 'isSuperAdmin'>): AuthActor {
   if (user.isSuperAdmin) return 'admin';
 
-  const fromRoles = inferActorFromRoles(user.roles ?? []);
-  if (fromRoles) return fromRoles;
-
-  // Portal role (mapped) — seo-member & employee only use the employee guard.
+  // Prefer mapped portal role over raw Spatie slugs.
   if (user.role === 'employee' || user.role === 'seo-member') return 'employee';
   if (user.role === 'admin' || user.role === 'hr' || user.role === 'manager' || user.role === 'seo-leader') {
     return 'admin';
   }
 
-  return user.actor === 'employee' ? 'employee' : 'admin';
+  // Explicit session actor (set at login / previous normalize).
+  if (user.actor === 'employee') return 'employee';
+
+  const fromRoles = inferActorFromRoles(user.roles ?? []);
+  if (fromRoles) return fromRoles;
+
+  return 'admin';
+}
+
+function collectPayloadRoleSlugs(payload: Record<string, unknown>): string[] {
+  const bags: unknown[] = [payload.roles];
+  for (const key of ['employee', 'admin', 'user'] as const) {
+    const nested = payload[key];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      bags.push((nested as Record<string, unknown>).roles);
+    }
+  }
+  const slugs: string[] = [];
+  for (const bag of bags) {
+    const { slugs: part } = normalizeRolesField(bag);
+    for (const s of part) {
+      if (!slugs.includes(s)) slugs.push(s);
+    }
+  }
+  return slugs;
+}
+
+/** Pick exactly one auth guard for the post-login profile fetch — never probe both. */
+function resolveLoginProfileActor(payload: Record<string, unknown>): AuthActor {
+  const actor = readActorHint(payload);
+  const redirect = typeof payload.redirect_path === 'string' ? payload.redirect_path : '';
+  const roleSlugs = collectPayloadRoleSlugs(payload);
+  const fromRoles = inferActorFromRoles(roleSlugs);
+
+  // Employee signals always win (seo-member / pm-employee).
+  if (
+    fromRoles === 'employee'
+    || actor === 'employee'
+    || Boolean(payload.employee)
+    || /\/employee(?:\/|$)/i.test(redirect)
+    || /\/seo-member(?:\/|$)/i.test(redirect)
+  ) {
+    return 'employee';
+  }
+
+  // Admin only when roles or portal redirect confirm it — do NOT trust a lone actorType=admin
+  // (backend has been tagging seo employees as admin, which caused dual profile calls).
+  if (
+    fromRoles === 'admin'
+    || /\/admin(?:\/|$)/i.test(redirect)
+    || /\/project-manager(?:\/|$)/i.test(redirect)
+    || /\/seo-leader(?:\/|$)/i.test(redirect)
+    || /\/admin-dashboard/i.test(redirect)
+  ) {
+    return 'admin';
+  }
+
+  if (payload.admin && fromRoles !== 'employee') {
+    const nested = payload.admin as Record<string, unknown>;
+    const nestedRoles = normalizeRolesField(nested.roles).slugs;
+    const nestedActor = inferActorFromRoles(nestedRoles) ?? readActorHint(nested);
+    if (nestedActor === 'employee') return 'employee';
+    if (nestedActor === 'admin') return 'admin';
+  }
+
+  // Ambiguous → employee profile (admins usually include role slugs or redirect).
+  return 'employee';
 }
 
 function isProfileRecord(value: unknown): value is Record<string, unknown> {
@@ -360,17 +424,6 @@ function parseLoginProfile(payload: Record<string, unknown>): { admin?: ApiAdmin
   return {};
 }
 
-function profileFetchOrder(payload: Record<string, unknown>): AuthActor[] {
-  const actor = readActorHint(payload);
-  const redirect = typeof payload.redirect_path === 'string' ? payload.redirect_path : '';
-  if (actor === 'admin' || /\/admin(?:\/|$)/i.test(redirect)) return ['admin', 'employee'];
-  if (actor === 'employee' || /\/employee(?:\/|$)/i.test(redirect)) return ['employee', 'admin'];
-  // Prefer admin when nested admin profile is present
-  if (payload.admin) return ['admin', 'employee'];
-  if (payload.employee) return ['employee', 'admin'];
-  return ['admin', 'employee'];
-}
-
 async function resolveLoginUser(
   accessToken: string,
   payload: Record<string, unknown>,
@@ -381,25 +434,27 @@ async function resolveLoginUser(
   const { admin, employee } = parseLoginProfile(payload);
 
   if (actorHint === 'employee' && employee) return buildEmployeeUser(employee);
-  if (actorHint === 'admin' && admin) return buildAdminUser(admin);
   if (employee) return buildEmployeeUser(employee);
-  if (admin) return buildAdminUser(admin);
 
-  const [first, second] = profileFetchOrder(payload);
-  storeAuthSession(accessToken, normalizeStoredUser({
-    id: '', employeeId: '', fullName: '', role: first === 'employee' ? 'employee' : 'admin',
-    roles: [], permissions: [], actor: first,
-  }), rememberMe, refreshToken);
-
-  for (const actor of [first, second]) {
-    try {
-      return await fetchProfile(actor);
-    } catch {
-      // try the other guard
+  if (admin) {
+    const adminRoles = normalizeRolesField(admin.roles).slugs;
+    if (actorHint === 'employee' || inferActorFromRoles(adminRoles) === 'employee') {
+      return buildEmployeeUser(admin as unknown as ApiEmployee);
+    }
+    if (actorHint === 'admin' || inferActorFromRoles(adminRoles) === 'admin') {
+      return buildAdminUser(admin);
     }
   }
 
-  throw new Error('Invalid login response');
+  // Exactly one profile request — never probe the other guard.
+  const actor = resolveLoginProfileActor(payload);
+  storeAuthSession(accessToken, normalizeStoredUser({
+    id: '', employeeId: '', fullName: '',
+    role: actor === 'employee' ? 'employee' : 'admin',
+    roles: [], permissions: [], actor,
+  }), rememberMe, refreshToken);
+
+  return fetchProfile(actor);
 }
 
 function readAdminAuthSuccess(data: Record<string, unknown>) {
@@ -418,7 +473,8 @@ function storeAuth(
   rememberMe: boolean,
   refreshToken?: string | null,
 ): void {
-  storeAuthSession(token, user, rememberMe, refreshToken);
+  // Always persist normalized actor so seo-member never keeps actor:'admin'.
+  storeAuthSession(token, normalizeStoredUser(user), rememberMe, refreshToken);
 }
 
 function updateStoredUser(user: AuthUser): void {
@@ -467,15 +523,8 @@ async function loadProfile(): Promise<AuthUser | null> {
     updateStoredUser(fresh);
     return fresh;
   } catch {
-    // If stored actor was wrong (legacy session), try the other guard once.
-    const other: AuthActor = actor === 'admin' ? 'employee' : 'admin';
-    try {
-      const fresh = await fetchProfile(other);
-      updateStoredUser(fresh);
-      return fresh;
-    } catch {
-      return stored;
-    }
+    // Never cross employee↔admin — dual requests and sticky wrong sessions.
+    return stored;
   }
 }
 

@@ -13,6 +13,10 @@ export const seoTaskStatusApi = {
     return http.get<SeoTaskStatusListResponse>('/v1/seo/task-statuses');
   },
 
+  get(id: number | string) {
+    return http.get<SeoTaskStatusSingleResponse>(`/v1/seo/task-statuses/${id}`);
+  },
+
   create(payload: CreateSeoTaskStatusPayload) {
     return http.post<SeoTaskStatusSingleResponse>('/v1/seo/task-statuses', payload);
   },

@@ -12,11 +12,12 @@ interface Props {
 function audienceLabel(ins: ApiAdminInstruction, isAr: boolean) {
   if (ins.audienceType === 'all') return isAr ? 'كل الموظفين' : 'All Employees';
   if (ins.audienceType === 'department') return ins.departmentName ?? (isAr ? 'قسم' : 'Department');
+  if (ins.audienceType === 'managers') return isAr ? 'مديرين' : 'Managers';
   return ins.employeeName ?? (isAr ? 'موظف' : 'Employee');
 }
 
 function AudienceIcon({ type }: { type: ApiAdminInstruction['audienceType'] }) {
-  if (type === 'all') return <Users size={13} />;
+  if (type === 'all' || type === 'managers') return <Users size={13} />;
   if (type === 'department') return <Building2 size={13} />;
   return <User size={13} />;
 }

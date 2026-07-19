@@ -3,6 +3,7 @@ import { useNavigate }   from 'react-router-dom';
 import { Badge }         from '@/shared/components/ui/Badge';
 import { Button }        from '@/shared/components/ui/Button';
 import { Card }          from '@/shared/components/ui/Card';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { TimerControls } from '@/shared/modules/task-timer/components/TimerControls';
 import { useTaskTimers } from '@/shared/modules/task-timer/hooks/useTaskTimers';
 import { ROUTES }        from '@/app/router/routes';
@@ -53,6 +54,10 @@ export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
           <Briefcase size={14} className="text-gray-400 shrink-0" />
           <span>{isAr ? `المشروع: ${project}` : `Project: ${project}`}</span>
         </div>
+
+        {!!task.importantLinks?.length && (
+          <ImportantLinksDisplay links={task.importantLinks} isAr={isAr} compact />
+        )}
 
         {/* Row 3: priority+deadline (start→right in RTL) | timer+details (end→left in RTL) */}
         <div className="flex items-center justify-between flex-wrap gap-3 gap-y-2 pt-1">

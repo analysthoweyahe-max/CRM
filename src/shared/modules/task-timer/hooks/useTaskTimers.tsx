@@ -110,6 +110,14 @@ function toEntry(raw: TaskTimeLog, meta: TimerMeta): TimerEntry {
   };
 }
 
+/** Elapsed seconds as of now, including time since last server/local sync. */
+export function liveElapsedSeconds(entry: Pick<TimerEntry, 'elapsedSeconds' | 'isPaused' | 'syncedAt'>): number {
+  const base = entry.elapsedSeconds ?? 0;
+  if (entry.isPaused) return base;
+  const drift = Math.max(0, Math.floor((Date.now() - entry.syncedAt) / 1000));
+  return base + drift;
+}
+
 interface ProviderProps {
   children: ReactNode;
   /** Attendance scope for this portal layout — used to auto-pause work timer. */
@@ -191,9 +199,10 @@ export function TaskTimersProvider({ children, attendanceScope }: ProviderProps)
 
       const raw = await apiFor(portal).start(projectId, taskId);
       const entry = toEntry(raw, { taskId, projectId, portal, title });
-      const allowsConcurrent = raw.allowsConcurrentTimers === true;
+      // Concurrent timers are allowed unless the API explicitly forbids them.
+      const forbidsConcurrent = raw.allowsConcurrentTimers === false;
 
-      if (!allowsConcurrent) {
+      if (forbidsConcurrent) {
         // Stop sibling UI timers after a successful start so a failed start
         // doesn't wipe other running sessions.
         await stopOtherTimers(taskId);

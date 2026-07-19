@@ -9,6 +9,7 @@ import { Button }                from '@/shared/components/ui/Button';
 import { ExtendDeadlineModal }   from '@/shared/components/form/ExtendDeadlineModal';
 import { Combobox }              from '@/shared/components/form/Combobox';
 import { inputCls }              from '@/shared/components/form/FormField';
+import { ImportantLinksField }   from '@/shared/components/form/ImportantLinksField';
 import { usePermission }         from '@/shared/hooks/usePermission';
 import { usePmTaskLookups }      from '../../projects/hooks/usePmTaskLookups';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
@@ -48,6 +49,7 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
   const counts = { attachments: modal.attachments.length, comments: modal.comments.length };
 
   function getMentionInfo(ref: MentionRef): ResolvedMention | undefined {
+    if (!Array.isArray(modal.mentionables)) return undefined;
     const m = modal.mentionables.find(x => x.id === ref.id && (x.type ?? 'employee') === ref.type);
     return m ? { id: m.id, type: m.type ?? 'employee', name: m.name } : undefined;
   }
@@ -103,7 +105,12 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
         <div className="flex-1 overflow-y-auto p-5">
           {modal.activeTab === 'info' && (
             <TaskInfoTab
-              task={task}
+              task={{
+                ...task,
+                importantLinks: modal.detailImportantLinks.length
+                  ? modal.detailImportantLinks
+                  : task.importantLinks,
+              }}
               onDeleteClick={modal.openDelete}
               onEditClick={modal.openEdit}
               onExtendClick={modal.openExtend}
@@ -142,11 +149,13 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
               setText={modal.setCommentText}
               onSubmit={modal.addComment}
               onEdit={modal.updateComment}
-              mentionables={modal.mentionables.map(m => ({
-                id: m.id,
-                name: m.name,
-                type: m.type ?? 'employee',
-              }))}
+              mentionables={Array.isArray(modal.mentionables)
+                ? modal.mentionables.map(m => ({
+                    id: m.id,
+                    name: m.name,
+                    type: m.type ?? 'employee',
+                  }))
+                : []}
               isAr={isAr}
               getMentionInfo={getMentionInfo}
             />
@@ -241,6 +250,13 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
               />
             </div>
           </div>
+
+          <ImportantLinksField
+            values={modal.editImportantLinks}
+            onChange={modal.setEditImportantLinks}
+            isAr={isAr}
+            error={modal.editLinksError ?? undefined}
+          />
         </div>
       </Modal>
 

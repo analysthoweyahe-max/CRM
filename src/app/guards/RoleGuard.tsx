@@ -19,7 +19,12 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ allowedRoles }: RoleGuardProps) {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
+
+  // Super-admin can enter every portal (needed for PM/SEO chat + admin tooling).
+  if (isSuperAdmin) {
+    return <Outlet />;
+  }
 
   if (!user || !allowedRoles.includes(user.role)) {
     return <Navigate to={homeDashboard(user?.role)} replace />;

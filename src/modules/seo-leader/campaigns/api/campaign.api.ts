@@ -12,6 +12,7 @@ import type { ProjectActivityApiResponse } from '@/modules/project-manager/proje
 import type { CreateSeoTaskPayload } from '../components/AddSeoTaskModal.types';
 import type { SeoTaskDetail }        from '../components/SeoTaskModal.types';
 import { appendSeoTaskFiles, normalizeSeoAttachments, type SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
+import { appendImportantLinks, parseImportantLinks } from '@/shared/utils/importantLinks.utils';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 
 /** Unwraps a lookup payload regardless of nesting depth — confirmed the real
@@ -70,6 +71,7 @@ export interface SeoTask {
   siteLinks:       string[];
   notes?:          string | null;
   referenceLinks:  string[];
+  importantLinks?: string[];
   assignees:       SeoTaskAssignee[];
   attachments:     SeoTaskAttachment[];
   attachmentsCount?: number;
@@ -178,6 +180,7 @@ function unwrapTaskDetail(data: unknown): SeoTaskDetail {
     : (data as SeoTaskDetail);
   return {
     ...raw,
+    importantLinks: parseImportantLinks(raw),
     attachments: normalizeSeoAttachments(raw.attachments),
     attachmentsCount: raw.attachmentsCount ?? raw.attachments?.length ?? 0,
   };
@@ -253,6 +256,7 @@ export interface SeoUpdateTaskPayload {
   siteLinks?:        string[];
   notes?:            string;
   referenceLinks?:   string[];
+  importantLinks?:   string[];
   /* snake_case aliases still accepted by backend */
   start_date?:       string;
   due_date?:         string;
@@ -260,6 +264,7 @@ export interface SeoUpdateTaskPayload {
   estimated_minutes?: number;
   site_links?:       string[];
   reference_links?:  string[];
+  important_links?:  string[];
   target_keyword?:   string;
   target_url?:       string;
   search_intent?:    string;
@@ -399,6 +404,7 @@ export const campaignApi = {
       if (payload.estimated_minutes != null) fd.append('estimated_minutes', String(payload.estimated_minutes));
       if (payload.target_keyword)   fd.append('target_keyword', payload.target_keyword);
       if (payload.target_url)       fd.append('target_url', payload.target_url);
+      appendImportantLinks(fd, payload.importantLinks);
       appendSeoTaskFiles(fd, files);
       return http.post<ApiResponse<SeoTask>>(
         `/v1/seo/projects/${projectId}/tasks`, fd,

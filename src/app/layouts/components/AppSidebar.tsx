@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useLayoutEffect, useEffect, type ReactNode } from 'react';
+import { useMemo, useState, useRef, useLayoutEffect, type ReactNode } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavItem } from './NavItem';
@@ -15,13 +15,9 @@ export interface AppSidebarProps extends _Base {
 
 export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollapse, footerWidget, isCheckedIn }: AppSidebarProps) {
   const { lang, isRTL } = useLang();
-  const { can, hasRole, isSuperAdmin, refreshUser } = useAuth();
+  const { can, hasRole, isSuperAdmin } = useAuth();
   const isAr             = lang === 'ar';
   const location         = useLocation();
-
-  useEffect(() => {
-    void refreshUser();
-  }, [refreshUser]);
 
   // The super-admin's nav links span several route groups that live under
   // different layout components, so navigating between them remounts this

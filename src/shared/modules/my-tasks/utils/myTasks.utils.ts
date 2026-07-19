@@ -171,12 +171,17 @@ interface RawTaskWire {
   isDelayed?:       boolean;
   overdueLabel?:    string | null;
   canExtend?:       boolean;
+  importantLinks?:  string[];
 }
 
 function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
   const project = readRecord(raw.project);
   const phase = raw.phase;
   const phaseObj = readRecord(phase);
+  const importantRaw = raw.importantLinks ?? raw.important_links;
+  const importantLinks = Array.isArray(importantRaw)
+    ? importantRaw.filter((v): v is string => typeof v === 'string')
+    : undefined;
 
   return {
     id:               Number(raw.id),
@@ -214,6 +219,7 @@ function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
     isDelayed:        Boolean(raw.isDelayed ?? raw.is_delayed),
     overdueLabel:     (raw.overdueLabel ?? raw.overdue_label ?? null) as string | null,
     canExtend:        Boolean(raw.canExtend ?? raw.can_extend),
+    importantLinks,
   };
 }
 
@@ -278,6 +284,7 @@ function normalizeTask(raw: RawTaskWire | Record<string, unknown>): MyTask {
     isDelayed:        wire.isDelayed,
     overdueLabel:     wire.overdueLabel ?? null,
     canExtend:        wire.canExtend,
+    importantLinks:   wire.importantLinks?.length ? wire.importantLinks : undefined,
   };
 }
 

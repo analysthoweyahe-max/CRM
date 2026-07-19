@@ -56,6 +56,9 @@ export function useSeoTaskModal(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
       queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
     },
   });
 

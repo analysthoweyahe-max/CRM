@@ -4,7 +4,9 @@ import { Button }               from '@/shared/components/ui/Button';
 import { Modal }                from '@/shared/components/ui/Modal';
 import { FormField, inputCls }  from '@/shared/components/form/FormField';
 import { Combobox }             from '@/shared/components/form/Combobox';
+import { ImportantLinksField }  from '@/shared/components/form/ImportantLinksField';
 import { useSeoTaskLookups }    from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
+import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { useUpdateSeoTask }     from '../hooks/useSeoTaskDetail';
 import type { SeoTaskDetail }   from '../types/seoTaskDetail.types';
 
@@ -40,11 +42,24 @@ function SeoMemberEditTaskModalForm({
   const [title,    setTitle]    = useState(task.title       ?? '');
   const [priority, setPriority] = useState<string>(task.priority ?? 'normal');
   const [dueDate,  setDueDate]  = useState(task.dueDate      ?? '');
+  const [importantLinks, setImportantLinks] = useState<string[]>(task.importantLinks ?? []);
+  const [linksError, setLinksError] = useState<string | null>(null);
 
   const handleSubmit = () => {
     if (!title.trim()) return;
+    const err = validateImportantLinks(importantLinks, isAr);
+    if (err) {
+      setLinksError(err);
+      return;
+    }
+    setLinksError(null);
     updateTask(
-      { title: title.trim(), priority, dueDate: dueDate || undefined },
+      {
+        title: title.trim(),
+        priority,
+        dueDate: dueDate || undefined,
+        importantLinks: normalizeImportantLinks(importantLinks),
+      },
       { onSuccess: onClose },
     );
   };
@@ -97,6 +112,13 @@ function SeoMemberEditTaskModalForm({
             <Calendar size={15} className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
         </FormField>
+
+        <ImportantLinksField
+          values={importantLinks}
+          onChange={(v) => { setImportantLinks(v); setLinksError(null); }}
+          isAr={isAr}
+          error={linksError ?? undefined}
+        />
 
       </div>
     </Modal>

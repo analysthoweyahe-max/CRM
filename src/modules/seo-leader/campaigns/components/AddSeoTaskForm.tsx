@@ -2,9 +2,13 @@ import { Combobox }     from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
-import { useSeoTaskLookups } from '../hooks/useSeoTaskLookups';
+import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
+import { useSeoTaskLookups, SEO_TASK_PHASE_ITEMS } from '../hooks/useSeoTaskLookups';
 import { SeoTaskFilesInput } from './SeoTaskFilesInput';
 import type { AddSeoTaskForm } from './AddSeoTaskModal.types';
+
+/** Phase is a free-text API field — store the display label, not the slug id. */
+const PHASE_ITEMS = SEO_TASK_PHASE_ITEMS.map(({ label }) => ({ id: label, label }));
 
 /* ── Shared style tokens ─────────────────────────────────────────────── */
 const INPUT = [
@@ -65,12 +69,14 @@ export function AddSeoTaskForm({ form, set, errors = {}, teamItems, isAr, files 
           {isAr ? 'المرحلة' : 'Phase'}
           <span className="text-red-500 ms-1">*</span>
         </label>
-        <input
-          type="text"
+        <Combobox
+          items={PHASE_ITEMS}
           value={form.phase}
-          onChange={e => set('phase', e.target.value)}
-          placeholder={isAr ? 'مثال: On-Page SEO' : 'e.g. On-Page SEO'}
-          className={errors.phase ? INPUT_ERROR : INPUT}
+          onChange={v => set('phase', v)}
+          error={!!errors.phase}
+          placeholder={isAr ? 'اختر المرحلة' : 'Select phase'}
+          searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
+          noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
         />
         {errors.phase && <p className={ERROR_TEXT}>{errors.phase}</p>}
       </div>
@@ -187,6 +193,13 @@ export function AddSeoTaskForm({ form, set, errors = {}, teamItems, isAr, files 
           </div>
         </div>
       </div>
+
+      <ImportantLinksField
+        values={form.importantLinks}
+        onChange={v => set('importantLinks', v)}
+        isAr={isAr}
+        error={errors.importantLinks}
+      />
 
       {onFilesChange && (
         <SeoTaskFilesInput

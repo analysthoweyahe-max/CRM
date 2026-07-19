@@ -1,4 +1,5 @@
 import { Calendar, Trash2 } from 'lucide-react';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import type { Task, TaskPriority } from '../../tasks/types/task.types';
 
 const PRIORITY_CONFIG: Record<TaskPriority, { ar: string; en: string; dot: string; badge: string }> = {
@@ -55,6 +56,12 @@ export function KanbanTaskCard({ task, isAr, onOpen, onDelete }: Props) {
       <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1 leading-snug text-end">
         {task.title}
       </p>
+
+      {!!task.importantLinks?.length && (
+        <div className="mb-2 flex justify-end">
+          <ImportantLinksDisplay links={task.importantLinks} isAr={isAr} compact />
+        </div>
+      )}
 
       {/* Phase */}
       {task.phaseName && (

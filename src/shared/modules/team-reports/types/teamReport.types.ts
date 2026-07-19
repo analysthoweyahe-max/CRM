@@ -1,4 +1,4 @@
-export type RequestStatus = 'pending' | 'approved' | 'rejected';
+export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 export type FilterKey     = 'all' | RequestStatus;
 
 export interface WorkEntry {
@@ -28,8 +28,11 @@ export interface RequestItem {
   typeEn:        string;
   bodyAr:        string;
   bodyEn:        string;
+  title?:        string;
   targetDate:    string;
   submittedDate: string;
   status:        RequestStatus;
   comment?:      string;
+  canApprove?:   boolean;
+  canReject?:    boolean;
 }

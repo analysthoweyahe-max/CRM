@@ -12,7 +12,7 @@ import { SeoLeaveRequestModal }   from '../components/SeoLeaveRequestModal';
 type Tab = 'requests' | 'balance';
 
 const TABS = [
-  { id: 'requests' as Tab, ar: 'طلباتي',       en: 'My Requests'   },
+  { id: 'requests' as Tab, ar: 'طلباتي',       en: 'My Leave Requests' },
   { id: 'balance'  as Tab, ar: 'رصيد إجازاتي', en: 'Leave Balance' },
 ];
 
@@ -42,7 +42,7 @@ export function SeoMemberRequestsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-          {isAr ? 'طلباتى' : 'My Requests'}
+          {isAr ? 'إجازاتي' : 'My Leave'}
         </h1>
         {canRequestLeave && (
           <Button variant="primary" startIcon={<Plus size={15} />} onClick={() => setShowModal(true)}>

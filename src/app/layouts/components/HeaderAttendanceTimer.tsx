@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { useLang } from '@/app/providers/LanguageProvider';
+import { ROUTES } from '@/app/router/routes';
 import { useWorkTimer } from '@/shared/modules/attendance/hooks/useWorkTimer';
 import { WorkTimerCard } from '@/shared/modules/attendance/components/WorkTimerCard';
 import { formatWorkingHours, workStatusStyle } from '@/shared/modules/attendance/utils/attendanceTimer.utils';
@@ -11,13 +13,30 @@ interface HeaderAttendanceTimerProps {
   layoutScope?: AttendanceScope;
 }
 
+function exceptionsPathFromLocation(pathname: string, scope?: AttendanceScope): string | null {
+  if (pathname.startsWith('/project-manager')) return ROUTES.PROJECT_MANAGER.ATTENDANCE_EXCEPTIONS;
+  if (pathname.startsWith('/seo-leader'))      return ROUTES.SEO_LEADER.ATTENDANCE_EXCEPTIONS;
+  if (pathname.startsWith('/seo-member'))      return ROUTES.SEO_MEMBER.ATTENDANCE_EXCEPTIONS;
+  if (pathname.startsWith('/employee'))        return ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS;
+  if (scope === 'employee') return ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS;
+  if (scope === 'pm')       return ROUTES.PROJECT_MANAGER.ATTENDANCE_EXCEPTIONS;
+  if (scope === 'seo')      return ROUTES.SEO_MEMBER.ATTENDANCE_EXCEPTIONS;
+  return null;
+}
+
 /** Compact header pill for the work timer — expands into the full check-in/out card on click. */
 export function HeaderAttendanceTimer({ layoutScope }: HeaderAttendanceTimerProps) {
   const { lang } = useLang();
   const isAr = lang === 'ar';
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, can } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const canViewExceptions = can('view-attendance');
+  const exceptionHref = canViewExceptions
+    ? exceptionsPathFromLocation(pathname, layoutScope)
+    : null;
 
   const { today, displayHours, isActiveDay, isLoading } = useWorkTimer({
     layoutScope,
@@ -74,7 +93,16 @@ export function HeaderAttendanceTimer({ layoutScope }: HeaderAttendanceTimerProp
                      sm:absolute sm:inset-x-auto sm:inset-e-0 sm:top-full sm:mt-2 sm:w-80 sm:max-h-none
                      [&>div]:shadow-xl"
         >
-          <WorkTimerCard variant="card" layoutScope={layoutScope} showExceptionLink />
+          <WorkTimerCard
+            variant="card"
+            layoutScope={layoutScope}
+            showExceptionLink={Boolean(exceptionHref)}
+            exceptionHref={exceptionHref ?? undefined}
+            onExceptionNavigate={() => {
+              setOpen(false);
+              if (exceptionHref) navigate(exceptionHref);
+            }}
+          />
         </div>
       )}
     </div>

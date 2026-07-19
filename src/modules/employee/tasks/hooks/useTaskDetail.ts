@@ -23,6 +23,8 @@ export function useUpdateTaskStatus(projectId: string, taskId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['task-detail', projectId, taskId] });
       qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });
+      qc.invalidateQueries({ queryKey: ['pm-dashboard'] });
+      qc.invalidateQueries({ queryKey: ['my-tasks'] });
     },
   });
 }
@@ -34,6 +36,8 @@ export function useUpdateTask(projectId: string, taskId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['task-detail', projectId, taskId] });
       qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });
+      qc.invalidateQueries({ queryKey: ['pm-dashboard'] });
+      qc.invalidateQueries({ queryKey: ['my-tasks'] });
     },
   });
 }

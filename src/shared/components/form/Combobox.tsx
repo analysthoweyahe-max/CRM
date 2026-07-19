@@ -86,7 +86,7 @@ export function Combobox({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute top-full mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600
+        <div className="absolute top-full inset-s-0 mt-1 min-w-full w-max max-w-[min(20rem,90vw)] rounded-xl border border-gray-200 dark:border-gray-600
                         bg-white dark:bg-gray-800 shadow-xl z-50">
           {/* Search */}
           <div className="p-2 border-b border-gray-100 dark:border-gray-700">

@@ -3,16 +3,8 @@ import { useQuery, useMutation, useQueryClient }     from '@tanstack/react-query
 import { campaignApi }                               from '../api/campaign.api';
 import type { SeoMessage, Mentionable }              from '../api/campaign.api';
 import { useAuth }                                   from '@/modules/auth/context/AuthContext';
-
-function extractList<T>(raw: unknown): T[] {
-  if (Array.isArray(raw)) return raw as T[];
-  if (raw && typeof raw === 'object') {
-    const r = raw as Record<string, unknown>;
-    if (Array.isArray(r['data'])) return r['data'] as T[];
-    if (Array.isArray(r['items'])) return r['items'] as T[];
-  }
-  return [];
-}
+import { excludeSelfFromActors }                     from '@/shared/utils/chatNormalize.utils';
+import { toApiArray }                                from '@/shared/utils/apiList.utils';
 
 export function useProjectMessages(projectId: string) {
   const { user }    = useAuth();
@@ -44,7 +36,7 @@ export function useProjectMessages(projectId: string) {
     queryKey: ['seo-mentionables', projectId],
     queryFn:  () =>
       campaignApi.getMentionables(projectId)
-        .then(r => extractList<Mentionable>(r.data.data)),
+        .then(r => excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user)),
     staleTime: 60_000,
   });
 

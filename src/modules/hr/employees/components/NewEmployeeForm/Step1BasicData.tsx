@@ -97,7 +97,7 @@ export function Step1BasicData({
     label: isAr ? (t.nameAr || t.name) : t.name,
   }));
 
-  const salaryLabel = isAr ? 'الراتب الشهري (ج.م)' : 'Monthly Salary (EGP)';
+  const salaryLabel = isAr ? 'الراتب الشهري' : 'Monthly Salary';
   const jobTypeItems = employmentTypes.map((t) => ({ id: t.value, label: t.label }));
 
   function handleDepartmentsChange(departmentIds: string[], onChange: (ids: string[]) => void) {
@@ -232,12 +232,13 @@ export function Step1BasicData({
                     type="number" min="1" placeholder="10000"
                     hasError={!!errors.salary} endIcon={<Wallet size={15} />} />
                 </div>
-                <div className="w-28">
+                <div className="w-32 shrink-0">
                   <Controller name="currency" control={control} render={({ field }) => (
                     <Combobox
                       items={CURRENCIES}
                       value={field.value ?? 'EGP'}
                       onChange={field.onChange}
+                      triggerShowsDetail={false}
                       searchPlaceholder={isAr ? 'ابحث عن عملة...' : 'Search currency...'}
                       noResultsText={isAr ? 'لا نتائج' : 'No results'} />
                   )} />

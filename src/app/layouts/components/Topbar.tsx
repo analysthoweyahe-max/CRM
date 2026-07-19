@@ -133,7 +133,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
   }, []);
 
   const initial   = user?.fullName?.slice(0, 1).toUpperCase() ?? '?';
-  const messagesRoute = getMessagesRoute(user);
+  const messagesRoute = getMessagesRoute(user, layoutScope);
 
   return (
     <>

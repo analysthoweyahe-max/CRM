@@ -45,7 +45,8 @@ export const PANEL_PERMISSION_GROUPS: PermissionGroup[] = [
     labelAr: 'الحضور',
     labelEn: 'Attendance',
     slugs: [
-      { slug: 'view-attendance', labelAr: 'عرض الحضور', labelEn: 'View Attendance' },
+      { slug: 'view-attendance',   labelAr: 'عرض الحضور',   labelEn: 'View Attendance'   },
+      { slug: 'manage-attendance', labelAr: 'إدارة الحضور', labelEn: 'Manage Attendance' },
     ],
   },
   {
@@ -55,6 +56,17 @@ export const PANEL_PERMISSION_GROUPS: PermissionGroup[] = [
     slugs: [
       { slug: 'view-leave',    labelAr: 'عرض الإجازات',  labelEn: 'View Leave'    },
       { slug: 'approve-leave', labelAr: 'اعتماد الإجازات', labelEn: 'Approve Leave' },
+    ],
+  },
+  {
+    // Seeded on admin guard (project-manager / seo-manager / also hr-manager via all-admin sync).
+    // UI: only show request surfaces in PM/SEO portals — never gate HR shell on these alone.
+    key: 'requests',
+    labelAr: 'الطلبات الإدارية',
+    labelEn: 'Admin Requests',
+    slugs: [
+      { slug: 'view-requests',   labelAr: 'عرض الطلبات',   labelEn: 'View Requests'   },
+      { slug: 'approve-request', labelAr: 'اعتماد الطلبات', labelEn: 'Approve Requests' },
     ],
   },
   {

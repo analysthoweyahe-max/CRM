@@ -85,6 +85,7 @@ function toLocalTask(t: SeoTask, projectId: string, marksCompletedByKey: Record<
     status:          coarseStatus(t.status, marksCompletedByKey[t.status] ?? false),
     rawStatus:       t.status,
     taskNumber:      `#${t.taskNumber ?? t.id}`,
+    importantLinks:  t.importantLinks,
   };
 }
 
@@ -226,6 +227,12 @@ export function CampaignDetailsPage() {
     setStatusOverrides(prev => ({ ...prev, [taskId]: toStatusKey }));
     campaignApi
       .updateTask(projectKey, task ? taskResourceKey(task) : taskId, { status: toStatusKey })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectKey] });
+        queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
+      })
       .catch((err) => {
         console.error(err);
         toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));
@@ -255,6 +262,7 @@ export function CampaignDetailsPage() {
       await refetchCampaign();
       queryClient.invalidateQueries({ queryKey: ['seo-project-settings', projectKey] });
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المشروع' : 'Failed to update status'));
     } finally {
@@ -274,6 +282,7 @@ export function CampaignDetailsPage() {
       await refetchCampaign();
       queryClient.invalidateQueries({ queryKey: ['seo-project-settings', projectKey] });
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر نشر المشروع' : 'Failed to publish project'));

@@ -27,16 +27,20 @@ function getMonthOptions(isAr: boolean) {
 
 interface AttendanceTimerPageProps {
   layoutScope?: AttendanceScope;
+  exceptionHref?: string;
 }
 
-export function AttendanceTimerPage({ layoutScope }: AttendanceTimerPageProps) {
+export function AttendanceTimerPage({ layoutScope, exceptionHref }: AttendanceTimerPageProps) {
   const { lang } = useLang();
   const isAr = lang === 'ar';
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const scope = resolveAttendanceScope(user?.role, user?.section, layoutScope);
 
   const [month, setMonth] = useState(currentMonth);
   const monthItems = useMemo(() => getMonthOptions(isAr), [isAr]);
+
+  const canViewExceptions = can('view-attendance');
+  const resolvedExceptionHref = canViewExceptions ? exceptionHref : undefined;
 
   return (
     <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
@@ -55,7 +59,12 @@ export function AttendanceTimerPage({ layoutScope }: AttendanceTimerPageProps) {
         }
       />
 
-      <WorkTimerCard layoutScope={layoutScope} variant="card" showExceptionLink={layoutScope === 'employee'} />
+      <WorkTimerCard
+        layoutScope={layoutScope}
+        variant="card"
+        showExceptionLink={Boolean(resolvedExceptionHref)}
+        exceptionHref={resolvedExceptionHref}
+      />
 
       <div>
         <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">

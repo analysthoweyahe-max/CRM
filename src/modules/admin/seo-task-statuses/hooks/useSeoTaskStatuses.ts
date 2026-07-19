@@ -14,11 +14,16 @@ export function useSeoTaskStatusList() {
   });
 }
 
+function invalidateLookups(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: KEY });
+  qc.invalidateQueries({ queryKey: ['seo-task-lookups'] });
+}
+
 export function useCreateSeoTaskStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateSeoTaskStatusPayload) => seoTaskStatusApi.create(payload),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess:  () => invalidateLookups(qc),
   });
 }
 
@@ -28,7 +33,10 @@ export function useUpdateSeoTaskStatus() {
     mutationFn: ({ id, payload }: { id: number; payload: UpdateSeoTaskStatusPayload }) =>
       seoTaskStatusApi.update(id, payload),
     // The backend returns the refreshed list on update — use it directly instead of refetching.
-    onSuccess:  (r) => qc.setQueryData(KEY, toApiArray<ApiSeoTaskStatus>(r.data.data)),
+    onSuccess:  (r) => {
+      qc.setQueryData(KEY, toApiArray<ApiSeoTaskStatus>(r.data.data));
+      invalidateLookups(qc);
+    },
   });
 }
 
@@ -36,6 +44,9 @@ export function useDeleteSeoTaskStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => seoTaskStatusApi.remove(id),
-    onSuccess:  (r) => qc.setQueryData(KEY, toApiArray<ApiSeoTaskStatus>(r.data.data)),
+    onSuccess:  (r) => {
+      qc.setQueryData(KEY, toApiArray<ApiSeoTaskStatus>(r.data.data));
+      invalidateLookups(qc);
+    },
   });
 }

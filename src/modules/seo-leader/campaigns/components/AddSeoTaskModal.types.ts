@@ -9,6 +9,7 @@ export interface AddSeoTaskForm {
   estimatedMinutes: string;
   targetKeyword:    string;
   targetUrl:        string;
+  importantLinks:   string[];
 }
 
 /** POST /v1/seo/projects/{id}/tasks — title/phase/employee_ids required, rest optional */
@@ -33,4 +34,5 @@ export interface CreateSeoTaskPayload {
   site_links?:         string[];
   reference_links?:    string[];
   notes?:              string;
+  importantLinks?:     string[];
 }

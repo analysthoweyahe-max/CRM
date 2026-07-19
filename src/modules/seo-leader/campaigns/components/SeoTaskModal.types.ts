@@ -21,6 +21,7 @@ export interface SeoTaskFull {
   dueDate?:         string | null;
   siteLinks:        string[];
   referenceLinks:   string[];
+  importantLinks?:  string[];
   notes?:           string | null;
   assignees:        SeoAssigneeDetail[];
   attachments:      SeoTaskAttachment[];

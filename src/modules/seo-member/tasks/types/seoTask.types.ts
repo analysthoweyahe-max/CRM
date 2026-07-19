@@ -29,6 +29,7 @@ export interface SeoTask {
   isDelayed?:    boolean;
   overdueLabel?: string | null;
   canExtend?:    boolean;
+  importantLinks?: string[];
 }
 
 export interface CreateSelfSeoTaskPayload {
@@ -38,4 +39,5 @@ export interface CreateSelfSeoTaskPayload {
   priority:         SeoTaskPriority;
   due_date?:        string;
   estimated_hours?: number;
+  importantLinks?:  string[];
 }

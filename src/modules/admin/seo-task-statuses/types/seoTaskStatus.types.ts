@@ -26,12 +26,13 @@ export interface SeoTaskStatusSingleResponse {
 }
 
 export interface CreateSeoTaskStatusPayload {
-  key:        string;
-  label_en:   string;
-  label_ar:   string;
-  color:      string;
-  sort_order: number;
-  is_active:  boolean;
+  key:             string;
+  label_en:        string;
+  label_ar:        string;
+  color?:          string;
+  sort_order:      number;
+  is_active:       boolean;
+  marks_completed: boolean;
 }
 
 export type UpdateSeoTaskStatusPayload = CreateSeoTaskStatusPayload;

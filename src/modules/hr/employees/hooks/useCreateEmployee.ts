@@ -32,7 +32,7 @@ export function useCreateEmployee() {
       }
 
       if (step < 3 && d.salary && d.salary > 0) {
-        await employeeApi.updateSalary(id, { salary: d.salary });
+        await employeeApi.updateSalary(id, { salary: d.salary, currency: d.currency });
       }
 
       if (step < 4) {

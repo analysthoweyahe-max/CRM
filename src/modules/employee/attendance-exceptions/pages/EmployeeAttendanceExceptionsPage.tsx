@@ -31,7 +31,14 @@ const STATUS_TABS: { key: ExceptionStatus | 'all'; ar: string; en: string }[] = 
   { key: 'cancelled', ar: 'ملغاة',   en: 'Cancelled' },
 ];
 
-export function EmployeeAttendanceExceptionsPage() {
+interface Props {
+  /** Portal-specific attendance page for the back link */
+  attendancePath?: string;
+}
+
+export function EmployeeAttendanceExceptionsPage({
+  attendancePath = ROUTES.EMPLOYEE.ATTENDANCE,
+}: Props) {
   const { lang } = useLang();
   const isAr = lang === 'ar';
 
@@ -68,7 +75,7 @@ export function EmployeeAttendanceExceptionsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <Link to={ROUTES.EMPLOYEE.ATTENDANCE} className="text-xs text-gray-400 hover:text-[#709028] mb-1 inline-block">
+          <Link to={attendancePath} className="text-xs text-gray-400 hover:text-[#709028] mb-1 inline-block">
             {isAr ? '← العودة للحضور' : '← Back to attendance'}
           </Link>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">

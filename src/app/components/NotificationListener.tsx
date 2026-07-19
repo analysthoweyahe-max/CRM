@@ -56,10 +56,15 @@ export function NotificationListener() {
     }
     const role = user?.role;
     if (!role) return true;
-    if (role === 'admin' || role === 'hr' || role === 'manager' || role === 'seo-leader') {
+    // Admin/HR mirrors must not toast employee-personal assignment alerts.
+    if (role === 'admin' || role === 'hr') {
       if (isEmployeeLeaveStatusNotification(notification)) return false;
       if (isPersonalAssigneeNotification(notification)) return false;
       return true;
+    }
+    // PM / SEO leaders own their portal notifications — including task assigned.
+    if (role === 'manager' || role === 'seo-leader') {
+      return !isEmployeeLeaveStatusNotification(notification);
     }
     if (role === 'employee' || role === 'seo-member') {
       return !isHrLeaveSubmittedNotification(notification);

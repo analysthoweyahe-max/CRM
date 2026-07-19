@@ -57,15 +57,37 @@ export function ManagerForm({
     });
   }, [allJobTitles, selectedDeptSet]);
 
-  const deptItems = departments.map((d) => ({
-    id:    String(d.id),
-    label: isAr ? (d.nameAr || d.name_ar || d.name) : d.name,
-  }));
+  const deptItems = useMemo(() => {
+    const items = departments.map((d) => ({
+      id:    String(d.id),
+      label: isAr ? (d.nameAr || d.name_ar || d.name) : d.name,
+    }));
+    // Keep currently selected departments visible even if the lookup list is still loading.
+    for (const id of values.departmentIds) {
+      if (id && !items.some((item) => item.id === id)) {
+        items.push({ id, label: id });
+      }
+    }
+    return items;
+  }, [departments, isAr, values.departmentIds]);
 
-  const titleItems = filteredTitles.map((t) => ({
-    id:    String(t.id),
-    label: isAr ? (t.nameAr || t.name_ar || t.name) : t.name,
-  }));
+  const titleItems = useMemo(() => {
+    const items = filteredTitles.map((t) => ({
+      id:    String(t.id),
+      label: isAr ? (t.nameAr || t.name_ar || t.name) : t.name,
+    }));
+    // Keep the manager's current title visible even when dept filtering would hide it.
+    if (values.jobTitleId && !items.some((item) => item.id === values.jobTitleId)) {
+      const title = allJobTitles.find((t) => String(t.id) === values.jobTitleId);
+      items.push({
+        id:    values.jobTitleId,
+        label: title
+          ? (isAr ? (title.nameAr || title.name_ar || title.name) : title.name)
+          : values.jobTitleId,
+      });
+    }
+    return items;
+  }, [filteredTitles, allJobTitles, isAr, values.jobTitleId]);
 
   function handleDepartmentsChange(departmentIds: string[]) {
     const nextSet = new Set(departmentIds.map(String));

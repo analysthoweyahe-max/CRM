@@ -39,6 +39,10 @@ export function useUpdateSeoTaskStatus(projectId: string | undefined, taskId: st
       qc.invalidateQueries({ queryKey: detailKey(projectId, taskId) });
       qc.invalidateQueries({ queryKey: ['my-tasks'] });
       qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
+      qc.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
+      qc.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
+      qc.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
+      qc.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
       toast.success(isAr ? 'تم تحديث الحالة' : 'Status updated');
     },
     onError: () => toast.error(isAr ? 'تعذّر تحديث الحالة' : 'Failed to update status'),

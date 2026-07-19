@@ -110,6 +110,7 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
       queryClient.invalidateQueries({ queryKey: ['seo-project-settings', projectId] });
       queryClient.invalidateQueries({ queryKey: ['campaign-detail'] });
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
     } catch (err) {
       const apiFieldErrors = extractApiFieldErrors(err);

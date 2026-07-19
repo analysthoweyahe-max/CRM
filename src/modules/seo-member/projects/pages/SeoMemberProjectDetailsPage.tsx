@@ -90,6 +90,7 @@ function toLocalTask(
     status:          coarseStatus(t.status, marksCompletedByKey[t.status] ?? false),
     rawStatus:       t.status,
     taskNumber:      `#${t.taskNumber ?? t.id}`,
+    importantLinks:  t.importantLinks,
   };
 }
 
@@ -211,6 +212,9 @@ export function SeoMemberProjectDetailsPage() {
       .then(() => {
         qc.invalidateQueries({ queryKey: ['seo-member-project-tasks', projectKey] });
         qc.invalidateQueries({ queryKey: ['my-tasks'] });
+        qc.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
+        qc.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
+        qc.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
       })
       .catch((err) => {
         setStatusOverrides(prev => {

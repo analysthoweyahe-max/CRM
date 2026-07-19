@@ -1,5 +1,6 @@
 import { Badge }    from '@/shared/components/ui/Badge';
 import { RichTextView } from '@/shared/components/form/RichTextView';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { fmtDeadline } from '@/modules/employee/tasks/components/useTasksTable';
 import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import type { SeoTaskDetail } from '../types/seoTaskDetail.types';
@@ -69,6 +70,12 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr, onStatusChange, canEd
       {task.description && (
         <InfoRow label={isAr ? 'الوصف التفصيلي' : 'Description'}>
           <RichTextView html={task.description} className="text-gray-700 dark:text-gray-300" />
+        </InfoRow>
+      )}
+
+      {!!task.importantLinks?.length && (
+        <InfoRow label={isAr ? 'روابط هامة' : 'Important Links'}>
+          <ImportantLinksDisplay links={task.importantLinks} isAr={isAr} showLabel={false} />
         </InfoRow>
       )}
 

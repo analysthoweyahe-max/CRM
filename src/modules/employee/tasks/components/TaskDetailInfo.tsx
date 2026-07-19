@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Badge }    from '@/shared/components/ui/Badge';
 import { Combobox } from '@/shared/components/form/Combobox';
 import { RichTextView } from '@/shared/components/form/RichTextView';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { useAuth }  from '@/modules/auth/context/AuthContext';
 import { useUpdateTaskStatus } from '../hooks/useTaskDetail';
 import { fmtDeadline, PRIORITY_MAP } from './useTasksTable';
@@ -76,6 +77,12 @@ export function TaskDetailInfo({ task, isLoading, isAr, projectId, taskId }: Pro
             : <span className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">{isAr ? 'لا يوجد وصف' : 'No description'}</span>
         }
       />
+      {!!task.importantLinks?.length && (
+        <InfoRow
+          label={isAr ? 'روابط هامة' : 'Important Links'}
+          value={<ImportantLinksDisplay links={task.importantLinks} isAr={isAr} showLabel={false} className="text-end" />}
+        />
+      )}
       {task.stage && (
         <InfoRow
           label={isAr ? 'المرحلة' : 'Stage'}

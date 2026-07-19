@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast }                                 from 'sonner';
 import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import {
+  excludeSelfFromActors,
   isSameActorId,
   normalizeTaskCommentFields,
 } from '@/shared/utils/chatNormalize.utils';
+import { toApiArray } from '@/shared/utils/apiList.utils';
 import { campaignApi }                           from '../api/campaign.api';
-import type { SeoComment }                       from '../api/campaign.api'; // used in extractComments + toTaskComment
+import type { Mentionable, SeoComment }          from '../api/campaign.api'; // used in extractComments + toTaskComment
 import type { SeoDrawerTab }                     from './SeoTaskModal.types';
 import type { ComboboxItem }                     from '@/shared/components/form/Combobox';
 import type { TaskComment, TimeSession }         from '@/modules/project-manager/tasks/types/taskModal.types';
@@ -114,10 +116,11 @@ export function useSeoTaskDrawer(
 
   const comments: TaskComment[] = extractComments(rawComments).map(c => toTaskComment(c, user));
 
-  /* ── Mentionables (for resolving @mention names/avatars in comments) ─── */
+  /* ── Mentionables (picker excludes self; used for @mentions in comments) ─── */
   const { data: mentionablesRaw } = useQuery({
     queryKey: ['seo-mentionables', projectId],
-    queryFn:  () => campaignApi.getMentionables(projectId).then(r => r.data.data.data ?? []),
+    queryFn:  () => campaignApi.getMentionables(projectId)
+      .then(r => excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user)),
     enabled:  !!projectId,
     staleTime: 60_000,
   });
@@ -203,6 +206,9 @@ export function useSeoTaskDrawer(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
       queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
     },
     onError: (err) => {

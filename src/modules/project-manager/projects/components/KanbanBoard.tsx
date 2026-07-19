@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Modal }  from '@/shared/components/ui/Modal';
 import { Button } from '@/shared/components/ui/Button';
@@ -37,6 +38,7 @@ interface Props {
 }
 
 export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers = [] }: Props) {
+  const queryClient = useQueryClient();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [deleteTarget,   setDeleteTarget]   = useState<Task | null>(null);
   const [deleting,       setDeleting]       = useState(false);
@@ -147,6 +149,7 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
       // general task-update endpoint with `status` in the body.
       await pmTaskApi.update(projectId, taskResourceKey(task), { status: toStatus });
       invalidateTasks();
+      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));

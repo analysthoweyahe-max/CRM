@@ -2,22 +2,33 @@ import { RequestCard }                        from './RequestCard';
 import type { RequestItem, FilterKey }         from '../types/teamReport.types';
 
 const FILTERS: { key: FilterKey; ar: string; en: string }[] = [
-  { key: 'all',      ar: 'الكل',         en: 'All'          },
-  { key: 'pending',  ar: 'قيد المراجعة', en: 'Under Review' },
-  { key: 'approved', ar: 'موافق عليه',   en: 'Approved'     },
-  { key: 'rejected', ar: 'مرفوض',        en: 'Rejected'     },
+  { key: 'all',       ar: 'الكل',         en: 'All'          },
+  { key: 'pending',   ar: 'قيد المراجعة', en: 'Under Review' },
+  { key: 'approved',  ar: 'موافق عليه',   en: 'Approved'     },
+  { key: 'rejected',  ar: 'مرفوض',        en: 'Rejected'     },
+  { key: 'cancelled', ar: 'ملغى',         en: 'Cancelled'    },
 ];
 
 interface Props {
-  visible:   RequestItem[];
-  filter:    FilterKey;
-  setFilter: (f: FilterKey) => void;
-  approve:   (id: string) => void;
-  reject:    (id: string) => void;
-  isAr:      boolean;
+  visible:     RequestItem[];
+  filter:      FilterKey;
+  setFilter:   (f: FilterKey) => void;
+  approve:     (id: string) => void;
+  reject:      (id: string) => void;
+  isAr:        boolean;
+  /** Spatie approve-request — managers only */
+  canApprove?: boolean;
 }
 
-export function RequestsTab({ visible, filter, setFilter, approve, reject, isAr }: Props) {
+export function RequestsTab({
+  visible,
+  filter,
+  setFilter,
+  approve,
+  reject,
+  isAr,
+  canApprove = true,
+}: Props) {
   return (
     <div className="space-y-4">
 
@@ -45,7 +56,11 @@ export function RequestsTab({ visible, filter, setFilter, approve, reject, isAr 
         {visible.map(item => (
           <RequestCard
             key={item.id}
-            item={item}
+            item={{
+              ...item,
+              canApprove: canApprove && item.canApprove !== false,
+              canReject:  canApprove && item.canReject !== false,
+            }}
             onApprove={approve}
             onReject={reject}
             isAr={isAr}
