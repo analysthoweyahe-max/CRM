@@ -197,7 +197,7 @@ export function AttendancePage() {
             <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={columns.length} className="py-12 text-center text-sm text-gray-400">
+                  <td colSpan={columns.length} className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
                     {isAr ? 'جاري التحميل...' : 'Loading...'}
                   </td>
                 </tr>

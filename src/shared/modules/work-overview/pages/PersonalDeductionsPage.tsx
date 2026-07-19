@@ -98,15 +98,15 @@ export function PersonalDeductionsPage({ layoutScope, seoRouteVariant }: Persona
                         {r.deductionDate || '—'}
                       </Link>
                     </td>
-                    <td className="px-4 py-2.5">{r.type?.label || r.deductionTypeLabel || r.sourceLabel || '—'}</td>
+                    <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{r.type?.label || r.deductionTypeLabel || r.sourceLabel || '—'}</td>
                     <td className="px-4 py-2.5 max-w-xs">
-                      <span className="line-clamp-2">{r.reason || '—'}</span>
+                      <span className="line-clamp-2 text-gray-700 dark:text-gray-300">{r.reason || '—'}</span>
                     </td>
-                    <td className="px-4 py-2.5 font-mono text-xs">{r.financialMonth || '—'}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-gray-600 dark:text-gray-400">{r.financialMonth || '—'}</td>
                     <td className="px-4 py-2.5 font-semibold text-red-600 dark:text-red-400">
                       {formatMoney(r.amount, isAr)}
                     </td>
-                    <td className="px-4 py-2.5">{r.statusLabel || r.status || '—'}</td>
+                    <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{r.statusLabel || r.status || '—'}</td>
                   </tr>
                 ))}
               </tbody>

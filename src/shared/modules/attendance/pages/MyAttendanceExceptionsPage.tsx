@@ -178,15 +178,15 @@ function ExceptionRow({
 
   return (
     <tr className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-gray-700/20">
-      <td className="px-4 py-3 font-medium">{row.workDate}</td>
-      <td className="px-4 py-3">{row.requestTypeLabel ?? (isAr ? EXCEPTION_TYPE_LABELS[row.requestType].ar : EXCEPTION_TYPE_LABELS[row.requestType].en)}</td>
+      <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{row.workDate}</td>
+      <td className="px-4 py-3 text-gray-800 dark:text-gray-200">{row.requestTypeLabel ?? (isAr ? EXCEPTION_TYPE_LABELS[row.requestType].ar : EXCEPTION_TYPE_LABELS[row.requestType].en)}</td>
       <td className="px-4 py-3 max-w-xs truncate text-gray-600 dark:text-gray-400">{row.reason}</td>
       <td className="px-4 py-3">
         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${statusVariant[statusCfg.variant]}`}>
           {row.statusLabel ?? (isAr ? statusCfg.ar : statusCfg.en)}
         </span>
       </td>
-      <td className="px-4 py-3 text-gray-500 text-xs">{formatDateFull(row.createdAt, isAr)}</td>
+      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{formatDateFull(row.createdAt, isAr)}</td>
       <td className="px-4 py-3">
         {row.status === 'pending' && (
           <button

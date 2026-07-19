@@ -81,10 +81,10 @@ export function AttendanceHistorySection({ scope, month }: AttendanceHistorySect
             return (
             <tr key={String(r.id ?? r.date)} className="bg-white dark:bg-gray-900">
               <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">{r.date}</td>
-              <td className="px-4 py-2.5 font-mono">{formatClockTime(recordCheckIn(r), isAr)}</td>
-              <td className="px-4 py-2.5 font-mono">{formatClockTime(recordCheckOut(r), isAr)}</td>
-              <td className="px-4 py-2.5 font-mono font-semibold">{formatWorkingHours(recordHours(r))}</td>
-              <td className="px-4 py-2.5">{breakMins != null ? formatBreakMinutes(breakMins, isAr) : '—'}</td>
+              <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">{formatClockTime(recordCheckIn(r), isAr)}</td>
+              <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">{formatClockTime(recordCheckOut(r), isAr)}</td>
+              <td className="px-4 py-2.5 font-mono font-semibold text-gray-800 dark:text-gray-200">{formatWorkingHours(recordHours(r))}</td>
+              <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{breakMins != null ? formatBreakMinutes(breakMins, isAr) : '—'}</td>
               <td className="px-4 py-2.5">
                 <div className="flex flex-wrap gap-1">
                   {(r.statusFlags ?? []).map(f => (
@@ -92,7 +92,9 @@ export function AttendanceHistorySection({ scope, month }: AttendanceHistorySect
                       {f.label}
                     </span>
                   ))}
-                  {!r.statusFlags?.length && (r.dayStatusLabel ?? r.day_status ?? '—')}
+                  {!r.statusFlags?.length && (
+                    <span className="text-gray-700 dark:text-gray-300">{r.dayStatusLabel ?? r.day_status ?? '—'}</span>
+                  )}
                 </div>
               </td>
             </tr>

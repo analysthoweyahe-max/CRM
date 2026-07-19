@@ -98,12 +98,12 @@ export function PersonalBonusesPage({ layoutScope, seoRouteVariant }: PersonalBo
                         {r.adjustmentDate || '—'}
                       </Link>
                     </td>
-                    <td className="px-4 py-2.5">{r.type?.label || r.adjustmentTypeLabel || r.adjustmentType || '—'}</td>
+                    <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{r.type?.label || r.adjustmentTypeLabel || r.adjustmentType || '—'}</td>
                     <td className="px-4 py-2.5 max-w-xs">
-                      <span className="line-clamp-2">{r.reason || '—'}</span>
+                      <span className="line-clamp-2 text-gray-700 dark:text-gray-300">{r.reason || '—'}</span>
                     </td>
-                    <td className="px-4 py-2.5 font-mono text-xs">{r.financialMonth || '—'}</td>
-                    <td className="px-4 py-2.5 font-mono">
+                    <td className="px-4 py-2.5 font-mono text-xs text-gray-600 dark:text-gray-400">{r.financialMonth || '—'}</td>
+                    <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">
                       {r.overtimeHours != null ? r.overtimeHours : '—'}
                     </td>
                     <td className="px-4 py-2.5 font-semibold text-[#709028] dark:text-[#A0CD39]">

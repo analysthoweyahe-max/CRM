@@ -164,28 +164,34 @@ export function AttendanceExceptionsPage() {
                   ? ['الموظف', 'التاريخ', 'النوع', 'السبب', 'الحالة', 'إجراءات']
                   : ['Employee', 'Date', 'Type', 'Reason', 'Status', 'Actions']
                 ).map((h, i) => (
-                  <th key={i} className="px-4 py-3 text-start text-xs font-semibold text-gray-500 whitespace-nowrap">{h}</th>
+                  <th key={i} className="px-4 py-3 text-start text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="py-12 text-center text-gray-400">{isAr ? 'جاري التحميل...' : 'Loading...'}</td></tr>
+                <tr><td colSpan={6} className="py-12 text-center text-gray-400 dark:text-gray-500">{isAr ? 'جاري التحميل...' : 'Loading...'}</td></tr>
               ) : rows.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-gray-400">{isAr ? 'لا توجد طلبات' : 'No requests'}</td></tr>
+                <tr><td colSpan={6} className="py-12 text-center text-gray-400 dark:text-gray-500">{isAr ? 'لا توجد طلبات' : 'No requests'}</td></tr>
               ) : rows.map((row: AttendanceException) => {
                 const statusCfg = EXCEPTION_STATUS_CFG[row.status];
+                const statusTextVariant: Record<string, string> = {
+                  warning: 'text-amber-600 dark:text-amber-400',
+                  success: 'text-[#709028] dark:text-[#A0CD39]',
+                  error:   'text-red-600 dark:text-red-400',
+                  neutral: 'text-gray-500 dark:text-gray-400',
+                };
                 return (
-                  <tr key={row.id} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50/50">
+                  <tr key={row.id} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-gray-700/20">
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-800 dark:text-gray-200">{row.employee?.name ?? '—'}</p>
-                      <p className="text-xs text-gray-400">{row.employee?.employeeNumber} · {row.employee?.department}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">{row.employee?.employeeNumber} · {row.employee?.department}</p>
                     </td>
-                    <td className="px-4 py-3">{row.workDate}</td>
-                    <td className="px-4 py-3">{row.requestTypeLabel}</td>
-                    <td className="px-4 py-3 max-w-xs truncate text-gray-600">{row.reason}</td>
+                    <td className="px-4 py-3 text-gray-800 dark:text-gray-200">{row.workDate}</td>
+                    <td className="px-4 py-3 text-gray-800 dark:text-gray-200">{row.requestTypeLabel}</td>
+                    <td className="px-4 py-3 max-w-xs truncate text-gray-600 dark:text-gray-400">{row.reason}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs font-semibold">{row.statusLabel ?? (isAr ? statusCfg.ar : statusCfg.en)}</span>
+                      <span className={`text-xs font-semibold ${statusTextVariant[statusCfg.variant]}`}>{row.statusLabel ?? (isAr ? statusCfg.ar : statusCfg.en)}</span>
                     </td>
                     <td className="px-4 py-3">
                       {row.status === 'pending' && (
