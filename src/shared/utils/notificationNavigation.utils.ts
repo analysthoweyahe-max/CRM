@@ -65,12 +65,54 @@ function isMessageNotification(notification: AppNotification): boolean {
 }
 
 function leavePath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
-  if (user?.role === 'employee')   return ROUTES.EMPLOYEE.REQUESTS;
-  if (user?.role === 'seo-member') return ROUTES.SEO_MEMBER.REQUESTS;
+  if (user?.role === 'employee')   return ROUTES.EMPLOYEE.LEAVE;
+  if (user?.role === 'seo-member') return ROUTES.SEO_MEMBER.LEAVE;
   if (user?.role === 'hr' || user?.role === 'admin' || user?.role === 'manager') {
     return ROUTES.LEAVES.LIST;
   }
   return null;
+}
+
+function employeeLeaveListPath(
+  user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined,
+): string {
+  if (user?.role === 'seo-member' || user?.section === 'seo') return ROUTES.SEO_MEMBER.LEAVE;
+  return ROUTES.EMPLOYEE.LEAVE;
+}
+
+function employeeExceptionListPath(
+  user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined,
+): string {
+  if (user?.role === 'manager') return ROUTES.PROJECT_MANAGER.ATTENDANCE_EXCEPTIONS;
+  if (user?.role === 'seo-leader') return ROUTES.SEO_LEADER.ATTENDANCE_EXCEPTIONS;
+  if (user?.role === 'seo-member' || user?.section === 'seo') {
+    return ROUTES.SEO_MEMBER.ATTENDANCE_EXCEPTIONS;
+  }
+  return ROUTES.EMPLOYEE.ATTENDANCE_EXCEPTIONS;
+}
+
+/** Backend realtime / FCM payloads use leaveRequestId; older payloads used leave_id. */
+function readLeaveRequestId(data: Record<string, unknown>): string | undefined {
+  const id = readId(
+    data.leaveRequestId,
+    data.leave_request_id,
+    data.leave_id,
+    data.leaveId,
+    data.id,
+  );
+  return id !== undefined ? String(id) : undefined;
+}
+
+/** Backend realtime / FCM payloads use exceptionRequestId. */
+function readExceptionRequestId(data: Record<string, unknown>): string | undefined {
+  const id = readId(
+    data.exceptionRequestId,
+    data.exception_request_id,
+    data.exceptionId,
+    data.exception_id,
+    data.id,
+  );
+  return id !== undefined ? String(id) : undefined;
 }
 
 function adminRequestPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
@@ -414,8 +456,27 @@ export function resolveNotificationPath(
       return resolvePmTaskPath(data, user);
 
     case 'hr_leave_submitted': {
-      const leaveId = readId(data.leave_id, data.leaveId, data.id);
-      return leaveId ? ROUTES.LEAVES.DETAIL(String(leaveId)) : ROUTES.LEAVES.LIST;
+      const leaveId = readLeaveRequestId(data);
+      return leaveId ? ROUTES.LEAVES.DETAIL(leaveId) : ROUTES.LEAVES.LIST;
+    }
+
+    case 'hr_leave_status_updated': {
+      const leaveId = readLeaveRequestId(data);
+      const base = employeeLeaveListPath(user);
+      return leaveId ? appendQuery(base, { leave: leaveId }) : base;
+    }
+
+    case 'hr_attendance_exception_submitted': {
+      const exceptionId = readExceptionRequestId(data);
+      return exceptionId
+        ? appendQuery(ROUTES.ATTENDANCE.EXCEPTIONS, { exception: exceptionId })
+        : ROUTES.ATTENDANCE.EXCEPTIONS;
+    }
+
+    case 'hr_attendance_exception_status_updated': {
+      const exceptionId = readExceptionRequestId(data);
+      const base = employeeExceptionListPath(user);
+      return exceptionId ? appendQuery(base, { exception: exceptionId }) : base;
     }
 
     default:
@@ -466,11 +527,25 @@ export function resolveNotificationPath(
   }
 
   if (isLeaveNotification(notification)) {
-    const leaveId = readId(data.leave_id, data.leaveId, data.id);
+    const leaveId = readLeaveRequestId(data);
     if (leaveId && (user?.role === 'hr' || user?.role === 'admin' || user?.role === 'manager')) {
-      return ROUTES.LEAVES.DETAIL(String(leaveId));
+      return ROUTES.LEAVES.DETAIL(leaveId);
     }
+    if (leaveId) return appendQuery(employeeLeaveListPath(user), { leave: leaveId });
     return leavePath(user);
+  }
+
+  if (/attendance.?exception|استثناء/.test(
+    `${notification.type} ${notification.title} ${notification.body}`.toLowerCase(),
+  )) {
+    const exceptionId = readExceptionRequestId(data);
+    if (user?.role === 'hr' || user?.role === 'admin') {
+      return exceptionId
+        ? appendQuery(ROUTES.ATTENDANCE.EXCEPTIONS, { exception: exceptionId })
+        : ROUTES.ATTENDANCE.EXCEPTIONS;
+    }
+    const base = employeeExceptionListPath(user);
+    return exceptionId ? appendQuery(base, { exception: exceptionId }) : base;
   }
 
   if (isAdminRequestNotification(notification)) {

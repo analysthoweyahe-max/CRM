@@ -2,7 +2,19 @@
 import { Toaster }          from 'sonner';
 import { QueryProvider }    from './QueryProvider';
 import { LanguageProvider } from './LanguageProvider';
-import { ThemeProvider }    from './ThemeProvider';
+import { ThemeProvider, useTheme } from './ThemeProvider';
+
+function ThemedToaster() {
+  const { isDark } = useTheme();
+  return (
+    <Toaster
+      position="top-center"
+      richColors
+      closeButton
+      theme={isDark ? 'dark' : 'light'}
+    />
+  );
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   return (
@@ -10,7 +22,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       <LanguageProvider>
         <ThemeProvider>
           {children}
-          <Toaster position="top-center" richColors closeButton />
+          <ThemedToaster />
         </ThemeProvider>
       </LanguageProvider>
     </QueryProvider>

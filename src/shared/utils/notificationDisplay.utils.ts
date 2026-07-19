@@ -45,7 +45,20 @@ function lookupLabel(value: unknown, preferAr = false): string {
 }
 
 export function isLeaveNotificationType(type: string): boolean {
-  return type === 'hr_leave_submitted' || type === 'leave' || /leave/i.test(type);
+  return (
+    type === 'hr_leave_submitted'
+    || type === 'hr_leave_status_updated'
+    || type === 'leave'
+    || /leave/i.test(type)
+  );
+}
+
+export function isAttendanceExceptionNotificationType(type: string): boolean {
+  return (
+    type === 'hr_attendance_exception_submitted'
+    || type === 'hr_attendance_exception_status_updated'
+    || /attendance.?exception/i.test(type)
+  );
 }
 
 function extractLeaveContext(notification: AppNotification, isAr: boolean) {

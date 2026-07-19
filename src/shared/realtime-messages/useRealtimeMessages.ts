@@ -14,7 +14,12 @@ import { parseRealtimeMessagePayload } from './refreshRealtimeMessages';
 
 /**
  * Pusher Echo listener:
- * Echo.private(`user.${actor}.${uuid}`).listen('.message.sent' | '.message.updated', handler)
+ * Echo.private(`user.${actor}.${uuid}`)
+ *   .listen('.notification.sent' | '.message.sent' | '.message.updated', handler)
+ *
+ * HR leave/exception payloads may arrive on both `.notification.sent` and
+ * `.message.sent` (compat) — callers must switch on `e.type` and must not
+ * treat HR types as chat messages.
  *
  * Tracks subscription health so open chats can fall back to fast polling.
  */
@@ -66,11 +71,13 @@ export function useRealtimeMessages(
       onMessageRef.current(parseRealtimeMessagePayload(event));
     };
 
+    channel.listen('.notification.sent', onEvent('notification.sent'));
     channel.listen('.message.sent', onEvent('message.sent'));
     channel.listen('.message.updated', onEvent('message.updated'));
 
     return () => {
       try {
+        channel.stopListening('.notification.sent');
         channel.stopListening('.message.sent');
         channel.stopListening('.message.updated');
         echo.leave(channelName);

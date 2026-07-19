@@ -21,11 +21,11 @@ const PRIORITY_BADGE: Record<string, { ar: string; en: string; variant: 'error' 
 };
 
 const PHASE_COLORS: Record<string, string> = {
-  'بحث الكلمات المفتاحية': 'bg-blue-100 text-blue-700',
-  'تحسين داخل الصفحة':      'bg-green-100 text-green-700',
-  'SEO تقني':               'bg-purple-100 text-purple-700',
-  'تحسين المحتوى':           'bg-yellow-100 text-yellow-700',
-  'التقارير':                'bg-gray-100 text-gray-600',
+  'بحث الكلمات المفتاحية': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  'تحسين داخل الصفحة':      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  'SEO تقني':               'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  'تحسين المحتوى':           'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  'التقارير':                'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
 };
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -55,7 +55,7 @@ export function SeoTaskDetailInfo({ task, isLoading, isAr, onStatusChange, canEd
   if (isLoading || !task) return <Skeleton />;
 
   const priority  = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.normal;
-  const phaseColor = task.phase ? (PHASE_COLORS[task.phase] ?? 'bg-gray-100 text-gray-600') : '';
+  const phaseColor = task.phase ? (PHASE_COLORS[task.phase] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300') : '';
   const dueDateFmt = task.dueDate ? fmtDeadline(task.dueDate, isAr) : '—';
   const startDateFmt = task.startDate ? fmtDeadline(task.startDate, isAr) : '—';
 

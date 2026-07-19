@@ -20,10 +20,26 @@ import {
   wasNotificationToasted,
 } from '@/shared/utils/notificationSeen.store';
 import { resolveNotificationPath } from '@/shared/utils/notificationNavigation.utils';
-import { getNotificationDisplayText, isLeaveNotificationType } from '@/shared/utils/notificationDisplay.utils';
+import {
+  getNotificationDisplayText,
+  isAttendanceExceptionNotificationType,
+  isLeaveNotificationType,
+} from '@/shared/utils/notificationDisplay.utils';
 import { isEmployeeLeaveStatusNotification, isHrLeaveSubmittedNotification, isPersonalAssigneeNotification } from '@/shared/utils/notificationRoleFilter.utils';
 import { playNotificationSound } from '@/shared/utils/sound.utils';
 import type { AppNotification } from '@/shared/types/notification.types';
+
+/** HR leave / attendance-exception realtime types — never append to chat. */
+const HR_ACTIVITY_TYPES = new Set([
+  'hr_leave_submitted',
+  'hr_leave_status_updated',
+  'hr_attendance_exception_submitted',
+  'hr_attendance_exception_status_updated',
+]);
+
+function isHrActivityType(type: string | undefined | null): boolean {
+  return !!type && HR_ACTIVITY_TYPES.has(type);
+}
 
 function readFcmField(data: Record<string, unknown>, key: string): string {
   const v = data[key];
@@ -84,8 +100,19 @@ export function NotificationListener() {
 
   function invalidateLeaveQueries() {
     qc.invalidateQueries({ queryKey: ['leaves'] });
+    qc.invalidateQueries({ queryKey: ['employee', 'leave'] });
+    qc.invalidateQueries({ queryKey: ['seo-member', 'leave'] });
     qc.invalidateQueries({ queryKey: ['dashboard', 'recent-leaves'] });
     qc.invalidateQueries({ queryKey: ['dashboard', 'pending-leaves'] });
+  }
+
+  function invalidateExceptionQueries() {
+    qc.invalidateQueries({ queryKey: ['attendance', 'exceptions'] });
+  }
+
+  function invalidateHrActivityQueries(type: string) {
+    if (isLeaveNotificationType(type)) invalidateLeaveQueries();
+    if (isAttendanceExceptionNotificationType(type)) invalidateExceptionQueries();
   }
 
   function showForNotification(notification: AppNotification) {
@@ -107,11 +134,9 @@ export function NotificationListener() {
 
     if (shown) playNotificationSound();
 
-    if (isLeaveNotificationType(notification.type)) {
-      invalidateLeaveQueries();
-    }
+    invalidateHrActivityQueries(notification.type);
 
-    if (isRealtimeMessageType(notification.type)) {
+    if (isRealtimeMessageType(notification.type) && !isHrActivityType(notification.type)) {
       const data = typeof notification.data === 'object' && notification.data
         ? notification.data
         : {};
@@ -125,17 +150,25 @@ export function NotificationListener() {
       ?? (isAr ? 'إشعار جديد' : 'New notification'),
     );
     const body = String(payload.body ?? '');
+    const type = String(payload.type ?? '');
     const dedupKey = realtimeDedupKey(payload, title, body);
 
     const now = Date.now();
     if (lastRealtimeRef.current?.key === dedupKey && now - lastRealtimeRef.current.at < 5_000) {
-      applyRealtimeMessage(qc, payload, user?.id);
+      if (isRealtimeMessageType(type) && !isHrActivityType(type)) {
+        applyRealtimeMessage(qc, payload, user?.id);
+      }
+      invalidateHrActivityQueries(type);
       handlePushRefresh();
       return;
     }
     lastRealtimeRef.current = { key: dedupKey, at: now };
 
-    const result = applyRealtimeMessage(qc, payload, user?.id);
+    // HR leave/exception payloads may also arrive on `.message.sent` for compat —
+    // treat them as notifications, never as chat messages.
+    const result = (isRealtimeMessageType(type) && !isHrActivityType(type))
+      ? applyRealtimeMessage(qc, payload, user?.id)
+      : { handled: false, chatOpen: false, skippedOwn: false as const };
 
     if (result.skippedOwn || result.isUpdate) {
       handlePushRefresh();
@@ -143,6 +176,7 @@ export function NotificationListener() {
     }
 
     if (wasNotificationToasted(dedupKey)) {
+      invalidateHrActivityQueries(type);
       handlePushRefresh();
       return;
     }
@@ -164,7 +198,7 @@ export function NotificationListener() {
 
     const fakeNotification: AppNotification = {
       id:        notificationId || 'realtime',
-      type:      String(payload.type || ''),
+      type,
       title,
       body,
       data:      payload as Record<string, unknown>,
@@ -175,6 +209,7 @@ export function NotificationListener() {
     if (!shouldShowForRole(fakeNotification)) {
       markNotificationToasted(notificationId);
       if (notificationId !== dedupKey) markNotificationToasted(dedupKey);
+      invalidateHrActivityQueries(type);
       handlePushRefresh();
       return;
     }
@@ -193,10 +228,7 @@ export function NotificationListener() {
 
     if (shown) playNotificationSound();
 
-    if (isLeaveNotificationType(fakeNotification.type)) {
-      invalidateLeaveQueries();
-    }
-
+    invalidateHrActivityQueries(type);
     handlePushRefresh();
   }
 
@@ -215,22 +247,26 @@ export function NotificationListener() {
       body:  String(body || ''),
     });
 
-    if (isRealtimeMessageType(realtime.type)) {
+    // Chat messages + HR activity types (leave/exception) share the same handler.
+    if (isRealtimeMessageType(realtime.type) || isHrActivityType(realtime.type)) {
       handleRealtimeEvent(realtime);
       return;
     }
 
     const notificationId = readFcmField(data, 'id');
     const dedupKey = notificationId || `${title}::${body}`;
+    const type = String(data.type || '');
 
     const now = Date.now();
     if (lastRealtimeRef.current?.key === dedupKey && now - lastRealtimeRef.current.at < 5_000) {
+      invalidateHrActivityQueries(type);
       handlePushRefresh();
       return;
     }
     lastRealtimeRef.current = { key: dedupKey, at: now };
 
     if (wasNotificationToasted(dedupKey)) {
+      invalidateHrActivityQueries(type);
       handlePushRefresh();
       return;
     }
@@ -243,7 +279,7 @@ export function NotificationListener() {
 
     const fakeNotification: AppNotification = {
       id:        notificationId || 'fcm',
-      type:      String(data.type || ''),
+      type,
       title:     String(title),
       body:      String(body || ''),
       data,
@@ -254,6 +290,7 @@ export function NotificationListener() {
     if (!shouldShowForRole(fakeNotification)) {
       markNotificationToasted(dedupKey);
       if (notificationId) markNotificationToasted(notificationId);
+      invalidateHrActivityQueries(type);
       handlePushRefresh();
       return;
     }
@@ -272,12 +309,41 @@ export function NotificationListener() {
 
     if (shown) playNotificationSound();
 
-    if (isLeaveNotificationType(fakeNotification.type)) {
-      invalidateLeaveQueries();
-    }
-
+    invalidateHrActivityQueries(type);
     handlePushRefresh();
   });
+
+  // Cold-start / background OS notification click → navigate in-app.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    const onSwMessage = (event: MessageEvent) => {
+      if (event.data?.type !== 'FCM_NOTIFICATION_CLICK') return;
+      const path = typeof event.data.path === 'string' ? event.data.path : '';
+      if (!path) return;
+
+      if (path.startsWith('/')) {
+        navigate(path);
+        return;
+      }
+
+      // Prefer resolving with auth user when SW only forwarded raw FCM data.
+      const data = (event.data.data ?? {}) as Record<string, unknown>;
+      const fake: AppNotification = {
+        id:        String(data.id ?? 'fcm-click'),
+        type:      String(data.type ?? ''),
+        title:     String(data.title ?? ''),
+        body:      String(data.body ?? ''),
+        data,
+        readAt:    null,
+        createdAt: new Date().toISOString(),
+      };
+      navigateTo(fake);
+    };
+
+    navigator.serviceWorker.addEventListener('message', onSwMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onSwMessage);
+  }, [navigate, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useRealtimeMessages((payload) => {
     handleRealtimeEvent(payload);

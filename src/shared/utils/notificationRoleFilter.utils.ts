@@ -1,17 +1,25 @@
 import type { AppNotification } from '@/shared/types/notification.types';
 import type { Role } from '@/shared/types/role.types';
 
-/** Employee-facing leave status update — must not appear for HR/admin reviewers. */
+/** Employee-facing leave/exception status updates — must not appear for HR/admin reviewers. */
 export function isEmployeeLeaveStatusNotification(notification: AppNotification): boolean {
-  if (notification.type === 'leave') return true;
+  const type = notification.type ?? '';
+  if (
+    type === 'leave'
+    || type === 'hr_leave_status_updated'
+    || type === 'hr_attendance_exception_status_updated'
+  ) {
+    return true;
+  }
 
   const haystack = `${notification.title} ${notification.body}`.toLowerCase();
-  return /إجازتك|your leave|leave status|حالة إجازتك|حالة طلب إجازتك/.test(haystack);
+  return /إجازتك|your leave|leave status|حالة إجازتك|حالة طلب إجازتك|استثناءك|your attendance exception|exception status/.test(haystack);
 }
 
-/** HR/admin reviewer alert when an employee submits a new leave request. */
+/** HR/admin reviewer alerts when an employee submits leave or an attendance exception. */
 export function isHrLeaveSubmittedNotification(notification: AppNotification): boolean {
-  return notification.type === 'hr_leave_submitted';
+  const type = notification.type ?? '';
+  return type === 'hr_leave_submitted' || type === 'hr_attendance_exception_submitted';
 }
 
 /** Personal "assigned to you" alerts — for the assignee only.
