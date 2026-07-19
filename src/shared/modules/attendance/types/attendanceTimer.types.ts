@@ -77,6 +77,7 @@ export interface AttendanceHistoryRecord {
   check_in?:       string | null;
   check_out?:      string | null;
   worked_hours?:   number | null;
+  break_minutes?:  number | null;
   day_status?:     string;
 }
 

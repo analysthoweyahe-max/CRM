@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient }     from '@tanstack/react-query
 import { campaignApi }                               from '../api/campaign.api';
 import type { SeoMessage, Mentionable }              from '../api/campaign.api';
 import { useAuth }                                   from '@/modules/auth/context/AuthContext';
-import { excludeSelfFromActors }                     from '@/shared/utils/chatNormalize.utils';
+import { excludeSelfFromActors, filterSeoProjectMentions } from '@/shared/utils/chatNormalize.utils';
 import { toApiArray }                                from '@/shared/utils/apiList.utils';
 
 export function useProjectMessages(projectId: string) {
@@ -36,7 +36,9 @@ export function useProjectMessages(projectId: string) {
     queryKey: ['seo-mentionables', projectId],
     queryFn:  () =>
       campaignApi.getMentionables(projectId)
-        .then(r => excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user)),
+        .then(r => filterSeoProjectMentions(
+          excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user),
+        )),
     staleTime: 60_000,
   });
 

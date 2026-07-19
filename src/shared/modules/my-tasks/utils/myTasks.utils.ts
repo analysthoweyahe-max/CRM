@@ -126,10 +126,18 @@ export function getTasksQueryParams(
   if (projectId && !endpoint.includes(`/${projectId}/`)) {
     params.project_id = projectId;
   }
-  // "My Tasks" page: only tasks assigned to the current user.
-  // Project Kanban uses pmTaskApi.list(..., { mine: false }) separately.
-  if (tasksRole === 'pm-employee' || tasksRole === 'project-manager') {
+  // "My Tasks" page: mine=1 (own assigned tasks) + include_partners=1
+  // (same-project teammate tasks, read-only). Project Kanban uses
+  // pmTaskApi.list(..., { mine: false }) separately.
+  if (
+    tasksRole === 'pm-employee'
+    || tasksRole === 'seo-employee'
+    || tasksRole === 'project-manager'
+  ) {
     params.mine = 1;
+  }
+  if (tasksRole === 'pm-employee' || tasksRole === 'seo-employee') {
+    params.include_partners = 1;
   }
   return params;
 }
@@ -172,6 +180,8 @@ interface RawTaskWire {
   overdueLabel?:    string | null;
   canExtend?:       boolean;
   importantLinks?:  string[];
+  isMine?:          boolean;
+  is_mine?:         boolean;
 }
 
 function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
@@ -220,6 +230,12 @@ function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
     overdueLabel:     (raw.overdueLabel ?? raw.overdue_label ?? null) as string | null,
     canExtend:        Boolean(raw.canExtend ?? raw.can_extend),
     importantLinks,
+    isMine:           raw.isMine != null || raw.is_mine != null
+      ? Boolean(raw.isMine ?? raw.is_mine)
+      : undefined,
+    is_mine:          raw.is_mine != null || raw.isMine != null
+      ? Boolean(raw.is_mine ?? raw.isMine)
+      : undefined,
   };
 }
 
@@ -285,6 +301,8 @@ function normalizeTask(raw: RawTaskWire | Record<string, unknown>): MyTask {
     overdueLabel:     wire.overdueLabel ?? null,
     canExtend:        wire.canExtend,
     importantLinks:   wire.importantLinks?.length ? wire.importantLinks : undefined,
+    isMine:           wire.isMine ?? wire.is_mine,
+    is_mine:          wire.is_mine ?? wire.isMine,
   };
 }
 
@@ -446,6 +464,55 @@ export function filterTasksForAssignee(
   return {
     columns,
     total: columns.reduce((sum, col) => sum + col.tasks.length, 0),
+  };
+}
+
+type OwnershipUser = { id?: string | null; employeeId?: string | null } | null | undefined;
+
+/** Canonical ownership flag from API: `is_mine ?? isMine ?? false`. */
+export function readTaskIsMine(task: Pick<MyTask, 'isMine' | 'is_mine'>): boolean {
+  return task.is_mine ?? task.isMine ?? false;
+}
+
+/**
+ * Prefer explicit API flag; if omitted, fall back to assignee uuid vs signed-in
+ * employee. Used when stamping boards after list normalize.
+ */
+export function resolveTaskIsMine(task: MyTask, user: OwnershipUser): boolean {
+  if (task.is_mine != null || task.isMine != null) {
+    return readTaskIsMine(task);
+  }
+  if (!task.assignee?.id || !user) return false;
+  const sid = String(task.assignee.id);
+  if (user.id && sid === String(user.id)) return true;
+  if (user.employeeId && sid === String(user.employeeId)) return true;
+  return false;
+}
+
+/** Own tasks only — partner cards must not open detail or call mutations. */
+export function isEditableMyTask(task: MyTask): boolean {
+  return readTaskIsMine(task);
+}
+
+/** Stamp `isMine` / `is_mine` on every task so the board can lock partner cards. */
+export function annotateGroupedTasksOwnership(
+  data: GroupedTasksData,
+  user: OwnershipUser,
+): GroupedTasksData {
+  const stamp = (task: MyTask): MyTask => {
+    const isMine = resolveTaskIsMine(task, user);
+    return { ...task, isMine, is_mine: isMine };
+  };
+  return {
+    ...data,
+    columns: data.columns.map((col) => ({
+      ...col,
+      tasks: col.tasks.map(stamp),
+    })),
+    phases: data.phases?.map((group) => ({
+      ...group,
+      tasks: group.tasks.map(stamp),
+    })),
   };
 }
 

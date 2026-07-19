@@ -125,6 +125,8 @@ export interface Mentionable {
   id:    string;
   name:  string;
   type?: string;
+  role?: string | null;
+  roles?: Array<string | { name?: string; slug?: string; role?: string }>;
 }
 
 export interface SeoComment {
@@ -213,6 +215,8 @@ export interface SeoProjectSettings {
   isDraft?:            boolean;
   campaignType:        string;
   campaignTypeLabel:   string;
+  /** Numeric project type id when backend provides it (for template filtering). */
+  projectTypeId?:      number | null;
   githubLink?:              string | null;
   driveLink?:               string | null;
   contractDurationMonths?:  number | null;

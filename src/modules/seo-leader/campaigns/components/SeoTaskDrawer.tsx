@@ -42,11 +42,17 @@ interface Props {
   projectId: string;
   onClose:   () => void;
   isAr:      boolean;
+  /** Open a specific drawer tab (e.g. comments from a mention notification). */
+  initialTab?: SeoDrawerTab;
+  /** Scroll/highlight this comment once comments load. */
+  highlightCommentId?: string | null;
 }
 
 /* ── Component ───────────────────────────────────────────────────────── */
-export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
-  const d = useSeoTaskDrawer(projectId, taskId, isAr);
+export function SeoTaskDrawer({
+  taskId, projectId, onClose, isAr, initialTab, highlightCommentId,
+}: Props) {
+  const d = useSeoTaskDrawer(projectId, taskId, isAr, { initialTab });
   const navigate = useNavigate();
   const { mutateAsync: createConversation } = useCreateSeoConversation(isAr);
   const canEdit = usePermission('edit-seo-tasks');
@@ -230,6 +236,7 @@ export function SeoTaskDrawer({ taskId, projectId, onClose, isAr }: Props) {
                 isAr={isAr}
                 getMentionInfo={getMentionInfo}
                 onMentionStartChat={handleMentionStartChat}
+                highlightCommentId={highlightCommentId}
               />
             )}
 

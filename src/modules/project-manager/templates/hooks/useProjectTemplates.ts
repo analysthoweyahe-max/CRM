@@ -11,18 +11,18 @@ function listKey(module: TemplateModule) {
   return [module, 'project-templates'] as const;
 }
 
-function allKey(module: TemplateModule) {
-  return [module, 'project-templates', 'all'] as const;
+function allKey(module: TemplateModule, projectTypeId?: number | null) {
+  return [module, 'project-templates', 'all', projectTypeId ?? null] as const;
 }
 
 function invalidateAll(qc: ReturnType<typeof useQueryClient>, module: TemplateModule) {
   qc.invalidateQueries({ queryKey: listKey(module) });
-  qc.invalidateQueries({ queryKey: allKey(module) });
+  qc.invalidateQueries({ queryKey: [module, 'project-templates', 'all'] });
 }
 
 export function useTemplateList(
   module: TemplateModule,
-  params: { search?: string; page?: number; per_page?: number },
+  params: { search?: string; page?: number; per_page?: number; project_type_id?: number },
 ) {
   const api = projectTemplatesApi(module);
   return useQuery({
@@ -36,11 +36,24 @@ export function useTemplateList(
   });
 }
 
-export function useAllTemplates(module: TemplateModule = 'pm') {
+/**
+ * Full template list for dropdowns.
+ * Pass `projectTypeId` to filter via `?project_type_id=` (globals + matching types).
+ */
+export function useAllTemplates(
+  module: TemplateModule = 'pm',
+  projectTypeId?: number | null,
+) {
   const api = projectTemplatesApi(module);
+  const typeId = projectTypeId != null && !Number.isNaN(Number(projectTypeId))
+    ? Number(projectTypeId)
+    : undefined;
+
   return useQuery({
-    queryKey: allKey(module),
-    queryFn:  () => api.all().then((r) => toApiArray<PmProjectTemplate>(r.data.data)),
+    queryKey: allKey(module, typeId ?? null),
+    queryFn:  () => api.all(
+      typeId != null ? { project_type_id: typeId } : {},
+    ).then((r) => toApiArray<PmProjectTemplate>(r.data.data)),
     staleTime: 5 * 60 * 1000,
   });
 }

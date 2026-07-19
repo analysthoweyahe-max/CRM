@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, CheckSquare } from 'lucide-react';
+import { toast } from 'sonner';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button } from '@/shared/components/ui/Button';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
 import { EmptyState } from '@/shared/components/feedback/EmptyState';
-import { CheckSquare } from 'lucide-react';
 import { AddTaskModal } from '@/modules/employee/tasks/components/AddTaskModal';
 import { AddSelfSeoTaskModal } from '@/modules/seo-member/tasks/components/AddSelfSeoTaskModal';
 import { useMyTasksPage } from '../hooks/useMyTasksPage';
 import { MyTasksKanbanBoard } from '../components/MyTasksKanbanBoard';
 import { MyTasksProjectSection } from '../components/MyTasksProjectSection';
 import { MyTasksProjectFilter } from '../components/MyTasksProjectFilter';
-import type { MyTask } from '../types/myTasks.types';
+import type { MyTask, TaskPhase } from '../types/myTasks.types';
+import { isEditableMyTask } from '../utils/myTasks.utils';
 
 export function MyTasksPage() {
   const navigate = useNavigate();
@@ -40,9 +41,35 @@ export function MyTasksPage() {
 
   function handleOpen(task: MyTask) {
     if (!config || !tasksRole) return;
+    if (!isEditableMyTask(task)) {
+      toast.info(
+        isAr
+          ? 'يمكنك فقط عرض ملخص مهمة الشريك من اللوحة'
+          : 'You can only view a summary of a partner task on the board',
+      );
+      return;
+    }
     const pid = task.project?.id ?? (projectId || undefined);
     if (!pid) return;
     navigate(config.taskDetailPath(pid, getTaskId(task)));
+  }
+
+  async function handleStatusChange(task: MyTask, toStatus: string, pid: number | string) {
+    if (!tasksRole) return;
+    if (!isEditableMyTask(task)) {
+      toast.info(isAr ? 'لا يمكن تحديث مهام الشركاء' : 'Partner tasks cannot be updated');
+      return;
+    }
+    await updateStatus(pid, getTaskId(task), toStatus);
+  }
+
+  async function handlePhaseChange(task: MyTask, toPhase: TaskPhase, pid: number | string) {
+    if (!tasksRole) return;
+    if (!isEditableMyTask(task)) {
+      toast.info(isAr ? 'لا يمكن تحديث مهام الشركاء' : 'Partner tasks cannot be updated');
+      return;
+    }
+    await updatePhase(pid, getTaskId(task), toPhase);
   }
 
   if (!tasksRole || !config) {
@@ -115,12 +142,10 @@ export function MyTasksPage() {
               canDrag={config.canDragStatus}
               onOpen={(task) => handleOpen({ ...task, project: task.project ?? project })}
               onStatusChange={async (task, toStatus) => {
-                if (!tasksRole) return;
-                await updateStatus(project.id, getTaskId(task), toStatus);
+                await handleStatusChange(task, toStatus, project.id);
               }}
               onPhaseChange={async (task, toPhase) => {
-                if (!tasksRole) return;
-                await updatePhase(project.id, getTaskId(task), toPhase);
+                await handlePhaseChange(task, toPhase, project.id);
               }}
             />
           ))}
@@ -134,8 +159,8 @@ export function MyTasksPage() {
           onOpen={handleOpen}
           onStatusChange={async (task, toStatus) => {
             const pid = task.project?.id ?? (projectId || undefined);
-            if (!pid || !tasksRole) return;
-            await updateStatus(pid, getTaskId(task), toStatus);
+            if (!pid) return;
+            await handleStatusChange(task, toStatus, pid);
           }}
         />
       )}

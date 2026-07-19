@@ -56,7 +56,10 @@ function isAdminRequestNotification(notification: AppNotification): boolean {
 }
 
 function isMessageNotification(notification: AppNotification): boolean {
-  if (notification.type === 'PmMentionNotification') return true;
+  if (notification.type === 'PmMentionNotification') return false;
+  if (notification.type === 'seo_mention' || notification.type === 'seo_direct_mention' || notification.type === 'pm_mention') {
+    return false;
+  }
   const haystack = `${notification.type} ${notification.title} ${notification.body}`.toLowerCase();
   return /message|mention|رسال|منشن/.test(haystack);
 }
@@ -221,6 +224,113 @@ function resolveSeoProjectPath(
   return ROUTES.SEO_MEMBER.DETAILS(pid);
 }
 
+function appendQuery(path: string, params: Record<string, string | number | undefined | null>): string {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === '') continue;
+    qs.set(key, String(value));
+  }
+  const query = qs.toString();
+  return query ? `${path}?${query}` : path;
+}
+
+function isTaskCommentContext(contextType: string): boolean {
+  return /task.?comment|seotaskcomment|pmtaskcomment/i.test(contextType);
+}
+
+function isProjectMessageContext(contextType: string): boolean {
+  return /project.?message|seoprojectmessage|seomessage|pmprojectmessage/i.test(contextType)
+    && !isTaskCommentContext(contextType);
+}
+
+function isClientUpdateContext(contextType: string): boolean {
+  return /client.?update/i.test(contextType);
+}
+
+/** seo_mention → project (and comment/message context when provided). */
+function resolveSeoMentionPath(
+  data: Record<string, unknown>,
+  user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined,
+): string | null {
+  const projectId = readId(data.projectId, data.project_id, data.projectUuid, data.project_uuid);
+  const contextType = String(data.contextType ?? data.context_type ?? '');
+  const contextId = readId(data.contextId, data.context_id);
+  const taskId = readId(data.taskId, data.task_id, data.taskUuid, data.task_uuid);
+
+  if (!projectId) return resolveSeoProjectPath(data, user);
+
+  const pid = String(projectId);
+
+  if (isTaskCommentContext(contextType)) {
+    if (taskId) {
+      if (user?.role === 'seo-leader') {
+        return appendQuery(ROUTES.SEO_LEADER.DETAILS(pid), {
+          task: taskId,
+          tab: 'comments',
+          comment: contextId,
+        });
+      }
+      return appendQuery(ROUTES.SEO_MEMBER.TASK_DETAIL(pid, String(taskId)), {
+        tab: 'comments',
+        comment: contextId,
+      });
+    }
+
+    // No taskId — land on the project; page will resolve comment → task.
+    if (user?.role === 'seo-leader') {
+      return appendQuery(ROUTES.SEO_LEADER.DETAILS(pid), {
+        contextType,
+        comment: contextId,
+      });
+    }
+    return appendQuery(ROUTES.SEO_MEMBER.DETAILS(pid), {
+      contextType,
+      comment: contextId,
+    });
+  }
+
+  if (isProjectMessageContext(contextType)) {
+    if (user?.role === 'seo-leader') {
+      return appendQuery(ROUTES.SEO_LEADER.DETAILS(pid), {
+        tab: 'messages',
+        message: contextId,
+      });
+    }
+    return appendQuery(ROUTES.SEO_MEMBER.DETAILS(pid), {
+      tab: 'messages',
+      message: contextId,
+    });
+  }
+
+  if (isClientUpdateContext(contextType)) {
+    if (user?.role === 'seo-leader') {
+      return appendQuery(ROUTES.SEO_LEADER.DETAILS(pid), {
+        tab: 'client-updates',
+        message: contextId,
+      });
+    }
+    return appendQuery(ROUTES.SEO_MEMBER.DETAILS(pid), {
+      tab: 'messages',
+      message: contextId,
+    });
+  }
+
+  return resolveSeoProjectPath(data, user);
+}
+
+function resolveSeoDirectMentionPath(
+  data: Record<string, unknown>,
+  user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined,
+): string {
+  const convId = readId(data.conversation_id, data.conversationId);
+  const messageId = readId(data.message_id, data.messageId);
+  const base = resolveMessagesPath(user);
+  return appendQuery(base, {
+    conversation: convId,
+    message: messageId,
+  });
+}
+
 /** Resolve in-app path when a notification is clicked. */
 export function resolveNotificationPath(
   notification: AppNotification,
@@ -234,11 +344,19 @@ export function resolveNotificationPath(
       return null;
 
     case 'seo_task_assigned':
+    case 'seo_task_created':
     case 'seo_task_status_changed':
       return resolveSeoTaskPath(data, user);
 
     case 'seo_mention':
-      return resolveMessagesPath(user);
+      return resolveSeoMentionPath(data, user);
+
+    case 'seo_direct_mention':
+      return resolveSeoDirectMentionPath(data, user);
+
+    case 'pm_mention':
+    case 'PmMentionNotification':
+      return resolvePmProjectPath(data, user);
 
     case 'pm_project_team_assigned':
     case 'pm_project_manager_assigned':

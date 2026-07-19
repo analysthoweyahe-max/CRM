@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import { useAuth }     from '@/modules/auth/context/AuthContext';
 import { ROUTES }      from '@/app/router/routes';
 import { PageHeader }  from '@/shared/components/ui/PageHeader';
 import { Button }      from '@/shared/components/ui/Button';
+import { Combobox }    from '@/shared/components/form/Combobox';
 import { SearchInput } from '@/shared/components/form/SearchInput';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { matchesSearch } from '@/shared/utils/search.utils';
@@ -21,17 +22,22 @@ import { employeeApi } from '../api/employee.api';
 
 const PAGE_SIZE = 8;
 const EMPLOYEES_KEY = ['employees', 'all'];
+const STATUS_FILTERS = new Set(['active', 'inactive', 'pending']);
 
 export function EmployeeListPage() {
   const { lang } = useLang();
   const isAr      = lang === 'ar';
   const navigate  = useNavigate();
   const qc        = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user }  = useAuth();
   const isAdmin   = user?.role === 'admin';
   const canCreate = usePermission('create-employee');
   const canEdit   = usePermission('edit-employee');
   const canDelete = usePermission('delete-employee');
+
+  const statusFromUrl = searchParams.get('status') ?? '';
+  const status = STATUS_FILTERS.has(statusFromUrl) ? statusFromUrl : '';
 
   const [search, setSearch] = useState('');
   const [page,   setPage]   = useState(1);       // 1-indexed
@@ -39,17 +45,23 @@ export function EmployeeListPage() {
   const [selected,       setSelected]       = useState<Set<string>>(new Set());
   const [showBulkDelete, setShowBulkDelete] = useState(false);
 
+  useEffect(() => {
+    setPage(1);
+  }, [status]);
+
   const { data: allEmployees = [], isLoading } = useEmployeeList();
 
   const filtered = useMemo(() => {
-    const list = search.trim()
-      ? allEmployees.filter(e => matchesSearch([e.name, e.email, e.phone, e.employeeNumber], search))
-      : allEmployees;
+    const list = allEmployees.filter(e => {
+      if (status && e.status !== status) return false;
+      if (search.trim() && !matchesSearch([e.name, e.email, e.phone, e.employeeNumber], search)) return false;
+      return true;
+    });
     return [...list].sort((a, b) => {
       if (a.createdAt && b.createdAt) return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       return Number(b.id) - Number(a.id);
     });
-  }, [allEmployees, search]);
+  }, [allEmployees, search, status]);
 
   const total     = filtered.length;
   const lastPage  = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -57,9 +69,26 @@ export function EmployeeListPage() {
   const lastRow   = Math.min(page * PAGE_SIZE, total);
   const employees = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  const statusItems = [
+    { id: '',         label: isAr ? 'كل الحالات' : 'All Statuses' },
+    { id: 'active',   label: isAr ? 'نشط'  : 'Active'   },
+    { id: 'inactive', label: isAr ? 'معطل' : 'Inactive' },
+    { id: 'pending',  label: isAr ? 'معلق' : 'Pending'  },
+  ];
+
   function handleSearch(v: string) {
     setSearch(v);
     setPage(1);
+  }
+
+  function handleStatus(v: string) {
+    setPage(1);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (v) next.set('status', v);
+      else next.delete('status');
+      return next;
+    }, { replace: true });
   }
 
   function toggleSelect(id: string) {
@@ -113,8 +142,8 @@ export function EmployeeListPage() {
         }
       />
 
-      {/* Search */}
-      <div className="flex gap-3">
+      {/* Search + status filter */}
+      <div className="flex flex-wrap items-center gap-3">
         <SearchInput
           value={search}
           onChange={handleSearch}
@@ -122,6 +151,15 @@ export function EmployeeListPage() {
           isAr={isAr}
           className="flex-1 max-w-sm"
         />
+        <div className="w-full sm:w-36">
+          <Combobox
+            items={statusItems}
+            value={status}
+            onChange={handleStatus}
+            searchPlaceholder={isAr ? 'ابحث عن حالة...' : 'Search status...'}
+            noResultsText={isAr ? 'لا نتائج' : 'No results'}
+          />
+        </div>
       </div>
 
       {canDelete && selected.size > 0 && (

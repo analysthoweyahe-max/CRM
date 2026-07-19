@@ -108,7 +108,10 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
 
   const isPaused = Boolean(today?.isPaused || today?.workStatus === 'on_break');
 
-  // Smooth local tick while working; freeze while paused
+  // Smooth local tick while working; freeze while paused.
+  // Wall-clock based — browsers throttle setInterval in background tabs, so we
+  // also re-tick on visibilitychange so the display catches up immediately
+  // instead of appearing frozen after leaving the tab.
   useEffect(() => {
     if (!isActiveWorkDay(today ?? null)) return;
     if (isPaused) {
@@ -125,7 +128,16 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
 
     tick();
     const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
   }, [today, today?.workingHours, today?.isWorking, isPaused, today?.workStatus]);
 
   // Live break elapsed while paused
@@ -137,7 +149,16 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
     const tick = () => setBreakElapsed(breakElapsedSeconds(today?.activeBreakStartedAt ?? null));
     tick();
     const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
   }, [isPaused, today?.activeBreakStartedAt]);
 
   function runAction(

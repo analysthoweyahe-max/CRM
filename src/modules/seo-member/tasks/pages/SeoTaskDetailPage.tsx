@@ -1,12 +1,16 @@
-import { useState }          from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery }           from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Lock, CheckSquare }  from 'lucide-react';
 import { useLang }            from '@/app/providers/LanguageProvider';
 import { useAuth }            from '@/modules/auth/context/AuthContext';
 import { usePermission }      from '@/shared/hooks/usePermission';
 import { ROUTES }             from '@/app/router/routes';
 import { toApiArray }         from '@/shared/utils/apiList.utils';
-import { excludeSelfFromActors } from '@/shared/utils/chatNormalize.utils';
+import { extractApiStatus }   from '@/shared/utils/error.utils';
+import { EmptyState }         from '@/shared/components/feedback/EmptyState';
+import { Button }             from '@/shared/components/ui/Button';
+import { excludeSelfFromActors, filterSeoProjectMentions } from '@/shared/utils/chatNormalize.utils';
 import { TaskDetailTabs }     from '@/modules/employee/tasks/components/TaskDetailTabs';
 import { TaskDetailTimeTracker }  from '@/modules/employee/tasks/components/TaskDetailTimeTracker';
 import { TaskDetailComments }     from '@/modules/employee/tasks/components/TaskDetailComments';
@@ -36,25 +40,54 @@ import { SeoMemberEditTaskModal } from '../components/SeoMemberEditTaskModal';
 export function SeoTaskDetailPage() {
   const { projectId, taskId } = useParams<{ projectId: string; taskId: string }>();
   const navigate    = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { lang }    = useLang();
   const isAr        = lang === 'ar';
   const { user }    = useAuth();
 
-  const [activeTab, setActiveTab] = useState<TabId>('time');
+  const tabParam = searchParams.get('tab');
+  const commentParam = searchParams.get('comment') ?? searchParams.get('commentId');
+  const initialTab: TabId =
+    tabParam === 'comments' || tabParam === 'attachments' || tabParam === 'info' || tabParam === 'time'
+      ? tabParam
+      : (commentParam ? 'comments' : 'time');
+
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  const [highlightCommentId, setHighlightCommentId] = useState<string | null>(commentParam);
   const [editOpen, setEditOpen]   = useState(false);
+
+  useEffect(() => {
+    if (tabParam === 'comments' || commentParam) {
+      setActiveTab('comments');
+      if (commentParam) setHighlightCommentId(commentParam);
+    }
+  }, [tabParam, commentParam]);
+
+  useEffect(() => {
+    if (!commentParam) return;
+    // Clear deep-link query once consumed so refresh doesn't re-highlight.
+    setSearchParams({}, { replace: true });
+  }, [commentParam, setSearchParams]);
 
   const canEdit = usePermission('edit-seo-tasks');
 
-  const { data: detailRes, isLoading } = useSeoTaskDetail(projectId, taskId);
+  const detailQuery = useSeoTaskDetail(projectId, taskId);
+  const detailRes = detailQuery.data;
+  const isForbidden = extractApiStatus(detailQuery.error) === 403;
+  const isError = detailQuery.isError && !isForbidden;
   const detail = detailRes?.task;
   const tabs = detailRes?.tabs;
+  const detailReady = !!projectId && !!taskId && !isForbidden;
 
-  const { data: comments = [], isLoading: commentsLoading } = useSeoTaskComments(projectId, taskId);
+  const { data: comments = [], isLoading: commentsLoading } = useSeoTaskComments(
+    detailReady ? projectId : undefined,
+    detailReady ? taskId : undefined,
+  );
   const { mutateAsync: addComment } = useAddSeoTaskComment(projectId, taskId, isAr);
   const { mutateAsync: updateComment } = useUpdateSeoTaskComment(projectId, taskId, isAr);
   const { data: timeLogs, isLoading: sessionsLoading } = useSeoTaskSessions(
-    projectId,
-    taskId,
+    detailReady ? projectId : undefined,
+    detailReady ? taskId : undefined,
     detail?.allocatedHours ?? 0,
   );
   const sessions = timeLogs?.sessions ?? [];
@@ -67,11 +100,17 @@ export function SeoTaskDetailPage() {
   const { data: mentionables = [] } = useQuery({
     queryKey: ['seo-member', 'task-mentionables', projectId],
     queryFn:  () => campaignApi.getMentionables(projectId!)
-      .then(r => excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user)),
-    enabled:  !!projectId,
+      .then(r => filterSeoProjectMentions(
+        excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user),
+      )),
+    enabled:  !!projectId && !isForbidden,
     staleTime: 60_000,
   });
   const { mutateAsync: createConversation } = useCreateSeoConversation(isAr);
+
+  function goBack() {
+    navigate(ROUTES.SEO_MEMBER.TASKS);
+  }
 
   function getMentionInfo(ref: MentionRef): ResolvedMention | undefined {
     const m = mentionables.find(x => x.id === ref.id && (x.type ?? 'employee') === ref.type);
@@ -86,6 +125,44 @@ export function SeoTaskDetailPage() {
       /* toast handled in hook */
     }
   }
+
+  if (isForbidden) {
+    return (
+      <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
+        <EmptyState
+          icon={<Lock size={26} className="text-[#709028] dark:text-[#A0CD39]" />}
+          title={isAr ? 'مهمة شريك — للعرض فقط' : 'Partner task — view only'}
+          description={isAr
+            ? 'يمكنك رؤية ملخص مهام زملائك في اللوحة فقط. لا يمكن فتح التفاصيل أو تعديل مهام الشركاء.'
+            : 'You can see a summary of teammates’ tasks on the board only. Partner task details and edits are not available.'}
+          action={
+            <Button variant="secondary" onClick={goBack}>
+              {isAr ? 'العودة إلى مهامي' : 'Back to My Tasks'}
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
+        <EmptyState
+          icon={<CheckSquare size={26} className="text-[#709028] dark:text-[#A0CD39]" />}
+          title={isAr ? 'تعذر تحميل المهمة' : 'Failed to load task'}
+          description={isAr ? 'حدث خطأ أثناء جلب تفاصيل المهمة. حاول مرة أخرى.' : 'An error occurred while loading this task. Please try again.'}
+          action={
+            <Button variant="secondary" onClick={goBack}>
+              {isAr ? 'العودة إلى مهامي' : 'Back to My Tasks'}
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  const isLoading = detailQuery.isLoading;
 
   const taskDetailAdapter: TaskDetail | undefined = detail
     ? {
@@ -121,7 +198,7 @@ export function SeoTaskDetailPage() {
         task={detail}
         isLoading={isLoading}
         isAr={isAr}
-        onBack={() => navigate(ROUTES.SEO_MEMBER.TASKS)}
+        onBack={goBack}
         canEdit={canEdit}
         onEdit={() => setEditOpen(true)}
       />
@@ -179,6 +256,7 @@ export function SeoTaskDetailPage() {
               }))}
               getMentionInfo={getMentionInfo}
               onMentionStartChat={handleMentionStartChat}
+              highlightCommentId={highlightCommentId}
             />
           )}
         </div>

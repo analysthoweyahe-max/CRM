@@ -1,4 +1,5 @@
 import type { Role } from '@/shared/types/role.types';
+import { timeToMinutes } from '@/shared/utils/attendanceWindow.utils';
 import { utcClockToLocal } from '@/shared/utils/date.utils';
 import type {
   AttendanceScope,
@@ -180,6 +181,26 @@ export function formatWorkingHours(hours: number | null | undefined): string {
 export function formatBreakMinutes(minutes: number, isAr: boolean): string {
   if (minutes <= 0) return isAr ? '0 د' : '0m';
   return isAr ? `${minutes} د` : `${minutes}m`;
+}
+
+/**
+ * Break duration in minutes when the API omits breakMinutes:
+ * (check-out − check-in) − workingHours.
+ * Returns null when clocks / hours are incomplete.
+ */
+export function calcBreakMinutes(
+  checkIn: string | null | undefined,
+  checkOut: string | null | undefined,
+  workingHours: number | null | undefined,
+): number | null {
+  const inMin = timeToMinutes(checkIn);
+  const outMin = timeToMinutes(checkOut);
+  if (inMin == null || outMin == null || workingHours == null || Number.isNaN(workingHours)) {
+    return null;
+  }
+  let span = outMin - inMin;
+  if (span < 0) span += 24 * 60; // overnight shift
+  return Math.max(0, Math.round(span - workingHours * 60));
 }
 
 /** Bare UTC "HH:MM:SS" → local 12h display */

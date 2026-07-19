@@ -27,10 +27,10 @@ interface Props {
 }
 
 const AUDIENCE_OPTIONS: { value: InstructionAudienceType; ar: string; en: string }[] = [
-  { value: 'all', ar: 'كل الموظفين', en: 'All Employees' },
+  { value: 'all', ar: 'الجميع', en: 'Everyone' },
   { value: 'department', ar: 'قسم معين', en: 'A Department' },
   { value: 'employee', ar: 'موظف معين', en: 'An Employee' },
-  { value: 'managers', ar: 'المديرين', en: 'Managers' },
+  { value: 'managers', ar: 'المدراء', en: 'Managers' },
 ];
 
 export function SendInstructionForm({
@@ -66,7 +66,7 @@ export function SendInstructionForm({
       </FormField>
 
       <FormField label={isAr ? 'الجهة المستهدفة' : 'Audience'} required>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {AUDIENCE_OPTIONS.map((opt) => (
             <button
               key={opt.value}

@@ -88,9 +88,14 @@ interface ChatProps {
   onLeftGroup: () => void;
   onOpenSidebar?: () => void;
   onMentionStartChat: (ref: MentionRef) => void;
+  focusMessageId?: string | null;
+  onFocusMessageConsumed?: () => void;
 }
 
-function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftGroup, onOpenSidebar, onMentionStartChat }: ChatProps) {
+function SeoMemberChatWindow({
+  conversation, isAr, onConversationUpdate, onLeftGroup, onOpenSidebar, onMentionStartChat,
+  focusMessageId, onFocusMessageConsumed,
+}: ChatProps) {
   const { user }  = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
@@ -143,8 +148,20 @@ function SeoMemberChatWindow({ conversation, isAr, onConversationUpdate, onLeftG
   }, [conversation.id]);
 
   useEffect(() => {
+    if (focusMessageId) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, focusMessageId]);
+
+  useEffect(() => {
+    if (!focusMessageId || messages.length === 0) return;
+    const t = window.setTimeout(() => {
+      scrollToMessage(focusMessageId);
+      onFocusMessageConsumed?.();
+    }, 120);
+    return () => window.clearTimeout(t);
+    // scrollToMessage is stable enough for this mount; avoid depending on its identity
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusMessageId, messages]);
 
   useEffect(() => {
     setShowMembers(false);
@@ -731,6 +748,8 @@ export function SeoMemberMessagesPage() {
   const { mutateAsync: createConversation, isPending: creatingChat } = useCreateSeoConversation(isAr);
 
   const deepLinkId = searchParams.get('conversation');
+  const deepLinkMessageId = searchParams.get('message');
+  const [focusMessageId, setFocusMessageId] = useState<string | null>(null);
   const { data: deepLinkConv } = useSeoConversation(
     deepLinkId && !activeConv ? deepLinkId : null,
     !!deepLinkId && !activeConv,
@@ -739,8 +758,9 @@ export function SeoMemberMessagesPage() {
   useEffect(() => {
     if (!deepLinkConv) return;
     setActiveConv(deepLinkConv);
+    if (deepLinkMessageId) setFocusMessageId(deepLinkMessageId);
     setSearchParams({}, { replace: true });
-  }, [deepLinkConv, setSearchParams]);
+  }, [deepLinkConv, deepLinkMessageId, setSearchParams]);
 
   useEffect(() => {
     if (!activeConv) return;
@@ -786,6 +806,8 @@ export function SeoMemberMessagesPage() {
             onLeftGroup={() => setActiveConv(null)}
             onOpenSidebar={() => setSidebarOpen(true)}
             onMentionStartChat={handleMentionStartChat}
+            focusMessageId={focusMessageId}
+            onFocusMessageConsumed={() => setFocusMessageId(null)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-400 select-none">

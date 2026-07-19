@@ -22,7 +22,7 @@ import { assignableRoles }    from '../utils/role.utils';
 import { getRoleNameLabel } from '../types/adminRole.types';
 import {
   HR_CREATABLE_MANAGER_ROLES,
-  MANAGER_STATUS_OPTIONS,
+  getManagerStatusLabel,
   type CreateAdminPayload,
 } from '../types/adminManager.types';
 
@@ -36,6 +36,7 @@ export function AdminManagersPage() {
   const {
     employees: managers, isLoading, canList, total, pageSize, page, setPage, pageCount,
     search, setSearch, statusFilter, setStatusFilter, roleFilter, setRoleFilter,
+    statusOptions, roleOptions,
   } = useAdminManagers();
 
   const { mutate: createAdmin, isPending: creating } = useCreateAdmin();
@@ -47,15 +48,12 @@ export function AdminManagersPage() {
 
   const statusItems = [
     { id: '', label: isAr ? 'كل الحالات' : 'All statuses' },
-    ...MANAGER_STATUS_OPTIONS.map(o => ({ id: o.id, label: isAr ? o.labelAr : o.labelEn })),
+    ...statusOptions.map((id) => ({ id, label: getManagerStatusLabel(id, isAr) })),
   ];
 
   const roleItems = [
     { id: '', label: isAr ? 'كل الأدوار' : 'All roles' },
-    ...assignableRoles(allRoles).map((r) => ({
-      id: r.name,
-      label: getRoleNameLabel(r.name, isAr),
-    })),
+    ...roleOptions.map((id) => ({ id, label: getRoleNameLabel(id, isAr) })),
   ];
 
   function submitManager(payload: CreateAdminPayload) {

@@ -53,6 +53,15 @@ export interface MyTask {
   overdueLabel?:    string | null;
   canExtend?:       boolean;
   importantLinks?:  string[];
+  /**
+   * True when the current user is an assignee (own task).
+   * Partner tasks on the same project are listed with `isMine` / `is_mine: false` —
+   * they are view-only on the board (no detail, update, or drag).
+   * Prefer reading via `readTaskIsMine()` (`is_mine ?? isMine ?? false`).
+   */
+  isMine?:          boolean;
+  /** Wire alias — prefer normalizing into `isMine`. */
+  is_mine?:         boolean;
 }
 
 export interface MyTaskColumn {

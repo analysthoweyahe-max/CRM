@@ -1,6 +1,7 @@
 import { Calendar, MessageSquare, Paperclip } from 'lucide-react';
+import { toast } from 'sonner';
 import type { MyTask } from '../types/myTasks.types';
-import { isTaskOverdue, PRIORITY_BADGE } from '../utils/myTasks.utils';
+import { isEditableMyTask, isTaskOverdue, PRIORITY_BADGE } from '../utils/myTasks.utils';
 import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 
 interface Props {
@@ -14,21 +15,44 @@ export function MyTaskCard({ task, isAr, showProjectName, onOpen }: Props) {
   const overdue  = isTaskOverdue(task);
   const prioCls  = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.normal;
   const assignee = task.assignee;
+  const isMine   = isEditableMyTask(task);
+
+  function handleClick() {
+    if (!isMine) {
+      toast.info(
+        isAr
+          ? 'يمكنك فقط عرض ملخص مهمة الشريك من اللوحة'
+          : 'You can only view a summary of a partner task on the board',
+      );
+      return;
+    }
+    onOpen(task);
+  }
 
   return (
     <button
       type="button"
-      onClick={() => onOpen(task)}
-      className="w-full text-start bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm
-                 border border-gray-100 dark:border-gray-700/60
-                 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600
-                 transition-all duration-150"
+      onClick={handleClick}
+      className={[
+        'w-full text-start rounded-xl p-3.5 shadow-sm border transition-all duration-150',
+        isMine
+          ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/60 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600'
+          : 'bg-gray-50 dark:bg-gray-900/50 border-dashed border-gray-200 dark:border-gray-700 cursor-default opacity-90',
+      ].join(' ')}
     >
       <div className="flex items-center justify-between gap-2 mb-2">
         <span className="text-[11px] text-gray-400 font-mono">#{task.taskNumber}</span>
-        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${prioCls}`}>
-          {task.priorityLabel}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {!isMine && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full
+                             bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              {isAr ? 'شريك' : 'Partner'}
+            </span>
+          )}
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${prioCls}`}>
+            {task.priorityLabel}
+          </span>
+        </div>
       </div>
 
       <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1 leading-snug">

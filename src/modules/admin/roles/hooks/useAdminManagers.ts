@@ -72,9 +72,27 @@ export function useAdminManagers() {
     enabled: isSuperAdmin,
   });
 
+  // Unfiltered list so status/role Combobox options don't collapse after filtering.
+  const { data: optionsData } = useQuery({
+    queryKey: ['admin', 'managers', 'filter-options'],
+    queryFn: () => adminApi.list({ per_page: 200, sort: '-created_at' }).then(r => r.data.data),
+    enabled: isSuperAdmin,
+    staleTime: 60_000,
+  });
+
   const managers = useMemo(
     () => (data?.data ?? []).map((m) => toManagerVM(m, isAr)),
     [data, isAr],
+  );
+
+  const statusOptions = useMemo(
+    () => [...new Set((optionsData?.data ?? []).flatMap((m) => (m.status ? [m.status] : [])))].filter(Boolean),
+    [optionsData],
+  );
+
+  const roleOptions = useMemo(
+    () => [...new Set((optionsData?.data ?? []).flatMap((m) => m.roles ?? []))].filter(Boolean),
+    [optionsData],
   );
 
   function setSearch(v: string) { setSearchRaw(v); setPage(1); }
@@ -96,5 +114,7 @@ export function useAdminManagers() {
     setStatusFilter: setStatus,
     roleFilter,
     setRoleFilter: setRole,
+    statusOptions,
+    roleOptions,
   };
 }

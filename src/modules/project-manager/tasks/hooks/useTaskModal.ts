@@ -6,13 +6,14 @@ import { getAvatarColor } from '@/shared/utils';
 import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import { toMentionRefs } from '@/shared/utils/mentionComposer.utils';
 import {
+  excludeSelfFromActors,
+  filterPmProjectMentions,
   isSameActorId,
   normalizeTaskCommentFields,
 } from '@/shared/utils/chatNormalize.utils';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import { normalizeImportantLinks, parseImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { toApiArray } from '@/shared/utils/apiList.utils';
-import { excludeSelfFromActors } from '@/shared/utils/chatNormalize.utils';
 import { useRemoveTaskLocally, useInvalidateProjectTasks } from '../store/taskStore';
 import { pmTaskApi } from '../api/task.api';
 import { pmProjectMessagesApi } from '@/modules/project-manager/projects/api/messages.api';
@@ -132,7 +133,9 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   const { data: mentionables = [] } = useQuery({
     queryKey: ['pm-task-mentionables', projectId],
     queryFn:  () => pmProjectMessagesApi.mentionables(projectId)
-      .then(r => excludeSelfFromActors(toApiArray<PmMentionable>(r.data.data), user)),
+      .then(r => filterPmProjectMentions(
+        excludeSelfFromActors(toApiArray<PmMentionable>(r.data.data), user),
+      )),
     enabled:  !!projectId && !!task,
     staleTime: 60_000,
   });

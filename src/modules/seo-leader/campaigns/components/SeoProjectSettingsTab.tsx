@@ -118,6 +118,10 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
           onClose={() => setShowApply(false)}
           projectId={campaignId}
           module="seo"
+          projectTypeId={
+            settings?.projectTypeId
+            ?? (/^\d+$/.test(type) ? Number(type) : null)
+          }
           isAr={isAr}
         />
       )}

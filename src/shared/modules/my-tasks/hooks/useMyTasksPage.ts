@@ -6,6 +6,7 @@ import { extractApiStatus } from '@/shared/utils/error.utils';
 import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import { myTasksApi } from '../api/myTasks.api';
 import {
+  annotateGroupedTasksOwnership,
   extractProjectsFromColumns,
   fillCatalogColumns,
   getTaskRouteId,
@@ -13,7 +14,35 @@ import {
   resolveMyTasksConfig,
   resolveTasksRole,
 } from '../utils/myTasks.utils';
-import type { GroupedTasksData, MyTasksPageConfig, TaskPhase, TasksApiRole } from '../types/myTasks.types';
+import type {
+  GroupedTasksData,
+  MyTasksPageConfig,
+  ResolveTasksRoleInput,
+  TaskPhase,
+  TasksApiRole,
+} from '../types/myTasks.types';
+
+/** Survives SPA navigation (task detail → back) but clears on full page refresh. */
+const rememberedProjectFilterByRole: Partial<Record<'pm-employee' | 'seo-employee', string>> = {};
+
+function readRememberedProjectFilter(
+  routeProjectId: string | undefined,
+  user: ResolveTasksRoleInput | null | undefined,
+): string {
+  if (routeProjectId) return routeProjectId;
+  if (!user) return '';
+  const role = resolveTasksRole(user);
+  if (role === 'pm-employee' || role === 'seo-employee') {
+    return rememberedProjectFilterByRole[role] ?? '';
+  }
+  return '';
+}
+
+function writeRememberedProjectFilter(tasksRole: TasksApiRole | null, id: string) {
+  if (tasksRole === 'pm-employee' || tasksRole === 'seo-employee') {
+    rememberedProjectFilterByRole[tasksRole] = id;
+  }
+}
 
 export interface UseMyTasksPageOptions {
   routeProjectId?: string;
@@ -44,13 +73,9 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
   const { user, can } = useAuth();
   const qc = useQueryClient();
   const [searchParams] = useSearchParams();
-  const [projectId, setProjectId] = useState(options.routeProjectId ?? '');
-
-  useEffect(() => {
-    if (options.routeProjectId) {
-      setProjectId(options.routeProjectId);
-    }
-  }, [options.routeProjectId]);
+  const [projectId, setProjectIdState] = useState(() =>
+    readRememberedProjectFilter(options.routeProjectId, user),
+  );
 
   const tasksApiUrl = options.tasksApiUrl ?? searchParams.get('tasksApiUrl') ?? undefined;
 
@@ -58,6 +83,26 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     () => (user ? resolveTasksRole(user) : null),
     [user],
   );
+
+  const setProjectId = (id: string) => {
+    setProjectIdState(id);
+    writeRememberedProjectFilter(tasksRole, id);
+  };
+
+  useEffect(() => {
+    if (options.routeProjectId) {
+      setProjectIdState(options.routeProjectId);
+      writeRememberedProjectFilter(tasksRole, options.routeProjectId);
+      return;
+    }
+    // Auth may load after first paint — restore in-memory filter once role is known.
+    if (tasksRole === 'pm-employee' || tasksRole === 'seo-employee') {
+      const remembered = rememberedProjectFilterByRole[tasksRole];
+      if (remembered !== undefined) {
+        setProjectIdState(remembered);
+      }
+    }
+  }, [options.routeProjectId, tasksRole]);
 
   const config = useMemo(() => {
     if (!tasksRole) return null;
@@ -219,15 +264,27 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
   const rawData = needsClientAggregate ? aggregateQuery.data?.merged : (query.data as GroupedTasksData | undefined);
 
   const statusCatalog = isSeoEmployee ? seoStatusCatalog : [];
-  const data = rawData && statusCatalog.length > 0
+  const withCatalog = rawData && statusCatalog.length > 0
     ? { ...rawData, columns: fillCatalogColumns(rawData.columns, statusCatalog) }
     : rawData;
-  const perProjectData = rawPerProjectData && statusCatalog.length > 0
+  const withCatalogPerProject = rawPerProjectData && statusCatalog.length > 0
     ? rawPerProjectData.map(({ project, data: projectData }) => ({
         project,
         data: { ...projectData, columns: fillCatalogColumns(projectData.columns, statusCatalog) },
       }))
     : rawPerProjectData;
+
+  // Employee / SEO-member boards stamp isMine so partner cards stay read-only.
+  const ownershipUser = isEmployeeRole ? user : null;
+  const data = withCatalog && ownershipUser
+    ? annotateGroupedTasksOwnership(withCatalog, ownershipUser)
+    : withCatalog;
+  const perProjectData = withCatalogPerProject && ownershipUser
+    ? withCatalogPerProject.map(({ project, data: projectData }) => ({
+        project,
+        data: annotateGroupedTasksOwnership(projectData, ownershipUser),
+      }))
+    : withCatalogPerProject;
 
   return {
     config,

@@ -1,4 +1,4 @@
-/* ── PM Project Templates (GET/POST/PUT/DELETE /v1/{pm|seo}/project-templates) ──── */
+/* ── PM / SEO Project Templates (GET/POST/PUT/DELETE /v1/{pm|seo}/project-templates) ──── */
 
 export interface PmTemplateStep {
   id?:          number;
@@ -8,11 +8,10 @@ export interface PmTemplateStep {
 }
 
 export interface PmTemplateProjectType {
-  id:     number;
-  name?:  string | null;
-  label?: string | null;
-  nameAr?: string | null;
-  labelAr?: string | null;
+  id:      number;
+  name:    string;
+  label:   string;
+  labelAr: string | null;
 }
 
 export interface PmProjectTemplate {
@@ -23,10 +22,10 @@ export interface PmProjectTemplate {
   isDefault:        boolean;
   stepsCount:       number;
   steps:            PmTemplateStep[];
-  /** Multi type link — preferred. Empty / missing = global (all types). */
-  projectTypeIds?:  number[];
-  projectTypes?:    PmTemplateProjectType[];
-  /** @deprecated Prefer `projectTypeIds` — kept for older API responses. */
+  /** Source of truth — empty = global (all types). */
+  projectTypeIds:   number[];
+  projectTypes:     PmTemplateProjectType[];
+  /** @deprecated Prefer `projectTypeIds` / `projectTypes`. */
   projectTypeId?:   number | null;
   projectType?:     string | null;
   projectTypeLabel?: string | null;
@@ -41,17 +40,28 @@ export interface PmTemplateStepPayload {
 }
 
 export interface PmTemplatePayload {
-  name?:            string;
-  description?:     string | null;
-  is_default?:      boolean;
-  /** Linked project type IDs. Empty array = global (available for all types). */
-  project_type_ids?: number[];
-  steps?:           PmTemplateStepPayload[];
+  name?:             string;
+  description?:      string | null;
+  is_default?:       boolean;
+  /** Required. Empty array = global (available for all types). */
+  project_type_ids:  number[];
+  steps?:            PmTemplateStepPayload[];
 }
 
 export interface PmApplyTemplatePayload {
   template_id: string;
   replace?:    boolean;
+}
+
+export interface PmTemplateListParams {
+  search?:          string;
+  per_page?:        number;
+  page?:            number;
+  project_type_id?: number;
+}
+
+export interface PmTemplateAllParams {
+  project_type_id?: number;
 }
 
 export interface PmTemplateListApiResponse {

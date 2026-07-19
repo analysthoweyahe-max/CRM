@@ -2,7 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useLang } from '@/app/providers/LanguageProvider';
 import { attendanceTimerApi } from '../api/attendanceTimer.api';
 import type { AttendanceScope, AttendanceHistoryRecord } from '../types/attendanceTimer.types';
-import { formatClockTime, formatWorkingHours } from '../utils/attendanceTimer.utils';
+import {
+  calcBreakMinutes,
+  formatBreakMinutes,
+  formatClockTime,
+  formatWorkingHours,
+} from '../utils/attendanceTimer.utils';
 
 interface AttendanceHistorySectionProps {
   scope:  AttendanceScope;
@@ -19,6 +24,12 @@ function recordCheckOut(r: AttendanceHistoryRecord): string | null {
 
 function recordHours(r: AttendanceHistoryRecord): number | null {
   return r.workingHours ?? r.worked_hours ?? null;
+}
+
+function recordBreakMinutes(r: AttendanceHistoryRecord): number | null {
+  const fromApi = r.breakMinutes ?? r.break_minutes;
+  if (fromApi != null) return fromApi;
+  return calcBreakMinutes(recordCheckIn(r), recordCheckOut(r), recordHours(r));
 }
 
 export function AttendanceHistorySection({ scope, month }: AttendanceHistorySectionProps) {
@@ -65,13 +76,15 @@ export function AttendanceHistorySection({ scope, month }: AttendanceHistorySect
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-          {records.map(r => (
+          {records.map(r => {
+            const breakMins = recordBreakMinutes(r);
+            return (
             <tr key={String(r.id ?? r.date)} className="bg-white dark:bg-gray-900">
               <td className="px-4 py-2.5 font-mono text-gray-700 dark:text-gray-300">{r.date}</td>
               <td className="px-4 py-2.5 font-mono">{formatClockTime(recordCheckIn(r), isAr)}</td>
               <td className="px-4 py-2.5 font-mono">{formatClockTime(recordCheckOut(r), isAr)}</td>
               <td className="px-4 py-2.5 font-mono font-semibold">{formatWorkingHours(recordHours(r))}</td>
-              <td className="px-4 py-2.5">{r.breakMinutes != null ? `${r.breakMinutes}${isAr ? ' د' : 'm'}` : '—'}</td>
+              <td className="px-4 py-2.5">{breakMins != null ? formatBreakMinutes(breakMins, isAr) : '—'}</td>
               <td className="px-4 py-2.5">
                 <div className="flex flex-wrap gap-1">
                   {(r.statusFlags ?? []).map(f => (
@@ -83,7 +96,8 @@ export function AttendanceHistorySection({ scope, month }: AttendanceHistorySect
                 </div>
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

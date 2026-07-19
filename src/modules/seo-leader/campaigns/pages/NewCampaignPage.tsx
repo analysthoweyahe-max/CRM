@@ -9,7 +9,6 @@ import { SDLCPanel } from '@/modules/project-manager/projects/components/SDLCPan
 import { CreateProjectForm } from '@/shared/modules/create-project/components/CreateProjectForm';
 import { useCreateProjectForm } from '@/shared/modules/create-project/hooks/useCreateProjectForm';
 import { useAllTemplates } from '@/modules/project-manager/templates/hooks/useProjectTemplates';
-import { filterTemplatesByType } from '@/modules/project-manager/templates/utils/templateFilter';
 
 export function NewCampaignPage() {
   const { lang, isRTL } = useLang();
@@ -19,9 +18,11 @@ export function NewCampaignPage() {
   const [templateId, setTemplateId] = useState('');
   const form = useCreateProjectForm({ module: 'seo', templateId: templateId || undefined });
 
-  const { data: allTemplates = [], isLoading: templatesLoading } = useAllTemplates('seo');
   const selectedTypeId = form.projectTypeId ? Number(form.projectTypeId) : null;
-  const matchingTemplates = filterTemplatesByType(allTemplates, selectedTypeId);
+  const { data: matchingTemplates = [], isLoading: templatesLoading } = useAllTemplates(
+    'seo',
+    selectedTypeId,
+  );
   const templateItems = [
     { id: '', label: isAr ? '-- بدون قالب --' : '-- No template --' },
     ...matchingTemplates.map(t => ({
@@ -33,7 +34,7 @@ export function NewCampaignPage() {
 
   useEffect(() => {
     if (templateId && !matchingTemplates.some(t => t.uuid === templateId)) setTemplateId('');
-  }, [form.projectTypeId, allTemplates]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [form.projectTypeId, matchingTemplates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>

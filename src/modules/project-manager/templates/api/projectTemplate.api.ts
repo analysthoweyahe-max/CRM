@@ -6,6 +6,8 @@ import type {
   PmTemplateApiResponse,
   PmTemplatePayload,
   PmApplyTemplatePayload,
+  PmTemplateListParams,
+  PmTemplateAllParams,
 } from '../types/template.types';
 import type { PmProjectDetailsApiResponse } from '@/modules/project-manager/projects/types/project.types';
 
@@ -20,13 +22,13 @@ export function projectTemplatesApi(module: TemplateModule = 'pm') {
   const projectsBase = `${basePath(module)}/projects`;
 
   return {
-    list(params: { search?: string; per_page?: number; page?: number } = {}) {
+    list(params: PmTemplateListParams = {}) {
       return http.get<PmTemplateListApiResponse>(base, { params });
     },
 
     /** Full list without pagination — for select/dropdown components. */
-    all() {
-      return http.get<PmTemplateListAllApiResponse>(`${base}/all`);
+    all(params: PmTemplateAllParams = {}) {
+      return http.get<PmTemplateListAllApiResponse>(`${base}/all`, { params });
     },
 
     get(uuid: string) {

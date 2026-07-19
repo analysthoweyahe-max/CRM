@@ -82,7 +82,12 @@ export const notificationsApi = {
       normalizeNotification(item as AppNotification & Record<string, unknown>),
     );
     const data = filterNotificationsForRole(normalized, role, actor);
-    const unreadCount = data.filter((n) => !n.readAt).length;
+
+    const rawPage = page as NotificationsPage & { unread_count?: number };
+    const backendUnread = Number(rawPage.unreadCount ?? rawPage.unread_count);
+    const unreadCount = Number.isFinite(backendUnread)
+      ? backendUnread
+      : data.filter((n) => !n.readAt).length;
 
     return {
       ...res,
@@ -90,6 +95,9 @@ export const notificationsApi = {
         ...res.data,
         data: {
           ...page,
+          current_page: Number(page.current_page ?? params?.page ?? 1),
+          last_page:    Number(page.last_page ?? 1),
+          total:        Number(page.total ?? data.length),
           data,
           unreadCount,
         },

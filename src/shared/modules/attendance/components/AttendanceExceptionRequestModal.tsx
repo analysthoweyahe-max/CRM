@@ -6,7 +6,6 @@ import { Modal } from '@/shared/components/ui/Modal';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox } from '@/shared/components/form/Combobox';
 import { extractApiError } from '@/shared/utils/error.utils';
-import { queryKeys } from '@/shared/constants/queryKeys';
 import { employeeApi } from '@/modules/hr/employees/api/employee.api';
 import { attendanceExceptionApi } from '../api/attendanceException.api';
 import {
@@ -75,10 +74,11 @@ export function AttendanceExceptionRequestModal({
       return attendanceExceptionApi.create(base);
     },
     onSuccess: () => {
+      // Prefix-only keys so every params variant of the list refetches
       if (forEmployee) {
         qc.invalidateQueries({ queryKey: ['attendance', 'exceptions', 'hr'] });
       } else {
-        qc.invalidateQueries({ queryKey: queryKeys.attendance.exceptions.employee() });
+        qc.invalidateQueries({ queryKey: ['attendance', 'exceptions', 'employee'] });
       }
       toast.success(isAr ? 'تم تقديم الطلب بنجاح' : 'Request submitted');
       handleClose();

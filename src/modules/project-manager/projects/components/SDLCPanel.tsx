@@ -15,7 +15,6 @@ import { ROUTES } from '@/app/router/routes';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 
 import { useTemplate } from '@/modules/project-manager/templates/hooks/useProjectTemplates';
-import { templateProjectTypeIds } from '@/modules/project-manager/templates/utils/templateFilter';
 
 import type { PmProjectTemplate } from '@/modules/project-manager/templates/types/template.types';
 import type { TemplateModule } from '@/modules/project-manager/templates/api/projectTemplate.api';
@@ -207,26 +206,12 @@ export function SDLCPanel({
         ) : (
 
           templates.map((t) => {
-            const typeBadges = t.projectTypes?.length
-              ? t.projectTypes.map((pt) => ({
-                  key: String(pt.id),
-                  label: translateProjectLookup(
-                    pt.name ?? '',
-                    pt.label || pt.name || String(pt.id),
-                    isAr,
-                    pt.labelAr ?? pt.nameAr,
-                  ),
-                }))
-              : templateProjectTypeIds(t).length > 0 && (t.projectTypeLabel || t.projectType)
-                ? [{
-                    key: 'legacy',
-                    label: translateProjectLookup(
-                      t.projectType ?? '',
-                      t.projectTypeLabel || t.projectType || '',
-                      isAr,
-                    ),
-                  }]
-                : [];
+            const types = t.projectTypes ?? [];
+            const typeBadges = types.map((pt) => ({
+              key: String(pt.id),
+              label: translateProjectLookup(pt.name, pt.label || pt.name, isAr, pt.labelAr),
+            }));
+            const isGlobal = typeBadges.length === 0;
 
             return (
 
@@ -284,11 +269,11 @@ export function SDLCPanel({
 
                     </span>
 
-                    {typeBadges.length > 0
-                      ? typeBadges.map((b) => (
+                    {isGlobal
+                      ? <Badge label={isAr ? 'عام' : 'Global'} variant="gray" />
+                      : typeBadges.map((b) => (
                           <Badge key={b.key} label={b.label} variant="brand" />
-                        ))
-                      : <Badge label={isAr ? 'عام' : 'Global'} variant="gray" />}
+                        ))}
 
                   </div>
 

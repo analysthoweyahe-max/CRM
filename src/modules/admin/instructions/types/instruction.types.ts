@@ -9,15 +9,20 @@ export interface AdminInstructionPayload {
 }
 
 export interface ApiAdminInstruction {
-  id:            string | number;
-  title:         string;
-  body:          string;
-  audienceType:  InstructionAudienceType;
-  departmentId?: number | null;
-  departmentName?: string | null;
-  employeeId?:   string | null;
-  employeeName?: string | null;
-  createdAt:     string;
+  id:                 string | number;
+  title:              string;
+  body:               string;
+  audienceType:       InstructionAudienceType;
+  audienceTypeLabel?: string | null;
+  department?:        { id: number; name: string } | null;
+  employee?:          { id: string; name: string } | null;
+  departmentId?:      number | null;
+  departmentName?:    string | null;
+  employeeId?:        string | null;
+  employeeName?:      string | null;
+  recipientsCount?:   number;
+  createdAt:          string;
+  createdBy?:         { id: string; name: string } | null;
 }
 
 export interface AdminInstructionListResponse {

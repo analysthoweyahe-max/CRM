@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Bold, Italic, AtSign, Paperclip, Pencil, Reply, Send, X } from 'lucide-react';
 import { useCreateComment, useUpdateComment } from '../hooks/useTaskDetail';
 import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
@@ -8,6 +8,7 @@ import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import type { MentionablePerson } from '@/shared/utils/mentionComposer.utils';
 import { messageWasEdited as isEdited } from '@/shared/utils/mentionComposer.utils';
 import { formatNotificationDateTime } from '@/shared/utils/date.utils';
+import { highlightCommentById } from '@/shared/utils/mentionDeepLink.utils';
 import type { TaskComment, SendCommentPayload, EditCommentPayload } from '../types/taskDetail.types';
 
 export type { SendCommentPayload, EditCommentPayload };
@@ -23,6 +24,8 @@ interface Props {
   mentionables?: MentionablePerson[];
   getMentionInfo?:      (ref: MentionRef) => ResolvedMention | undefined;
   onMentionStartChat?:  (ref: MentionRef) => void;
+  /** When set (e.g. from a mention notification), scroll to and highlight that comment. */
+  highlightCommentId?: string | null;
 }
 
 function Skeleton() {
@@ -62,7 +65,10 @@ function CommentRow({
   nested?: boolean;
 }) {
   return (
-    <div className={`flex gap-3 py-4 ${nested ? 'border-s-2 border-[#A0CD39]/50 ps-3' : ''}`}>
+    <div
+      data-comment-id={comment.id}
+      className={`flex gap-3 py-4 rounded-xl transition-shadow ${nested ? 'border-s-2 border-[#A0CD39]/50 ps-3' : ''}`}
+    >
       <div className={`w-9 h-9 rounded-full ${comment.avatarBg} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
         {comment.initials}
       </div>
@@ -132,7 +138,7 @@ function CommentRow({
 
 export function TaskDetailComments({
   comments: serverComments, isLoading, isAr, projectId, taskId, onSend, onEdit,
-  mentionables = [], getMentionInfo, onMentionStartChat,
+  mentionables = [], getMentionInfo, onMentionStartChat, highlightCommentId,
 }: Props) {
   const canPersist = !!onSend || !!onEdit || !!(projectId && taskId);
   const createCommentMutation = useCreateComment(projectId ?? '', taskId ?? '');
@@ -147,6 +153,12 @@ export function TaskDetailComments({
   const textareaRef = useAutoResizeTextarea(text);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selRef = useRef({ start: 0, end: 0 });
+
+  useEffect(() => {
+    if (!highlightCommentId || isLoading || comments.length === 0) return;
+    const t = window.setTimeout(() => highlightCommentById(highlightCommentId), 80);
+    return () => window.clearTimeout(t);
+  }, [highlightCommentId, isLoading, comments]);
 
   if (isLoading) return <Skeleton />;
 

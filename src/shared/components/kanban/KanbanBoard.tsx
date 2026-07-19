@@ -16,11 +16,14 @@ interface Props<T> {
   onDrop:      (id: string, groupKey: string) => void;
   emptyLabel?: string;
   draggable?:  boolean;
+  isItemDraggable?: (item: T) => boolean;
 }
 
 /** Generic horizontal-scroll kanban board: lays out columns and delegates
  *  all drag/status/phase logic to the caller via `onDrop`. */
-export function KanbanBoard<T>({ columns, isAr, getId, renderCard, onDrop, emptyLabel, draggable }: Props<T>) {
+export function KanbanBoard<T>({
+  columns, isAr, getId, renderCard, onDrop, emptyLabel, draggable, isItemDraggable,
+}: Props<T>) {
   return (
     <div className="flex gap-5 overflow-x-auto pb-4 px-1">
       {columns.map(col => (
@@ -36,6 +39,7 @@ export function KanbanBoard<T>({ columns, isAr, getId, renderCard, onDrop, empty
           onDrop={onDrop}
           emptyLabel={emptyLabel}
           draggable={draggable}
+          isItemDraggable={isItemDraggable}
         />
       ))}
     </div>

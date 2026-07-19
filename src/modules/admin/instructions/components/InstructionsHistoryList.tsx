@@ -9,11 +9,28 @@ interface Props {
   isAr:      boolean;
 }
 
+function audienceTypeLabel(ins: ApiAdminInstruction, isAr: boolean) {
+  if (ins.audienceTypeLabel) return ins.audienceTypeLabel;
+  if (ins.audienceType === 'all') return isAr ? 'الجميع' : 'Everyone';
+  if (ins.audienceType === 'department') return isAr ? 'قسم محدد' : 'Department';
+  if (ins.audienceType === 'managers') return isAr ? 'المدراء' : 'Managers';
+  return isAr ? 'موظف محدد' : 'Employee';
+}
+
+function destinationName(ins: ApiAdminInstruction) {
+  if (ins.audienceType === 'department') {
+    return ins.department?.name ?? ins.departmentName ?? null;
+  }
+  if (ins.audienceType === 'employee') {
+    return ins.employee?.name ?? ins.employeeName ?? null;
+  }
+  return null;
+}
+
 function audienceLabel(ins: ApiAdminInstruction, isAr: boolean) {
-  if (ins.audienceType === 'all') return isAr ? 'كل الموظفين' : 'All Employees';
-  if (ins.audienceType === 'department') return ins.departmentName ?? (isAr ? 'قسم' : 'Department');
-  if (ins.audienceType === 'managers') return isAr ? 'مديرين' : 'Managers';
-  return ins.employeeName ?? (isAr ? 'موظف' : 'Employee');
+  const typeLabel = audienceTypeLabel(ins, isAr);
+  const name = destinationName(ins);
+  return name ? `${typeLabel} · ${name}` : typeLabel;
 }
 
 function AudienceIcon({ type }: { type: ApiAdminInstruction['audienceType'] }) {
@@ -43,11 +60,12 @@ export function InstructionsHistoryList({ history, isLoading, isAr }: Props) {
           {history.map((ins) => (
             <div key={ins.id} className="rounded-xl border border-gray-100 dark:border-gray-700 p-3.5">
               <div className="flex items-start justify-between gap-3">
-                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{ins.title}</h4>
+                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100 min-w-0">{ins.title}</h4>
                 <Badge
                   label={audienceLabel(ins, isAr)}
                   variant="gray"
                   icon={<AudienceIcon type={ins.audienceType} />}
+                  className="max-w-[55%] shrink-0 justify-end text-end whitespace-normal text-wrap"
                 />
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">{ins.body}</p>

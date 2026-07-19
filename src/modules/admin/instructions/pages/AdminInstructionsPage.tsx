@@ -23,8 +23,8 @@ export function AdminInstructionsPage() {
       <PageHeader
         title={isAr ? 'تعليمات فورية' : 'Realtime Instructions'}
         subtitle={isAr
-          ? 'أرسل تعليمات فورية لكل الموظفين أو قسم معين أو موظف محدد'
-          : 'Send realtime instructions to all employees, a specific department, or a single employee'}
+          ? 'أرسل تعليمات فورية للجميع (الموظفين والمدراء)، أو قسم معين، أو موظف محدد، أو المدراء فقط'
+          : 'Send realtime instructions to everyone (employees & managers), a department, a specific employee, or managers only'}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">

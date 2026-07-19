@@ -4,6 +4,7 @@ import { toast }                                 from 'sonner';
 import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import {
   excludeSelfFromActors,
+  filterSeoProjectMentions,
   isSameActorId,
   normalizeTaskCommentFields,
 } from '@/shared/utils/chatNormalize.utils';
@@ -69,14 +70,19 @@ export function useSeoTaskDrawer(
   projectId: string,
   taskId:    string | null,
   isAr:      boolean,
+  options?: { initialTab?: SeoDrawerTab },
 ) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   /* ── Tab ───────────────────────────────────────────────────────────── */
-  const [tab,        setTab]        = useState<SeoDrawerTab>('info');
+  const [tab,        setTab]        = useState<SeoDrawerTab>(options?.initialTab ?? 'info');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [extendOpen, setExtendOpen] = useState(false);
+
+  useEffect(() => {
+    if (options?.initialTab) setTab(options.initialTab);
+  }, [options?.initialTab, taskId]);
 
   /* ── Form state ─────────────────────────────────────────────────────── */
   const [description,       setDescription]       = useState('');
@@ -120,7 +126,9 @@ export function useSeoTaskDrawer(
   const { data: mentionablesRaw } = useQuery({
     queryKey: ['seo-mentionables', projectId],
     queryFn:  () => campaignApi.getMentionables(projectId)
-      .then(r => excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user)),
+      .then(r => filterSeoProjectMentions(
+        excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user),
+      )),
     enabled:  !!projectId,
     staleTime: 60_000,
   });

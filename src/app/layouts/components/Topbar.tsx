@@ -9,7 +9,9 @@ import { useTheme }                   from '@/app/providers/ThemeProvider';
 import { ROUTES }                     from '@/app/router/routes';
 import { UserRoleBadges }             from '@/shared/components/auth';
 import { useNotifications }           from '@/shared/hooks/useNotifications';
+import { useHasUnreadMessages }       from '@/shared/hooks/useHasUnreadMessages';
 import { NotificationDropdown }       from './NotificationDropdown';
+import { InstructionAlertModal }      from './InstructionAlertModal';
 import { HeaderAttendanceTimer }      from './HeaderAttendanceTimer';
 import { LogoutAttendanceChoiceModal } from '@/shared/modules/attendance/components/LogoutAttendanceChoiceModal';
 import type { AttendanceScope }       from '@/shared/modules/attendance/types/attendanceTimer.types';
@@ -18,6 +20,12 @@ import { parseBackendTimestamp }      from '@/shared/utils/date.utils';
 import { playNotificationSound }      from '@/shared/utils/sound.utils';
 import { useEmployeeAlertList }       from '@/modules/employee/alerts/hooks/useEmployeeAlerts';
 import type { AppNotification }     from '@/shared/types/notification.types';
+
+function isInstructionAlertNotification(notification: AppNotification): boolean {
+  if (notification.id.startsWith('alert-')) return true;
+  const type = (notification.type ?? '').toLowerCase();
+  return type === 'alert' || type === 'instruction' || type.includes('instruction');
+}
 
 interface TopbarProps {
   onMenuToggle:  () => void;
@@ -37,6 +45,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [showChangePwd,  setShowChangePwd]  = useState(false);
   const [showLogoutChoice, setShowLogoutChoice] = useState(false);
+  const [instructionAlert, setInstructionAlert] = useState<AppNotification | null>(null);
 
   const needsAttendanceLogoutChoice = Boolean(layoutScope) && !user?.isSuperAdmin;
 
@@ -54,7 +63,8 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
     void completeLogout();
   }
 
-  const { notifications, unreadCount, justArrived, markRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, justArrived, markRead, markAllRead, hasNextPage, isFetchingNextPage, fetchNextPage } = useNotifications();
+  const hasUnreadMessages = useHasUnreadMessages();
   const [ringing, setRinging] = useState(false);
 
   useEffect(() => {
@@ -86,7 +96,7 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
 
   const alertNotifications: AppNotification[] = (alertsData?.data ?? []).map(a => ({
     id:        `alert-${a.id}`,
-    type:      'alert',
+    type:      a.type || 'instruction',
     title:     a.title,
     body:      a.body,
     readAt:    a.readAt,
@@ -99,9 +109,8 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
   const mergedUnreadCount = unreadCount + unreadAlertsCount;
 
   function handleNotificationClick(notification: AppNotification) {
-    if (notification.type === 'alert') {
-      const alertId = notification.id.replace(/^alert-/, '');
-      navigate(ROUTES.EMPLOYEE.ALERT_DETAIL(alertId));
+    if (isInstructionAlertNotification(notification)) {
+      setInstructionAlert(notification);
       setTimeout(() => qc.invalidateQueries({ queryKey: ['employee', 'alerts'] }), 500);
       setNotifOpen(false);
       return;
@@ -177,13 +186,23 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
 
         <button
           type="button"
-          aria-label={isAr ? 'المحادثات' : 'Messages'}
+          aria-label={
+            hasUnreadMessages
+              ? (isAr ? 'المحادثات — رسائل غير مقروءة' : 'Messages — unread')
+              : (isAr ? 'المحادثات' : 'Messages')
+          }
           title={isAr ? 'المحادثات' : 'Messages'}
           onClick={() => { navigate(messagesRoute); setNotifOpen(false); setOpen(false); }}
-          className="p-2 rounded-lg text-gray-500 dark:text-gray-400
+          className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400
                      hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
           <MessageSquare size={18} />
+          {hasUnreadMessages && (
+            <span
+              className="absolute top-1.5 inset-e-1.5 w-2 h-2 rounded-full bg-red-500"
+              aria-hidden
+            />
+          )}
         </button>
 
         <div className="relative" ref={notifRef}>
@@ -210,6 +229,10 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
             <NotificationDropdown
               notifications={mergedNotifications}
               isAr={isAr}
+              unreadCount={mergedUnreadCount}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onFetchNextPage={() => { void fetchNextPage(); }}
               onMarkAllRead={markAllRead}
               onMarkRead={handleMarkRead}
               onNavigate={handleNotificationClick}
@@ -314,6 +337,12 @@ export function Topbar({ onMenuToggle, profileRoute = ROUTES.PROFILE, layoutScop
       open={showChangePwd}
       onClose={() => setShowChangePwd(false)}
       isAr={isAr}
+    />
+
+    <InstructionAlertModal
+      notification={instructionAlert}
+      isAr={isAr}
+      onClose={() => setInstructionAlert(null)}
     />
 
     {needsAttendanceLogoutChoice && (

@@ -2,6 +2,7 @@ import { toast } from 'sonner';
 import type { GroupedTasksData, MyTask } from '../types/myTasks.types';
 import { KanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
+import { isEditableMyTask } from '../utils/myTasks.utils';
 import { MyTaskCard } from './MyTaskCard';
 
 const STATUS_COLOR: Record<string, string> = {
@@ -36,6 +37,10 @@ export function MyTasksKanbanBoard({
     const taskId = Number(id);
     const task = allTasks.find((t) => t.id === taskId);
     if (!task || task.status === toStatus || !onStatusChange) return;
+    if (!isEditableMyTask(task)) {
+      toast.info(isAr ? 'لا يمكن تحديث مهام الشركاء' : 'Partner tasks cannot be updated');
+      return;
+    }
     if (!task.project?.id) {
       toast.error(isAr ? 'لا يمكن تحديث المهمة بدون مشروع' : 'Cannot update task without a project');
       return;
@@ -58,6 +63,7 @@ export function MyTasksKanbanBoard({
       }))}
       isAr={isAr}
       draggable={canDrag && !!onStatusChange}
+      isItemDraggable={(task: MyTask) => isEditableMyTask(task)}
       getId={(task: MyTask) => String(task.id)}
       renderCard={(task: MyTask) => (
         <MyTaskCard task={task} isAr={isAr} showProjectName={showProjectName} onOpen={onOpen} />

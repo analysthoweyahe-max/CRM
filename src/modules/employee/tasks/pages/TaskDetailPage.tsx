@@ -1,11 +1,14 @@
+import { Lock, CheckSquare } from 'lucide-react';
 import { Card }                    from '@/shared/components/ui/Card';
+import { EmptyState }               from '@/shared/components/feedback/EmptyState';
+import { Button }                   from '@/shared/components/ui/Button';
 import { usePermission }            from '@/shared/hooks/usePermission';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { useTaskDetailPage }        from './useTaskDetailPage';
 import { empProjectMessagesApi }    from '@/modules/employee/projects/api/projectMessages.api';
 import { toApiArray } from '@/shared/utils/apiList.utils';
-import { excludeSelfFromActors } from '@/shared/utils/chatNormalize.utils';
+import { excludeSelfFromActors, filterPmProjectMentions } from '@/shared/utils/chatNormalize.utils';
 import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import type { PmMentionable } from '@/modules/employee/projects/types/projectMessage.types';
 import { TaskDetailHeader }         from '../components/TaskDetailHeader';
@@ -19,7 +22,7 @@ import { EditTaskModal }            from '../components/EditTaskModal';
 export function TaskDetailPage() {
   const {
     isAr, goBack, activeTab, setActiveTab, task, comments, sessions, timeLogs, isLoading, projectId, taskId,
-    isEditOpen, openEdit, closeEdit,
+    isEditOpen, openEdit, closeEdit, isForbidden, isError,
   } = useTaskDetailPage();
 
   const { user } = useAuth();
@@ -28,14 +31,52 @@ export function TaskDetailPage() {
   const { data: mentionables = [] } = useQuery({
     queryKey: ['emp-task-mentionables', projectId],
     queryFn:  () => empProjectMessagesApi.mentionables(projectId)
-      .then(r => excludeSelfFromActors(toApiArray<PmMentionable>(r.data.data), user)),
-    enabled:  !!projectId,
+      .then(r => filterPmProjectMentions(
+        excludeSelfFromActors(toApiArray<PmMentionable>(r.data.data), user),
+      )),
+    enabled:  !!projectId && !isForbidden,
     staleTime: 60_000,
   });
 
   function getMentionInfo(ref: MentionRef): ResolvedMention | undefined {
     const m = mentionables.find(x => x.id === ref.id && (x.type ?? 'employee') === ref.type);
     return m ? { id: m.id, type: m.type ?? 'employee', name: m.name } : undefined;
+  }
+
+  if (isForbidden) {
+    return (
+      <div className="space-y-4" dir={isAr ? 'rtl' : 'ltr'}>
+        <EmptyState
+          icon={<Lock size={26} className="text-[#709028] dark:text-[#A0CD39]" />}
+          title={isAr ? 'مهمة شريك — للعرض فقط' : 'Partner task — view only'}
+          description={isAr
+            ? 'يمكنك رؤية ملخص مهام زملائك في اللوحة فقط. لا يمكن فتح التفاصيل أو تعديل مهام الشركاء.'
+            : 'You can see a summary of teammates’ tasks on the board only. Partner task details and edits are not available.'}
+          action={
+            <Button variant="secondary" onClick={goBack}>
+              {isAr ? 'العودة إلى مهامي' : 'Back to My Tasks'}
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-4" dir={isAr ? 'rtl' : 'ltr'}>
+        <EmptyState
+          icon={<CheckSquare size={26} className="text-[#709028] dark:text-[#A0CD39]" />}
+          title={isAr ? 'تعذر تحميل المهمة' : 'Failed to load task'}
+          description={isAr ? 'حدث خطأ أثناء جلب تفاصيل المهمة. حاول مرة أخرى.' : 'An error occurred while loading this task. Please try again.'}
+          action={
+            <Button variant="secondary" onClick={goBack}>
+              {isAr ? 'العودة إلى مهامي' : 'Back to My Tasks'}
+            </Button>
+          }
+        />
+      </div>
+    );
   }
 
   return (

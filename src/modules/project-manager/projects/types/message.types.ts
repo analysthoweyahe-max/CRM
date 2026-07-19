@@ -62,6 +62,8 @@ export interface PmMentionable {
   id:            string;
   name:          string;
   type:          string;
+  role?:         string | null;
+  roles?:        Array<string | { name?: string; slug?: string; role?: string }>;
   avatarUrl:     string | null;
   avatarInitial: string;
 }

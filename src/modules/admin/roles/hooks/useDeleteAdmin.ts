@@ -5,6 +5,6 @@ export function useDeleteAdmin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => adminApi.remove(id),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['admin', 'managers', 'list'] }),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: ['admin', 'managers'] }),
   });
 }

@@ -8,8 +8,10 @@ import { Card }                   from '@/shared/components/ui/Card';
 import { Button }                 from '@/shared/components/ui/Button';
 import { Combobox }               from '@/shared/components/form/Combobox';
 import type { ComboboxItem }      from '@/shared/components/form/Combobox';
+import { GoogleDriveIcon }        from '@/shared/components/icons/GoogleDriveIcon';
 import { ROUTES }                 from '@/app/router/routes';
 import { extractApiError }        from '@/shared/utils/error.utils';
+import { ensureHttpUrl }          from '@/shared/utils';
 import { usePermission }          from '@/shared/hooks/usePermission';
 import { campaignApi }                       from '../api/campaign.api';
 import type { SeoTask }                      from '../api/campaign.api';
@@ -31,6 +33,10 @@ import {
 } from '@/modules/project-manager/projects/utils/kanbanTaskFilters.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
+import {
+  findSeoTaskIdForComment,
+  isSeoTaskCommentContext,
+} from '@/shared/utils/mentionDeepLink.utils';
 import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
 
 const UNASSIGNED = '__unassigned__';
@@ -124,14 +130,27 @@ export function CampaignDetailsPage() {
   const isAr        = lang === 'ar';
   const navigate    = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const canAddTask  = usePermission(['edit-seo-tasks', 'create-seo-project']);
 
   const tabParam = searchParams.get('tab');
-  const initialTab: TabKey = tabParam === 'messages' ? 'messages' : 'tasks';
+  const taskParam = searchParams.get('task');
+  const commentParam = searchParams.get('comment') ?? searchParams.get('commentId');
+  const contextTypeParam = searchParams.get('contextType');
+  const initialTab: TabKey = tabParam === 'messages' || tabParam === 'client-updates'
+    ? (tabParam === 'client-updates' ? 'client' : 'messages')
+    : 'tasks';
   const [activeTab,      setActiveTab]      = useState<TabKey>(initialTab);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(taskParam);
+  const [highlightCommentId, setHighlightCommentId] = useState<string | null>(
+    commentParam && (tabParam === 'comments' || !taskParam || !!contextTypeParam)
+      ? commentParam
+      : null,
+  );
+  const [drawerInitialTab, setDrawerInitialTab] = useState<'info' | 'comments'>(
+    tabParam === 'comments' || !!commentParam ? 'comments' : 'info',
+  );
   // Keyed by task id → the real backend status key (not the coarse union).
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
   const [changingStatus, setChangingStatus] = useState(false);
@@ -139,7 +158,18 @@ export function CampaignDetailsPage() {
 
   useEffect(() => {
     if (tabParam === 'messages') setActiveTab('messages');
+    if (tabParam === 'client-updates') setActiveTab('client');
   }, [tabParam]);
+
+  useEffect(() => {
+    if (taskParam) {
+      setSelectedTaskId(taskParam);
+      if (tabParam === 'comments' || commentParam) {
+        setDrawerInitialTab('comments');
+        setHighlightCommentId(commentParam);
+      }
+    }
+  }, [taskParam, tabParam, commentParam]);
 
   /* ── Campaign header ──────────────────────────────────────────────── */
   const { data: campaign, isLoading: campaignLoading, refetch: refetchCampaign } = useQuery({
@@ -201,6 +231,28 @@ export function CampaignDetailsPage() {
     ),
     [baseTasks, statusOverrides, marksCompletedByKey],
   );
+
+  /* Mention deep-link: resolve SeoTaskComment → task when only commentId is present. */
+  useEffect(() => {
+    if (taskParam || selectedTaskId) return;
+    if (!commentParam || !isSeoTaskCommentContext(contextTypeParam ?? 'SeoTaskComment')) return;
+    if (tasks.length === 0) return;
+
+    let cancelled = false;
+    const keys = tasks.map(t => taskResourceKey(t));
+
+    void findSeoTaskIdForComment(projectKey, keys, commentParam).then((taskKey) => {
+      if (cancelled || !taskKey) return;
+      setSelectedTaskId(taskKey);
+      setDrawerInitialTab('comments');
+      setHighlightCommentId(commentParam);
+      setSearchParams({}, { replace: true });
+    });
+
+    return () => { cancelled = true; };
+  }, [
+    taskParam, selectedTaskId, commentParam, contextTypeParam, tasks, projectKey, setSearchParams,
+  ]);
 
   const assigneeItems: ComboboxItem[] = useMemo(() => {
     const map = new Map<string, ComboboxItem>();
@@ -447,9 +499,25 @@ export function CampaignDetailsPage() {
       <Card className="p-6">
         <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-snug">
-              {campaign?.name ?? '—'}
-            </h1>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-snug">
+                {campaign?.name ?? '—'}
+              </h1>
+              {campaign?.driveLink && (
+                <a
+                  href={ensureHttpUrl(campaign.driveLink)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={isAr ? 'فتح Google Drive' : 'Open Google Drive'}
+                  aria-label={isAr ? 'رابط Google Drive' : 'Google Drive Link'}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200
+                             dark:border-gray-600 transition-colors shrink-0
+                             hover:bg-gray-50 dark:hover:bg-gray-700/60 hover:border-gray-300 dark:hover:border-gray-500"
+                >
+                  <GoogleDriveIcon size={18} />
+                </a>
+              )}
+            </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {translateProjectLookup(campaign?.campaignType ?? '', campaign?.campaignTypeLabel ?? '', isAr)}
             </p>
@@ -626,7 +694,15 @@ export function CampaignDetailsPage() {
               isAr={isAr}
               getId={(task: Task) => task.id}
               renderCard={(task: Task) => (
-                <KanbanTaskCard task={task} isAr={isAr} onOpen={t => setSelectedTaskId(taskResourceKey(t))} />
+                <KanbanTaskCard
+                  task={task}
+                  isAr={isAr}
+                  onOpen={t => {
+                    setDrawerInitialTab('info');
+                    setHighlightCommentId(null);
+                    setSelectedTaskId(taskResourceKey(t));
+                  }}
+                />
               )}
               onDrop={viewMode === 'status' ? handleDrop : handlePhaseDrop}
             />
@@ -657,8 +733,14 @@ export function CampaignDetailsPage() {
       <SeoTaskDrawer
         taskId={selectedTaskId}
         projectId={projectKey}
-        onClose={() => setSelectedTaskId(null)}
+        onClose={() => {
+          setSelectedTaskId(null);
+          setHighlightCommentId(null);
+          setDrawerInitialTab('info');
+        }}
         isAr={isAr}
+        initialTab={drawerInitialTab}
+        highlightCommentId={highlightCommentId}
       />
 
     </div>

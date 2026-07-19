@@ -8,7 +8,6 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { FormField } from '@/shared/components/form/FormField';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { useAllTemplates, useApplyTemplate } from '../hooks/useProjectTemplates';
-import { filterTemplatesByType } from '../utils/templateFilter';
 import type { TemplateModule } from '../api/projectTemplate.api';
 
 interface Props {
@@ -22,7 +21,7 @@ interface Props {
 }
 
 export function ApplyTemplateModal({ open, onClose, projectId, projectTypeId, isAr, module = 'pm', onApplied }: Props) {
-  const { data: templates = [], isLoading } = useAllTemplates(module);
+  const { data: templates = [], isLoading } = useAllTemplates(module, projectTypeId);
   const { mutate: apply, isPending } = useApplyTemplate(projectId, module);
 
   const [templateId, setTemplateId] = useState('');
@@ -32,9 +31,7 @@ export function ApplyTemplateModal({ open, onClose, projectId, projectTypeId, is
     if (!open) { setTemplateId(''); setReplace(false); }
   }, [open]);
 
-  const available = filterTemplatesByType(templates, projectTypeId);
-
-  const items: ComboboxItem[] = available.map((t) => ({
+  const items: ComboboxItem[] = templates.map((t) => ({
     id:     t.uuid,
     label:  t.name,
     detail: isAr ? `${t.stepsCount} مرحلة` : `${t.stepsCount} steps`,

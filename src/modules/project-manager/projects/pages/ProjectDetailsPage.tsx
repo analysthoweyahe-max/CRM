@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Plus, Info, FolderOpen } from 'lucide-react';import { GithubIcon } from '@/shared/components/icons/GithubIcon';
+import { ArrowLeft, ArrowRight, Plus, Info } from 'lucide-react';
+import { GithubIcon } from '@/shared/components/icons/GithubIcon';
+import { GoogleDriveIcon } from '@/shared/components/icons/GoogleDriveIcon';
 import { ensureHttpUrl } from '@/shared/utils';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { toast } from 'sonner';
@@ -182,10 +184,10 @@ export function ProjectDetailsPage() {
               title={isAr ? 'فتح Google Drive' : 'Open Google Drive'}
               aria-label={isAr ? 'رابط Google Drive' : 'Google Drive Link'}
               className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200
-                         dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:text-white transition-colors
-                         hover:bg-[#A0CD39] hover:border-[#A0CD39]"
+                         dark:border-gray-600 transition-colors
+                         hover:bg-gray-50 dark:hover:bg-gray-700/60 hover:border-gray-300 dark:hover:border-gray-500"
             >
-              <FolderOpen size={18} />
+              <GoogleDriveIcon size={18} />
             </a>
           )}
           <div className="w-40">

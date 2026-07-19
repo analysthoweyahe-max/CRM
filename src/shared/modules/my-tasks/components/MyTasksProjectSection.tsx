@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { KanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
 import { MyTaskCard } from './MyTaskCard';
 import type { GroupedTasksData, MyTask, TaskPhase } from '../types/myTasks.types';
+import { isEditableMyTask } from '../utils/myTasks.utils';
 
 const STATUS_COLOR: Record<string, string> = {
   pending:      '#9CA3AF',
@@ -44,6 +46,10 @@ export function MyTasksProjectSection({ project, data, isAr, canDrag, onOpen, on
   async function handleStatusDrop(id: string, toStatus: string) {
     const task = allTasks.find(t => String(t.id) === id);
     if (!task || !onStatusChange || task.status === toStatus) return;
+    if (!isEditableMyTask(task)) {
+      toast.info(isAr ? 'لا يمكن تحديث مهام الشركاء' : 'Partner tasks cannot be updated');
+      return;
+    }
     await onStatusChange(task, toStatus);
   }
 
@@ -51,6 +57,10 @@ export function MyTasksProjectSection({ project, data, isAr, canDrag, onOpen, on
     const task = allTasks.find(t => String(t.id) === id);
     const column = phaseColumns.find(c => c.key === toPhaseKey);
     if (!task || !onPhaseChange || !column?.phase || task.phase?.id === column.phase.id) return;
+    if (!isEditableMyTask(task)) {
+      toast.info(isAr ? 'لا يمكن تحديث مهام الشركاء' : 'Partner tasks cannot be updated');
+      return;
+    }
     await onPhaseChange(task, column.phase);
   }
 
@@ -90,6 +100,7 @@ export function MyTasksProjectSection({ project, data, isAr, canDrag, onOpen, on
         }
         isAr={isAr}
         draggable={canDrag && !!(viewMode === 'status' ? onStatusChange : onPhaseChange)}
+        isItemDraggable={(task: MyTask) => isEditableMyTask(task)}
         getId={(task: MyTask) => String(task.id)}
         renderCard={(task: MyTask) => (
           <MyTaskCard task={task} isAr={isAr} showProjectName={false} onOpen={onOpen} />

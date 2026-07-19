@@ -48,6 +48,91 @@ export function excludeSelfFromActors<T extends { id: string | number }>(
   return items.filter(item => !isSameActorId(item.id, user));
 }
 
+const SUPER_ADMIN_ROLE_SLUGS = new Set([
+  'super-admin',
+]);
+
+const SEO_LEADER_ROLE_SLUGS = new Set([
+  'seo-manager',
+  'seo-leader',
+]);
+
+const PM_MANAGER_ROLE_SLUGS = new Set([
+  'project-manager',
+  'manager',
+  'pm-manager',
+]);
+
+function pushRoleSlug(out: string[], value: unknown) {
+  if (typeof value === 'string' && value.trim()) {
+    out.push(value.trim().toLowerCase());
+  }
+}
+
+/** Collect role slugs from common mentionable payload shapes. */
+function collectMentionableRoleSlugs(item: unknown): string[] {
+  if (!item || typeof item !== 'object') return [];
+  const rec = item as Record<string, unknown>;
+  const roles: string[] = [];
+
+  pushRoleSlug(roles, rec.role);
+  pushRoleSlug(roles, rec.roleName);
+  pushRoleSlug(roles, rec.role_name);
+  pushRoleSlug(roles, rec.roleSlug);
+  pushRoleSlug(roles, rec.role_slug);
+
+  if (Array.isArray(rec.roles)) {
+    for (const entry of rec.roles) {
+      if (typeof entry === 'string') {
+        pushRoleSlug(roles, entry);
+        continue;
+      }
+      if (entry && typeof entry === 'object') {
+        const r = entry as Record<string, unknown>;
+        pushRoleSlug(roles, r.name);
+        pushRoleSlug(roles, r.slug);
+        pushRoleSlug(roles, r.role);
+      }
+    }
+  }
+
+  return roles;
+}
+
+function mentionableHasAnyRole(item: unknown, allowed: Set<string>): boolean {
+  return collectMentionableRoleSlugs(item).some((slug) => allowed.has(slug));
+}
+
+function isProjectTeammate(item: unknown): boolean {
+  if (!item || typeof item !== 'object') return false;
+  const type = String((item as { type?: unknown }).type ?? '').toLowerCase();
+  return type === 'employee';
+}
+
+function isAllowedMentionable(item: unknown, allowedAdminRoles: Set<string>): boolean {
+  if (isProjectTeammate(item)) return true;
+  if (mentionableHasAnyRole(item, SUPER_ADMIN_ROLE_SLUGS)) return true;
+  return mentionableHasAnyRole(item, allowedAdminRoles);
+}
+
+/**
+ * SEO project/task @mentions — allow only:
+ * super-admins + SEO leaders/managers + project teammates (type=employee).
+ */
+export function filterSeoProjectMentions<T>(items: T[] | null | undefined): T[] {
+  if (!items?.length) return [];
+  return items.filter((item) => isAllowedMentionable(item, SEO_LEADER_ROLE_SLUGS));
+}
+
+/**
+ * PM project/task @mentions — allow only:
+ * super-admins + PM managers + project teammates (type=employee).
+ */
+export function filterPmProjectMentions<T>(items: T[] | null | undefined): T[] {
+  if (!items?.length) return [];
+  return items.filter((item) => isAllowedMentionable(item, PM_MANAGER_ROLE_SLUGS));
+}
+
 export function normalizeMentions(raw: unknown): MentionRef[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   return toMentionRefs(raw);

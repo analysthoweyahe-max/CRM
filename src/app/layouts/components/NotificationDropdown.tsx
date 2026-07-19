@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react';
-import { CalendarCheck, MessageSquare, Wallet, AtSign, Megaphone, Bell, ClipboardList, FolderKanban } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CalendarCheck, MessageSquare, Wallet, AtSign, Megaphone, Bell, ClipboardList, FolderKanban, Loader2 } from 'lucide-react';
 import type { AppNotification } from '@/shared/types/notification.types';
 import { formatNotificationDateTime } from '@/shared/utils/date.utils';
 
 interface Props {
   notifications: AppNotification[];
   isAr:          boolean;
+  unreadCount?:  number;
+  hasNextPage?:  boolean;
+  isFetchingNextPage?: boolean;
+  onFetchNextPage?: () => void;
   onMarkAllRead: () => void;
   onMarkRead:    (id: string) => void;
   onNavigate?:   (notification: AppNotification) => void;
@@ -20,10 +24,13 @@ const TYPE_ICON: Record<string, React.ReactNode> = {
   bonus_applied:          <Wallet size={14} />,
   PmMentionNotification:  <AtSign size={14} />,
   alert:                  <Megaphone size={14} />,
+  instruction:            <Megaphone size={14} />,
   test_notification:      <Bell size={14} />,
   seo_task_assigned:      <ClipboardList size={14} />,
   seo_task_status_changed:<ClipboardList size={14} />,
   seo_mention:            <AtSign size={14} />,
+  seo_direct_mention:     <AtSign size={14} />,
+  pm_mention:             <AtSign size={14} />,
   pm_task_assigned:       <ClipboardList size={14} />,
   pm_project_team_assigned:    <FolderKanban size={14} />,
   pm_project_manager_assigned: <FolderKanban size={14} />,
@@ -45,10 +52,13 @@ const TYPE_ICON_BG: Record<string, string> = {
   bonus_applied:          'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
   PmMentionNotification:  'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
   alert:                  'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]',
+  instruction:            'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028]',
   test_notification:      'bg-gray-100 dark:bg-gray-700 text-gray-500',
   seo_task_assigned:      'bg-[#D8EBAE] text-[#709028]',
   seo_task_status_changed:'bg-[#D8EBAE] text-[#709028]',
   seo_mention:            'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+  seo_direct_mention:     'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+  pm_mention:             'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
   pm_task_assigned:       'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
   pm_project_team_assigned:    'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
   pm_project_manager_assigned: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
@@ -66,15 +76,33 @@ const TYPE_ICON_BG: Record<string, string> = {
 const DEFAULT_ICON = <Bell size={14} />;
 const DEFAULT_ICON_BG = 'bg-gray-100 dark:bg-gray-700 text-gray-500';
 
-export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMarkRead, onNavigate }: Props) {
+export function NotificationDropdown({
+  notifications,
+  isAr,
+  unreadCount: unreadCountProp,
+  hasNextPage = false,
+  isFetchingNextPage = false,
+  onFetchNextPage,
+  onMarkAllRead,
+  onMarkRead,
+  onNavigate,
+}: Props) {
   const [visible, setVisible] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.readAt).length;
+  const unreadCount = unreadCountProp ?? notifications.filter(n => !n.readAt).length;
+
+  function handleScroll() {
+    const el = listRef.current;
+    if (!el || !hasNextPage || isFetchingNextPage || !onFetchNextPage) return;
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (remaining < 72) onFetchNextPage();
+  }
 
   return (
     <>
@@ -127,7 +155,11 @@ export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMar
         </div>
 
         {/* List */}
-        <div className="max-h-80 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
+        <div
+          ref={listRef}
+          onScroll={handleScroll}
+          className="max-h-80 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50"
+        >
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
               <Bell size={28} className="text-gray-300 dark:text-gray-600" />
@@ -135,47 +167,67 @@ export function NotificationDropdown({ notifications, isAr, onMarkAllRead, onMar
                 {isAr ? 'لا توجد إشعارات' : 'No notifications'}
               </p>
             </div>
-          ) : notifications.map(n => (
-            <button
-              key={n.id}
-              type="button"
-              onClick={() => {
-                onMarkRead(n.id);
-                onNavigate?.(n);
-              }}
-              className={`w-full text-start px-4 py-3.5 flex items-start gap-3
-                          transition-colors duration-150
-                          ${n.readAt
-                            ? 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
-                            : 'bg-[#D8EBAE]/20 dark:bg-[#D8EBAE]/5 hover:bg-[#D8EBAE]/30 dark:hover:bg-[#D8EBAE]/10'
-                          }`}
-            >
-              <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0
-                               ${TYPE_ICON_BG[n.type] ?? DEFAULT_ICON_BG}`}>
-                {TYPE_ICON[n.type] ?? DEFAULT_ICON}
-              </div>
+          ) : (
+            <>
+              {notifications.map(n => (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => {
+                    onMarkRead(n.id);
+                    onNavigate?.(n);
+                  }}
+                  className={`w-full text-start px-4 py-3.5 flex items-start gap-3
+                              transition-colors duration-150
+                              ${n.readAt
+                                ? 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                                : 'bg-[#D8EBAE]/20 dark:bg-[#D8EBAE]/5 hover:bg-[#D8EBAE]/30 dark:hover:bg-[#D8EBAE]/10'
+                              }`}
+                >
+                  <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0
+                                   ${TYPE_ICON_BG[n.type] ?? DEFAULT_ICON_BG}`}>
+                    {TYPE_ICON[n.type] ?? DEFAULT_ICON}
+                  </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <p className={`text-sm leading-snug
-                                 ${n.readAt
-                                   ? 'font-normal text-gray-500 dark:text-gray-400'
-                                   : 'font-semibold text-gray-800 dark:text-gray-100'}`}>
-                    {n.title}
-                  </p>
-                  {!n.readAt && (
-                    <span className="notif-dot-pulse mt-1.5 w-2 h-2 rounded-full bg-[#A0CD39] shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={`text-sm leading-snug
+                                     ${n.readAt
+                                       ? 'font-normal text-gray-500 dark:text-gray-400'
+                                       : 'font-semibold text-gray-800 dark:text-gray-100'}`}>
+                        {n.title}
+                      </p>
+                      {!n.readAt && (
+                        <span className="notif-dot-pulse mt-1.5 w-2 h-2 rounded-full bg-[#A0CD39] shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug line-clamp-2">
+                      {n.body}
+                    </p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                      {formatNotificationDateTime(n.createdAt, isAr)}
+                    </p>
+                  </div>
+                </button>
+              ))}
+
+              {hasNextPage && (
+                <div className="px-4 py-3 flex justify-center">
+                  {isFetchingNextPage ? (
+                    <Loader2 size={16} className="animate-spin text-[#709028]" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onFetchNextPage?.()}
+                      className="text-xs font-medium text-[#709028] dark:text-[#A0CD39] hover:underline"
+                    >
+                      {isAr ? 'تحميل المزيد' : 'Load more'}
+                    </button>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug line-clamp-2">
-                  {n.body}
-                </p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                  {formatNotificationDateTime(n.createdAt, isAr)}
-                </p>
-              </div>
-            </button>
-          ))}
+              )}
+            </>
+          )}
         </div>
 
       </div>

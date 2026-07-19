@@ -4,6 +4,7 @@ import { authService } from '@/modules/auth/services/auth.service';
 import { ROUTES } from '@/app/router/routes';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
 import { NotificationListener } from '@/app/components/NotificationListener';
+import { AttendanceInactivityWatcher } from '@/app/components/AttendanceInactivityWatcher';
 
 export function AuthGuard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -23,6 +24,7 @@ export function AuthGuard() {
   return (
     <>
       <NotificationListener />
+      <AttendanceInactivityWatcher />
       <Outlet />
     </>
   );

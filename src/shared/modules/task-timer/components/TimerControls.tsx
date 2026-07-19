@@ -48,8 +48,18 @@ export function ElapsedDisplay({
 
   useEffect(() => {
     if (isPaused) return;
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(id);
+    const bump = () => setTick((t) => t + 1);
+    const id = setInterval(bump, 1000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') bump();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
   }, [isPaused]);
 
   const display = isPaused

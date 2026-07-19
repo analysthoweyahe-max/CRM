@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bold, Italic, AtSign, Link, Pencil, Reply, X } from 'lucide-react';
 import { Avatar }              from '@/shared/components/ui/Avatar';
 import { useAutoResizeTextarea } from '@/shared/hooks/useAutoResizeTextarea';
@@ -7,6 +7,7 @@ import { MentionPopover }      from '@/shared/components/chat';
 import { ensureHttpUrl }       from '@/shared/utils/format.utils';
 import { messageWasEdited as isEdited } from '@/shared/utils/mentionComposer.utils';
 import { formatNotificationDateTime } from '@/shared/utils/date.utils';
+import { highlightCommentById } from '@/shared/utils/mentionDeepLink.utils';
 import type { MentionablePerson } from '@/shared/utils/mentionComposer.utils';
 import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
 import type { TaskComment }    from '../types/taskModal.types';
@@ -21,6 +22,8 @@ interface Props {
   isAr:      boolean;
   getMentionInfo?:     (ref: MentionRef) => ResolvedMention | undefined;
   onMentionStartChat?: (ref: MentionRef) => void;
+  /** When set (e.g. from a mention notification), scroll to and highlight that comment. */
+  highlightCommentId?: string | null;
 }
 
 const URL_PATTERN = 'https?:\\/\\/[^\\s<]+|www\\.[^\\s<]+';
@@ -115,7 +118,10 @@ function CommentItem({
   nested?: boolean;
 }) {
   return (
-    <div className={`flex items-start gap-3 ${nested ? 'ps-4 border-s-2 border-[#A0CD39]/40' : ''}`}>
+    <div
+      data-comment-id={comment.id}
+      className={`flex items-start gap-3 rounded-xl transition-shadow ${nested ? 'ps-4 border-s-2 border-[#A0CD39]/40' : ''}`}
+    >
       <div className="flex-1 space-y-1.5">
         <div className="flex items-center justify-end gap-2">
           <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -172,11 +178,18 @@ function CommentItem({
 
 export function TaskCommentsTab({
   comments, text, setText, onSubmit, onEdit, mentionables = [], isAr, getMentionInfo, onMentionStartChat,
+  highlightCommentId,
 }: Props) {
   const areaRef = useAutoResizeTextarea(text);
   const mentionComposer = useMentionComposer();
   const [replyTo, setReplyTo] = useState<TaskComment | null>(null);
   const [editingComment, setEditingComment] = useState<TaskComment | null>(null);
+
+  useEffect(() => {
+    if (!highlightCommentId || comments.length === 0) return;
+    const t = window.setTimeout(() => highlightCommentById(highlightCommentId), 80);
+    return () => window.clearTimeout(t);
+  }, [highlightCommentId, comments]);
 
   function wrap(before: string, after: string) {
     const el = areaRef.current;

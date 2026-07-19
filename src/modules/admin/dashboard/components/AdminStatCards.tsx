@@ -11,8 +11,8 @@ interface Props {
 
 function employeesPath(status?: string) {
   return status
-    ? `${ROUTES.ADMIN.EMPLOYEES}?status=${encodeURIComponent(status)}`
-    : ROUTES.ADMIN.EMPLOYEES;
+    ? `${ROUTES.EMPLOYEES.LIST}?status=${encodeURIComponent(status)}`
+    : ROUTES.EMPLOYEES.LIST;
 }
 
 export function AdminStatCards({ stats, isAr }: Props) {

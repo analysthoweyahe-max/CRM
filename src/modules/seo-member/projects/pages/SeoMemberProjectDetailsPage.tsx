@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, ExternalLink, Globe, Plus } from 'lucide-react';
@@ -8,11 +8,17 @@ import { ROUTES } from '@/app/router/routes';
 import { Button } from '@/shared/components/ui/Button';
 import { Card } from '@/shared/components/ui/Card';
 import { RichTextView } from '@/shared/components/form/RichTextView';
+import { GoogleDriveIcon } from '@/shared/components/icons/GoogleDriveIcon';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { formatDateShort } from '@/shared/utils/date.utils';
+import { ensureHttpUrl } from '@/shared/utils';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
+import {
+  findSeoTaskIdForComment,
+  isSeoTaskCommentContext,
+} from '@/shared/utils/mentionDeepLink.utils';
 import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import type { SeoTaskStatusOption } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import { campaignApi } from '@/modules/seo-leader/campaigns/api/campaign.api';
@@ -100,11 +106,13 @@ export function SeoMemberProjectDetailsPage() {
   const isAr = lang === 'ar';
   const navigate = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
   const canAddTask = usePermission(['edit-seo-tasks', 'create-seo-project']);
 
   const tabParam = searchParams.get('tab');
+  const commentParam = searchParams.get('comment') ?? searchParams.get('commentId');
+  const contextTypeParam = searchParams.get('contextType');
   const initialTab: TabKey =
     tabParam === 'messages' || tabParam === 'team' || tabParam === 'progress' || tabParam === 'info'
       ? tabParam
@@ -112,6 +120,10 @@ export function SeoMemberProjectDetailsPage() {
 
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (tabParam === 'messages') setActiveTab('messages');
+  }, [tabParam]);
 
   const { data: campaign, isLoading: campaignLoading } = useQuery({
     queryKey: ['seo-member-project', id],
@@ -171,6 +183,25 @@ export function SeoMemberProjectDetailsPage() {
     ),
     [baseTasks, statusOverrides, marksCompletedByKey],
   );
+
+  /* Mention deep-link: resolve SeoTaskComment → task detail. */
+  useEffect(() => {
+    if (!commentParam || !isSeoTaskCommentContext(contextTypeParam ?? 'SeoTaskComment')) return;
+    if (tasks.length === 0) return;
+
+    let cancelled = false;
+    const keys = tasks.map(t => taskResourceKey(t));
+
+    void findSeoTaskIdForComment(projectKey, keys, commentParam).then((taskKey) => {
+      if (cancelled || !taskKey) return;
+      setSearchParams({}, { replace: true });
+      navigate(
+        `${ROUTES.SEO_MEMBER.TASK_DETAIL(projectKey, taskKey)}?tab=comments&comment=${encodeURIComponent(commentParam)}`,
+      );
+    });
+
+    return () => { cancelled = true; };
+  }, [commentParam, contextTypeParam, tasks, projectKey, navigate, setSearchParams]);
 
   const displayColumns: SeoTaskStatusOption[] = useMemo(() => {
     const known = new Set(statuses.map(s => s.key));
@@ -276,9 +307,25 @@ export function SeoMemberProjectDetailsPage() {
       <Card className="p-6">
         <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-snug">
-              {name}
-            </h1>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-snug">
+                {name}
+              </h1>
+              {drive && (
+                <a
+                  href={ensureHttpUrl(drive)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={isAr ? 'فتح Google Drive' : 'Open Google Drive'}
+                  aria-label={isAr ? 'رابط Google Drive' : 'Google Drive Link'}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200
+                             dark:border-gray-600 transition-colors shrink-0
+                             hover:bg-gray-50 dark:hover:bg-gray-700/60 hover:border-gray-300 dark:hover:border-gray-500"
+                >
+                  <GoogleDriveIcon size={18} />
+                </a>
+              )}
+            </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{typeLabel}</p>
             {statusLabel && (
               <span className="inline-flex mt-2 text-xs px-2.5 py-1 rounded-full

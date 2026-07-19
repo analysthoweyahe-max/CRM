@@ -14,6 +14,8 @@ interface Props<T> {
   /** Set false to render cards without the draggable wrapper (e.g. when the
    *  caller has no permission/handler to change the group on drop). */
   draggable?:  boolean;
+  /** Per-item drag gate — ignored when `draggable` is false. */
+  isItemDraggable?: (item: T) => boolean;
 }
 
 /** Generic kanban column shell: header (dot + label + count) + a native
@@ -21,7 +23,8 @@ interface Props<T> {
  *  drag mechanics/state (onDragOver/onDragLeave/onDrop + isDragOver ring)
  *  live in one place instead of being copy-pasted per module. */
 export function KanbanColumn<T>({
-  groupKey, label, color, items, isAr, getId, renderCard, onDrop, emptyLabel, draggable = true,
+  groupKey, label, color, items, isAr, getId, renderCard, onDrop, emptyLabel,
+  draggable = true, isItemDraggable,
 }: Props<T>) {
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -65,18 +68,21 @@ export function KanbanColumn<T>({
             : 'bg-gray-50/70 dark:bg-gray-900/20',
         ].join(' ')}
       >
-        {items.map(item => (
-          <div
-            key={getId(item)}
-            draggable={draggable}
-            onDragStart={draggable ? (e => {
-              e.dataTransfer.setData('taskId', getId(item));
-              e.dataTransfer.effectAllowed = 'move';
-            }) : undefined}
-          >
-            {renderCard(item)}
-          </div>
-        ))}
+        {items.map(item => {
+          const itemDraggable = draggable && (isItemDraggable ? isItemDraggable(item) : true);
+          return (
+            <div
+              key={getId(item)}
+              draggable={itemDraggable}
+              onDragStart={itemDraggable ? (e => {
+                e.dataTransfer.setData('taskId', getId(item));
+                e.dataTransfer.effectAllowed = 'move';
+              }) : undefined}
+            >
+              {renderCard(item)}
+            </div>
+          );
+        })}
 
         {items.length === 0 && (
           <div className="h-full min-h-[200px] flex items-center justify-center py-16

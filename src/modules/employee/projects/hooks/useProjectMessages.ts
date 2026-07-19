@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { mapProjectMessage } from '@/shared/utils/projectChat.utils';
 import { toApiArray } from '@/shared/utils/apiList.utils';
-import { excludeSelfFromActors } from '@/shared/utils/chatNormalize.utils';
+import { excludeSelfFromActors, filterPmProjectMentions } from '@/shared/utils/chatNormalize.utils';
 import { empProjectMessagesApi } from '../api/projectMessages.api';
 import type { ChatMessage, PmMentionable } from '../types/projectMessage.types';
 
@@ -20,7 +20,9 @@ export function useProjectMessages(projectId: string) {
   const { data: mentionables = [] } = useQuery({
     queryKey: ['emp-project-mentionables', projectId],
     queryFn:  () => empProjectMessagesApi.mentionables(projectId)
-      .then(r => excludeSelfFromActors(toApiArray<PmMentionable>(r.data.data), user)),
+      .then(r => filterPmProjectMentions(
+        excludeSelfFromActors(toApiArray<PmMentionable>(r.data.data), user),
+      )),
     enabled:  showMentions && !!projectId,
     staleTime: 60_000,
   });
