@@ -31,7 +31,7 @@ export function useJobTitles(departmentId?: string) {
       // Client-side safety net if the API ignored department_id
       return list.filter((t) => {
         const dept = t.departmentId ?? t.department_id;
-        return dept == null || String(dept) === String(departmentId);
+        return dept != null && dept !== '' && String(dept) === String(departmentId);
       });
     },
     staleTime: 5 * 60_000,

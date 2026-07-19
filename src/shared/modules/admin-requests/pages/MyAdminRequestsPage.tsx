@@ -4,7 +4,6 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { Card } from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui/Button';
 import { Combobox } from '@/shared/components/form/Combobox';
-import { TablePagination } from '@/shared/components/tables/TablePagination';
 import { usePermission } from '@/shared/hooks/usePermission';
 import {
   useAdminRequestList,
@@ -129,22 +128,17 @@ export function MyAdminRequestsPage({ namespace }: Props) {
             isAr={isAr}
             onCancel={canCancel ? handleCancel : undefined}
             cancelling={cancelling}
+            serverPagination={{
+              page,
+              lastPage,
+              total,
+              firstRow,
+              lastRow,
+              onPrev: () => setPage((p) => p - 1),
+              onNext: () => setPage((p) => p + 1),
+              onPage: (i) => setPage(i + 1),
+            }}
           />
-          {total > 0 && (
-            <TablePagination
-              pageIndex={page - 1}
-              pageCount={lastPage}
-              totalRows={total}
-              firstRow={firstRow}
-              lastRow={lastRow}
-              canPrev={page > 1}
-              canNext={page < lastPage}
-              onPrev={() => setPage((p) => p - 1)}
-              onNext={() => setPage((p) => p + 1)}
-              onPage={(i) => setPage(i + 1)}
-              isAr={isAr}
-            />
-          )}
         </div>
       </Card>
 

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { invalidateEmployeeHomeTasks } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import { employeeTaskApi } from '../api/employeeTask.api';
 import type { CreateSelfTaskPayload } from '../types/employeeTask.types';
 
@@ -16,8 +17,7 @@ export function useCreateSelfTask() {
     mutationFn: ({ projectId, payload }: { projectId: string; payload: CreateSelfTaskPayload }) =>
       employeeTaskApi.createSelfTask(projectId, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });
-      qc.invalidateQueries({ queryKey: ['my-tasks'] });
+      invalidateEmployeeHomeTasks(qc);
     },
   });
 }

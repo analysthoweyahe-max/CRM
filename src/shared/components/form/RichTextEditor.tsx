@@ -15,6 +15,9 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ value, onChange, placeholder, dir, hasError, className }: RichTextEditorProps) {
   const editor = useEditor({
+    // Defer creation until after mount so React StrictMode remounts don't
+    // call into a destroyed editor whose schema was already nulled (→ null.cached).
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({ heading: false, blockquote: false, code: false, codeBlock: false, horizontalRule: false }),
       Placeholder.configure({ placeholder: placeholder ?? '' }),
@@ -32,20 +35,22 @@ export function RichTextEditor({ value, onChange, placeholder, dir, hasError, cl
         ].join(' '),
       },
     },
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
+    onUpdate: ({ editor: ed }) => {
+      if (ed.isDestroyed) return;
+      const html = ed.getHTML();
       onChange(html === '<p></p>' ? '' : html);
     },
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML() && !(value === '' && editor.isEmpty)) {
+    if (!editor || editor.isDestroyed) return;
+    if (value !== editor.getHTML() && !(value === '' && editor.isEmpty)) {
       editor.commands.setContent(value || '', { emitUpdate: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, editor]);
 
-  if (!editor) return null;
+  if (!editor || editor.isDestroyed) return null;
 
   return (
     <div

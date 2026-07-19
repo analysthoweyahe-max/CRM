@@ -10,6 +10,7 @@ export interface ApiLookup {
   isActive?:     boolean;
   departmentId?: number | string | null;
   department_id?: number | string | null;
+  department?:   { id?: number | string | null; name?: string | null } | null;
 }
 
 // ── Employee as returned by the API (camelCase) ───────────────────────────────
@@ -205,8 +206,9 @@ export function toDepartmentIds(ids: string[]): number[] {
 export function titleDepartmentId(t: {
   departmentId?: unknown;
   department_id?: unknown;
+  department?: { id?: unknown } | null;
 }): string {
-  const raw = t.departmentId ?? t.department_id;
+  const raw = t.departmentId ?? t.department_id ?? t.department?.id;
   return raw == null || raw === '' ? '' : String(raw);
 }
 

@@ -47,6 +47,8 @@ export interface MyTask {
   commentsCount?:    number;
   createdAt:        string;
   updatedAt:        string;
+  createdById?:     string;
+  createdByName?:   string;
   dueAt?:           string | null;
   isOverdue?:       boolean;
   isDelayed?:       boolean;

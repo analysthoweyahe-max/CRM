@@ -1,43 +1,32 @@
+import { CalendarCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CheckSquare, ArrowLeft, ArrowRight } from 'lucide-react';
-import { Card }    from '@/shared/components/ui/Card';
-import { ROUTES }  from '@/app/router/routes';
+import { ROUTES } from '@/app/router/routes';
 import { TablePagination } from '@/shared/components/tables/TablePagination';
 import { HomeTaskFilters } from '@/shared/modules/my-tasks/components/HomeTaskFilters';
-import { TaskCard } from '@/modules/employee/tasks/components/TaskCard';
-import { useHomeTaskFilters } from '../hooks/useHomeTaskFilters';
-import type { EmployeeTask } from '@/modules/employee/tasks/types/employeeTask.types';
+import { TodayTaskCard } from './TodayTaskCard';
+import { useSeoHomeTaskFilters } from '../hooks/useSeoHomeTaskFilters';
+import type { SeoTask } from '@/modules/seo-member/tasks/types/seoTask.types';
 
 interface Props {
-  tasks: EmployeeTask[];
-  isAr:  boolean;
+  tasks:     SeoTask[];
+  isLoading: boolean;
+  isAr:      boolean;
 }
 
-export function MyTasksSection({ tasks, isAr }: Props) {
+export function SeoHomeTasksSection({ tasks, isLoading, isAr }: Props) {
   const navigate = useNavigate();
   const {
     status, project, deadline,
     statusItems, projectItems, deadlineItems,
     onStatus, onProject, onDeadline,
     pageItems, page, pageCount, total, firstRow, lastRow, canPrev, canNext, setPage,
-  } = useHomeTaskFilters(tasks, isAr);
+  } = useSeoHomeTaskFilters(tasks, isAr);
 
   return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
-          {isAr ? 'مهامي' : 'My Tasks'}
-        </h2>
-        {tasks.length > 0 && (
-          <button
-            onClick={() => navigate(ROUTES.EMPLOYEE.TASKS)}
-            className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 transition-colors inline-flex items-center gap-1"
-          >
-            {isAr ? 'عرض الكل' : 'View All'}
-            {isAr ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
-          </button>
-        )}
-      </div>
+    <div>
+      <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4">
+        {isAr ? 'مهامي' : 'My Tasks'}
+      </h2>
 
       {tasks.length > 0 && (
         <div className="mb-4">
@@ -56,10 +45,16 @@ export function MyTasksSection({ tasks, isAr }: Props) {
         </div>
       )}
 
-      {pageItems.length === 0 ? (
-        <div className="py-12 text-center">
-          <CheckSquare size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="text-sm text-gray-400 dark:text-gray-500">
+      {isLoading ? (
+        <div className="space-y-3 animate-pulse">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-24 rounded-xl bg-gray-200 dark:bg-gray-700" />
+          ))}
+        </div>
+      ) : pageItems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-12 text-gray-400 dark:text-gray-500">
+          <CalendarCheck size={28} className="opacity-50" />
+          <p className="text-sm">
             {tasks.length === 0
               ? (isAr ? 'لا توجد مهام مسندة إليك حاليًا' : 'You have no assigned tasks yet')
               : (isAr ? 'لا توجد مهام مطابقة للتصفية' : 'No tasks match the selected filters')}
@@ -68,13 +63,22 @@ export function MyTasksSection({ tasks, isAr }: Props) {
       ) : (
         <div className="space-y-3">
           {pageItems.map(task => (
-            <TaskCard key={task.id} task={task} isAr={isAr} />
+            <TodayTaskCard
+              key={task.id}
+              task={task}
+              isAr={isAr}
+              onDetails={(t) => {
+                const projectId = t.project?.id;
+                if (!projectId) return;
+                navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(projectId, t.id));
+              }}
+            />
           ))}
         </div>
       )}
 
       {total > 0 && pageCount > 1 && (
-        <div className="-mx-5 mt-4">
+        <div className="mt-4 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
           <TablePagination
             isAr={isAr}
             pageIndex={page - 1}
@@ -90,6 +94,6 @@ export function MyTasksSection({ tasks, isAr }: Props) {
           />
         </div>
       )}
-    </Card>
+    </div>
   );
 }

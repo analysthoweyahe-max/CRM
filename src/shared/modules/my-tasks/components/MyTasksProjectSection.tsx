@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { KanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
+import { KanbanTaskFilters } from '@/modules/project-manager/projects/components/KanbanTaskFilters';
 import { MyTaskCard } from './MyTaskCard';
 import type { GroupedTasksData, MyTask, TaskPhase } from '../types/myTasks.types';
 import { isEditableMyTask } from '../utils/myTasks.utils';
+import { useMyTasksBoardFilters } from '../hooks/useMyTasksBoardFilters';
 
 const STATUS_COLOR: Record<string, string> = {
   pending:      '#9CA3AF',
@@ -30,10 +32,16 @@ interface Props {
 export function MyTasksProjectSection({ project, data, isAr, canDrag, onOpen, onStatusChange, onPhaseChange }: Props) {
   const [viewMode, setViewMode] = useState<'status' | 'phase'>('status');
   const allTasks = useMemo(() => data.columns.flatMap(c => c.tasks), [data.columns]);
+  const filters = useMyTasksBoardFilters(allTasks, isAr);
+  const filteredData = useMemo(
+    () => filters.filterGroupedData(data),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- filterGroupedData closes over filter state
+    [data, filters.filteredTasks, filters.statusFilter],
+  );
 
   const phaseColumns = useMemo(() => {
     const map = new Map<string, { key: string; label: string; phase?: MyTask['phase']; items: MyTask[] }>();
-    for (const t of allTasks) {
+    for (const t of filters.filteredTasks) {
       const key = t.phase ? String(t.phase.id) : '__none__';
       if (!map.has(key)) {
         map.set(key, { key, label: t.phase?.name ?? (isAr ? 'بدون مرحلة' : 'No phase'), phase: t.phase, items: [] });
@@ -41,7 +49,7 @@ export function MyTasksProjectSection({ project, data, isAr, canDrag, onOpen, on
       map.get(key)!.items.push(t);
     }
     return Array.from(map.values()).map(col => ({ ...col, color: colorForKey(col.key) }));
-  }, [allTasks, isAr]);
+  }, [filters.filteredTasks, isAr]);
 
   async function handleStatusDrop(id: string, toStatus: string) {
     const task = allTasks.find(t => String(t.id) === id);
@@ -87,10 +95,37 @@ export function MyTasksProjectSection({ project, data, isAr, canDrag, onOpen, on
         </div>
       </div>
 
+      <KanbanTaskFilters
+        isAr={isAr}
+        phase=""
+        assignee={filters.assigneeFilter}
+        creator={filters.creatorFilter}
+        status={filters.statusFilter}
+        period={filters.periodFilter}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        phaseItems={[{ id: '', label: isAr ? 'كل المراحل' : 'All phases' }]}
+        assigneeItems={filters.assigneeItems}
+        creatorItems={filters.creatorItems}
+        statusItems={filters.statusItems}
+        onPhase={() => {}}
+        onAssignee={filters.setAssigneeFilter}
+        onCreator={filters.setCreatorFilter}
+        onStatus={filters.setStatusFilter}
+        onPeriod={filters.setPeriod}
+        onDateFrom={filters.setDateFrom}
+        onDateTo={filters.setDateTo}
+        onClear={filters.clearFilters}
+        hasActive={filters.hasActiveFilters}
+        resultCount={filters.filteredTasks.length}
+        totalCount={allTasks.length}
+        hidePhase
+      />
+
       <KanbanBoard
         columns={
           viewMode === 'status'
-            ? data.columns.map(col => ({
+            ? filteredData.columns.map(col => ({
                 key:   col.status,
                 label: col.statusLabel,
                 color: STATUS_COLOR[col.status] ?? colorForKey(col.status),

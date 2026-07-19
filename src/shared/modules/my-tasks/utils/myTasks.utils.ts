@@ -174,6 +174,8 @@ interface RawTaskWire {
   commentsCount?:    number;
   createdAt?:       string;
   updatedAt?:       string;
+  createdBy?:       { id: string; name: string } | null;
+  created_by?:      { id: string; name: string } | null;
   dueAt?:           string | null;
   isOverdue?:       boolean;
   isDelayed?:       boolean;
@@ -193,7 +195,12 @@ function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
     ? importantRaw.filter((v): v is string => typeof v === 'string')
     : undefined;
 
-  return {
+    const createdByRec = readRecord(raw.createdBy ?? raw.created_by);
+    const createdBy = createdByRec
+      ? { id: String(createdByRec.id ?? ''), name: String(createdByRec.name ?? '') }
+      : null;
+
+    return {
     id:               Number(raw.id),
     uuid:             typeof raw.uuid === 'string' ? raw.uuid : undefined,
     taskNumber:       Number(raw.taskNumber ?? raw.task_number ?? raw.id),
@@ -224,6 +231,8 @@ function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
     commentsCount:    Number(raw.commentsCount ?? raw.comments_count ?? 0) || undefined,
     createdAt:        String(raw.createdAt ?? raw.created_at ?? ''),
     updatedAt:        String(raw.updatedAt ?? raw.updated_at ?? ''),
+    createdBy,
+    created_by:       createdBy,
     dueAt:            (raw.dueAt ?? raw.due_at ?? null) as string | null,
     isOverdue:        Boolean(raw.isOverdue ?? raw.is_overdue),
     isDelayed:        Boolean(raw.isDelayed ?? raw.is_delayed),
@@ -273,6 +282,7 @@ function normalizeTask(raw: RawTaskWire | Record<string, unknown>): MyTask {
   const wire = 'title' in raw && typeof raw.title === 'string'
     ? raw as RawTaskWire
     : wireFromRecord(raw as Record<string, unknown>);
+  const createdBy = wire.createdBy ?? wire.created_by ?? null;
   return {
     id:               wire.id,
     uuid:             wire.uuid ?? String(wire.id),
@@ -295,6 +305,8 @@ function normalizeTask(raw: RawTaskWire | Record<string, unknown>): MyTask {
     commentsCount:    wire.commentsCount,
     createdAt:        wire.createdAt ?? '',
     updatedAt:        wire.updatedAt ?? '',
+    createdById:      createdBy?.id != null ? String(createdBy.id) : undefined,
+    createdByName:    createdBy?.name,
     dueAt:            wire.dueAt ?? null,
     isOverdue:        wire.isOverdue,
     isDelayed:        wire.isDelayed,

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Eye, RefreshCw, Clock, CalendarCheck, FolderKanban, Plus } from 'lucide-react';
+import { CheckCircle, Eye, RefreshCw, Clock, FolderKanban, Plus } from 'lucide-react';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { useAuth }     from '@/modules/auth/context/AuthContext';
 import { ROUTES }      from '@/app/router/routes';
@@ -10,7 +10,7 @@ import { MyProjectCard } from '@/shared/modules/my-projects/components/MyProject
 import { resolveMyProjectsConfig } from '@/shared/modules/my-projects/utils/myProjects.utils';
 import { useSeoMemberDashboard } from '../hooks/useSeoMemberDashboard';
 import { useTodayTasks }         from '../hooks/useTodayTasks';
-import { TodayTaskCard }         from '../components/TodayTaskCard';
+import { SeoHomeTasksSection }   from '../components/SeoHomeTasksSection';
 
 function DashboardSkeleton() {
   return (
@@ -143,39 +143,7 @@ export function SeoMemberDashboardPage() {
         )}
       </div>
 
-      <div>
-        <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4">
-          {isAr ? 'مهام اليوم' : "Today's Tasks"}
-        </h2>
-
-        {tasksLoading ? (
-          <div className="space-y-3 animate-pulse">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="h-24 rounded-xl bg-gray-200 dark:bg-gray-700" />
-            ))}
-          </div>
-        ) : todayTasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 text-gray-400 dark:text-gray-500">
-            <CalendarCheck size={28} className="opacity-50" />
-            <p className="text-sm">{isAr ? 'لا توجد مهام اليوم' : 'No tasks today'}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {todayTasks.map(task => (
-              <TodayTaskCard
-                key={task.id}
-                task={task}
-                isAr={isAr}
-                onDetails={(t) => {
-                  const projectId = t.project?.id;
-                  if (!projectId) return;
-                  navigate(ROUTES.SEO_MEMBER.TASK_DETAIL(projectId, t.id));
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <SeoHomeTasksSection tasks={todayTasks} isLoading={tasksLoading} isAr={isAr} />
 
     </div>
   );

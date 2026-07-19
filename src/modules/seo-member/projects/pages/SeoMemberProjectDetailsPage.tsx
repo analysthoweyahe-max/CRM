@@ -26,11 +26,20 @@ import type { SeoTask } from '@/modules/seo-leader/campaigns/api/campaign.api';
 import { KanbanBoard as SharedKanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
 import { KanbanTaskCard } from '@/modules/project-manager/projects/components/KanbanTaskCard';
+import { KanbanTaskFilters } from '@/modules/project-manager/projects/components/KanbanTaskFilters';
+import {
+  matchesTaskPeriod,
+  type TaskPeriodFilter,
+} from '@/modules/project-manager/projects/utils/kanbanTaskFilters.utils';
 import { ProjectMessages } from '@/modules/seo-leader/campaigns/components/ProjectMessages';
 import { SeoProgressTab } from '@/modules/seo-leader/campaigns/components/SeoProgressTab';
 import { SeoProjectTeamTab } from '@/modules/seo-leader/projects/components/SeoProjectTeamTab';
 import { myTasksApi } from '@/shared/modules/my-tasks/api/myTasks.api';
+import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import type { Task, TaskStatus } from '@/modules/project-manager/tasks/types/task.types';
+
+const UNASSIGNED = '__unassigned__';
+const UNKNOWN_CREATOR = '__unknown_creator__';
 
 type TabKey = 'tasks' | 'messages' | 'team' | 'progress' | 'info';
 
@@ -70,6 +79,7 @@ const PRIORITY_MAP: Record<string, Task['priority']> = {
 
 export interface SeoMemberTaskVM extends Task {
   rawStatus: string;
+  assigneeIds: string[];
 }
 
 function toLocalTask(
@@ -77,9 +87,14 @@ function toLocalTask(
   projectId: string,
   marksCompletedByKey: Record<string, boolean>,
 ): SeoMemberTaskVM {
-  const assignee = t.assignees?.[0]?.name
-    ?? (t as SeoTask & { assignee?: { name?: string } }).assignee?.name
-    ?? '';
+  const primary = t.assignees?.[0]
+    ?? (t as SeoTask & { assignee?: { id?: string; name?: string } }).assignee;
+  const assignee = primary?.name ?? '';
+  const createdBy = t.createdBy ?? t.created_by ?? null;
+  const assigneeIds = (t.assignees ?? [])
+    .map(a => a.id)
+    .filter(Boolean);
+  if (assigneeIds.length === 0 && primary?.id) assigneeIds.push(String(primary.id));
   return {
     id:              String(t.id),
     uuid:            t.uuid || undefined,
@@ -88,6 +103,7 @@ function toLocalTask(
     description:     t.description ?? '',
     phaseName:       t.phase ?? t.taskTypeLabel ?? 'مهمة SEO',
     priority:        PRIORITY_MAP[t.priority] ?? 'normal',
+    assigneeId:      primary?.id ? String(primary.id) : undefined,
     assigneeName:    assignee,
     assigneeInitial: assignee ? assignee[0].toUpperCase() : '?',
     assigneeColor:   avatarColor(assignee),
@@ -97,6 +113,10 @@ function toLocalTask(
     rawStatus:       t.status,
     taskNumber:      `#${t.taskNumber ?? t.id}`,
     importantLinks:  t.importantLinks,
+    createdAt:       t.createdAt,
+    createdById:     createdBy?.id,
+    createdByName:   createdBy?.name,
+    assigneeIds,
   };
 }
 
@@ -149,6 +169,12 @@ export function SeoMemberProjectDetailsPage() {
     [statuses],
   );
   const [viewMode, setViewMode] = useState<'status' | 'phase'>('status');
+  const [assigneeFilter, setAssigneeFilter] = useState('');
+  const [creatorFilter,  setCreatorFilter]  = useState('');
+  const [statusFilter,   setStatusFilter]   = useState('');
+  const [periodFilter,   setPeriodFilter]   = useState<TaskPeriodFilter>('');
+  const [dateFrom,       setDateFrom]       = useState('');
+  const [dateTo,         setDateTo]         = useState('');
 
   /* GET /v1/seo/employee/projects/{id}/tasks — the member-scoped route.
      /v1/seo/manager/tasks (used by CampaignDetailsPage) is manager-guarded
@@ -203,11 +229,72 @@ export function SeoMemberProjectDetailsPage() {
     return () => { cancelled = true; };
   }, [commentParam, contextTypeParam, tasks, projectKey, navigate, setSearchParams]);
 
+  const assigneeItems: ComboboxItem[] = useMemo(() => {
+    const map = new Map<string, ComboboxItem>();
+    for (const raw of rawTasks ?? []) {
+      for (const a of raw.assignees ?? []) {
+        if (a.id) map.set(String(a.id), { id: String(a.id), label: a.name || String(a.id) });
+      }
+      const single = (raw as SeoTask & { assignee?: { id?: string; name?: string } }).assignee;
+      if (single?.id) map.set(String(single.id), { id: String(single.id), label: single.name || String(single.id) });
+    }
+    const items = [
+      { id: '', label: isAr ? 'كل المسؤولين' : 'All assignees' },
+      ...Array.from(map.values()),
+    ];
+    if (tasks.some(t => t.assigneeIds.length === 0)) {
+      items.push({ id: UNASSIGNED, label: isAr ? 'بدون مسؤول' : 'Unassigned' });
+    }
+    return items;
+  }, [rawTasks, tasks, isAr]);
+
+  const creatorItems: ComboboxItem[] = useMemo(() => {
+    const map = new Map<string, ComboboxItem>();
+    for (const t of tasks) {
+      if (t.createdById) {
+        map.set(t.createdById, {
+          id: t.createdById,
+          label: t.createdByName || t.createdById,
+        });
+      }
+    }
+    const items = [
+      { id: '', label: isAr ? 'كل المنشئين' : 'All creators' },
+      ...Array.from(map.values()),
+    ];
+    if (tasks.some(t => !t.createdById)) {
+      items.push({ id: UNKNOWN_CREATOR, label: isAr ? 'غير معروف' : 'Unknown' });
+    }
+    return items;
+  }, [tasks, isAr]);
+
+  const taskStatusItems: ComboboxItem[] = useMemo(() => [
+    { id: '', label: isAr ? 'كل الحالات' : 'All statuses' },
+    ...statuses.map(s => ({ id: s.key, label: s.label })),
+  ], [statuses, isAr]);
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(t => {
+      if (assigneeFilter === UNASSIGNED) return t.assigneeIds.length === 0;
+      if (assigneeFilter && !t.assigneeIds.includes(assigneeFilter)) return false;
+      if (creatorFilter === UNKNOWN_CREATOR) return !t.createdById;
+      if (creatorFilter && t.createdById !== creatorFilter) return false;
+      if (statusFilter && t.rawStatus !== statusFilter) return false;
+      if (!matchesTaskPeriod(t.createdAt, periodFilter, dateFrom, dateTo)) return false;
+      return true;
+    });
+  }, [
+    tasks, assigneeFilter, creatorFilter, statusFilter,
+    periodFilter, dateFrom, dateTo,
+  ]);
+
+  const hasActiveFilters = !!assigneeFilter || !!creatorFilter || !!statusFilter || !!periodFilter;
+
   const displayColumns: SeoTaskStatusOption[] = useMemo(() => {
     const known = new Set(statuses.map(s => s.key));
     const extras: SeoTaskStatusOption[] = [];
     const seen = new Set<string>();
-    tasks.forEach(t => {
+    filteredTasks.forEach(t => {
       if (!known.has(t.rawStatus) && !seen.has(t.rawStatus)) {
         seen.add(t.rawStatus);
         extras.push({
@@ -220,12 +307,23 @@ export function SeoMemberProjectDetailsPage() {
         });
       }
     });
-    return [...statuses, ...extras];
-  }, [statuses, tasks]);
+    const all = [...statuses, ...extras];
+    if (!statusFilter) return all;
+    const matched = all.filter(s => s.key === statusFilter);
+    if (matched.length > 0) return matched;
+    return [{
+      key: statusFilter,
+      label: statusFilter,
+      color: '#9CA3AF',
+      sortOrder: 0,
+      isActive: true,
+      marksCompleted: false,
+    }];
+  }, [statuses, filteredTasks, statusFilter]);
 
   const phaseColumns = useMemo(() => {
     const map = new Map<string, Task[]>();
-    for (const t of tasks) {
+    for (const t of filteredTasks) {
       const key = t.phaseName || (isAr ? 'بدون مرحلة' : 'No phase');
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(t);
@@ -233,7 +331,7 @@ export function SeoMemberProjectDetailsPage() {
     return Array.from(map.entries()).map(([key, items]) => ({
       key, label: key, color: colorForKey(key), items,
     }));
-  }, [tasks, isAr]);
+  }, [filteredTasks, isAr]);
 
   function handleDrop(taskId: string, toStatusKey: string) {
     const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
@@ -433,6 +531,45 @@ export function SeoMemberProjectDetailsPage() {
                 ))}
               </div>
             </div>
+            <KanbanTaskFilters
+              isAr={isAr}
+              phase=""
+              assignee={assigneeFilter}
+              creator={creatorFilter}
+              status={statusFilter}
+              period={periodFilter}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              phaseItems={[{ id: '', label: isAr ? 'كل المراحل' : 'All phases' }]}
+              assigneeItems={assigneeItems}
+              creatorItems={creatorItems}
+              statusItems={taskStatusItems}
+              onPhase={() => {}}
+              onAssignee={setAssigneeFilter}
+              onCreator={setCreatorFilter}
+              onStatus={setStatusFilter}
+              onPeriod={(value) => {
+                setPeriodFilter(value);
+                if (value !== 'custom') {
+                  setDateFrom('');
+                  setDateTo('');
+                }
+              }}
+              onDateFrom={setDateFrom}
+              onDateTo={setDateTo}
+              onClear={() => {
+                setAssigneeFilter('');
+                setCreatorFilter('');
+                setStatusFilter('');
+                setPeriodFilter('');
+                setDateFrom('');
+                setDateTo('');
+              }}
+              hasActive={hasActiveFilters}
+              resultCount={filteredTasks.length}
+              totalCount={tasks.length}
+              hidePhase
+            />
             <SharedKanbanBoard
               columns={
                 viewMode === 'status'
@@ -440,7 +577,7 @@ export function SeoMemberProjectDetailsPage() {
                       key:   status.key,
                       label: status.label,
                       color: status.color,
-                      items: tasks.filter(t => t.rawStatus === status.key),
+                      items: filteredTasks.filter(t => t.rawStatus === status.key),
                     }))
                   : phaseColumns
               }

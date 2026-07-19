@@ -5,7 +5,8 @@ import type { SeoTaskProjectRef } from '../types/seoTask.types';
 export function useSeoTasks() {
   return useQuery({
     queryKey: ['seo-member', 'tasks'],
-    queryFn:  () => seoTaskApi.list(),
+    // Per-project fetch + flatMap — cross-project aggregate is unreliable.
+    queryFn:  () => seoTaskApi.listMineAggregated(),
     select: ({ tasks, total }) => {
       const phaseNames = [...new Set(
         tasks.map((t) => t.phase).filter((p): p is string => !!p),

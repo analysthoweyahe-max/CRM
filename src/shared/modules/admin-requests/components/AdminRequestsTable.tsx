@@ -7,7 +7,7 @@ import {
   type ColumnDef,
 } from '@tanstack/react-table';
 import { Badge } from '@/shared/components/ui/Badge';
-import { DataTable } from '@/shared/components/tables/DataTable';
+import { DataTable, type ServerPagination } from '@/shared/components/tables/DataTable';
 import { formatDateFull } from '@/shared/utils/date.utils';
 import {
   ADMIN_REQUEST_STATUS_MAP,
@@ -18,11 +18,12 @@ import {
 const col = createColumnHelper<AdminRequest>();
 
 interface Props {
-  requests:   AdminRequest[];
-  isLoading:  boolean;
-  isAr:       boolean;
-  onCancel?:  (id: string) => void;
-  cancelling?: string | null;
+  requests:          AdminRequest[];
+  isLoading:         boolean;
+  isAr:              boolean;
+  onCancel?:         (id: string) => void;
+  cancelling?:       string | null;
+  serverPagination?: ServerPagination;
 }
 
 function fmtRange(start: string | null, end: string | null, isAr: boolean) {
@@ -39,6 +40,7 @@ export function AdminRequestsTable({
   isAr,
   onCancel,
   cancelling,
+  serverPagination,
 }: Props) {
   const columns = useMemo((): ColumnDef<AdminRequest, unknown>[] => {
     const cols: ColumnDef<AdminRequest, unknown>[] = [
@@ -122,6 +124,7 @@ export function AdminRequestsTable({
       isLoading={isLoading}
       emptyText={isAr ? 'لا توجد طلبات بعد' : 'No requests yet'}
       withCard={false}
+      serverPagination={serverPagination}
     />
   );
 }

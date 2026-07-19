@@ -25,8 +25,7 @@ export function useUpdateJobTitle() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: number | string; payload: UpdateJobTitlePayload }) =>
       jobTitleApi.update(id, payload),
-    // The backend returns the refreshed list on update — use it directly instead of refetching.
-    onSuccess:  (r) => qc.setQueryData(JOB_TITLES_KEY, toApiArray<ApiJobTitle>(r.data.data)),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: JOB_TITLES_KEY }),
   });
 }
 
@@ -34,7 +33,6 @@ export function useDeleteJobTitle() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number | string) => jobTitleApi.remove(id),
-    // The backend returns the refreshed list on delete — use it directly instead of refetching.
-    onSuccess:  (r) => qc.setQueryData(JOB_TITLES_KEY, toApiArray<ApiJobTitle>(r.data.data)),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: JOB_TITLES_KEY }),
   });
 }

@@ -6,7 +6,7 @@ import { Input }     from '@/shared/components/ui/Input';
 import { FormField } from '@/shared/components/form/FormField';
 import { Combobox }  from '@/shared/components/form/Combobox';
 import type { ApiDepartment } from '@/modules/admin/departments/types/adminDepartment.types';
-import type { ApiJobTitle } from '../types/adminJobTitle.types';
+import { jobTitleDepartmentId, type ApiJobTitle } from '../types/adminJobTitle.types';
 
 interface Props {
   open:        boolean;
@@ -29,9 +29,9 @@ export function JobTitleFormModal({ open, onClose, onSubmit, departments, initia
   useEffect(() => {
     if (!open) return;
     setName(initial?.name ?? '');
-    setDepartmentId('');
+    setDepartmentId(jobTitleDepartmentId(initial));
     setImage(null);
-    setPreview(null);
+    setPreview(initial?.image ?? null);
   }, [open, initial]);
 
   function handleFile(file: File | null) {

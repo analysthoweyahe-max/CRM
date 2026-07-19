@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import { useLang }    from '@/app/providers/LanguageProvider';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { Button }     from '@/shared/components/ui/Button';
+import { Combobox }   from '@/shared/components/form/Combobox';
 import { JobTitleCard }        from '../components/JobTitleCard';
 import { JobTitleFormModal }   from '../components/JobTitleFormModal';
 import { DeleteJobTitleModal } from '../components/DeleteJobTitleModal';
@@ -13,10 +14,16 @@ export function AdminJobTitlesPage() {
 
   const {
     jobTitles, departments, isLoading,
+    departmentFilter, setDepartmentFilter, departmentOptions,
     showAdd, openAdd, closeAdd, submitAdd, creating,
     editingJobTitle, openEdit, closeEdit, submitEdit, updating,
     pendingDelete, askDelete, cancelDelete, confirmDelete, deleting,
   } = useAdminJobTitlesPage(isAr);
+
+  const departmentItems = [
+    { id: '', label: isAr ? 'كل الأقسام' : 'All Departments' },
+    ...departmentOptions,
+  ];
 
   return (
     <div className="space-y-5">
@@ -30,6 +37,16 @@ export function AdminJobTitlesPage() {
           </Button>
         }
       />
+
+      <div className="w-full sm:w-56">
+        <Combobox
+          items={departmentItems}
+          value={departmentFilter}
+          onChange={setDepartmentFilter}
+          searchPlaceholder={isAr ? 'ابحث عن قسم...' : 'Search department...'}
+          noResultsText={isAr ? 'لا نتائج' : 'No results'}
+        />
+      </div>
 
       {isLoading ? (
         <div className="text-center py-16 text-sm text-gray-400 dark:text-gray-500">

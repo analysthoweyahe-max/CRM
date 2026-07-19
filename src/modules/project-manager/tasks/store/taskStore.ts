@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAvatarColor } from '@/shared/utils';
 import { parseImportantLinks } from '@/shared/utils/importantLinks.utils';
+import { invalidateEmployeeHomeTasks } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import { pmTaskApi } from '../api/task.api';
 import type { RawPmTask } from '../api/task.api';
 import type { Task, TaskPriority, TaskStatus } from '../types/task.types';
@@ -56,7 +57,11 @@ export function useProjectTasks(projectId: string): Task[] {
 /** Invalidate the task list after a create/update/status/delete mutation succeeds. */
 export function useInvalidateProjectTasks(projectId: string) {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: queryKey(projectId) });
+  return () => {
+    queryClient.invalidateQueries({ queryKey: queryKey(projectId) });
+    // Keep employee home / My Tasks in sync when a PM creates or edits tasks.
+    invalidateEmployeeHomeTasks(queryClient);
+  };
 }
 
 /** Optimistically remove a task from the cached list — there is no confirmed

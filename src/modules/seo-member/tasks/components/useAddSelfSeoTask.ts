@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
+import { invalidateSeoMemberHomeTasks } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import { useSeoMemberDashboard } from '../../dashboard/hooks/useSeoMemberDashboard';
 import { seoTaskDetailApi } from '../api/seoTaskDetail.api';
 import type { CreateSelfSeoTaskPayload, SeoTaskPriority } from '../types/seoTask.types';
@@ -24,9 +25,7 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
     mutationFn: ({ projectId, payload, files }: { projectId: string; payload: CreateSelfSeoTaskPayload; files?: File[] }) =>
       seoTaskDetailApi.createSelfTask(projectId, payload, files),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
-      qc.invalidateQueries({ queryKey: ['my-tasks'] });
-      qc.invalidateQueries({ queryKey: ['seo-member-project-tasks'] });
+      invalidateSeoMemberHomeTasks(qc);
     },
   });
 

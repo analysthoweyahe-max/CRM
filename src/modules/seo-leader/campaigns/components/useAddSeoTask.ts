@@ -3,6 +3,7 @@ import { useMutation, useQueryClient }      from '@tanstack/react-query';
 import { campaignApi }                      from '../api/campaign.api';
 import type { AddSeoTaskForm }              from './AddSeoTaskModal.types';
 import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
+import { invalidateSeoMemberHomeTasks } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 
 const INITIAL: AddSeoTaskForm = {
   title:            '',
@@ -60,8 +61,8 @@ export function useAddSeoTask(
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ['campaign-tasks', campaignId] });
       queryClient.invalidateQueries({ queryKey: ['seo-member-project'] });
-      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
+      invalidateSeoMemberHomeTasks(queryClient);
 
       setForm({ ...INITIAL, targetUrl: prefillUrl });
       setFiles([]);

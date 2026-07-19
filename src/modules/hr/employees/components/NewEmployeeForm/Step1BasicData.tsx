@@ -74,7 +74,7 @@ export function Step1BasicData({
     if (selectedDeptSet.size === 0) return [];
     return allJobTitles.filter((t) => {
       const deptId = titleDepartmentId(t);
-      return !deptId || selectedDeptSet.has(deptId);
+      return Boolean(deptId) && selectedDeptSet.has(deptId);
     });
   }, [allJobTitles, selectedDeptSet]);
 
