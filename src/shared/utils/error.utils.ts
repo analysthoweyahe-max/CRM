@@ -10,6 +10,7 @@ const FIELD_ALIASES: Record<string, string> = {
   department_id:            'departmentIds',
   job_title_id:             'jobTitleId',
   project_type_id:          'projectTypeId',
+  project_type_ids:         'projectTypeIds',
   target_domain:            'targetDomain',
   expected_end_date:        'endDate',
   start_date:               'startDate',

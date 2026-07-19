@@ -26,4 +26,8 @@ export interface Task {
   overdueLabel?:    string | null;
   canExtend?:       boolean;
   importantLinks?:  string[];
+  /** ISO date/datetime from list API — used for client-side period filters. */
+  createdAt?:       string;
+  createdById?:     string;
+  createdByName?:   string;
 }

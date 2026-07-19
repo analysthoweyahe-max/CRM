@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useLayoutEffect, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useRef, useLayoutEffect, type ReactNode } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavItem } from './NavItem';
@@ -11,6 +11,10 @@ import type { AppSidebarProps as _Base } from './appSidebar.types';
 export interface AppSidebarProps extends _Base {
   footerWidget?: ReactNode;
   isCheckedIn?:  boolean;
+}
+
+function isChildPathActive(pathname: string, childPath: string): boolean {
+  return pathname === childPath || pathname.startsWith(`${childPath}/`);
 }
 
 export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollapse, footerWidget, isCheckedIn }: AppSidebarProps) {
@@ -44,22 +48,31 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
   const allItems = sections.flatMap(s => s.items);
 
   const activeParentKey = allItems.find(item =>
-    item.children?.some(c => location.pathname.startsWith(c.path))
+    item.children?.some(c => isChildPathActive(location.pathname, c.path)),
   )?.key;
 
-  const [manualExpanded, setManualExpanded] = useState<Set<string>>(
+  const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set(activeParentKey ? [activeParentKey] : []),
   );
+  const prevActiveParentKey = useRef(activeParentKey);
 
-  const expanded = useMemo(
-    () => new Set([...manualExpanded, ...(activeParentKey ? [activeParentKey] : [])]),
-    [manualExpanded, activeParentKey],
-  );
+  // Auto-open the parent when navigation lands on one of its children.
+  // Do not force it open on every render — that blocked manual collapse.
+  useEffect(() => {
+    if (activeParentKey && activeParentKey !== prevActiveParentKey.current) {
+      setExpanded((prev) => {
+        if (prev.has(activeParentKey)) return prev;
+        return new Set([...prev, activeParentKey]);
+      });
+    }
+    prevActiveParentKey.current = activeParentKey;
+  }, [activeParentKey]);
 
   function toggle(key: string) {
-    setManualExpanded(prev => {
+    setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }
@@ -137,7 +150,7 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
 
               {section.items.map(item => {
                 const collapsedPath = item.path ?? item.children?.[0]?.path ?? '/';
-                const isChildActive = item.children?.some(c => location.pathname.startsWith(c.path)) ?? false;
+                const isChildActive = item.children?.some(c => isChildPathActive(location.pathname, c.path)) ?? false;
 
                 return (
                   <div key={item.key}>

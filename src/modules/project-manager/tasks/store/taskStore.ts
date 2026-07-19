@@ -10,6 +10,7 @@ export function queryKey(projectId: string) {
 }
 
 export function toTask(raw: RawPmTask, projectId: string): Task {
+  const createdBy = raw.createdBy ?? raw.created_by ?? null;
   return {
     id:              String(raw.id),
     uuid:            raw.uuid || undefined,
@@ -34,6 +35,9 @@ export function toTask(raw: RawPmTask, projectId: string): Task {
     overdueLabel:    raw.overdueLabel ?? null,
     canExtend:       raw.canExtend,
     importantLinks:  parseImportantLinks(raw),
+    createdAt:       raw.createdAt,
+    createdById:     createdBy?.id,
+    createdByName:   createdBy?.name,
   };
 }
 

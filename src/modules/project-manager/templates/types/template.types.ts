@@ -7,6 +7,14 @@ export interface PmTemplateStep {
   sortOrder:    number;
 }
 
+export interface PmTemplateProjectType {
+  id:     number;
+  name?:  string | null;
+  label?: string | null;
+  nameAr?: string | null;
+  labelAr?: string | null;
+}
+
 export interface PmProjectTemplate {
   id:               number;
   uuid:             string;
@@ -15,8 +23,10 @@ export interface PmProjectTemplate {
   isDefault:        boolean;
   stepsCount:       number;
   steps:            PmTemplateStep[];
-  // Optional type link — present only if the backend associates templates with
-  // a project type. Used to filter the template dropdown by the selected type.
+  /** Multi type link — preferred. Empty / missing = global (all types). */
+  projectTypeIds?:  number[];
+  projectTypes?:    PmTemplateProjectType[];
+  /** @deprecated Prefer `projectTypeIds` — kept for older API responses. */
   projectTypeId?:   number | null;
   projectType?:     string | null;
   projectTypeLabel?: string | null;
@@ -34,8 +44,8 @@ export interface PmTemplatePayload {
   name?:            string;
   description?:     string | null;
   is_default?:      boolean;
-  // Sent so templates can be scoped per project type (SEO / development / …).
-  project_type_id?: number | null;
+  /** Linked project type IDs. Empty array = global (available for all types). */
+  project_type_ids?: number[];
   steps?:           PmTemplateStepPayload[];
 }
 

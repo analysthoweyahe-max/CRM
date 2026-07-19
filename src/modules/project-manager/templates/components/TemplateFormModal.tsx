@@ -4,14 +4,15 @@ import { Modal }     from '@/shared/components/ui/Modal';
 import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { Switch }    from '@/shared/components/ui/Switch';
-import { Combobox }  from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { FormField } from '@/shared/components/form/FormField';
 import { usePmProjectLookups } from '@/modules/project-manager/projects/hooks/usePmProjectLookups';
 import { createProjectApi } from '@/shared/modules/create-project/api/createProject.api';
 import { projectTypeLabel } from '@/shared/modules/create-project/utils/createProject.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { TemplateStepsEditor } from './TemplateStepsEditor';
+import { templateProjectTypeIds } from '../utils/templateFilter';
 import type { TemplateModule } from '../api/projectTemplate.api';
 import type {
   PmProjectTemplate,
@@ -50,7 +51,7 @@ export function TemplateFormModal({
   const [name, setName]           = useState('');
   const [description, setDesc]    = useState('');
   const [isDefault, setIsDefault] = useState(false);
-  const [projectType, setType]    = useState('');
+  const [projectTypes, setTypes]  = useState<string[]>([]);
   const [steps, setSteps]         = useState<PmTemplateStep[]>([]);
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export function TemplateFormModal({
     setName(initial?.name ?? '');
     setDesc(initial?.description ?? '');
     setIsDefault(initial?.isDefault ?? false);
-    setType(initial?.projectTypeId != null ? String(initial.projectTypeId) : '');
+    setTypes(initial ? templateProjectTypeIds(initial).map(String) : []);
     setSteps(
       initial?.steps?.length
         ? initial.steps.map((s, i) => ({ ...s, sortOrder: s.sortOrder ?? i }))
@@ -70,28 +71,22 @@ export function TemplateFormModal({
   const isValid = !!name.trim() && validSteps.length > 0;
 
   const typeItems: ComboboxItem[] = module === 'seo'
-    ? [
-        { id: '', label: isAr ? 'كل الأنواع (عام)' : 'All types (global)' },
-        ...(seoTypesQ.data ?? []).map((t) => ({
-          id:    String(t.id),
-          label: projectTypeLabel(t, isAr),
-        })),
-      ]
-    : [
-        { id: '', label: isAr ? 'كل الأنواع (عام)' : 'All types (global)' },
-        ...pmLookups.types.map((t) => ({
-          id: t.value,
-          label: translateProjectLookup(t.value, t.label, isAr, t.labelAr),
-        })),
-      ];
+    ? (seoTypesQ.data ?? []).map((t) => ({
+        id:    String(t.id),
+        label: projectTypeLabel(t, isAr),
+      }))
+    : pmLookups.types.map((t) => ({
+        id: t.value,
+        label: translateProjectLookup(t.value, t.label, isAr, t.labelAr),
+      }));
 
   function handleSubmit() {
     if (!isValid) return;
     onSubmit({
-      name:            name.trim(),
-      description:     description.trim() || null,
-      is_default:      isDefault,
-      project_type_id: projectType ? Number(projectType) : null,
+      name:             name.trim(),
+      description:      description.trim() || null,
+      is_default:       isDefault,
+      project_type_ids: projectTypes.map(Number).filter((n) => !Number.isNaN(n)),
       steps: validSteps.map((s, i) => ({
         title:       s.title.trim(),
         description: s.description?.trim() || null,
@@ -129,12 +124,15 @@ export function TemplateFormModal({
           </FormField>
           <FormField
             label={isAr ? 'نوع المشروع' : 'Project Type'}
-            hint={isAr ? 'اختر النوع لربط القالب به، أو اتركه عام' : 'Link to a type, or leave global'}
+            hint={isAr
+              ? 'اختر نوعاً أو أكثر لربط القالب، أو اتركه فارغاً ليكون عاماً'
+              : 'Select one or more types, or leave empty for global'}
           >
-            <Combobox
+            <MultiCombobox
               items={typeItems}
-              value={projectType}
-              onChange={setType}
+              values={projectTypes}
+              onChange={setTypes}
+              placeholder={isAr ? 'كل الأنواع (عام)' : 'All types (global)'}
               searchPlaceholder={isAr ? 'ابحث عن نوع...' : 'Search type...'}
               noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
             />

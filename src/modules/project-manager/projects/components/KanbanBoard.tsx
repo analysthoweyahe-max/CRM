@@ -17,8 +17,13 @@ import { KanbanTaskCard } from './KanbanTaskCard';
 import { KanbanTaskFilters } from './KanbanTaskFilters';
 import { TaskModal } from '../../tasks/components/TaskModal';
 import type { PmProjectPhase, PmProjectTeamMember } from '../types/project.types';
+import {
+  matchesTaskPeriod,
+  type TaskPeriodFilter,
+} from '../utils/kanbanTaskFilters.utils';
 
 const UNASSIGNED = '__unassigned__';
+const UNKNOWN_CREATOR = '__unknown_creator__';
 
 /** Colors for the common, well-known statuses; anything else (an admin-added
  *  status not in this map) falls back to the deterministic hash color. */
@@ -44,6 +49,11 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
   const [deleting,       setDeleting]       = useState(false);
   const [phaseFilter,    setPhaseFilter]    = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
+  const [creatorFilter,  setCreatorFilter]  = useState('');
+  const [statusFilter,   setStatusFilter]   = useState('');
+  const [periodFilter,   setPeriodFilter]   = useState<TaskPeriodFilter>('');
+  const [dateFrom,       setDateFrom]       = useState('');
+  const [dateTo,         setDateTo]         = useState('');
   const [viewMode,       setViewMode]       = useState<'status' | 'phase'>('status');
   const invalidateTasks = useInvalidateProjectTasks(projectId);
   const { statuses: statusLookup } = usePmTaskLookups();
@@ -74,7 +84,7 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
       if (item.id) map.set(item.id, item);
     }
     const items = [
-      { id: '', label: isAr ? 'كل الأعضاء' : 'All members' },
+      { id: '', label: isAr ? 'كل المسؤولين' : 'All assignees' },
       ...Array.from(map.values()),
     ];
     if (tasks.some(t => !t.assigneeId)) {
@@ -83,16 +93,60 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
     return items;
   }, [teamMembers, tasks, isAr]);
 
+  const creatorItems: ComboboxItem[] = useMemo(() => {
+    const map = new Map<string, ComboboxItem>();
+    for (const t of tasks) {
+      if (t.createdById) {
+        map.set(t.createdById, {
+          id: t.createdById,
+          label: t.createdByName || t.createdById,
+        });
+      }
+    }
+    const items = [
+      { id: '', label: isAr ? 'كل المنشئين' : 'All creators' },
+      ...Array.from(map.values()),
+    ];
+    if (tasks.some(t => !t.createdById)) {
+      items.push({ id: UNKNOWN_CREATOR, label: isAr ? 'غير معروف' : 'Unknown' });
+    }
+    return items;
+  }, [tasks, isAr]);
+
+  const statusItems: ComboboxItem[] = useMemo(() => {
+    const keys = statusLookup.length > 0
+      ? statusLookup.map(s => s.value)
+      : ['pending', 'in_progress', 'needs_review', 'completed'];
+    return [
+      { id: '', label: isAr ? 'كل الحالات' : 'All statuses' },
+      ...keys.map(key => {
+        const lookup = statusLookup.find(s => s.value === key);
+        const label = lookup
+          ? (isAr ? (lookup.labelAr || lookup.label) : lookup.label)
+          : key;
+        return { id: key, label };
+      }),
+    ];
+  }, [statusLookup, isAr]);
+
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => {
-      if (viewMode === 'status' && phaseFilter && String(t.phaseId ?? '') !== phaseFilter) return false;
+      if (phaseFilter && String(t.phaseId ?? '') !== phaseFilter) return false;
       if (assigneeFilter === UNASSIGNED) return !t.assigneeId;
       if (assigneeFilter && t.assigneeId !== assigneeFilter) return false;
+      if (creatorFilter === UNKNOWN_CREATOR) return !t.createdById;
+      if (creatorFilter && t.createdById !== creatorFilter) return false;
+      if (statusFilter && t.status !== statusFilter) return false;
+      if (!matchesTaskPeriod(t.createdAt, periodFilter, dateFrom, dateTo)) return false;
       return true;
     });
-  }, [tasks, phaseFilter, assigneeFilter, viewMode]);
+  }, [
+    tasks, phaseFilter, assigneeFilter, creatorFilter, statusFilter,
+    periodFilter, dateFrom, dateTo,
+  ]);
 
-  const hasActiveFilters = !!phaseFilter || !!assigneeFilter;
+  const hasActiveFilters = !!phaseFilter || !!assigneeFilter || !!creatorFilter
+    || !!statusFilter || !!periodFilter;
   const selectedTask = selectedTaskId
     ? tasks.find(t => t.id === selectedTaskId) ?? null
     : null;
@@ -103,7 +157,12 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
     const keys = statusLookup.length > 0
       ? statusLookup.map(s => s.value)
       : ['pending', 'in_progress', 'needs_review', 'completed'];
-    return keys.map(key => {
+    const visibleKeys = statusFilter ? keys.filter(key => key === statusFilter) : keys;
+    // If filter points at a key missing from the lookup, still show that column.
+    const columnKeys = visibleKeys.length > 0
+      ? visibleKeys
+      : (statusFilter ? [statusFilter] : keys);
+    return columnKeys.map(key => {
       const lookup = statusLookup.find(s => s.value === key);
       const label = lookup ? (isAr ? (lookup.labelAr || lookup.label) : lookup.label) : key;
       return {
@@ -113,17 +172,21 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
         items: filteredTasks.filter(t => t.status === key),
       };
     });
-  }, [statusLookup, filteredTasks, isAr]);
+  }, [statusLookup, filteredTasks, isAr, statusFilter]);
 
   /* ── Phase columns — from the project's phase list plus any task-only
-     phase not (yet) represented there ─────────────────────────────────── */
+     phase not (yet) represented there. A selected phase filter keeps only
+     that column so the board is the selected phase alone. ─────────────── */
   const phaseColumns = useMemo(() => {
     const map = new Map<string, { key: string; label: string; items: Task[] }>();
     for (const p of phases) {
-      map.set(String(p.id), { key: String(p.id), label: p.name, items: [] });
+      const key = String(p.id);
+      if (phaseFilter && key !== phaseFilter) continue;
+      map.set(key, { key, label: p.name, items: [] });
     }
     for (const t of filteredTasks) {
       const key = t.phaseId != null ? String(t.phaseId) : '__none__';
+      if (phaseFilter && key !== phaseFilter) continue;
       if (!map.has(key)) {
         map.set(key, {
           key,
@@ -133,11 +196,21 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
       }
       map.get(key)!.items.push(t);
     }
+    // Selected phase with no tasks yet — still show its empty column.
+    if (phaseFilter && !map.has(phaseFilter)) {
+      const fromList = phases.find(p => String(p.id) === phaseFilter);
+      const fromItems = phaseItems.find(p => p.id === phaseFilter);
+      map.set(phaseFilter, {
+        key: phaseFilter,
+        label: fromList?.name || fromItems?.label || phaseFilter,
+        items: [],
+      });
+    }
     return Array.from(map.values()).map(col => ({
       ...col,
       color: colorForKey(col.key),
     }));
-  }, [phases, filteredTasks, isAr]);
+  }, [phases, filteredTasks, isAr, phaseFilter, phaseItems]);
 
   async function handleStatusDrop(taskId: string, toStatus: string) {
     const task = tasks.find(t => t.id === taskId);
@@ -211,15 +284,40 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
         isAr={isAr}
         phase={phaseFilter}
         assignee={assigneeFilter}
+        creator={creatorFilter}
+        status={statusFilter}
+        period={periodFilter}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
         phaseItems={phaseItems}
         assigneeItems={assigneeItems}
+        creatorItems={creatorItems}
+        statusItems={statusItems}
         onPhase={setPhaseFilter}
         onAssignee={setAssigneeFilter}
-        onClear={() => { setPhaseFilter(''); setAssigneeFilter(''); }}
+        onCreator={setCreatorFilter}
+        onStatus={setStatusFilter}
+        onPeriod={(value) => {
+          setPeriodFilter(value);
+          if (value !== 'custom') {
+            setDateFrom('');
+            setDateTo('');
+          }
+        }}
+        onDateFrom={setDateFrom}
+        onDateTo={setDateTo}
+        onClear={() => {
+          setPhaseFilter('');
+          setAssigneeFilter('');
+          setCreatorFilter('');
+          setStatusFilter('');
+          setPeriodFilter('');
+          setDateFrom('');
+          setDateTo('');
+        }}
         hasActive={hasActiveFilters}
         resultCount={filteredTasks.length}
         totalCount={tasks.length}
-        hidePhase={viewMode === 'phase'}
       />
 
       <SharedKanbanBoard

@@ -133,6 +133,8 @@ export interface RawPmTask {
   attachmentsCount: number;
   createdAt:        string;
   updatedAt:        string;
+  createdBy?:       { id: string; name: string } | null;
+  created_by?:      { id: string; name: string } | null;
   dueAt?:           string | null;
   isOverdue?:       boolean;
   isDelayed?:       boolean;
