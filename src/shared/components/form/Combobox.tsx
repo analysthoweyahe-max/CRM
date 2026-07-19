@@ -10,7 +10,7 @@ export interface ComboboxItem {
 }
 
 interface ComboboxProps {
-  items:              ComboboxItem[];
+  items:              readonly ComboboxItem[];
   value:              string;
   onChange:           (id: string) => void;
   error?:             boolean;

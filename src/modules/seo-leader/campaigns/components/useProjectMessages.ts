@@ -24,7 +24,7 @@ export function useProjectMessages(projectId: string) {
     queryKey: ['seo-messages', projectId, search],
     queryFn:  () =>
       campaignApi.getMessages(projectId, search ? { search } : undefined)
-        .then(r => extractList<SeoMessage>(r.data.data)),
+        .then(r => toApiArray<SeoMessage>(r.data.data)),
     refetchInterval: 10_000,
     staleTime:       5_000,
   });
