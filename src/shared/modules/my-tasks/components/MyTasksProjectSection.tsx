@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { KanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { KanbanTaskFilters } from '@/modules/project-manager/projects/components/KanbanTaskFilters';
 import { MyTaskCard } from './MyTaskCard';
 import type { GroupedTasksData, MyTask, TaskPhase } from '../types/myTasks.types';
@@ -127,7 +128,7 @@ export function MyTasksProjectSection({ project, data, isAr, canDrag, onOpen, on
           viewMode === 'status'
             ? filteredData.columns.map(col => ({
                 key:   col.status,
-                label: col.statusLabel,
+                label: translateProjectLookup(col.status, col.statusLabel, isAr),
                 color: STATUS_COLOR[col.status] ?? colorForKey(col.status),
                 items: col.tasks,
               }))

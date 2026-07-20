@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { extractPaginatedList } from '@/shared/utils/apiList.utils';
+import { toChronologicalMessages } from '@/shared/utils/chatNormalize.utils';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { useRealtimeMessages } from '@/shared/realtime-messages';
 import type { RealtimeMessagePayload } from '@/shared/realtime-messages/messageRealtime.types';
@@ -11,7 +12,6 @@ import {
   normalizeMessengerConversations,
   normalizeMonitoredMessages,
   partiesLabel,
-  sortMessagesChronological,
 } from '../utils/monitor.utils';
 
 const CONV_KEY = ['admin', 'messages-monitor', 'conversations'] as const;
@@ -59,8 +59,8 @@ export function useMessagesMonitor(isAr: boolean) {
     queryKey: ['admin', 'messages-monitor', 'thread', selectedId],
     queryFn:  async (): Promise<ApiMonitoredMessage[]> => {
       if (!selectedId) return [];
-      const res = await messagesMonitorApi.listMessages(selectedId, { per_page: 100 });
-      return sortMessagesChronological(
+      const res = await messagesMonitorApi.listMessages(selectedId, { page: 1, per_page: 30 });
+      return toChronologicalMessages(
         normalizeMonitoredMessages(extractPaginatedList(res.data)).map((m) => ({
           ...m,
           conversationId: selectedId,

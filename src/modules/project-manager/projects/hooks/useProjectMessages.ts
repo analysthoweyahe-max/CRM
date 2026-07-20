@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { mapProjectMessage } from '@/shared/utils/projectChat.utils';
 import { toApiArray } from '@/shared/utils/apiList.utils';
-import { excludeSelfFromActors, filterPmProjectMentions } from '@/shared/utils/chatNormalize.utils';
+import { excludeSelfFromActors, filterPmProjectMentions, toChronologicalMessages } from '@/shared/utils/chatNormalize.utils';
 import { pmProjectMessagesApi } from '../api/messages.api';
 import type { ChatMessage, PmMentionable } from '../types/message.types';
 
@@ -37,11 +37,11 @@ export function useProjectMessages(projectId: string) {
     queryKey: ['pm-project-messages', projectId, search],
     queryFn:  async () => {
       const rows = await pmProjectMessagesApi.list(projectId, {
+        page: 1,
         per_page: 30,
         search: search.trim() || undefined,
       }).then(r => r.data.data.data.map(m => mapProjectMessage(m, user?.id) as ChatMessage));
-      // Page 1 = newest first (DESC) → chronological for chat UI.
-      return [...rows].reverse();
+      return toChronologicalMessages(rows);
     },
     refetchInterval: 5_000,
     enabled: !!projectId,

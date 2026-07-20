@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient }     from '@tanstack/react-query
 import { campaignApi }                               from '../api/campaign.api';
 import type { SeoMessage, Mentionable }              from '../api/campaign.api';
 import { useAuth }                                   from '@/modules/auth/context/AuthContext';
-import { excludeSelfFromActors, filterSeoProjectMentions } from '@/shared/utils/chatNormalize.utils';
+import { excludeSelfFromActors, filterSeoProjectMentions, toChronologicalMessages } from '@/shared/utils/chatNormalize.utils';
 import { toApiArray }                                from '@/shared/utils/apiList.utils';
 
 export function useProjectMessages(projectId: string) {
@@ -25,8 +25,7 @@ export function useProjectMessages(projectId: string) {
     queryFn:  async () => {
       const rows = await campaignApi.getMessages(projectId, search ? { search } : undefined)
         .then(r => toApiArray<SeoMessage>(r.data.data));
-      // Page 1 = newest first (DESC) → chronological for chat UI.
-      return [...rows].reverse();
+      return toChronologicalMessages(rows);
     },
     refetchInterval: 10_000,
     staleTime:       5_000,

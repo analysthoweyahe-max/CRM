@@ -6,7 +6,7 @@ import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared
 import { extractPaginatedList } from '@/shared/utils/apiList.utils';
 import { useEchoLive } from '@/shared/realtime-messages';
 import { conversationLastMessagePreview } from '@/shared/utils/messagePreview.utils';
-import { excludeSelfFromActors, normalizeSeoMessage, toChronologicalMessages } from '@/shared/utils/chatNormalize.utils';
+import { excludeSelfFromActors, mergeChronologicalMessages, normalizeSeoMessage, toChronologicalMessages } from '@/shared/utils/chatNormalize.utils';
 import { seoMessagesApi } from '../api/messages.api';
 import type {
   CreateSeoGroupPayload,
@@ -63,18 +63,6 @@ function patchCachedMessage(
 function pollMs(echoLive: boolean, openChat: boolean): number {
   if (echoLive) return openChat ? 15_000 : 45_000;
   return openChat ? 2_000 : 5_000;
-}
-
-function mergeChronological(older: SeoMessage[], recent: SeoMessage[]): SeoMessage[] {
-  const seen = new Set<string>();
-  const out: SeoMessage[] = [];
-  for (const m of [...older, ...recent]) {
-    const id = String(m.id);
-    if (seen.has(id)) continue;
-    seen.add(id);
-    out.push(m);
-  }
-  return out;
 }
 
 export function useSeoConversations(opts?: { search?: string; type?: SeoConversationType | 'all' }) {
@@ -186,7 +174,7 @@ export function useSeoMessages(conversationId: string | null) {
   const recentMessages = query.data?.messages ?? [];
 
   const messages = useMemo(
-    () => mergeChronological(olderMessages, recentMessages),
+    () => mergeChronologicalMessages(olderMessages, recentMessages),
     [olderMessages, recentMessages],
   );
 

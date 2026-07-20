@@ -28,6 +28,8 @@ interface Props {
   isLoading: boolean;
   isAr:      boolean;
   module?:   TemplateModule;
+  fieldErrors?: Record<string, string>;
+  onClearFieldError?: (field: string) => void;
 }
 
 const TEXTAREA = [
@@ -39,6 +41,7 @@ const TEXTAREA = [
 
 export function TemplateFormModal({
   open, onClose, onSubmit, initial, isLoading, isAr, module = 'pm',
+  fieldErrors = {}, onClearFieldError,
 }: Props) {
   const pmLookups = usePmProjectLookups();
   const seoTypesQ = useQuery({
@@ -49,6 +52,7 @@ export function TemplateFormModal({
   });
 
   const [name, setName]           = useState('');
+  const [link, setLink]           = useState('');
   const [description, setDesc]    = useState('');
   const [isDefault, setIsDefault] = useState(false);
   const [projectTypes, setTypes]  = useState<string[]>([]);
@@ -57,6 +61,7 @@ export function TemplateFormModal({
   useEffect(() => {
     if (!open) return;
     setName(initial?.name ?? '');
+    setLink(initial?.link ?? '');
     setDesc(initial?.description ?? '');
     setIsDefault(initial?.isDefault ?? false);
     setTypes(initial ? templateProjectTypeIds(initial).map(String) : []);
@@ -84,6 +89,7 @@ export function TemplateFormModal({
     if (!isValid) return;
     onSubmit({
       name:             name.trim(),
+      link:             link.trim() || null,
       description:      description.trim() || null,
       is_default:       isDefault,
       project_type_ids: projectTypes.map(Number).filter((n) => !Number.isNaN(n)),
@@ -146,6 +152,25 @@ export function TemplateFormModal({
             onChange={(e) => setDesc(e.target.value)}
             placeholder={isAr ? 'وصف مختصر للقالب' : 'Short template description'}
             className={TEXTAREA}
+          />
+        </FormField>
+
+        <FormField
+          label={isAr ? 'رابط القالب' : 'Template link'}
+          hint={!fieldErrors.link
+            ? (isAr ? 'اختياري — رابط خارجي للموارد أو الوثائق' : 'Optional — external URL for resources or docs')
+            : undefined}
+          error={fieldErrors.link}
+        >
+          <Input
+            value={link}
+            onChange={(e) => {
+              setLink(e.target.value);
+              if (fieldErrors.link) onClearFieldError?.('link');
+            }}
+            placeholder="https://docs.google.com/... or docs.google.com/..."
+            dir="ltr"
+            hasError={!!fieldErrors.link}
           />
         </FormField>
 

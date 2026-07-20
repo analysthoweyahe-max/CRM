@@ -160,6 +160,8 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
       { key: 'admin-pm-task-statuses', labelAr: 'حالات مهام PM', labelEn: 'PM Task Statuses', icon: Tags, path: ROUTES.ADMIN.PM_TASK_STATUSES, permission: ['edit-pm-project', 'create-pm-project'] },
 
+      { key: 'admin-pm-project-statuses', labelAr: 'حالات مشاريع PM', labelEn: 'PM Project Statuses', icon: Tags, path: ROUTES.ADMIN.PM_PROJECT_STATUSES, permission: ['edit-pm-project', 'create-pm-project'] },
+
     ],
 
   },
@@ -189,6 +191,8 @@ export const ADMIN_NAV: NavSectionDef[] = [
       { key: 'seo-templates', labelAr: 'قوالب مشاريع SEO', labelEn: 'SEO Project Templates', icon: ListChecks, path: ROUTES.ADMIN.SEO_PROJECT_TEMPLATES, role: 'super-admin' },
 
       { key: 'admin-seo-task-statuses', labelAr: 'حالات مهام SEO', labelEn: 'SEO Task Statuses', icon: Tags, path: ROUTES.ADMIN.SEO_TASK_STATUSES, permission: ['edit-seo-project', 'create-seo-project'] },
+
+      { key: 'admin-seo-project-statuses', labelAr: 'حالات مشاريع SEO', labelEn: 'SEO Project Statuses', icon: Tags, path: ROUTES.ADMIN.SEO_PROJECT_STATUSES, permission: ['edit-seo-project', 'create-seo-project'] },
 
     ],
 
@@ -364,6 +368,7 @@ export const PM_NAV: NavSectionDef[] = [
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات',labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS,  permission: 'view-pm-projects' },
       { key: 'pm-templates', labelAr: 'قوالب المشاريع', labelEn: 'Project Templates', icon: ListChecks, path: ROUTES.PROJECT_MANAGER.TEMPLATES, permission: 'edit-pm-project' },
       { key: 'pm-task-statuses', labelAr: 'حالات المهام', labelEn: 'Task Statuses', icon: Tags, path: ROUTES.PROJECT_MANAGER.TASK_STATUSES },
+      { key: 'pm-project-statuses', labelAr: 'حالات المشاريع', labelEn: 'Project Statuses', icon: Tags, path: ROUTES.PROJECT_MANAGER.PROJECT_STATUSES },
     ],
   },
   {
@@ -448,6 +453,7 @@ export const SEO_NAV: NavSectionDef[] = [
       { key: 'seo-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.SEO_LEADER.REPORTS,  permission: 'view-seo-projects' },
       { key: 'seo-templates', labelAr: 'قوالب مشاريع SEO', labelEn: 'SEO Project Templates', icon: ListChecks, path: ROUTES.SEO_LEADER.TEMPLATES, permission: 'edit-seo-project' },
       { key: 'seo-task-statuses', labelAr: 'حالات المهام', labelEn: 'Task Statuses', icon: Tags, path: ROUTES.SEO_LEADER.TASK_STATUSES },
+      { key: 'seo-project-statuses', labelAr: 'حالات المشاريع', labelEn: 'Project Statuses', icon: Tags, path: ROUTES.SEO_LEADER.PROJECT_STATUSES },
     ],
   },
   {

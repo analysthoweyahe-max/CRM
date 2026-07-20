@@ -117,7 +117,9 @@ export const myTasksApi = {
       case 'seo-manager':
         return http.put(
           `/v1/seo/projects/${projectId}/tasks/${taskId}`,
-          { phase: phase.name },
+          Number.isFinite(Number(phase.id)) && String(phase.id) !== phase.name
+            ? { phaseId: Number(phase.id) }
+            : { phase: phase.name },
           { skip401Redirect: true },
         );
     }

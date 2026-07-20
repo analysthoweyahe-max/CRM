@@ -24,6 +24,14 @@ const LOOKUP_LABELS: Record<string, { ar: string; en: string }> = {
   in_review:    { ar: 'قيد المراجعة',  en: 'In Review'    },
   review:       { ar: 'مراجعة',        en: 'Review'       },
   done:         { ar: 'مكتمل',         en: 'Done'         },
+  blocked:      { ar: 'محظورة',        en: 'Blocked'      },
+
+  /* ── Client issue statuses ──────────────────── */
+  open_issues:    { ar: 'مشاكل قائمة',        en: 'Open Issues'    },
+  sent_to_client: { ar: 'تم إرسالها للعميل', en: 'Sent to Client' },
+  under_review:   { ar: 'قيد المراجعة',      en: 'Under Review'   },
+  resolved:       { ar: 'تم الحل',           en: 'Resolved'       },
+  rejected:       { ar: 'تم الرفض',          en: 'Rejected'       },
 
   /* ── Project / campaign types ─────────────────── */
   seo:              { ar: 'تحسين محركات البحث', en: 'SEO'              },

@@ -1,5 +1,6 @@
 import { useState }                  from 'react';
 import { useNavigate }               from 'react-router-dom';
+import { useQueryClient }            from '@tanstack/react-query';
 import { LayoutTemplate }            from 'lucide-react';
 import { ROUTES }                    from '@/app/router/routes';
 import { Button }                    from '@/shared/components/ui/Button';
@@ -13,6 +14,8 @@ import { campaignApi }               from '../api/campaign.api';
 import { useSeoProjectSettings }     from '../hooks/useSeoProjectSettings';
 import { toast }                     from 'sonner';
 import { ApplyTemplateModal }        from '@/modules/project-manager/templates/components/ApplyTemplateModal';
+import { useSeoProjectPhases }         from '../hooks/useSeoProjectPhases';
+import { invalidateSeoProjectPhases }  from '../utils/seoPhase.utils';
 
 interface Props {
   campaignId: string;
@@ -21,9 +24,11 @@ interface Props {
 
 export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [showApply, setShowApply] = useState(false);
   const canEdit   = usePermission('edit-seo-project');
   const canDelete = usePermission('delete-seo-project');
+  const { data: projectPhases = [] } = useSeoProjectPhases(campaignId);
 
   const {
     isLoading, settings,
@@ -110,7 +115,7 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
         </div>
       )}
 
-      <SeoSettingsPhasesSection isAr={isAr} />
+      <SeoSettingsPhasesSection projectId={campaignId} isAr={isAr} canEdit={canEdit} />
 
       {canEdit && (
         <ApplyTemplateModal
@@ -123,6 +128,12 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
             ?? (/^\d+$/.test(type) ? Number(type) : null)
           }
           isAr={isAr}
+          onApplied={() => {
+            invalidateSeoProjectPhases(queryClient, campaignId);
+            queryClient.invalidateQueries({ queryKey: ['campaign-tasks', campaignId] });
+            queryClient.invalidateQueries({ queryKey: ['seo-member-project-tasks', campaignId] });
+            queryClient.invalidateQueries({ queryKey: ['campaign-detail', campaignId] });
+          }}
         />
       )}
 
@@ -132,6 +143,7 @@ export function SeoProjectSettingsTab({ campaignId, isAr }: Props) {
           campaignName={settings?.name ?? name}
           isDraft={settings?.isDraft === true}
           exportData={exportData}
+          phases={projectPhases}
           isAr={isAr}
         />
       )}

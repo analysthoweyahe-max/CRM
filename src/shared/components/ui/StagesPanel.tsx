@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import type { ReactNode } from 'react';
 import { Card } from '@/shared/components/ui/Card';
 
 export interface StageItem {
@@ -8,7 +9,7 @@ export interface StageItem {
 }
 
 interface Props {
-  title:     string;
+  title:     ReactNode;
   subtitle:  string;
   icon:      ReactElement;
   stages:    StageItem[];

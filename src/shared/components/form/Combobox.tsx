@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown, ExternalLink, Search } from 'lucide-react';
 import { inputCls } from './FormField';
+import { externalLinkHref } from '@/shared/utils/format.utils';
 
 export interface ComboboxItem {
   id:      string;
   label:   string;
   detail?: string;
   meta?:   string;
+  /** Optional external URL — shows a link icon beside the label. */
+  href?:   string | null;
 }
 
 interface ComboboxProps {
@@ -47,6 +50,7 @@ export function Combobox({
   });
 
   const selected = items.find((i) => i.id === value);
+  const selectedHref = selected ? externalLinkHref(selected.href) : null;
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -69,10 +73,25 @@ export function Combobox({
         className={`${inputCls(!!error)} flex items-center justify-between gap-2 text-start ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         {selected ? (
-          <span className="flex items-baseline gap-2 min-w-0 truncate text-gray-800 dark:text-gray-200">
-            <span className="truncate font-medium">{selected.label}</span>
-            {triggerShowsDetail && selected.detail && (
-              <span className="text-gray-400 dark:text-gray-500 text-xs shrink-0">{selected.detail}</span>
+          <span className="flex items-center gap-1.5 min-w-0 flex-1">
+            <span className="flex items-baseline gap-2 min-w-0 truncate text-gray-800 dark:text-gray-200">
+              <span className="truncate font-medium">{selected.label}</span>
+              {triggerShowsDetail && selected.detail && (
+                <span className="text-gray-400 dark:text-gray-500 text-xs shrink-0">{selected.detail}</span>
+              )}
+            </span>
+            {selectedHref && (
+              <a
+                href={selectedHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Open link"
+                className="inline-flex items-center justify-center w-6 h-6 shrink-0 rounded-md
+                           text-[#709028] dark:text-[#A0CD39] hover:bg-[#D8EBAE]/40 dark:hover:bg-[#D8EBAE]/10"
+              >
+                <ExternalLink size={14} />
+              </a>
             )}
           </span>
         ) : (
@@ -113,7 +132,9 @@ export function Combobox({
                 {noResultsText}
               </li>
             ) : (
-              filtered.map((item) => (
+              filtered.map((item) => {
+                const itemHref = externalLinkHref(item.href);
+                return (
                 <li
                   key={item.id}
                   onMouseDown={() => { onChange(item.id); setOpen(false); setQuery(''); }}
@@ -124,17 +145,33 @@ export function Combobox({
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50',
                   ].join(' ')}
                 >
-                  <span className="flex items-baseline gap-2 min-w-0">
-                    <span className="font-medium truncate">{item.label}</span>
-                    {item.detail && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{item.detail}</span>
+                  <span className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span className="flex items-baseline gap-2 min-w-0">
+                      <span className="font-medium truncate">{item.label}</span>
+                      {item.detail && (
+                        <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{item.detail}</span>
+                      )}
+                    </span>
+                    {itemHref && (
+                      <a
+                        href={itemHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Open link"
+                        className="inline-flex items-center justify-center w-6 h-6 shrink-0 rounded-md
+                                   text-[#709028] dark:text-[#A0CD39] hover:bg-[#D8EBAE]/40 dark:hover:bg-[#D8EBAE]/10"
+                      >
+                        <ExternalLink size={14} />
+                      </a>
                     )}
                   </span>
                   {item.meta && (
                     <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{item.meta}</span>
                   )}
                 </li>
-              ))
+              );})
             )}
           </ul>
         </div>

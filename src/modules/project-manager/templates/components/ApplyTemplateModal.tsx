@@ -8,6 +8,7 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { FormField } from '@/shared/components/form/FormField';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { useAllTemplates, useApplyTemplate } from '../hooks/useProjectTemplates';
+import { TemplateResourceLink } from './TemplateResourceLink';
 import type { TemplateModule } from '../api/projectTemplate.api';
 
 interface Props {
@@ -35,7 +36,10 @@ export function ApplyTemplateModal({ open, onClose, projectId, projectTypeId, is
     id:     t.uuid,
     label:  t.name,
     detail: isAr ? `${t.stepsCount} مرحلة` : `${t.stepsCount} steps`,
+    href:   t.link,
   }));
+
+  const selectedTemplate = templates.find((t) => t.uuid === templateId);
 
   function handleApply() {
     if (!templateId || isPending) return;
@@ -81,6 +85,17 @@ export function ApplyTemplateModal({ open, onClose, projectId, projectTypeId, is
             noResultsText={isAr ? 'لا توجد قوالب' : 'No templates'}
           />
         </FormField>
+
+        {selectedTemplate && (
+          <div className="space-y-1">
+            {selectedTemplate.description && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                {selectedTemplate.description}
+              </p>
+            )}
+            <TemplateResourceLink link={selectedTemplate.link} isAr={isAr} />
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 dark:border-gray-700 p-3">
           <Switch checked={replace} onChange={() => setReplace((v) => !v)}

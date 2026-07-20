@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { extractApiError } from '@/shared/utils/error.utils';
+import { extractApiError, extractApiFieldErrors } from '@/shared/utils/error.utils';
 import {
   useTemplateList, useCreateTemplate, useUpdateTemplate, useDeleteTemplate,
 } from './useProjectTemplates';
@@ -23,14 +23,32 @@ export function useTemplatesPage(isAr: boolean, module: TemplateModule = 'pm') {
   const [showAdd, setShowAdd]           = useState(false);
   const [editing, setEditing]           = useState<PmProjectTemplate | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PmProjectTemplate | null>(null);
+  const [fieldErrors, setFieldErrors]   = useState<Record<string, string>>({});
+
+  function clearFieldError(field: string) {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
 
   function submitAdd(payload: PmTemplatePayload) {
     create(payload, {
       onSuccess: () => {
         toast.success(isAr ? 'تم إنشاء القالب' : 'Template created');
         setShowAdd(false);
+        setFieldErrors({});
       },
-      onError: (err) => toast.error(extractApiError(err)),
+      onError: (err) => {
+        const apiFieldErrors = extractApiFieldErrors(err);
+        if (Object.keys(apiFieldErrors).length) {
+          setFieldErrors(apiFieldErrors);
+          return;
+        }
+        toast.error(extractApiError(err));
+      },
     });
   }
 
@@ -40,8 +58,16 @@ export function useTemplatesPage(isAr: boolean, module: TemplateModule = 'pm') {
       onSuccess: () => {
         toast.success(isAr ? 'تم تحديث القالب' : 'Template updated');
         setEditing(null);
+        setFieldErrors({});
       },
-      onError: (err) => toast.error(extractApiError(err)),
+      onError: (err) => {
+        const apiFieldErrors = extractApiFieldErrors(err);
+        if (Object.keys(apiFieldErrors).length) {
+          setFieldErrors(apiFieldErrors);
+          return;
+        }
+        toast.error(extractApiError(err));
+      },
     });
   }
 
@@ -63,10 +89,11 @@ export function useTemplatesPage(isAr: boolean, module: TemplateModule = 'pm') {
     lastPage:  data?.lastPage ?? 1,
     total:     data?.total ?? 0,
     isLoading,
-    showAdd, openAdd: () => setShowAdd(true), closeAdd: () => setShowAdd(false),
+    showAdd, openAdd: () => { setFieldErrors({}); setShowAdd(true); }, closeAdd: () => { setShowAdd(false); setFieldErrors({}); },
     submitAdd, creating,
-    editing, openEdit: setEditing, closeEdit: () => setEditing(null),
+    editing, openEdit: (t: PmProjectTemplate) => { setFieldErrors({}); setEditing(t); }, closeEdit: () => { setEditing(null); setFieldErrors({}); },
     submitEdit, updating,
+    fieldErrors, clearFieldError,
     pendingDelete, askDelete: setPendingDelete, cancelDelete: () => setPendingDelete(null),
     confirmDelete, deleting,
   };

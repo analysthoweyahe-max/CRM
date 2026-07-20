@@ -27,6 +27,7 @@ export function TemplatesPage({ module = 'pm' }: Props) {
     showAdd, openAdd, closeAdd, submitAdd, creating,
     editing, openEdit, closeEdit, submitEdit, updating,
     pendingDelete, askDelete, cancelDelete, confirmDelete, deleting,
+    fieldErrors, clearFieldError,
   } = useTemplatesPage(isAr, module);
 
   const perPage  = 15;
@@ -106,6 +107,8 @@ export function TemplatesPage({ module = 'pm' }: Props) {
         isLoading={creating}
         isAr={isAr}
         module={module}
+        fieldErrors={fieldErrors}
+        onClearFieldError={clearFieldError}
       />
 
       <TemplateFormModal
@@ -116,6 +119,8 @@ export function TemplatesPage({ module = 'pm' }: Props) {
         isLoading={updating}
         isAr={isAr}
         module={module}
+        fieldErrors={fieldErrors}
+        onClearFieldError={clearFieldError}
       />
 
       <DeleteTemplateModal

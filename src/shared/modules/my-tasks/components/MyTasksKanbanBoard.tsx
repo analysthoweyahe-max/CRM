@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import type { GroupedTasksData, MyTask } from '../types/myTasks.types';
 import { KanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { KanbanTaskFilters } from '@/modules/project-manager/projects/components/KanbanTaskFilters';
 import { isEditableMyTask } from '../utils/myTasks.utils';
 import { useMyTasksBoardFilters } from '../hooks/useMyTasksBoardFilters';
@@ -133,7 +134,7 @@ export function MyTasksKanbanBoard({
           viewMode === 'status'
             ? filteredData.columns.map((column) => ({
                 key:   column.status,
-                label: column.statusLabel,
+                label: translateProjectLookup(column.status, column.statusLabel, isAr),
                 color: STATUS_COLOR[column.status] ?? colorForKey(column.status),
                 items: column.tasks,
               }))

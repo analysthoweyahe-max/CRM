@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import {
   matchesTaskPeriod,
   type TaskPeriodFilter,
@@ -58,7 +59,10 @@ export function useMyTasksBoardFilters(allTasks: MyTask[], isAr: boolean) {
     const map = new Map<string, ComboboxItem>();
     for (const t of allTasks) {
       if (t.status) {
-        map.set(t.status, { id: t.status, label: t.statusLabel || t.status });
+        map.set(t.status, {
+          id: t.status,
+          label: translateProjectLookup(t.status, t.statusLabel || t.status, isAr),
+        });
       }
     }
     return [

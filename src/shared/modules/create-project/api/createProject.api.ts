@@ -1,5 +1,7 @@
 import { http } from '@/shared/services/http.service';
 import { toApiArray } from '@/shared/utils/apiList.utils';
+import { pmProjectStatusApi } from '@/modules/project-manager/project-statuses/api/pmProjectStatus.api';
+import { seoProjectStatusApi } from '@/modules/admin/seo-project-statuses/api/seoProjectStatus.api';
 import {
   filterTypesByDepartment,
   normalizeManagers,
@@ -133,9 +135,11 @@ export const createProjectApi = {
   },
 
   statuses(module: CreateProjectModule) {
-    return http.get<{ data: StatusLookup[] }>(
-      `${basePath(module)}/projects/lookups/statuses`,
-    ).then(r => unwrapArray<StatusLookup>(r.data));
+    return (module === 'pm' ? pmProjectStatusApi.listActive() : seoProjectStatusApi.listActive())
+      .then(items => items.map(s => ({
+        value: s.value,
+        label: s.label,
+      } satisfies StatusLookup)));
   },
 
   /** Prefer project lookup managers; fall back to admins with the right role. */

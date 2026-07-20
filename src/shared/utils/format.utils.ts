@@ -15,6 +15,20 @@ export function ensureHttpUrl(url: string): string {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
+/** Returns a safe external href, or null when the input is empty. */
+export function externalLinkHref(url: string | null | undefined): string | null {
+  const trimmed = url?.trim();
+  return trimmed ? ensureHttpUrl(trimmed) : null;
+}
+
+/** Alias for template link normalization. */
+export const normalizeTemplateLink = externalLinkHref;
+
+export function openTemplateLink(link: string | null | undefined): void {
+  const url = externalLinkHref(link);
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 /** Renders a task's estimate (hours + optional minutes) as e.g. "8h 30m" / "8 س 30 د". */
 export function formatEstimatedTime(
   hours?:   number | null,

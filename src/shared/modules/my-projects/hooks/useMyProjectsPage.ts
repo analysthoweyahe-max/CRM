@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { useLang } from '@/app/providers/LanguageProvider';
+import { useProjectStatusLookups } from '@/shared/hooks/useProjectStatusLookups';
 import { myProjectsApi } from '../api/myProjects.api';
 import {
   PER_PAGE,
@@ -72,12 +73,7 @@ export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageRe
     page,
   }), [config, search, status, showDrafts, page]);
 
-  const statusQuery = useQuery({
-    queryKey: ['my-projects', 'statuses', module],
-    queryFn:  () => (module === 'pm' ? myProjectsApi.getPmStatuses() : myProjectsApi.getSeoStatuses()),
-    enabled:  config.canFilterStatus,
-    staleTime: Infinity,
-  });
+  const statusQuery = useProjectStatusLookups(module);
 
   const paginatedQuery = useQuery({
     queryKey: ['my-projects', module, role, listParams],
@@ -95,18 +91,17 @@ export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageRe
   });
 
   const sectionsQuery = useQuery({
-    queryKey: ['my-projects', 'sections', module, role],
+    queryKey: ['my-projects', 'sections', module, role, statusQuery.data],
     queryFn: async () => {
+      const catalog = statusQuery.data ?? [];
       if (module === 'pm') {
-        // Membership only — GET /v1/employee/projects (never manager lists)
         const projects = await myProjectsApi.listEmployeeProjects();
-        return groupMembershipProjectsIntoSections(projects, isAr);
+        return groupMembershipProjectsIntoSections(projects, isAr, catalog);
       }
-      // SEO membership only — GET /v1/seo/employee/projects
       const projects = await myProjectsApi.listSeoEmployeeProjects();
-      return groupSeoProjectsIntoSections(projects, isAr);
+      return groupSeoProjectsIntoSections(projects, isAr, catalog);
     },
-    enabled:  config.viewMode === 'sections',
+    enabled:  config.viewMode === 'sections' && statusQuery.isSuccess,
     staleTime: 30_000,
   });
 

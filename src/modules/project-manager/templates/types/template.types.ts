@@ -18,6 +18,8 @@ export interface PmProjectTemplate {
   id:               number;
   uuid:             string;
   name:             string;
+  /** Optional external URL (docs, drive folder, etc.). */
+  link:             string | null;
   description:      string | null;
   isDefault:        boolean;
   stepsCount:       number;
@@ -41,6 +43,7 @@ export interface PmTemplateStepPayload {
 
 export interface PmTemplatePayload {
   name?:             string;
+  link?:             string | null;
   description?:      string | null;
   is_default?:       boolean;
   /** Required. Empty array = global (available for all types). */

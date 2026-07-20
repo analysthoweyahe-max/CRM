@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toApiArray } from '@/shared/utils/apiList.utils';
+import { invalidateSeoProjectPhases } from '@/modules/seo-leader/campaigns/utils/seoPhase.utils';
 import { projectTemplatesApi, type TemplateModule } from '../api/projectTemplate.api';
 import type {
   PmProjectTemplate,
@@ -104,6 +105,10 @@ export function useApplyTemplate(projectUuid: string, module: TemplateModule = '
       if (module === 'seo') {
         qc.invalidateQueries({ queryKey: ['seo-project', projectUuid] });
         qc.invalidateQueries({ queryKey: ['seo-project-settings', projectUuid] });
+        qc.invalidateQueries({ queryKey: ['campaign-detail', projectUuid] });
+        qc.invalidateQueries({ queryKey: ['campaign-tasks', projectUuid] });
+        qc.invalidateQueries({ queryKey: ['seo-member-project-tasks', projectUuid] });
+        invalidateSeoProjectPhases(qc, projectUuid);
       } else {
         qc.invalidateQueries({ queryKey: ['pm-project', projectUuid] });
         qc.invalidateQueries({ queryKey: ['pm-project-settings', projectUuid] });

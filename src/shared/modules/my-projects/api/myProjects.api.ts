@@ -1,7 +1,8 @@
 import { http } from '@/shared/services/http.service';
 import type { ApiResponse } from '@/shared/types/api.types';
 import type { Role } from '@/shared/types/role.types';
-import { campaignApi } from '@/modules/seo-leader/campaigns/api/campaign.api';
+import { pmProjectStatusApi } from '@/modules/project-manager/project-statuses/api/pmProjectStatus.api';
+import { seoProjectStatusApi } from '@/modules/admin/seo-project-statuses/api/seoProjectStatus.api';
 import type {
   EmployeeMembershipProject,
   MyProjectsModule,
@@ -10,7 +11,6 @@ import type {
   ProjectStatus,
   SeoProject,
   SeoMemberDashboardPayload,
-  StatusLookupItem,
 } from '../types/myProjects.types';
 
 export interface MyProjectsListParams {
@@ -81,13 +81,6 @@ export function getMyProjectsEndpoint(role: Role, module: MyProjectsModule): str
   }
   if (role === 'seo-member') return '/v1/seo/employee/projects';
   return '/v1/seo/projects';
-}
-
-function unwrapLookupItems(body: unknown): StatusLookupItem[] {
-  if (Array.isArray(body)) return body as StatusLookupItem[];
-  const data = (body as { data?: unknown })?.data;
-  if (Array.isArray(data)) return data as StatusLookupItem[];
-  return [];
 }
 
 const STATUS_KEYS = new Set(['not_started', 'in_progress', 'on_hold', 'completed']);
@@ -270,11 +263,10 @@ export const myProjectsApi = {
   },
 
   getPmStatuses() {
-    return http.get<{ status: string; message: string; data: unknown }>('/v1/pm/projects/lookups/statuses')
-      .then(r => unwrapLookupItems(r.data));
+    return pmProjectStatusApi.listActive();
   },
 
   getSeoStatuses() {
-    return campaignApi.getStatuses().then(r => unwrapLookupItems(r.data));
+    return seoProjectStatusApi.listActive();
   },
 };

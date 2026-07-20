@@ -23,11 +23,18 @@ interface Props {
 export function EmpChatWindow({ conversation, isAr, onOpenSidebar }: Props) {
   const { user }   = useAuth();
   const bottomRef  = useRef<HTMLDivElement>(null);
+  const scrollRef  = useRef<HTMLDivElement>(null);
   const fileRef    = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
   const textareaRef = useAutoResizeTextarea(text);
 
-  const { data: messages = [], isLoading } = useEmpMessages(conversation.id);
+  const {
+    data: messages = [],
+    isLoading,
+    hasMoreOlder,
+    isFetchingOlder,
+    loadOlder,
+  } = useEmpMessages(conversation.id);
   const { mutate: sendText,  isPending: sending  } = useEmpSendMessage(conversation.id);
   const { mutate: sendMedia, isPending: uploading } = useEmpSendMedia(conversation.id);
   const { mutate: markRead }                        = useEmpMarkRead();
@@ -45,7 +52,20 @@ export function EmpChatWindow({ conversation, isAr, onOpenSidebar }: Props) {
   // scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages.length]);
+
+  function handleThreadScroll() {
+    const el = scrollRef.current;
+    if (!el || !hasMoreOlder || isFetchingOlder) return;
+    if (el.scrollTop > 64) return;
+    const prevHeight = el.scrollHeight;
+    void loadOlder().then(() => {
+      requestAnimationFrame(() => {
+        if (!scrollRef.current) return;
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+      });
+    });
+  }
 
   function handleSend() {
     const body = text.trim();
@@ -107,7 +127,16 @@ export function EmpChatWindow({ conversation, isAr, onOpenSidebar }: Props) {
       </div>
 
       {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50 dark:bg-gray-950">
+      <div
+        ref={scrollRef}
+        onScroll={handleThreadScroll}
+        className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50 dark:bg-gray-950"
+      >
+        {isFetchingOlder && (
+          <p className="text-center text-[11px] text-gray-400 py-2">
+            {isAr ? 'جاري تحميل الرسائل الأقدم...' : 'Loading older messages...'}
+          </p>
+        )}
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'} animate-pulse`}>

@@ -38,6 +38,8 @@ const AdminJobTitlesPage = lazyImport(() => import('@/modules/admin/job-titles/p
 const AdminPermissionsPage = lazyImport(() => import('@/modules/admin/permissions/pages/AdminPermissionsPage').then(m => ({ default: m.AdminPermissionsPage })));
 const AdminSeoTaskStatusesPage = lazyImport(() => import('@/modules/admin/seo-task-statuses/pages/AdminSeoTaskStatusesPage').then(m => ({ default: m.AdminSeoTaskStatusesPage })));
 const PmTaskStatusesPage = lazyImport(() => import('@/modules/project-manager/task-statuses/pages/PmTaskStatusesPage').then(m => ({ default: m.PmTaskStatusesPage })));
+const AdminSeoProjectStatusesPage = lazyImport(() => import('@/modules/admin/seo-project-statuses/pages/AdminSeoProjectStatusesPage').then(m => ({ default: m.AdminSeoProjectStatusesPage })));
+const PmProjectStatusesPage = lazyImport(() => import('@/modules/project-manager/project-statuses/pages/PmProjectStatusesPage').then(m => ({ default: m.PmProjectStatusesPage })));
 const AdminProjectTypesPage = lazyImport(() => import('@/modules/admin/project-types/pages/AdminProjectTypesPage').then(m => ({ default: m.AdminProjectTypesPage })));
 const AdminInstructionsPage = lazyImport(() => import('@/modules/admin/instructions/pages/AdminInstructionsPage').then(m => ({ default: m.AdminInstructionsPage })));
 const AdminMessagesMonitorPage = lazyImport(() => import('@/modules/admin/messages-monitor/pages/AdminMessagesMonitorPage').then(m => ({ default: m.AdminMessagesMonitorPage })));
@@ -217,9 +219,11 @@ export function AppRouter() {
                   </Route>
                   <Route element={<PermissionGuard permission={['edit-seo-project', 'create-seo-project']} />}>
                     <Route path={ROUTES.ADMIN.SEO_TASK_STATUSES} element={<AdminSeoTaskStatusesPage />} />
+                    <Route path={ROUTES.ADMIN.SEO_PROJECT_STATUSES} element={<AdminSeoProjectStatusesPage />} />
                   </Route>
                   <Route element={<PermissionGuard permission={['edit-pm-project', 'create-pm-project']} />}>
                     <Route path={ROUTES.ADMIN.PM_TASK_STATUSES} element={<PmTaskStatusesPage />} />
+                    <Route path={ROUTES.ADMIN.PM_PROJECT_STATUSES} element={<PmProjectStatusesPage />} />
                   </Route>
                   <Route element={<PermissionGuard role="super-admin" />}>
                     <Route path={ROUTES.ADMIN.PROJECT_TYPES}    element={<AdminProjectTypesPage />} />
@@ -279,6 +283,7 @@ export function AppRouter() {
                   {/* Portal role is enough — PMs may not have every Spatie slug assigned. */}
                   <Route element={<RoleGuard allowedRoles={['manager', 'admin']} />}>
                     <Route path={ROUTES.PROJECT_MANAGER.TASK_STATUSES} element={<PmTaskStatusesPage />} />
+                    <Route path={ROUTES.PROJECT_MANAGER.PROJECT_STATUSES} element={<PmProjectStatusesPage />} />
                     <Route path={ROUTES.PROJECT_MANAGER.MESSAGES}     element={<SeoMemberMessagesPage />} />
                   </Route>
                   <Route path={ROUTES.PROJECT_MANAGER.PROFILE}   element={<PMProfilePage />} />
@@ -357,6 +362,7 @@ export function AppRouter() {
                   {/* Portal role is enough — SEO leaders may not have every Spatie slug assigned. */}
                   <Route element={<RoleGuard allowedRoles={['seo-leader', 'admin']} />}>
                     <Route path={ROUTES.SEO_LEADER.TASK_STATUSES} element={<AdminSeoTaskStatusesPage />} />
+                    <Route path={ROUTES.SEO_LEADER.PROJECT_STATUSES} element={<AdminSeoProjectStatusesPage />} />
                     <Route path={ROUTES.SEO_LEADER.MESSAGES}  element={<SeoMemberMessagesPage />} />
                   </Route>
                   <Route path={ROUTES.SEO_LEADER.WORK_OVERVIEW} element={<WorkOverviewPage layoutScope="seo" seoRouteVariant="leader" />} />

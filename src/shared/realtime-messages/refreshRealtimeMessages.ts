@@ -95,12 +95,18 @@ export function isRealtimeChatOpen(qc: QueryClient, payload: RealtimeMessagePayl
       if (!projectId) return hasActiveQuery(qc, ['pm-phase-messages']);
       if (phaseId) return hasActiveQuery(qc, ['pm-phase-messages', projectId, phaseId]);
       return hasActiveQuery(qc, ['pm-phase-messages', projectId])
-        || hasActiveQuery(qc, ['pm-client-updates', projectId]);
+        || hasActiveQuery(qc, ['pm-client-updates', projectId])
+        || hasActiveQuery(qc, ['project-client-issues', 'pm-manager', projectId])
+        || hasActiveQuery(qc, ['project-client-issues', 'pm', projectId]);
 
     case 'seo_client_update':
       if (!projectId) return false;
       return hasActiveQuery(qc, ['seo-client-updates', projectId])
-        || hasActiveQuery(qc, ['seo-phase-messages', projectId]);
+        || hasActiveQuery(qc, ['seo-phase-messages', projectId])
+        || hasActiveQuery(qc, ['project-client-issues', 'seo-leader', projectId])
+        || hasActiveQuery(qc, ['project-client-issues', 'seo-member', projectId])
+        || hasActiveQuery(qc, ['project-client-issues', 'seo', projectId])
+        || hasActiveQuery(qc, ['project-client-issues', 'seo-employee', projectId]);
 
     default:
       return false;
@@ -156,9 +162,13 @@ export function refreshRealtimeMessages(qc: QueryClient, payload: RealtimeMessag
     case 'pm_client_update':
       qc.invalidateQueries({ queryKey: ['pm-client-updates'] });
       qc.invalidateQueries({ queryKey: ['pm-phase-messages'] });
+      qc.invalidateQueries({ queryKey: ['project-client-issues', 'pm-manager'] });
+      qc.invalidateQueries({ queryKey: ['project-client-issues', 'pm-employee'] });
       qc.invalidateQueries({ queryKey: ['admin', 'messages-monitor'] });
       if (projectId) {
         qc.invalidateQueries({ queryKey: ['pm-client-updates', projectId] });
+        qc.invalidateQueries({ queryKey: ['project-client-issues', 'pm-manager', projectId] });
+        qc.invalidateQueries({ queryKey: ['project-client-issues', 'pm-employee', projectId] });
         if (phaseId) {
           qc.invalidateQueries({ queryKey: ['pm-phase-messages', projectId, phaseId] });
         } else {
@@ -170,8 +180,12 @@ export function refreshRealtimeMessages(qc: QueryClient, payload: RealtimeMessag
     case 'seo_client_update':
       qc.invalidateQueries({ queryKey: ['seo-client-updates'] });
       qc.invalidateQueries({ queryKey: ['seo-phase-messages'] });
+      qc.invalidateQueries({ queryKey: ['project-client-issues', 'seo-leader'] });
+      qc.invalidateQueries({ queryKey: ['project-client-issues', 'seo-member'] });
       if (projectId) {
         qc.invalidateQueries({ queryKey: ['seo-client-updates', projectId] });
+        qc.invalidateQueries({ queryKey: ['project-client-issues', 'seo-leader', projectId] });
+        qc.invalidateQueries({ queryKey: ['project-client-issues', 'seo-member', projectId] });
         if (phaseId) {
           qc.invalidateQueries({ queryKey: ['seo-phase-messages', projectId, phaseId] });
         } else {

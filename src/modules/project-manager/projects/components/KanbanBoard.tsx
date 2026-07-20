@@ -7,6 +7,7 @@ import { usePermission } from '@/shared/hooks/usePermission';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
+import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { KanbanBoard as SharedKanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
 import type { Task } from '../../tasks/types/task.types';
@@ -122,8 +123,8 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
       ...keys.map(key => {
         const lookup = statusLookup.find(s => s.value === key);
         const label = lookup
-          ? (isAr ? (lookup.labelAr || lookup.label) : lookup.label)
-          : key;
+          ? translateProjectLookup(key, lookup.label, isAr, lookup.labelAr)
+          : translateProjectLookup(key, key.replace(/_/g, ' '), isAr);
         return { id: key, label };
       }),
     ];
@@ -164,7 +165,9 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
       : (statusFilter ? [statusFilter] : keys);
     return columnKeys.map(key => {
       const lookup = statusLookup.find(s => s.value === key);
-      const label = lookup ? (isAr ? (lookup.labelAr || lookup.label) : lookup.label) : key;
+      const label = lookup
+        ? translateProjectLookup(key, lookup.label, isAr, lookup.labelAr)
+        : translateProjectLookup(key, key.replace(/_/g, ' '), isAr);
       return {
         key,
         label,

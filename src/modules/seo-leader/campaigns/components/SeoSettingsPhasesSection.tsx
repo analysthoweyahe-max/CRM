@@ -1,59 +1,45 @@
-import { useState }       from 'react';
+import { useMemo } from 'react';
 import { PhasesManagerUI } from '@/shared/modules/project/components/PhasesManagerUI';
-import type { PhaseItem }  from '@/shared/modules/project/components/PhasesManagerUI';
+import { useSeoProjectPhases } from '../hooks/useSeoProjectPhases';
+import { seoPhasesToPhaseItems } from '../utils/seoPhase.utils';
 
-const DEFAULT_PHASES: PhaseItem[] = [
-  { id: '1', label: 'بحث الكلمات المفتاحية', duration: '1 مواد' },
-  { id: '2', label: 'تحليل المنافسين',        duration: '1 مواد' },
-  { id: '3', label: 'تقني SEO',               duration: '2 مواد' },
-  { id: '4', label: 'تحسين الصفحات',          duration: '3 مواد' },
-  { id: '5', label: 'الربط الداخلي',          duration: '1 مواد' },
-  { id: '6', label: 'بناء الروابط',            duration: '1 مواد' },
-];
+interface Props {
+  projectId: string;
+  isAr:      boolean;
+  canEdit?:  boolean;
+}
 
-let _nextId = 100;
+/** Read-only phase list sourced from project template phases (client-updates API). */
+export function SeoSettingsPhasesSection({ projectId, isAr, canEdit = false }: Props) {
+  const { data: phases = [], isLoading, isError } = useSeoProjectPhases(projectId);
 
-interface Props { isAr: boolean }
-
-export function SeoSettingsPhasesSection({ isAr }: Props) {
-  const [phases, setPhases] = useState<PhaseItem[]>(DEFAULT_PHASES);
-
-  function handleAdd(label: string) {
-    setPhases(prev => [...prev, { id: String(++_nextId), label }]);
-  }
-
-  function handleDelete(id: string) {
-    setPhases(prev => prev.filter(p => p.id !== id));
-  }
-
-  function handleMoveUp(id: string) {
-    setPhases(prev => {
-      const idx = prev.findIndex(p => p.id === id);
-      if (idx <= 0) return prev;
-      const next = [...prev];
-      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-      return next;
-    });
-  }
-
-  function handleMoveDown(id: string) {
-    setPhases(prev => {
-      const idx = prev.findIndex(p => p.id === id);
-      if (idx < 0 || idx === prev.length - 1) return prev;
-      const next = [...prev];
-      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-      return next;
-    });
-  }
+  const phaseItems = useMemo(
+    () => seoPhasesToPhaseItems(phases, isAr),
+    [phases, isAr],
+  );
 
   return (
-    <PhasesManagerUI
-      phases={phases}
-      onAdd={handleAdd}
-      onDelete={handleDelete}
-      onMoveUp={handleMoveUp}
-      onMoveDown={handleMoveDown}
-      isAr={isAr}
-    />
+    <div className="space-y-3">
+      <PhasesManagerUI
+        phases={phaseItems}
+        isAr={isAr}
+        readOnly
+        isLoading={isLoading}
+        emptyLabel={
+          isError
+            ? (isAr ? 'تعذر تحميل مراحل المشروع' : 'Failed to load project phases')
+            : (isAr
+              ? 'لا توجد مراحل بعد — طبّق قالباً من الزر أعلاه لإنشاء مراحل المشروع.'
+              : 'No phases yet — apply a template using the button above to create project phases.')
+        }
+      />
+      {canEdit && phases.length > 0 && (
+        <p className="text-xs text-gray-400 dark:text-gray-500 text-end px-1">
+          {isAr
+            ? 'المراحل مُشتقة من قالب المشروع. استخدم «تطبيق قالب» لإضافة أو استبدال المراحل.'
+            : 'Phases come from the project template. Use “Apply Template” to append or replace phases.'}
+        </p>
+      )}
+    </div>
   );
 }

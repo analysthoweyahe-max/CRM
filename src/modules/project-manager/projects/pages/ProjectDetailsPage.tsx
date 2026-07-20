@@ -30,7 +30,7 @@ type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings'
 
 const TABS: { key: TabKey; ar: string; en: string }[] = [
   { key: 'tasks',    ar: 'المهام',          en: 'Tasks'          },
-  { key: 'client',   ar: 'تحديثات العميل',  en: 'Client Updates' },
+  { key: 'client',   ar: 'متطلبات العميل',  en: 'Client Updates' },
   { key: 'messages', ar: 'رسائل المشروع',   en: 'Messages'       },
   { key: 'team',     ar: 'فريق العمل',      en: 'Team'           },
   { key: 'progress', ar: 'سجل الإنجاز',     en: 'Progress Log'   },
@@ -59,7 +59,7 @@ export function ProjectDetailsPage() {
     tabParam === 'messages' ? 'messages'
     : tabParam === 'settings' ? 'settings'
     : tabParam === 'team' ? 'team'
-    : tabParam === 'client' ? 'client'
+    : tabParam === 'client' || tabParam === 'client-updates' ? 'client'
     : tabParam === 'progress' ? 'progress'
     : 'tasks';
   const [activeTab,      setActiveTab]      = useState<TabKey>(initialTab);
@@ -68,7 +68,7 @@ export function ProjectDetailsPage() {
     if (tabParam === 'messages') setActiveTab('messages');
     else if (tabParam === 'settings') setActiveTab('settings');
     else if (tabParam === 'team') setActiveTab('team');
-    else if (tabParam === 'client') setActiveTab('client');
+    else if (tabParam === 'client' || tabParam === 'client-updates') setActiveTab('client');
     else if (tabParam === 'progress') setActiveTab('progress');
   }, [tabParam]);
   const [changingStatus, setChangingStatus] = useState(false);

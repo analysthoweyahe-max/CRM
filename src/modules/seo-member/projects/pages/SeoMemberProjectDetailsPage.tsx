@@ -21,10 +21,17 @@ import {
 } from '@/shared/utils/mentionDeepLink.utils';
 import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import type { SeoTaskStatusOption } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
+import { useSeoProjectPhases } from '@/modules/seo-leader/campaigns/hooks/useSeoProjectPhases';
+import {
+  buildSeoPhaseFilterItems,
+  buildSeoPhaseKanbanColumns,
+  flattenSeoPhasedTasks,
+  readSeoTaskPhaseId,
+  resolveSeoTaskPhaseColumnKey,
+} from '@/modules/seo-leader/campaigns/utils/seoKanban.utils';
 import { campaignApi } from '@/modules/seo-leader/campaigns/api/campaign.api';
 import type { SeoTask } from '@/modules/seo-leader/campaigns/api/campaign.api';
 import { KanbanBoard as SharedKanbanBoard } from '@/shared/components/kanban/KanbanBoard';
-import { colorForKey } from '@/shared/components/kanban/kanbanColors';
 import { KanbanTaskCard } from '@/modules/project-manager/projects/components/KanbanTaskCard';
 import { KanbanTaskFilters } from '@/modules/project-manager/projects/components/KanbanTaskFilters';
 import {
@@ -32,6 +39,7 @@ import {
   type TaskPeriodFilter,
 } from '@/modules/project-manager/projects/utils/kanbanTaskFilters.utils';
 import { ProjectMessages } from '@/modules/seo-leader/campaigns/components/ProjectMessages';
+import { ProjectClientIssuesTab } from '@/shared/modules/project-client-issues/components/ProjectClientIssuesTab';
 import { SeoProgressTab } from '@/modules/seo-leader/campaigns/components/SeoProgressTab';
 import { SeoProjectTeamTab } from '@/modules/seo-leader/projects/components/SeoProjectTeamTab';
 import { myTasksApi } from '@/shared/modules/my-tasks/api/myTasks.api';
@@ -41,14 +49,15 @@ import type { Task, TaskStatus } from '@/modules/project-manager/tasks/types/tas
 const UNASSIGNED = '__unassigned__';
 const UNKNOWN_CREATOR = '__unknown_creator__';
 
-type TabKey = 'tasks' | 'messages' | 'team' | 'progress' | 'info';
+type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'info';
 
 const TABS: { key: TabKey; ar: string; en: string }[] = [
-  { key: 'tasks',    ar: 'المهام',  en: 'Tasks' },
-  { key: 'info',     ar: 'التفاصيل', en: 'Details' },
-  { key: 'messages', ar: 'الرسائل', en: 'Messages' },
-  { key: 'team',     ar: 'الفريق',  en: 'Team' },
-  { key: 'progress', ar: 'الإنجاز', en: 'Progress' },
+  { key: 'tasks',    ar: 'المهام',           en: 'Tasks'         },
+  { key: 'client',   ar: 'متطلبات العميل',   en: 'Client Updates'},
+  { key: 'info',     ar: 'التفاصيل',         en: 'Details'       },
+  { key: 'messages', ar: 'الرسائل',          en: 'Messages'      },
+  { key: 'team',     ar: 'الفريق',           en: 'Team'          },
+  { key: 'progress', ar: 'الإنجاز',          en: 'Progress'      },
 ];
 
 const AVATAR_COLORS = [
@@ -101,6 +110,7 @@ function toLocalTask(
     projectId,
     title:           t.title,
     description:     t.description ?? '',
+    phaseId:         readSeoTaskPhaseId(t),
     phaseName:       t.phase ?? t.taskTypeLabel ?? 'مهمة SEO',
     priority:        PRIORITY_MAP[t.priority] ?? 'normal',
     assigneeId:      primary?.id ? String(primary.id) : undefined,
@@ -134,7 +144,8 @@ export function SeoMemberProjectDetailsPage() {
   const commentParam = searchParams.get('comment') ?? searchParams.get('commentId');
   const contextTypeParam = searchParams.get('contextType');
   const initialTab: TabKey =
-    tabParam === 'messages' || tabParam === 'team' || tabParam === 'progress' || tabParam === 'info'
+    tabParam === 'client-updates' ? 'client'
+    : tabParam === 'messages' || tabParam === 'team' || tabParam === 'progress' || tabParam === 'info'
       ? tabParam
       : 'tasks';
 
@@ -143,6 +154,7 @@ export function SeoMemberProjectDetailsPage() {
 
   useEffect(() => {
     if (tabParam === 'messages') setActiveTab('messages');
+    if (tabParam === 'client-updates') setActiveTab('client');
   }, [tabParam]);
 
   const { data: campaign, isLoading: campaignLoading } = useQuery({
@@ -169,12 +181,15 @@ export function SeoMemberProjectDetailsPage() {
     [statuses],
   );
   const [viewMode, setViewMode] = useState<'status' | 'phase'>('status');
+  const [phaseFilter,    setPhaseFilter]    = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
   const [creatorFilter,  setCreatorFilter]  = useState('');
   const [statusFilter,   setStatusFilter]   = useState('');
   const [periodFilter,   setPeriodFilter]   = useState<TaskPeriodFilter>('');
   const [dateFrom,       setDateFrom]       = useState('');
   const [dateTo,         setDateTo]         = useState('');
+
+  const { data: projectPhases = [], isLoading: phasesLoading } = useSeoProjectPhases(projectKey);
 
   /* GET /v1/seo/employee/projects/{id}/tasks — the member-scoped route.
      /v1/seo/manager/tasks (used by CampaignDetailsPage) is manager-guarded
@@ -183,7 +198,7 @@ export function SeoMemberProjectDetailsPage() {
     queryKey: ['seo-member-project-tasks', projectKey],
     queryFn: async () => {
       const r = await campaignApi.getEmployeeTasks(projectKey, { per_page: 100 });
-      return (r.data.data.phases ?? []).flatMap(p => p.tasks);
+      return flattenSeoPhasedTasks(r.data.data);
     },
     enabled: !!projectKey,
     staleTime: 30_000,
@@ -273,8 +288,14 @@ export function SeoMemberProjectDetailsPage() {
     ...statuses.map(s => ({ id: s.key, label: s.label })),
   ], [statuses, isAr]);
 
+  const phaseItems: ComboboxItem[] = useMemo(
+    () => buildSeoPhaseFilterItems(projectPhases, tasks, isAr),
+    [projectPhases, tasks, isAr],
+  );
+
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => {
+      if (phaseFilter && resolveSeoTaskPhaseColumnKey(t, projectPhases) !== phaseFilter) return false;
       if (assigneeFilter === UNASSIGNED) return t.assigneeIds.length === 0;
       if (assigneeFilter && !t.assigneeIds.includes(assigneeFilter)) return false;
       if (creatorFilter === UNKNOWN_CREATOR) return !t.createdById;
@@ -284,11 +305,11 @@ export function SeoMemberProjectDetailsPage() {
       return true;
     });
   }, [
-    tasks, assigneeFilter, creatorFilter, statusFilter,
-    periodFilter, dateFrom, dateTo,
+    tasks, phaseFilter, assigneeFilter, creatorFilter, statusFilter,
+    periodFilter, dateFrom, dateTo, projectPhases,
   ]);
 
-  const hasActiveFilters = !!assigneeFilter || !!creatorFilter || !!statusFilter || !!periodFilter;
+  const hasActiveFilters = !!phaseFilter || !!assigneeFilter || !!creatorFilter || !!statusFilter || !!periodFilter;
 
   const displayColumns: SeoTaskStatusOption[] = useMemo(() => {
     const known = new Set(statuses.map(s => s.key));
@@ -299,7 +320,7 @@ export function SeoMemberProjectDetailsPage() {
         seen.add(t.rawStatus);
         extras.push({
           key: t.rawStatus,
-          label: t.rawStatus,
+          label: translateProjectLookup(t.rawStatus, t.rawStatus.replace(/_/g, ' '), isAr),
           color: '#9CA3AF',
           sortOrder: 999 + extras.length,
           isActive: true,
@@ -313,7 +334,7 @@ export function SeoMemberProjectDetailsPage() {
     if (matched.length > 0) return matched;
     return [{
       key: statusFilter,
-      label: statusFilter,
+      label: translateProjectLookup(statusFilter, statusFilter.replace(/_/g, ' '), isAr),
       color: '#9CA3AF',
       sortOrder: 0,
       isActive: true,
@@ -321,17 +342,15 @@ export function SeoMemberProjectDetailsPage() {
     }];
   }, [statuses, filteredTasks, statusFilter]);
 
-  const phaseColumns = useMemo(() => {
-    const map = new Map<string, Task[]>();
-    for (const t of filteredTasks) {
-      const key = t.phaseName || (isAr ? 'بدون مرحلة' : 'No phase');
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(t);
-    }
-    return Array.from(map.entries()).map(([key, items]) => ({
-      key, label: key, color: colorForKey(key), items,
-    }));
-  }, [filteredTasks, isAr]);
+  const phaseColumns = useMemo(
+    () => buildSeoPhaseKanbanColumns({
+      phases: projectPhases,
+      tasks:  filteredTasks,
+      phaseFilter,
+      isAr,
+    }),
+    [projectPhases, filteredTasks, isAr, phaseFilter],
+  );
 
   function handleDrop(taskId: string, toStatusKey: string) {
     const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
@@ -504,7 +523,7 @@ export function SeoMemberProjectDetailsPage() {
       </div>
 
       {activeTab === 'tasks' && (
-        tasksLoading || statusesLoading ? (
+        tasksLoading || statusesLoading || phasesLoading ? (
           <div className="flex gap-4">
             {[0, 1, 2, 3].map(i => (
               <div key={i} className="flex-1 min-w-62.5 h-64 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
@@ -533,18 +552,18 @@ export function SeoMemberProjectDetailsPage() {
             </div>
             <KanbanTaskFilters
               isAr={isAr}
-              phase=""
+              phase={phaseFilter}
               assignee={assigneeFilter}
               creator={creatorFilter}
               status={statusFilter}
               period={periodFilter}
               dateFrom={dateFrom}
               dateTo={dateTo}
-              phaseItems={[{ id: '', label: isAr ? 'كل المراحل' : 'All phases' }]}
+              phaseItems={phaseItems}
               assigneeItems={assigneeItems}
               creatorItems={creatorItems}
               statusItems={taskStatusItems}
-              onPhase={() => {}}
+              onPhase={setPhaseFilter}
               onAssignee={setAssigneeFilter}
               onCreator={setCreatorFilter}
               onStatus={setStatusFilter}
@@ -558,6 +577,7 @@ export function SeoMemberProjectDetailsPage() {
               onDateFrom={setDateFrom}
               onDateTo={setDateTo}
               onClear={() => {
+                setPhaseFilter('');
                 setAssigneeFilter('');
                 setCreatorFilter('');
                 setStatusFilter('');
@@ -568,7 +588,6 @@ export function SeoMemberProjectDetailsPage() {
               hasActive={hasActiveFilters}
               resultCount={filteredTasks.length}
               totalCount={tasks.length}
-              hidePhase
             />
             <SharedKanbanBoard
               columns={
@@ -666,6 +685,10 @@ export function SeoMemberProjectDetailsPage() {
             </div>
           )}
         </Card>
+      )}
+
+      {activeTab === 'client' && (
+        <ProjectClientIssuesTab projectId={projectKey} portal="seo-member" isAr={isAr} />
       )}
 
       {activeTab === 'messages' && (

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { seoProjectStatusApi } from '@/modules/admin/seo-project-statuses/api/seoProjectStatus.api';
 import { campaignApi } from '../api/campaign.api';
 import { ROUTES } from '@/app/router/routes';
 import { useLang } from '@/app/providers/LanguageProvider';
@@ -60,13 +61,16 @@ export function useNewCampaign() {
   });
 
   const statusesQ = useQuery({
-    queryKey: ['seo', 'lookups', 'statuses'],
-    queryFn:  () => campaignApi.getStatuses().then(r => r.data.data),
+    queryKey: ['seo', 'project-statuses'],
+    queryFn:  () => seoProjectStatusApi.listActive(),
     staleTime: 10 * 60 * 1000,
   });
 
   const campaignTypeItems = toItems(typesQ.data ?? [], isAr);
-  const statusItems       = toItems(statusesQ.data ?? [], isAr);
+  const statusItems       = toItems(
+    (statusesQ.data ?? []).map(s => ({ value: s.value, label: s.label, label_ar: s.labelAr })),
+    isAr,
+  );
 
   useEffect(() => {
     if (!status && statusItems.length > 0) setStatus(statusItems[0].id);

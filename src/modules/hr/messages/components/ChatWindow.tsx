@@ -42,10 +42,20 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
 
   const { isDark } = useTheme();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
-  const { data: messages = [], isLoading, isError, refetch, isFetching } = useMessages(conversation);
+  const {
+    data: messages = [],
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+    hasMoreOlder,
+    isFetchingOlder,
+    loadOlder,
+  } = useMessages(conversation);
   const { mutate: sendText,  isPending: sending   } = useSendMessage(conversation);
   const { mutate: sendMedia, isPending: uploading } = useSendMedia(conversation);
   const { mutate: markRead } = useMarkRead();
@@ -65,7 +75,20 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
   }, [messageConvId]);
 
   // auto-scroll on new messages
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
+
+  function handleThreadScroll() {
+    const el = scrollRef.current;
+    if (!el || !hasMoreOlder || isFetchingOlder) return;
+    if (el.scrollTop > 64) return;
+    const prevHeight = el.scrollHeight;
+    void loadOlder().then(() => {
+      requestAnimationFrame(() => {
+        if (!scrollRef.current) return;
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+      });
+    });
+  }
 
   // close emoji picker on outside click
   useEffect(() => {
@@ -143,7 +166,16 @@ export function ChatWindow({ conversation, currentUserId, isAr, onOpenSidebar }:
       </div>
 
       {/* ── Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50/50 dark:bg-gray-900/50 space-y-1">
+      <div
+        ref={scrollRef}
+        onScroll={handleThreadScroll}
+        className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50/50 dark:bg-gray-900/50 space-y-1"
+      >
+        {isFetchingOlder && (
+          <p className="text-center text-[11px] text-gray-400 py-2">
+            {isAr ? 'جاري تحميل الرسائل الأقدم...' : 'Loading older messages...'}
+          </p>
+        )}
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'} animate-pulse`}>

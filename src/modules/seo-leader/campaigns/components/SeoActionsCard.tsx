@@ -1,15 +1,12 @@
-import { useState }         from 'react';
-import { Archive, Download } from 'lucide-react';
-import { useNavigate }       from 'react-router-dom';
-import { useQueryClient }    from '@tanstack/react-query';
-import { toast }             from 'sonner';
-import { Button }            from '@/shared/components/ui/Button';
-import { Modal }             from '@/shared/components/ui/Modal';
-import { ROUTES }            from '@/app/router/routes';
-import { extractApiError }   from '@/shared/utils/error.utils';
-import { archiveSeoProject } from '../store/seoArchivedStore';
-import { campaignApi }       from '../api/campaign.api';
-import { stripHtml }         from '@/shared/utils/richText.utils';
+import { useState } from 'react';
+import { Download } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Button } from '@/shared/components/ui/Button';
+import { extractApiError } from '@/shared/utils/error.utils';
+import { campaignApi } from '../api/campaign.api';
+import type { SeoProjectPhase } from '../api/campaign.api';
+import { stripHtml } from '@/shared/utils/richText.utils';
 
 export interface SeoExportData {
   name:             string;
@@ -27,11 +24,12 @@ interface Props {
   campaignName: string;
   isDraft?:     boolean;
   exportData?:  SeoExportData;
+  phases?:      SeoProjectPhase[];
   isAr:         boolean;
   onPublished?: () => void;
 }
 
-function buildExcel(data: SeoExportData, isAr: boolean): string {
+function buildExcel(data: SeoExportData, phases: SeoProjectPhase[], isAr: boolean): string {
   const cell = (v: string | number | null | undefined) => {
     const safe = String(v ?? '—').replace(/&/g, '&amp;').replace(/</g, '&lt;');
     return `<Cell><Data ss:Type="String">${safe}</Data></Cell>`;
@@ -59,6 +57,15 @@ function buildExcel(data: SeoExportData, isAr: boolean): string {
 
   const header = isAr ? ['الحقل', 'القيمة'] : ['Field', 'Value'];
   const sheet  = isAr ? 'معلومات المشروع' : 'Project Info';
+  const phaseSheet = isAr ? 'المراحل' : 'Phases';
+  const phaseHeader = isAr
+    ? ['المرحلة', 'عدد المهام', 'تاريخ التسليم']
+    : ['Phase', 'Tasks', 'Delivery Date'];
+  const phaseRows = phases.map(p => [
+    p.name,
+    p.tasksCount ?? 0,
+    p.deliveryDate ?? '—',
+  ]);
 
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -69,21 +76,27 @@ function buildExcel(data: SeoExportData, isAr: boolean): string {
     ...rows.map(r => `      <Row>${r.map(v => cell(v)).join('')}</Row>`),
     `    </Table>`,
     `  </Worksheet>`,
+    phases.length > 0 ? [
+      `  <Worksheet ss:Name="${phaseSheet}">`,
+      `    <Table>`,
+      `      <Row>${phaseHeader.map(h => cell(h)).join('')}</Row>`,
+      ...phaseRows.map(r => `      <Row>${r.map(v => cell(v)).join('')}</Row>`),
+      `    </Table>`,
+      `  </Worksheet>`,
+    ].join('\n') : '',
     `</Workbook>`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 export function SeoActionsCard({
-  campaignId, campaignName, isDraft = false, exportData, isAr, onPublished,
+  campaignId, campaignName, isDraft = false, exportData, phases = [], isAr, onPublished,
 }: Props) {
-  const navigate                      = useNavigate();
-  const queryClient                   = useQueryClient();
-  const [openArchive, setOpenArchive] = useState(false);
-  const [publishing, setPublishing]   = useState(false);
+  const queryClient = useQueryClient();
+  const [publishing, setPublishing] = useState(false);
 
   function handleExport() {
     const data   = exportData ?? { name: campaignName };
-    const xml    = buildExcel(data, isAr);
+    const xml    = buildExcel(data, phases, isAr);
     const blob   = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url    = URL.createObjectURL(blob);
     const a      = Object.assign(document.createElement('a'), {
@@ -115,74 +128,24 @@ export function SeoActionsCard({
     }
   }
 
-  function handleArchive() {
-    archiveSeoProject(Number(campaignId));
-    toast.success(
-      isAr
-        ? `تم أرشفة "${campaignName}" بنجاح`
-        : `"${campaignName}" has been archived`
-    );
-    setOpenArchive(false);
-    navigate(ROUTES.SEO_LEADER.DASHBOARD);
-  }
-
   return (
-    <>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 space-y-3">
-        <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 text-end">
-          {isAr ? 'إجراءات' : 'Actions'}
-        </h2>
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 space-y-3">
+      <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 text-end">
+        {isAr ? 'إجراءات' : 'Actions'}
+      </h2>
 
-        <div className="flex flex-wrap gap-3 justify-end">
-          {isDraft && (
-            <Button variant="primary" disabled={publishing} onClick={handlePublish}>
-              {publishing
-                ? (isAr ? 'جاري النشر...' : 'Publishing…')
-                : (isAr ? 'نشر المشروع' : 'Publish Project')}
-            </Button>
-          )}
-          <Button variant="secondary" startIcon={<Archive size={15} />} onClick={() => setOpenArchive(true)}>
-            {isAr ? 'أرشفة' : 'Archive'}
+      <div className="flex flex-wrap gap-3 justify-end">
+        {isDraft && (
+          <Button variant="primary" disabled={publishing} onClick={handlePublish}>
+            {publishing
+              ? (isAr ? 'جاري النشر...' : 'Publishing…')
+              : (isAr ? 'نشر المشروع' : 'Publish Project')}
           </Button>
-          <Button variant="secondary" startIcon={<Download size={15} />} onClick={handleExport}>
-            {isAr ? 'تصدير البيانات' : 'Export Data'}
-          </Button>
-        </div>
+        )}
+        <Button variant="secondary" startIcon={<Download size={15} />} onClick={handleExport}>
+          {isAr ? 'تصدير البيانات' : 'Export Data'}
+        </Button>
       </div>
-
-      <Modal
-        open={openArchive}
-        onClose={() => setOpenArchive(false)}
-        size="sm"
-        title={isAr ? 'أرشفة المشروع' : 'Archive Project'}
-        footer={
-          <div className="flex items-center gap-3 justify-start flex-row-reverse">
-            <Button variant="secondary" startIcon={<Archive size={14} />} onClick={handleArchive}>
-              {isAr ? 'أرشفة' : 'Archive'}
-            </Button>
-            <Button variant="ghost" onClick={() => setOpenArchive(false)}>
-              {isAr ? 'إلغاء' : 'Cancel'}
-            </Button>
-          </div>
-        }
-      >
-        <div className="flex flex-col items-end gap-4 text-end">
-          <div className="self-center w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <Archive size={28} className="text-gray-400" />
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {isAr
-              ? <> سيتم نقل <span className="font-semibold text-gray-900 dark:text-gray-100">"{campaignName}"</span> إلى الأرشيف.</>
-              : <> Project <span className="font-semibold">"{campaignName}"</span> will be moved to archive.</>
-            }
-          </p>
-          <div className="w-full rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 px-4 py-2.5 text-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {isAr ? 'يمكنك العثور عليها في تبويب الأرشيف' : 'You can find it in the Archive tab'}
-            </span>
-          </div>
-        </div>
-      </Modal>
-    </>
+    </div>
   );
 }

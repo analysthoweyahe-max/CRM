@@ -1,9 +1,11 @@
-import { Pencil, Trash2, ListChecks, Star } from 'lucide-react';
+import { Pencil, Trash2, ListChecks, Star, ExternalLink } from 'lucide-react';
 import { Card }   from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui/Button';
 import { Badge }  from '@/shared/components/ui/Badge';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { isGlobalTemplate } from '../utils/templateFilter';
+import { TemplateNameWithLink } from './TemplateNameWithLink';
+import { normalizeTemplateLink, truncateTemplateLink } from '../utils/templateLink.utils';
 import type { PmProjectTemplate } from '../types/template.types';
 
 interface Props {
@@ -24,6 +26,7 @@ function typeBadges(template: PmProjectTemplate, isAr: boolean) {
 export function TemplateCard({ template, isAr, onEdit, onDelete }: Props) {
   const badges = typeBadges(template, isAr);
   const global = isGlobalTemplate(template);
+  const linkHref = normalizeTemplateLink(template.link);
 
   return (
     <Card padding="lg" className="space-y-3">
@@ -47,13 +50,32 @@ export function TemplateCard({ template, isAr, onEdit, onDelete }: Props) {
             <Star size={14} className="text-amber-500 fill-amber-500 shrink-0" />
           )}
           <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 break-words">
-            {template.name}
+            <TemplateNameWithLink
+              name={template.name}
+              link={template.link}
+              isAr={isAr}
+              className="justify-end"
+            />
           </h3>
         </div>
         {template.description && (
           <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
             {template.description}
           </p>
+        )}
+        {linkHref && (
+          <a
+            href={linkHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1.5 max-w-full text-xs text-[#709028] dark:text-[#A0CD39] hover:underline"
+            title={template.link ?? undefined}
+            dir="ltr"
+          >
+            <ExternalLink size={12} className="shrink-0" />
+            <span className="truncate">{truncateTemplateLink(template.link!)}</span>
+          </a>
         )}
         <p className="text-xs text-gray-400 dark:text-gray-500">
           {isAr ? `عدد المراحل: ${template.stepsCount}` : `Steps: ${template.stepsCount}`}

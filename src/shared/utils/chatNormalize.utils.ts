@@ -164,6 +164,52 @@ export function toChronologicalMessages<T>(msgs: T[] | null | undefined): T[] {
   return [...msgs].reverse();
 }
 
+/** React Query cache for messenger threads (page 1 = newest, already chronological). */
+export type MessengerThreadCache<T> = {
+  messages: T[];
+  lastPage: number;
+};
+
+export function readThreadMessages<T>(
+  cache: MessengerThreadCache<T> | T[] | null | undefined,
+): T[] {
+  if (!cache) return [];
+  if (Array.isArray(cache)) return cache;
+  return cache.messages ?? [];
+}
+
+export function mergeChronologicalMessages<T extends { id: string | number }>(
+  older: T[],
+  recent: T[],
+): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const message of [...older, ...recent]) {
+    const id = String(message.id);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(message);
+  }
+  return out;
+}
+
+export function appendThreadMessage<T extends { id: string | number }>(
+  cache: MessengerThreadCache<T> | T[] | null | undefined,
+  msg: T,
+): MessengerThreadCache<T> {
+  const messages = readThreadMessages(cache);
+  if (messages.some((m) => String(m.id) === String(msg.id))) {
+    return {
+      messages,
+      lastPage: Array.isArray(cache) ? 1 : (cache?.lastPage ?? 1),
+    };
+  }
+  return {
+    messages: [...messages, msg],
+    lastPage: Array.isArray(cache) ? 1 : (cache?.lastPage ?? 1),
+  };
+}
+
 export function normalizeTaskCommentFields(raw: {
   isEdited?: boolean | null;
   is_edited?: boolean | null;

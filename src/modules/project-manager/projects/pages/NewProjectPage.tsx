@@ -9,6 +9,7 @@ import { SDLCPanel } from '../components/SDLCPanel';
 import { CreateProjectForm } from '@/shared/modules/create-project/components/CreateProjectForm';
 import { useCreateProjectForm } from '@/shared/modules/create-project/hooks/useCreateProjectForm';
 import { useAllTemplates } from '@/modules/project-manager/templates/hooks/useProjectTemplates';
+import { TemplateResourceLink } from '@/modules/project-manager/templates/components/TemplateResourceLink';
 
 export function NewProjectPage() {
   const { lang, isRTL } = useLang();
@@ -29,8 +30,11 @@ export function NewProjectPage() {
       id:     t.uuid,
       label:  t.name,
       detail: isAr ? `${t.stepsCount} مرحلة` : `${t.stepsCount} steps`,
+      href:   t.link,
     })),
   ];
+
+  const selectedTemplate = matchingTemplates.find((t) => t.uuid === templateId);
 
   useEffect(() => {
     if (templateId && !matchingTemplates.some(t => t.uuid === templateId)) setTemplateId('');
@@ -69,6 +73,11 @@ export function NewProjectPage() {
                 searchPlaceholder={isAr ? 'ابحث عن قالب...' : 'Search template...'}
                 noResultsText={isAr ? 'لا توجد قوالب لهذا النوع' : 'No templates for this type'}
               />
+              {selectedTemplate && (
+                <div className="mt-2">
+                  <TemplateResourceLink link={selectedTemplate.link} isAr={isAr} />
+                </div>
+              )}
             </div>
           )}
           <CreateProjectForm form={form} />

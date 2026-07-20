@@ -9,6 +9,7 @@ import type {
   ProjectSection,
   ProjectStatus,
   SeoProject,
+  StatusLookupItem,
 } from '../types/myProjects.types';
 
 export function resolveMyProjectsConfig(role: Role, module: MyProjectsModule): MyProjectsPageConfig {
@@ -115,6 +116,24 @@ export const PER_PAGE = 15;
 
 const SECTION_ORDER: ProjectStatus[] = ['in_progress', 'completed', 'on_hold', 'not_started'];
 
+function resolveSectionOrder(catalog?: StatusLookupItem[]): string[] {
+  if (catalog?.length) return catalog.map(s => s.value);
+  return [...SECTION_ORDER];
+}
+
+function sectionLabelForKey(
+  key: string,
+  catalog: StatusLookupItem[] | undefined,
+  isAr: boolean,
+  fallback?: string,
+): string {
+  const fromCatalog = catalog?.find(s => s.value === key);
+  if (fromCatalog) return isAr ? (fromCatalog.labelAr ?? fromCatalog.label) : fromCatalog.label;
+  if (fallback) return fallback;
+  const known = SECTION_LABEL_FALLBACK[key as ProjectStatus];
+  return known ? known[isAr ? 'ar' : 'en'] : key;
+}
+
 const SECTION_LABEL_FALLBACK: Record<ProjectStatus, { ar: string; en: string }> = {
   in_progress: { ar: 'قيد التنفيذ', en: 'In Progress' },
   completed:   { ar: 'مكتمل',        en: 'Completed' },
@@ -144,13 +163,15 @@ function toDashboardCard(p: EmployeeMembershipProject): DashboardProjectCard {
 export function groupMembershipProjectsIntoSections(
   projects: EmployeeMembershipProject[],
   isAr: boolean,
+  statusCatalog?: StatusLookupItem[],
 ): ProjectSection[] {
-  const known = projects.filter(p => SECTION_ORDER.includes(p.status));
-  const unknown = projects.filter(p => !SECTION_ORDER.includes(p.status));
+  const sectionOrder = resolveSectionOrder(statusCatalog);
+  const known = projects.filter(p => sectionOrder.includes(p.status));
+  const unknown = projects.filter(p => !sectionOrder.includes(p.status));
 
-  const sections = SECTION_ORDER.map((key) => {
+  const sections = sectionOrder.map((key) => {
     const inSection = known.filter(p => p.status === key);
-    const label = inSection[0]?.statusLabel || SECTION_LABEL_FALLBACK[key][isAr ? 'ar' : 'en'];
+    const label = inSection[0]?.statusLabel || sectionLabelForKey(key, statusCatalog, isAr);
 
     return {
       key,
@@ -177,13 +198,18 @@ export function groupMembershipProjectsIntoSections(
 }
 
 /** @deprecated Prefer groupMembershipProjectsIntoSections for employee views. */
-export function groupProjectsIntoSections(projects: PmProject[], isAr: boolean): ProjectSection[] {
-  const known = projects.filter(p => SECTION_ORDER.includes(p.status));
-  const unknown = projects.filter(p => !SECTION_ORDER.includes(p.status));
+export function groupProjectsIntoSections(
+  projects: PmProject[],
+  isAr: boolean,
+  statusCatalog?: StatusLookupItem[],
+): ProjectSection[] {
+  const sectionOrder = resolveSectionOrder(statusCatalog);
+  const known = projects.filter(p => sectionOrder.includes(p.status));
+  const unknown = projects.filter(p => !sectionOrder.includes(p.status));
 
-  const sections = SECTION_ORDER.map((key) => {
+  const sections = sectionOrder.map((key) => {
     const inSection = known.filter(p => p.status === key);
-    const label = inSection[0]?.statusLabel || SECTION_LABEL_FALLBACK[key][isAr ? 'ar' : 'en'];
+    const label = inSection[0]?.statusLabel || sectionLabelForKey(key, statusCatalog, isAr);
 
     return {
       key,
@@ -231,13 +257,18 @@ export function groupProjectsIntoSections(projects: PmProject[], isAr: boolean):
   return sections.filter(s => s.total > 0);
 }
 
-export function groupSeoProjectsIntoSections(projects: SeoProject[], isAr: boolean): ProjectSection[] {
-  const known = projects.filter(p => SECTION_ORDER.includes(p.status));
-  const unknown = projects.filter(p => !SECTION_ORDER.includes(p.status));
+export function groupSeoProjectsIntoSections(
+  projects: SeoProject[],
+  isAr: boolean,
+  statusCatalog?: StatusLookupItem[],
+): ProjectSection[] {
+  const sectionOrder = resolveSectionOrder(statusCatalog);
+  const known = projects.filter(p => sectionOrder.includes(p.status));
+  const unknown = projects.filter(p => !sectionOrder.includes(p.status));
 
-  const sections = SECTION_ORDER.map((key) => {
+  const sections = sectionOrder.map((key) => {
     const inSection = known.filter(p => p.status === key);
-    const label = inSection[0]?.statusLabel || SECTION_LABEL_FALLBACK[key][isAr ? 'ar' : 'en'];
+    const label = inSection[0]?.statusLabel || sectionLabelForKey(key, statusCatalog, isAr);
 
     return {
       key,

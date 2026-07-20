@@ -16,6 +16,8 @@ import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 
 import { useTemplate } from '@/modules/project-manager/templates/hooks/useProjectTemplates';
 
+import { TemplateNameWithLink } from '@/modules/project-manager/templates/components/TemplateNameWithLink';
+
 import type { PmProjectTemplate } from '@/modules/project-manager/templates/types/template.types';
 import type { TemplateModule } from '@/modules/project-manager/templates/api/projectTemplate.api';
 
@@ -109,7 +111,14 @@ export function SDLCPanel({
 
         <StagesPanel
 
-          title={template.name}
+          title={
+            <TemplateNameWithLink
+              name={template.name}
+              link={template.link}
+              isAr={isAr}
+              nameClassName="text-sm font-bold text-gray-900 dark:text-gray-100"
+            />
+          }
 
           subtitle={isAr ? 'مراحل المشروع من القالب المحدد' : 'Project stages from the selected template'}
 
@@ -215,15 +224,29 @@ export function SDLCPanel({
 
             return (
 
-              <button
+              <div
 
                 key={t.uuid}
 
-                type="button"
+                role="button"
+
+                tabIndex={0}
 
                 onClick={() => onTemplateSelect(t.uuid)}
 
-                className="w-full px-5 py-3.5 flex items-start gap-3 text-start hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
+                onKeyDown={(e) => {
+
+                  if (e.key === 'Enter' || e.key === ' ') {
+
+                    e.preventDefault();
+
+                    onTemplateSelect(t.uuid);
+
+                  }
+
+                }}
+
+                className="w-full px-5 py-3.5 flex items-start gap-3 text-start hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors cursor-pointer"
 
               >
 
@@ -245,7 +268,7 @@ export function SDLCPanel({
 
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
 
-                      {t.name}
+                      <TemplateNameWithLink name={t.name} link={t.link} isAr={isAr} />
 
                     </p>
 
@@ -279,7 +302,7 @@ export function SDLCPanel({
 
                 </div>
 
-              </button>
+              </div>
 
             );
 

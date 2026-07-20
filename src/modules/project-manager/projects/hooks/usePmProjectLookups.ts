@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLang } from '@/app/providers/LanguageProvider';
+import { usePmProjectStatuses } from '@/modules/project-manager/project-statuses/hooks/usePmProjectStatuses';
 import { pmProjectLookupsApi } from '../api/project.api';
 import type { PmLookupItem } from '../types/project.types';
 
@@ -44,11 +45,12 @@ export function usePmProjectLookups(options: { includeManagers?: boolean } = {})
   const { includeManagers = false } = options;
   const { lang } = useLang();
 
-  const statuses = useQuery({
-    queryKey: ['pm-project-lookups', 'statuses'],
-    queryFn:  () => pmProjectLookupsApi.statuses().then(r => toLookupArray(r.data).map(normalizeLookupItem)),
-    staleTime: Infinity,
-  });
+  const statusesQuery = usePmProjectStatuses();
+  const statuses: PmLookupItem[] = (statusesQuery.data ?? []).map(s => ({
+    value:   s.value,
+    label:   s.label,
+    labelAr: s.labelAr ?? null,
+  }));
 
   const types = useQuery({
     queryKey: ['pm-project-lookups', 'types', lang],
@@ -63,9 +65,9 @@ export function usePmProjectLookups(options: { includeManagers?: boolean } = {})
   });
 
   return {
-    statuses: statuses.data ?? [],
+    statuses,
     types:    types.data ?? [],
     managers: managers.data ?? [],
-    isLoading: statuses.isLoading || types.isLoading,
+    isLoading: statusesQuery.isLoading || types.isLoading,
   };
 }

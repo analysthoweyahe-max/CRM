@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Plus, Megaphone } from 'lucide-react';
 import { Card } from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui/Button';
-import { myProjectsApi } from '@/shared/modules/my-projects/api/myProjects.api';
+import { useProjectStatusLookups } from '@/shared/hooks/useProjectStatusLookups';
 import type { StatusLookupItem } from '@/shared/modules/my-projects/types/myProjects.types';
 import { CampaignCard } from './CampaignCard';
 import type { CampaignViewModel } from '../hooks/useSeoLeaderDashboard';
@@ -25,11 +24,7 @@ interface Props {
 }
 
 export function CampaignsSection({ campaigns, isAr, onNewCampaign, canCreate = true }: Props) {
-  const { data: statusOptions = [], isLoading } = useQuery({
-    queryKey:  ['my-projects', 'statuses', 'seo'],
-    queryFn:   () => myProjectsApi.getSeoStatuses(),
-    staleTime: Infinity,
-  });
+  const { data: statusOptions = [], isLoading } = useProjectStatusLookups('seo');
 
   const tabs = useMemo<StatusTab[]>(() => {
     const fromApi = statusOptions.map(o => ({

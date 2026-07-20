@@ -55,6 +55,7 @@ export interface SeoTask {
   uuid?:           string;
   taskNumber:      number;
   phase:           string | null;
+  phaseId?:        number | null;
   title:           string;
   description?:    string | null;
   taskType:        string;
@@ -87,9 +88,26 @@ export interface SeoTask {
   canExtend?:      boolean;
 }
 
-interface PhasedTasksResponse {
-  phases: { phase: string; tasks: SeoTask[] }[];
-  total:  number;
+export interface SeoTaskPhaseGroup {
+  phase:    string;
+  phaseId?: number | null;
+  tasks:    SeoTask[];
+}
+
+export interface PhasedTasksResponse {
+  phases:  SeoTaskPhaseGroup[];
+  columns?: { status: string; statusLabel?: string; tasks: SeoTask[] }[];
+  total:   number;
+}
+
+export interface SeoProjectPhase {
+  id:           number;
+  uuid:         string;
+  name:         string;
+  sortOrder:    number;
+  description?: string | null;
+  deliveryDate?: string | null;
+  tasksCount?:  number;
 }
 
 export interface SeoMessageSender {
@@ -248,10 +266,11 @@ export interface SeoProjectUpdatePayload {
 export interface SeoUpdateTaskPayload {
   title?:            string;
   description?:      string;
-  /** Unverified against the real backend — the documented full-update field
-   *  list doesn't mention `phase`, so a phase-column drag may silently no-op
-   *  server-side. See phase-view drag handler in CampaignDetailsPage. */
+  /** String fallback when phaseId is unknown (orphan column). */
   phase?:            string;
+  /** Canonical phase move field for managers — preferred over `phase`. */
+  phaseId?:          number;
+  phase_id?:         number;
   taskType?:         string;
   status?:           string;
   priority?:         string;
@@ -278,6 +297,48 @@ export interface SeoUpdateTaskPayload {
   keyword_difficulty?: number;
   meta_title?:       string;
   meta_description?: string;
+}
+
+function unwrapSeoPhaseRecords(payload: unknown): Record<string, unknown>[] {
+  if (Array.isArray(payload)) return payload as Record<string, unknown>[];
+  if (payload && typeof payload === 'object') {
+    const obj = payload as Record<string, unknown>;
+    if (Array.isArray(obj.data)) return obj.data as Record<string, unknown>[];
+    if (obj.data && typeof obj.data === 'object') {
+      const inner = obj.data as Record<string, unknown>;
+      if (Array.isArray(inner.data)) return inner.data as Record<string, unknown>[];
+    }
+  }
+  return [];
+}
+
+function normalizeSeoPhaseRecord(raw: Record<string, unknown>, index: number): SeoProjectPhase | null {
+  const id = raw.id;
+  if (id == null) return null;
+  return {
+    id:           Number(id),
+    uuid:         String(raw.uuid ?? id),
+    name:         String(raw.name ?? ''),
+    sortOrder:    Number(raw.sortOrder ?? raw.sort_order ?? index),
+    description:  raw.description != null ? String(raw.description) : null,
+    deliveryDate: raw.deliveryDate != null
+      ? String(raw.deliveryDate)
+      : raw.delivery_date != null
+        ? String(raw.delivery_date)
+        : null,
+    tasksCount:   raw.tasksCount != null
+      ? Number(raw.tasksCount)
+      : raw.tasks_count != null
+        ? Number(raw.tasks_count)
+        : undefined,
+  };
+}
+
+function normalizeSeoProjectPhases(payload: unknown): SeoProjectPhase[] {
+  return unwrapSeoPhaseRecords(payload)
+    .map((item, index) => normalizeSeoPhaseRecord(item, index))
+    .filter((phase): phase is SeoProjectPhase => phase != null)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 export const campaignApi = {
@@ -368,6 +429,17 @@ export const campaignApi = {
      time-logs keep a separate employee/manager path (see below). */
   listAllTasks(params?: { project_id?: string | number; status?: string; search?: string; per_page?: number }) {
     return http.get<ApiResponse<PhasedTasksResponse>>('/v1/seo/manager/tasks', { params });
+  },
+
+  /** Project phases from template apply — backed by GET .../client-updates today. */
+  getPhases(projectId: string | number): Promise<SeoProjectPhase[]> {
+    return http.get<ApiResponse<unknown>>(
+      `/v1/seo/projects/${projectId}/client-updates`,
+    ).then(res => normalizeSeoProjectPhases(res.data.data));
+  },
+
+  getClientUpdates(projectId: string | number): Promise<SeoProjectPhase[]> {
+    return this.getPhases(projectId);
   },
 
   getTasks(projectId: string | number, params?: { status?: string; search?: string; per_page?: number }) {
