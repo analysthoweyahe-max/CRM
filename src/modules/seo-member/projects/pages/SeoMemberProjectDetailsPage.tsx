@@ -688,7 +688,11 @@ export function SeoMemberProjectDetailsPage() {
       )}
 
       {activeTab === 'client' && (
-        <ProjectClientIssuesTab projectId={projectKey} portal="seo-member" isAr={isAr} />
+        <ProjectClientIssuesTab
+          projectId={id || projectKey}
+          portal="seo-member"
+          isAr={isAr}
+        />
       )}
 
       {activeTab === 'messages' && (

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { useClientPage } from '@/shared/hooks/useClientPage';
 import {
   homeDeadlineItems,
@@ -7,21 +6,12 @@ import {
   type HomeDeadlineFilter,
 } from '@/shared/modules/my-tasks/utils/homeTaskDeadline.utils';
 import type { SeoTask } from '@/modules/seo-member/tasks/types/seoTask.types';
-import {
-  buildMarksCompletedMap,
-  taskMatchesBucketFilter,
-  type SeoDashboardStatusBucket,
-} from '../utils/seoTaskStatusBuckets.utils';
-import type { SeoTaskStatusOption } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
+import { buildSeoTaskStatusItems } from '../utils/seoTaskStatusStats.utils';
 
 const PAGE_SIZE = 10;
 
 interface UseSeoHomeTaskFiltersOptions {
-  /** Raw status key driven from the combobox or a stat card with a single matching key. */
   externalStatus?: string;
-  /** Bucket filter driven from a stat card click. */
-  externalBucket?: SeoDashboardStatusBucket | '';
-  statusOptions?: SeoTaskStatusOption[];
 }
 
 export function useSeoHomeTaskFilters(
@@ -33,29 +23,15 @@ export function useSeoHomeTaskFilters(
   const [project, setProject]   = useState('');
   const [deadline, setDeadline] = useState<HomeDeadlineFilter>('');
 
-  const marksCompletedByKey = useMemo(
-    () => buildMarksCompletedMap(options?.statusOptions ?? []),
-    [options?.statusOptions],
-  );
-
   useEffect(() => {
     if (options?.externalStatus !== undefined) {
       setStatus(options.externalStatus);
     }
   }, [options?.externalStatus]);
 
-  const statusItems: ComboboxItem[] = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const t of tasks) {
-      if (t.status) map.set(t.status, t.statusLabel || t.status);
-    }
-    return [
-      { id: '', label: isAr ? 'كل الحالات' : 'All Statuses' },
-      ...[...map.entries()].map(([id, label]) => ({ id, label })),
-    ];
-  }, [tasks, isAr]);
+  const statusItems = useMemo(() => buildSeoTaskStatusItems(tasks, isAr), [tasks, isAr]);
 
-  const projectItems: ComboboxItem[] = useMemo(() => {
+  const projectItems = useMemo(() => {
     const map = new Map<string, string>();
     for (const t of tasks) {
       if (t.project?.id) map.set(t.project.id, t.project.name);
@@ -69,13 +45,8 @@ export function useSeoHomeTaskFilters(
   const deadlineItems = useMemo(() => homeDeadlineItems(isAr), [isAr]);
 
   const filtered = useMemo(() => {
-    const bucket = options?.externalBucket ?? '';
     return tasks.filter((task) => {
-      if (bucket) {
-        if (!taskMatchesBucketFilter(task, bucket, marksCompletedByKey)) return false;
-      } else if (status && task.status !== status) {
-        return false;
-      }
+      if (status && task.status !== status) return false;
       if (project && task.project?.id !== project) return false;
       if (!matchesHomeDeadline(task.dueDate || task.dueAt, deadline, {
         isOverdue: task.isOverdue,
@@ -83,7 +54,7 @@ export function useSeoHomeTaskFilters(
       })) return false;
       return true;
     });
-  }, [tasks, status, project, deadline, options?.externalBucket, marksCompletedByKey]);
+  }, [tasks, status, project, deadline]);
 
   const pagination = useClientPage(filtered, PAGE_SIZE);
 

@@ -2,6 +2,7 @@ import { toast } from 'sonner';
 import { Bell, X } from 'lucide-react';
 import { formatNotificationDateTime } from '@/shared/utils/date.utils';
 import { markNotificationToasted, wasNotificationToasted } from './notificationSeen.store';
+import { isTabActive, showDesktopNotification } from './desktopNotification.utils';
 
 const TOAST_DURATION_MS = 4_000;
 
@@ -13,6 +14,10 @@ interface ShowInAppNotificationOptions {
   createdAt?: string;
   isAr:       boolean;
   onView?:    () => void;
+  /** Skip the OS/device notification — e.g. an FCM push already showed one via
+   *  the service worker's background handler, so raising another here would
+   *  duplicate it. */
+  skipDesktopNotification?: boolean;
 }
 
 /** Prominent in-page toast — only for notifications not already shown this session.
@@ -25,6 +30,7 @@ export function showInAppNotification({
   createdAt,
   isAr,
   onView,
+  skipDesktopNotification,
 }: ShowInAppNotificationOptions): boolean {
   const contentKey = `${title}::${body ?? ''}`;
   const keys = (dedupKeys?.length ? dedupKeys : [id, contentKey]).filter(Boolean) as string[];
@@ -34,6 +40,17 @@ export function showInAppNotification({
   keys.forEach(markNotificationToasted);
 
   const toastId = id ?? keys[0] ?? contentKey;
+
+  // Tab isn't in view — the in-page toast below won't be seen, so also raise
+  // an OS/device notification (no-op if permission was never granted).
+  if (!skipDesktopNotification && !isTabActive()) {
+    showDesktopNotification({
+      title:   title,
+      body:    body ?? '',
+      tag:     toastId,
+      onClick: onView,
+    });
+  }
 
   toast.custom(
     (t) => (

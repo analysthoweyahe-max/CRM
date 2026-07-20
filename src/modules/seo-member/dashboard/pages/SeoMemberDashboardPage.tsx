@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { CheckCircle, Eye, RefreshCw, Clock, FolderKanban, Plus } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { FolderKanban, Plus } from 'lucide-react';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { useAuth }     from '@/modules/auth/context/AuthContext';
 import { ROUTES }      from '@/app/router/routes';
@@ -13,37 +13,15 @@ import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTa
 import { useSeoMemberDashboard } from '../hooks/useSeoMemberDashboard';
 import { useTodayTasks }         from '../hooks/useTodayTasks';
 import { SeoHomeTasksSection }   from '../components/SeoHomeTasksSection';
-import {
-  buildSeoDashboardStatCards,
-  type SeoDashboardStatusBucket,
-} from '../utils/seoTaskStatusBuckets.utils';
-
-const STAT_ICONS: Record<SeoDashboardStatusBucket, { icon: ReactNode; iconBg: string }> = {
-  completed: {
-    icon:    <CheckCircle size={20} className="text-[#709028]" />,
-    iconBg:  'bg-[#D8EBAE] dark:bg-[#A0CD39]/20',
-  },
-  needs_review: {
-    icon:    <Eye size={20} className="text-purple-600" />,
-    iconBg:  'bg-purple-100 dark:bg-purple-900/30',
-  },
-  in_progress: {
-    icon:    <RefreshCw size={20} className="text-amber-600" />,
-    iconBg:  'bg-amber-100 dark:bg-amber-900/30',
-  },
-  pending: {
-    icon:    <Clock size={20} className="text-gray-500" />,
-    iconBg:  'bg-gray-100 dark:bg-gray-700',
-  },
-};
+import { buildSeoTaskStatusStats } from '../utils/seoTaskStatusStats.utils';
 
 function DashboardSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
       <div className="h-8 w-56 rounded-lg bg-gray-200 dark:bg-gray-700" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 rounded-2xl bg-gray-200 dark:bg-gray-700" />
+          <div key={i} className="aspect-square rounded-2xl bg-gray-200 dark:bg-gray-700" />
         ))}
       </div>
       <div className="space-y-3">
@@ -70,28 +48,19 @@ export function SeoMemberDashboardPage() {
   };
   const canCreate = projectsConfig.canCreate;
 
-  const [activeBucket, setActiveBucket] = useState<SeoDashboardStatusBucket | ''>('');
   const [activeStatus, setActiveStatus] = useState('');
   const tasksSectionRef = useRef<HTMLDivElement>(null);
 
   const statCards = useMemo(
-    () => buildSeoDashboardStatCards(todayTasks, statusOptions),
+    () => buildSeoTaskStatusStats(todayTasks, statusOptions),
     [todayTasks, statusOptions],
   );
 
-  function handleStatClick(bucket: SeoDashboardStatusBucket, filterKey: string) {
-    const isActive = activeBucket === bucket;
-    setActiveBucket(isActive ? '' : bucket);
-    const hasFilterKey = filterKey && todayTasks.some(t => t.status === filterKey);
-    setActiveStatus(isActive ? '' : (hasFilterKey ? filterKey : ''));
+  function handleStatClick(statusKey: string) {
+    setActiveStatus(prev => (prev === statusKey ? '' : statusKey));
     setTimeout(() => {
       tasksSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
-  }
-
-  function handleStatusChange(status: string) {
-    setActiveStatus(status);
-    setActiveBucket('');
   }
 
   if (isLoading) return <DashboardSkeleton />;
@@ -118,24 +87,28 @@ export function SeoMemberDashboardPage() {
 
       <WorkTimerCard layoutScope="seo" variant="card" initialData={checkIn} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map(card => {
-          const { icon, iconBg } = STAT_ICONS[card.bucket];
-          return (
+      {statCards.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {statCards.map(card => (
             <DashboardStatCard
-              key={card.bucket}
-              icon={icon}
-              iconBg={iconBg}
+              key={card.key}
+              square
+              icon={(
+                <span
+                  className="block w-3 h-3 rounded-full"
+                  style={{ backgroundColor: card.color ?? '#9CA3AF' }}
+                />
+              )}
+              iconBg="bg-gray-100 dark:bg-gray-700"
               value={card.count}
-              labelAr={card.labelAr}
-              labelEn={card.labelEn}
+              label={card.label}
               isAr={isAr}
-              isActive={activeBucket === card.bucket}
-              onClick={() => handleStatClick(card.bucket, card.filterKey)}
+              isActive={activeStatus === card.key}
+              onClick={() => handleStatClick(card.key)}
             />
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between gap-3 mb-4">
@@ -181,10 +154,7 @@ export function SeoMemberDashboardPage() {
           isLoading={tasksLoading}
           isAr={isAr}
           externalStatus={activeStatus}
-          externalBucket={activeBucket}
-          statusOptions={statusOptions}
-          onStatusChange={handleStatusChange}
-          onBucketClear={() => setActiveBucket('')}
+          onStatusChange={setActiveStatus}
         />
       </div>
 

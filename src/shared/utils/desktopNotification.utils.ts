@@ -13,6 +13,12 @@ export async function ensureDesktopNotificationPermission(): Promise<Notificatio
   }
 }
 
+/** True when this tab is the one the user is actively looking at (visible + focused). */
+export function isTabActive(): boolean {
+  if (typeof document === 'undefined') return true;
+  return document.visibilityState === 'visible' && document.hasFocus();
+}
+
 interface DesktopNotificationOptions {
   title: string;
   body:  string;

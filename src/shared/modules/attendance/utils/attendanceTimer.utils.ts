@@ -183,6 +183,27 @@ export function formatBreakMinutes(minutes: number, isAr: boolean): string {
   return isAr ? `${minutes} د` : `${minutes}m`;
 }
 
+/** Break = (end − check-in) − working hours. Uses current time when still checked in. */
+export function calcTodayBreakMinutes(
+  checkIn: string | null | undefined,
+  workingHours: number | null | undefined,
+  checkOut?: string | null | undefined,
+  /** Changing value (e.g. live timer tick) — only used to keep callers re-rendering. */
+  _liveTick?: number | null,
+): number {
+  void _liveTick;
+  if (!checkIn || workingHours == null || Number.isNaN(workingHours)) return 0;
+
+  const start = utcClockTimeToday(checkIn);
+  if (!start) return 0;
+
+  const end = checkOut ? utcClockTimeToday(checkOut) : new Date();
+  if (!end) return 0;
+
+  const spanMinutes = (end.getTime() - start.getTime()) / 60_000;
+  return Math.max(0, Math.round(spanMinutes - workingHours * 60));
+}
+
 /**
  * Break duration in minutes when the API omits breakMinutes:
  * (check-out − check-in) − workingHours.

@@ -44,6 +44,13 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
 
   const columns = useMemo(() => buildClientIssueColumns(issues, isAr), [issues, isAr]);
 
+  // Member portals always get create in this workspace (API often omits capabilities).
+  // Managers/leaders also keep create when the API flag is missing/true.
+  const showCreateButton =
+    capabilities.canCreate
+    || portal === 'seo-member'
+    || portal === 'pm-employee';
+
   const selectedFromList = selected
     ? issues.find(i => i.id === selected.id) ?? selected
     : null;
@@ -85,15 +92,25 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
 
   if (isLoading) {
     return (
-      <div className="flex gap-4 overflow-hidden">
-        {[0, 1, 2, 3, 4].map(i => (
-          <div key={i} className="flex-1 min-w-62.5 h-64 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
-        ))}
+      <div className="space-y-4 pb-10">
+        {/* Show create while loading so seo-member always sees the action */}
+        {showCreateButton && (
+          <div className="flex justify-start">
+            <Button variant="primary" startIcon={<Plus size={16} />} disabled>
+              {isAr ? 'إضافة مشكلة' : 'Add Issue'}
+            </Button>
+          </div>
+        )}
+        <div className="flex gap-4 overflow-hidden">
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} className="flex-1 min-w-62.5 h-64 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (!capabilities.canView) {
+  if (!capabilities.canView && portal !== 'seo-member' && portal !== 'pm-employee') {
     return (
       <div className="text-center py-16 text-sm text-gray-400 dark:text-gray-500">
         {isAr ? 'لا تملك صلاحية عرض تحديثات العميل' : 'You do not have permission to view client issues'}
@@ -103,7 +120,7 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
 
   return (
     <div className="space-y-4 pb-10">
-      {capabilities.canCreate && (
+      {showCreateButton && (
         <div className="flex justify-start">
           <Button
             variant="primary"

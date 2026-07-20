@@ -122,9 +122,18 @@ interface ProviderProps {
   children: ReactNode;
   /** Attendance scope for this portal layout — used to auto-pause work timer. */
   attendanceScope?: AttendanceScope;
+  /**
+   * When `true`, starting/resuming a task timer will auto-pause the work/attendance timer
+   * (mutual exclusion behavior).
+   */
+  pauseAttendanceWhenTaskRuns?: boolean;
 }
 
-export function TaskTimersProvider({ children, attendanceScope }: ProviderProps) {
+export function TaskTimersProvider({
+  children,
+  attendanceScope,
+  pauseAttendanceWhenTaskRuns = true,
+}: ProviderProps) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const scope = attendanceScope
@@ -189,7 +198,7 @@ export function TaskTimersProvider({ children, attendanceScope }: ProviderProps)
   const startTimer = useCallback(async ({ portal, projectId, taskId, title }: StartArgs) => {
     try {
       // Mutual exclusion with attendance: pause the work day while a task runs.
-      if (!user?.isSuperAdmin) {
+      if (pauseAttendanceWhenTaskRuns && !user?.isSuperAdmin) {
         try {
           await pauseAttendanceIfRunning(qc, scope);
         } catch {
@@ -215,7 +224,7 @@ export function TaskTimersProvider({ children, attendanceScope }: ProviderProps)
     } catch {
       toast.error('Failed to start timer');
     }
-  }, [qc, scope, stopOtherTimers, user?.isSuperAdmin]);
+  }, [qc, scope, stopOtherTimers, user?.isSuperAdmin, pauseAttendanceWhenTaskRuns]);
 
   const pauseTimer = useCallback(async (taskId: string) => {
     const entry = timersRef.current.get(taskId);
@@ -237,7 +246,7 @@ export function TaskTimersProvider({ children, attendanceScope }: ProviderProps)
     const entry = timersRef.current.get(taskId);
     if (!entry) return;
     try {
-      if (!user?.isSuperAdmin) {
+      if (pauseAttendanceWhenTaskRuns && !user?.isSuperAdmin) {
         try {
           await pauseAttendanceIfRunning(qc, scope);
         } catch {
@@ -254,7 +263,7 @@ export function TaskTimersProvider({ children, attendanceScope }: ProviderProps)
     } catch {
       toast.error('Failed to resume timer');
     }
-  }, [qc, scope, user?.isSuperAdmin]);
+  }, [qc, scope, user?.isSuperAdmin, pauseAttendanceWhenTaskRuns]);
 
   const stopTimer = useCallback(async (taskId: string) => {
     const entry = timersRef.current.get(taskId);

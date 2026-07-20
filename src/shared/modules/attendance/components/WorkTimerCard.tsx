@@ -67,7 +67,7 @@ export function WorkTimerCard({
     enabled: (timerOptions.enabled ?? true) && !isSuperAdmin,
   });
   const {
-    today, displayHours, breakElapsed, isLoading, isActiveDay,
+    today, displayHours, breakMinutes, isLoading, isActiveDay,
     offerCheckIn, offerCheckOut, offerPause, offerResume,
     isCheckingIn, isCheckingOut, isPausing, isResuming,
     checkIn, checkOut, pause, resume,
@@ -101,10 +101,6 @@ export function WorkTimerCard({
   const checkOutTimeRaw = today?.record?.checkOutTime ?? today?.checkOutTime ?? null;
   // API clocks are UTC — convert for window checks / expected end (display converts in formatClockTime)
   const checkInTime = utcClockToLocal(checkInTimeRaw);
-  const breakMinutes = today?.breakMinutes ?? 0;
-  const liveBreakMinutes = isPaused && breakElapsed > 0
-    ? Math.max(breakMinutes, Math.floor(breakElapsed / 60))
-    : breakMinutes;
   const timerText = formatWorkingHours(displayHours ?? today?.workingHours ?? null);
   const isCompact = variant === 'compact';
 
@@ -230,7 +226,7 @@ export function WorkTimerCard({
             ) : (
               <span>
                 {isAr ? 'استراحة:' : 'Break:'}{' '}
-                <span className="font-medium">{formatBreakMinutes(liveBreakMinutes, isAr)}</span>
+                <span className="font-medium">{formatBreakMinutes(breakMinutes, isAr)}</span>
               </span>
             )}
           </div>

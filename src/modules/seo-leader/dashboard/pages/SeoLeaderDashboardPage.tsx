@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
 import { StatCard }    from '@/shared/components/ui/StatCard';
+import { WorkTimerCard } from '@/shared/modules/attendance/components/WorkTimerCard';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { useSeoLeaderDashboard }      from '../hooks/useSeoLeaderDashboard';
 import { CampaignsSection }           from '../components/CampaignsSection';
@@ -12,7 +13,7 @@ export function SeoLeaderDashboardPage() {
   const { lang }                        = useLang();
   const isAr                            = lang === 'ar';
   const navigate                        = useNavigate();
-  const { isLoading, stats, campaigns } = useSeoLeaderDashboard();
+  const { isLoading, stats, campaigns, checkIn } = useSeoLeaderDashboard();
   const canCreate   = usePermission('create-seo-project');
   const canViewTasks = usePermission('view-seo-tasks');
 
@@ -20,6 +21,8 @@ export function SeoLeaderDashboardPage() {
 
   return (
     <div className="space-y-6">
+
+      <WorkTimerCard layoutScope="seo" variant="card" initialData={checkIn} />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

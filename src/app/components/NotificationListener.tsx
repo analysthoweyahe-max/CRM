@@ -15,6 +15,7 @@ import {
   type RealtimeMessagePayload,
 } from '@/shared/realtime-messages';
 import { showInAppNotification } from '@/shared/utils/notificationToast.utils';
+import { ensureDesktopNotificationPermission } from '@/shared/utils/desktopNotification.utils';
 import {
   isRecentlyCreated,
   markNotificationToasted,
@@ -62,6 +63,11 @@ export function NotificationListener() {
   const seenIdsRef = useRef<Set<string>>(new Set());
   const initialisedRef = useRef(false);
   const lastRealtimeRef = useRef<{ key: string; at: number } | null>(null);
+
+  // Ask once per session so background-tab notifications can also raise an OS notification.
+  useEffect(() => {
+    void ensureDesktopNotificationPermission();
+  }, []);
 
   function shouldShowForRole(notification: AppNotification): boolean {
     // Employee sessions always receive personal assignment alerts.
@@ -143,7 +149,7 @@ export function NotificationListener() {
     }
   }
 
-  function handleRealtimeEvent(payload: RealtimeMessagePayload) {
+  function handleRealtimeEvent(payload: RealtimeMessagePayload, opts?: { skipDesktopNotification?: boolean }) {
     const title = String(
       payload.title
       ?? (isAr ? 'إشعار جديد' : 'New notification'),
@@ -223,6 +229,7 @@ export function NotificationListener() {
       createdAt,
       isAr,
       onView: () => navigateTo(fakeNotification),
+      skipDesktopNotification: opts?.skipDesktopNotification,
     });
 
     if (shown) playNotificationSound();
@@ -247,8 +254,11 @@ export function NotificationListener() {
     });
 
     // Chat messages + request/alert types (leave/exception/instruction) share the same handler.
+    // skipDesktopNotification: FCM pushes are shown natively by the service
+    // worker's background handler when the tab is actually hidden, so raising
+    // one here too would duplicate it.
     if (isRealtimeMessageType(realtime.type) || isToastOnlyRealtimeType(realtime.type)) {
-      handleRealtimeEvent(realtime);
+      handleRealtimeEvent(realtime, { skipDesktopNotification: true });
       return;
     }
 
@@ -304,6 +314,9 @@ export function NotificationListener() {
       createdAt,
       isAr,
       onView: () => navigateTo(fakeNotification),
+      // Service worker already showed a native OS notification for this push
+      // when the tab was actually backgrounded — don't duplicate it here.
+      skipDesktopNotification: true,
     });
 
     if (shown) playNotificationSound();

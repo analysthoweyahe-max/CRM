@@ -2,24 +2,19 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { projectClientIssueApi } from '../api/projectClientIssue.api';
-import { clientIssueResourceKey } from '../utils/clientIssue.utils';
+import {
+  clientIssueResourceKey,
+  defaultClientIssueCapabilities,
+  normalizeClientIssueList,
+} from '../utils/clientIssue.utils';
 import { extractApiError } from '@/shared/utils/error.utils';
 import type {
   ClientIssue,
-  ClientIssueCapabilities,
   ClientIssueStatus,
   CreateClientIssuePayload,
   ProjectClientIssuePortal,
   UpdateClientIssuePayload,
 } from '../types/projectClientIssue.types';
-
-const DEFAULT_CAPABILITIES: ClientIssueCapabilities = {
-  canView:         false,
-  canCreate:       false,
-  canEdit:         false,
-  canDelete:       false,
-  canUpdateStatus: false,
-};
 
 function queryKey(portal: ProjectClientIssuePortal, projectId: string) {
   return ['project-client-issues', portal, projectId] as const;
@@ -36,18 +31,23 @@ export function useProjectClientIssues(
 ) {
   const qc = useQueryClient();
   const [statusOverrides, setStatusOverrides] = useState<Record<string, ClientIssueStatus>>({});
+  const portalDefaults = defaultClientIssueCapabilities(portal);
 
   const listQuery = useQuery({
     queryKey: queryKey(portal, projectId),
     queryFn: async () => {
       const res = await projectClientIssueApi.list(portal, projectId);
-      return res.data.data;
+      const body = res.data as unknown as Record<string, unknown>;
+      // Pass full envelope so top-level `capabilities` is not dropped when
+      // unwrapping `data`.
+      return normalizeClientIssueList(body.data ?? body, portal, body.capabilities);
     },
     enabled: !!projectId,
     staleTime: 30_000,
   });
 
-  const capabilities = listQuery.data?.capabilities ?? DEFAULT_CAPABILITIES;
+  // seo-member / managers: if list fails or capabilities omitted → still can create
+  const capabilities = listQuery.data?.capabilities ?? portalDefaults;
 
   const issues = useMemo(() => {
     const raw = listQuery.data?.data ?? [];

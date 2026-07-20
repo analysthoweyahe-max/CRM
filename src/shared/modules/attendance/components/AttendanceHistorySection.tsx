@@ -3,7 +3,7 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { attendanceTimerApi } from '../api/attendanceTimer.api';
 import type { AttendanceScope, AttendanceHistoryRecord } from '../types/attendanceTimer.types';
 import {
-  calcBreakMinutes,
+  calcTodayBreakMinutes,
   formatBreakMinutes,
   formatClockTime,
   formatWorkingHours,
@@ -27,9 +27,12 @@ function recordHours(r: AttendanceHistoryRecord): number | null {
 }
 
 function recordBreakMinutes(r: AttendanceHistoryRecord): number | null {
-  const fromApi = r.breakMinutes ?? r.break_minutes;
-  if (fromApi != null) return fromApi;
-  return calcBreakMinutes(recordCheckIn(r), recordCheckOut(r), recordHours(r));
+  const checkIn = recordCheckIn(r);
+  const checkOut = recordCheckOut(r);
+  const hours = recordHours(r);
+  const derived = calcTodayBreakMinutes(checkIn, hours, checkOut);
+  if (derived > 0 || (checkIn && hours != null)) return derived;
+  return r.breakMinutes ?? r.break_minutes ?? null;
 }
 
 export function AttendanceHistorySection({ scope, month }: AttendanceHistorySectionProps) {

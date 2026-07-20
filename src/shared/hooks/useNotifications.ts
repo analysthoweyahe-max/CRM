@@ -57,8 +57,13 @@ export function useNotifications() {
     initialPageParam: 1,
     getNextPageParam: nextPageParam,
     staleTime: 15_000,
-    /* Polling fallback when FCM is unavailable — keeps badge close to real-time. */
+    /* Polling fallback when FCM is unavailable — keeps badge close to real-time.
+     * Must keep polling in background tabs too, otherwise a hidden tab never
+     * learns about new notifications (and so never raises a desktop notification)
+     * until the user switches back — react-query pauses refetchInterval in the
+     * background by default. */
     refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
   });
 
   const hrQuery = useInfiniteQuery({
@@ -71,6 +76,7 @@ export function useNotifications() {
     enabled: shouldMergeHrNotifications,
     staleTime: 15_000,
     refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
   });
 
   const notifications = useMemo(() => {

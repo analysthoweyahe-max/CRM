@@ -13,6 +13,7 @@ import {
   attendancePausePath,
   attendanceResumePath,
   breakElapsedSeconds,
+  calcTodayBreakMinutes,
   canOfferCheckIn,
   canOfferCheckOut,
   canOfferPause,
@@ -36,6 +37,7 @@ export interface UseWorkTimerResult {
   scope:            AttendanceScope;
   today:            AttendanceTodayData | null;
   displayHours:     number | null;
+  breakMinutes:     number;
   breakElapsed:     number;
   isLoading:        boolean;
   isActiveDay:      boolean;
@@ -183,10 +185,21 @@ export function useWorkTimer(options: UseWorkTimerOptions = {}): UseWorkTimerRes
 
   const todayData = today ?? null;
 
+  const checkInTime = todayData?.record?.checkInTime ?? todayData?.checkInTime ?? null;
+  const checkOutTime = todayData?.record?.checkOutTime ?? todayData?.checkOutTime ?? null;
+  const workingHours = displayHours ?? todayData?.workingHours ?? todayData?.record?.workingHours ?? null;
+  const breakMinutes = calcTodayBreakMinutes(
+    checkInTime,
+    workingHours,
+    checkOutTime,
+    checkOutTime ? undefined : (isPaused ? breakElapsed : displayHours),
+  );
+
   return {
     scope,
     today: todayData,
     displayHours,
+    breakMinutes,
     breakElapsed,
     isLoading,
     isActiveDay: isActiveWorkDay(todayData),
