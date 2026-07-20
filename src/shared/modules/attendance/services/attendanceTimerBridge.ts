@@ -40,9 +40,8 @@ export function isAttendanceRunning(qc: QueryClient, scope: AttendanceScope): bo
 }
 
 /**
- * Auto-pause the work timer — e.g. because a task timer just started and the two
- * must be mutually exclusive. Wired from `TaskTimersProvider` start/resume.
- * No-op (returns false) if there's nothing running to pause.
+ * Auto-pause the work timer — used by the inactivity guard to pause after a period
+ * of idle time. No-op (returns false) if there's nothing running to pause.
  */
 export async function pauseAttendanceIfRunning(qc: QueryClient, scope: AttendanceScope): Promise<boolean> {
   const today = readToday(qc, scope);

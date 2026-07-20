@@ -27,7 +27,7 @@ export function EmployeeLayout() {
   }, [collapsed, attendance.isActiveDay, isAr]);
 
   return (
-    <TaskTimersProvider attendanceScope="employee" pauseAttendanceWhenTaskRuns={false}>
+    <TaskTimersProvider attendanceScope="employee">
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AppSidebar
           variant="employee"

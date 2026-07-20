@@ -10,7 +10,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/modules/auth/context/AuthContext';
-import { pauseAttendanceIfRunning } from '@/shared/modules/attendance/services/attendanceTimerBridge';
 import { resolveAttendanceScope } from '@/shared/modules/attendance/utils/attendanceTimer.utils';
 import type { AttendanceScope } from '@/shared/modules/attendance/types/attendanceTimer.types';
 import { pmTaskTimerApi, seoTaskTimerApi } from '../api/taskTimer.api';
@@ -120,19 +119,13 @@ export function liveElapsedSeconds(entry: Pick<TimerEntry, 'elapsedSeconds' | 'i
 
 interface ProviderProps {
   children: ReactNode;
-  /** Attendance scope for this portal layout — used to auto-pause work timer. */
+  /** Attendance scope for this portal layout — used to namespace persisted timer storage. */
   attendanceScope?: AttendanceScope;
-  /**
-   * When `true`, starting/resuming a task timer will auto-pause the work/attendance timer
-   * (mutual exclusion behavior).
-   */
-  pauseAttendanceWhenTaskRuns?: boolean;
 }
 
 export function TaskTimersProvider({
   children,
   attendanceScope,
-  pauseAttendanceWhenTaskRuns = true,
 }: ProviderProps) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -197,15 +190,6 @@ export function TaskTimersProvider({
 
   const startTimer = useCallback(async ({ portal, projectId, taskId, title }: StartArgs) => {
     try {
-      // Mutual exclusion with attendance: pause the work day while a task runs.
-      if (pauseAttendanceWhenTaskRuns && !user?.isSuperAdmin) {
-        try {
-          await pauseAttendanceIfRunning(qc, scope);
-        } catch {
-          /* don't block task start if attendance pause fails */
-        }
-      }
-
       const raw = await apiFor(portal).start(projectId, taskId);
       const entry = toEntry(raw, { taskId, projectId, portal, title });
       // Concurrent timers are allowed unless the API explicitly forbids them.
@@ -224,7 +208,7 @@ export function TaskTimersProvider({
     } catch {
       toast.error('Failed to start timer');
     }
-  }, [qc, scope, stopOtherTimers, user?.isSuperAdmin, pauseAttendanceWhenTaskRuns]);
+  }, [stopOtherTimers]);
 
   const pauseTimer = useCallback(async (taskId: string) => {
     const entry = timersRef.current.get(taskId);
@@ -246,13 +230,6 @@ export function TaskTimersProvider({
     const entry = timersRef.current.get(taskId);
     if (!entry) return;
     try {
-      if (pauseAttendanceWhenTaskRuns && !user?.isSuperAdmin) {
-        try {
-          await pauseAttendanceIfRunning(qc, scope);
-        } catch {
-          /* ignore */
-        }
-      }
       const raw = await apiFor(entry.portal).resume(entry.projectId, taskId, entry.id);
       putTimer(taskId, toEntry(raw, {
         taskId: entry.taskId,
@@ -263,7 +240,7 @@ export function TaskTimersProvider({
     } catch {
       toast.error('Failed to resume timer');
     }
-  }, [qc, scope, user?.isSuperAdmin, pauseAttendanceWhenTaskRuns]);
+  }, []);
 
   const stopTimer = useCallback(async (taskId: string) => {
     const entry = timersRef.current.get(taskId);
