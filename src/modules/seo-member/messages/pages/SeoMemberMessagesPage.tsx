@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   AtSign,
@@ -47,6 +47,7 @@ import type {
   SeoMentionable,
   SeoMessage,
 } from '../types/messages.types';
+import { canSendSeoMessengerMessage } from '../utils/seoMessenger.utils';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 
@@ -96,7 +97,7 @@ function SeoMemberChatWindow({
   conversation, isAr, onConversationUpdate, onLeftGroup, onOpenSidebar, onMentionStartChat,
   focusMessageId, onFocusMessageConsumed,
 }: ChatProps) {
-  const { user }  = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef  = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
@@ -117,8 +118,12 @@ function SeoMemberChatWindow({
 
   const isGroup = conversation.type === 'group';
 
-  const { data: detail } = useSeoConversation(conversation.id, isGroup && showMembers);
+  const { data: detail } = useSeoConversation(conversation.id, true);
   const liveConversation = detail ?? conversation;
+  const canSend = useMemo(
+    () => canSendSeoMessengerMessage(liveConversation, user, isSuperAdmin),
+    [liveConversation, user, isSuperAdmin],
+  );
 
   const {
     data: messages = [],
@@ -252,6 +257,7 @@ function SeoMemberChatWindow({
   }
 
   function handleSend() {
+    if (!canSend) return;
     const body = text.trim();
     if (!body || sending || editing || voice.isRecording) return;
     const mentions = activeMentions(body);
@@ -287,7 +293,7 @@ function SeoMemberChatWindow({
   }
 
   function sendFile(file: File, opts?: { durationSeconds?: number }) {
-    if (sending) return;
+    if (!canSend || sending) return;
     const body = text.trim();
     const mentions = body ? activeMentions(body) : [];
     sendMessage({
@@ -317,7 +323,7 @@ function SeoMemberChatWindow({
   }
 
   async function handleMicClick() {
-    if (sending) return;
+    if (!canSend || sending) return;
     if (!voice.isRecording) {
       const ok = await voice.start();
       if (!ok) {
@@ -331,6 +337,7 @@ function SeoMemberChatWindow({
   }
 
   function handleReact(messageId: number | string, emoji: string) {
+    if (!canSend) return;
     setReactionFor(null);
     reactToMessage({ messageId, emoji });
   }
@@ -503,6 +510,7 @@ function SeoMemberChatWindow({
                     </p>
                   </div>
 
+                  {!canSend ? null : (
                   <div className={`absolute -top-2 ${isOwn ? 'end-0' : 'start-0'}
                                   flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity`}>
                     <button
@@ -554,6 +562,7 @@ function SeoMemberChatWindow({
                       )}
                     </div>
                   </div>
+                  )}
                 </div>
               </div>
             );
@@ -562,6 +571,7 @@ function SeoMemberChatWindow({
         <div ref={bottomRef} />
       </div>
 
+      {canSend && (
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700/60
                       bg-white dark:bg-gray-900 relative">
         {editingMessage && (
@@ -732,6 +742,7 @@ function SeoMemberChatWindow({
           />
         </div>
       </div>
+      )}
 
       {isGroup && showMembers && (
         <SeoGroupMembersPanel

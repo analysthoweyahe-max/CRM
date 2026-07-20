@@ -26,6 +26,10 @@ export interface SeoConversation {
   participants?:     SeoParticipant[] | null;
   /** Only group managers may add/remove members or assign new managers. */
   canManageMembers?: boolean;
+  /** Super-admin may open chats in read-only observer mode. */
+  isObserver?: boolean;
+  /** When provided by the API, overrides client-side send rules. */
+  canSend?: boolean;
 }
 
 export interface SeoConversationListResponse {

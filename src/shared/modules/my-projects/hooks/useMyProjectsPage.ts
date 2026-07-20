@@ -101,7 +101,7 @@ export function useMyProjectsPage(module: MyProjectsModule): UseMyProjectsPageRe
       const projects = await myProjectsApi.listSeoEmployeeProjects();
       return groupSeoProjectsIntoSections(projects, isAr, catalog);
     },
-    enabled:  config.viewMode === 'sections' && statusQuery.isSuccess,
+    enabled:  config.viewMode === 'sections',
     staleTime: 30_000,
   });
 
