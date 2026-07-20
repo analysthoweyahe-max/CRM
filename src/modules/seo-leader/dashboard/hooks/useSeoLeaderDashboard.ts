@@ -1,11 +1,37 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 import { getAvatarColor } from '@/shared/utils';
+import { filterSeoTeamMembers } from '@/shared/modules/team/utils/teamScope.utils';
 import { seoLeaderDashboardApi } from '../api/seoLeaderDashboard.api';
+import { seoTeamApi } from '../../team/api/seoTeam.api';
 import { useArchivedSeoProjects } from '../../campaigns/store/seoArchivedStore';
 import type { SeoDashboardProject, SeoManagerStats } from '../types/dashboard.types';
+import type { SeoTeamApiMember } from '../../team/types/seoTeam.types';
 
 export const SEO_LEADER_DASHBOARD_KEY = ['seo-leader', 'dashboard'] as const;
+export const SEO_LEADER_TEAM_KEY = ['seo-leader', 'team', 'all'] as const;
+
+const TEAM_FETCH_PAGE_SIZE = 100;
+
+async function fetchAllSeoTeamMembers(): Promise<SeoTeamApiMember[]> {
+  const first = await seoTeamApi.getTeam({ per_page: TEAM_FETCH_PAGE_SIZE, page: 1 });
+  const { data: firstBatch, last_page } = first.data.data;
+  if (last_page <= 1) return firstBatch;
+
+  const restPages = Array.from({ length: last_page - 1 }, (_, i) => i + 2);
+  const rest = await Promise.all(
+    restPages.map(page =>
+      seoTeamApi.getTeam({ per_page: TEAM_FETCH_PAGE_SIZE, page }).then(r => r.data.data.data),
+    ),
+  );
+  return [firstBatch, ...rest].flat();
+}
+
+function isActiveTeamMember(member: SeoTeamApiMember): boolean {
+  if (member.isActive != null) return member.isActive;
+  return member.status === 'active';
+}
 
 export interface CampaignViewModel {
   id:                number;
@@ -60,11 +86,18 @@ function toCampaignVM(p: SeoDashboardProject): CampaignViewModel {
 }
 
 export function useSeoLeaderDashboard() {
+  const { user } = useAuth();
   const archivedIds = useArchivedSeoProjects();
 
   const dashboardQuery = useQuery({
     queryKey:  SEO_LEADER_DASHBOARD_KEY,
     queryFn:   () => seoLeaderDashboardApi.get().then(r => r.data.data),
+    staleTime: 60_000,
+  });
+
+  const teamQuery = useQuery({
+    queryKey:  SEO_LEADER_TEAM_KEY,
+    queryFn:   fetchAllSeoTeamMembers,
     staleTime: 60_000,
   });
 
@@ -82,24 +115,35 @@ export function useSeoLeaderDashboard() {
     });
   }, [sections, archivedIds]);
 
-  const stats: SeoManagerStats = {
-    total_projects:     campaigns.filter(c => c.status !== 'archived').length,
-    active_employees:   0,
-    pending_tasks:      campaigns
-      .filter(c => c.status === 'in_progress')
-      .reduce((sum, c) => sum + Math.max(0, c.tasks_total - c.tasks_completed), 0),
-    completed_projects: summary?.completed
-      ?? campaigns.filter(c => c.status === 'completed').length,
-  };
+  const activeEmployees = useMemo(() => {
+    const scoped = filterSeoTeamMembers(teamQuery.data ?? [], {
+      viewerId: user?.employeeId,
+      isAdmin:  user?.role === 'admin',
+    });
+    return scoped.filter(isActiveTeamMember).length;
+  }, [teamQuery.data, user?.employeeId, user?.role]);
 
-  // Prefer summary counts for the "total projects" when available
-  if (summary) {
-    stats.total_projects =
-      (summary.inProgress ?? 0)
-      + (summary.completed ?? 0)
-      + (summary.onHold ?? 0)
-      + (summary.notStarted ?? 0);
-  }
+  const stats = useMemo<SeoManagerStats>(() => {
+    const next: SeoManagerStats = {
+      total_projects: campaigns.filter(c => c.status !== 'archived').length,
+      active_employees: activeEmployees,
+      pending_tasks: campaigns
+        .filter(c => c.status === 'in_progress')
+        .reduce((sum, c) => sum + Math.max(0, c.tasks_total - c.tasks_completed), 0),
+      completed_projects: summary?.completed
+        ?? campaigns.filter(c => c.status === 'completed').length,
+    };
+
+    if (summary) {
+      next.total_projects =
+        (summary.inProgress ?? 0)
+        + (summary.completed ?? 0)
+        + (summary.onHold ?? 0)
+        + (summary.notStarted ?? 0);
+    }
+
+    return next;
+  }, [campaigns, summary, activeEmployees]);
 
   return {
     isLoading: dashboardQuery.isLoading,
