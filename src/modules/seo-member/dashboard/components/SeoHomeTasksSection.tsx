@@ -6,21 +6,37 @@ import { HomeTaskFilters } from '@/shared/modules/my-tasks/components/HomeTaskFi
 import { TodayTaskCard } from './TodayTaskCard';
 import { useSeoHomeTaskFilters } from '../hooks/useSeoHomeTaskFilters';
 import type { SeoTask } from '@/modules/seo-member/tasks/types/seoTask.types';
+import type { SeoDashboardStatusBucket } from '../utils/seoTaskStatusBuckets.utils';
+import type { SeoTaskStatusOption } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 
 interface Props {
-  tasks:     SeoTask[];
-  isLoading: boolean;
-  isAr:      boolean;
+  tasks:           SeoTask[];
+  isLoading:       boolean;
+  isAr:            boolean;
+  externalStatus?: string;
+  externalBucket?: SeoDashboardStatusBucket | '';
+  statusOptions?:  SeoTaskStatusOption[];
+  onStatusChange?: (status: string) => void;
+  onBucketClear?:  () => void;
 }
 
-export function SeoHomeTasksSection({ tasks, isLoading, isAr }: Props) {
+export function SeoHomeTasksSection({
+  tasks,
+  isLoading,
+  isAr,
+  externalStatus,
+  externalBucket,
+  statusOptions,
+  onStatusChange,
+  onBucketClear,
+}: Props) {
   const navigate = useNavigate();
   const {
     status, project, deadline,
     statusItems, projectItems, deadlineItems,
     onStatus, onProject, onDeadline,
     pageItems, page, pageCount, total, firstRow, lastRow, canPrev, canNext, setPage,
-  } = useSeoHomeTaskFilters(tasks, isAr);
+  } = useSeoHomeTaskFilters(tasks, isAr, { externalStatus, externalBucket, statusOptions });
 
   return (
     <div>
@@ -37,7 +53,11 @@ export function SeoHomeTasksSection({ tasks, isLoading, isAr }: Props) {
             status={status}
             project={project}
             deadline={deadline}
-            onStatus={onStatus}
+            onStatus={(v) => {
+              onBucketClear?.();
+              onStatus(v);
+              onStatusChange?.(v);
+            }}
             onProject={onProject}
             onDeadline={onDeadline}
             isAr={isAr}

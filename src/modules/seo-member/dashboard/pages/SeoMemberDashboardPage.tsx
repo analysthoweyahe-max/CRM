@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { CheckCircle, Eye, RefreshCw, Clock, FolderKanban, Plus } from 'lucide-react';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { useAuth }     from '@/modules/auth/context/AuthContext';
@@ -8,9 +9,33 @@ import { DashboardStatCard }     from '@/shared/components/ui/DashboardStatCard'
 import { Button } from '@/shared/components/ui/Button';
 import { MyProjectCard } from '@/shared/modules/my-projects/components/MyProjectCard';
 import { resolveMyProjectsConfig } from '@/shared/modules/my-projects/utils/myProjects.utils';
+import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import { useSeoMemberDashboard } from '../hooks/useSeoMemberDashboard';
 import { useTodayTasks }         from '../hooks/useTodayTasks';
 import { SeoHomeTasksSection }   from '../components/SeoHomeTasksSection';
+import {
+  buildSeoDashboardStatCards,
+  type SeoDashboardStatusBucket,
+} from '../utils/seoTaskStatusBuckets.utils';
+
+const STAT_ICONS: Record<SeoDashboardStatusBucket, { icon: ReactNode; iconBg: string }> = {
+  completed: {
+    icon:    <CheckCircle size={20} className="text-[#709028]" />,
+    iconBg:  'bg-[#D8EBAE] dark:bg-[#A0CD39]/20',
+  },
+  needs_review: {
+    icon:    <Eye size={20} className="text-purple-600" />,
+    iconBg:  'bg-purple-100 dark:bg-purple-900/30',
+  },
+  in_progress: {
+    icon:    <RefreshCw size={20} className="text-amber-600" />,
+    iconBg:  'bg-amber-100 dark:bg-amber-900/30',
+  },
+  pending: {
+    icon:    <Clock size={20} className="text-gray-500" />,
+    iconBg:  'bg-gray-100 dark:bg-gray-700',
+  },
+};
 
 function DashboardSkeleton() {
   return (
@@ -36,21 +61,44 @@ export function SeoMemberDashboardPage() {
   const isAr      = lang === 'ar';
   const { user, can }  = useAuth();
   const navigate  = useNavigate();
-  const { tasksOverview, projects, isLoading, checkIn } = useSeoMemberDashboard();
+  const { projects, isLoading, checkIn } = useSeoMemberDashboard();
   const { tasks: todayTasks, isLoading: tasksLoading } = useTodayTasks();
+  const { statusOptions } = useSeoTaskLookups(isAr);
   const projectsConfig = {
     ...resolveMyProjectsConfig(user?.role ?? 'seo-member', 'seo'),
     canCreate: can('create-seo-project'),
   };
   const canCreate = projectsConfig.canCreate;
 
+  const [activeBucket, setActiveBucket] = useState<SeoDashboardStatusBucket | ''>('');
+  const [activeStatus, setActiveStatus] = useState('');
+  const tasksSectionRef = useRef<HTMLDivElement>(null);
+
+  const statCards = useMemo(
+    () => buildSeoDashboardStatCards(todayTasks, statusOptions),
+    [todayTasks, statusOptions],
+  );
+
+  function handleStatClick(bucket: SeoDashboardStatusBucket, filterKey: string) {
+    const isActive = activeBucket === bucket;
+    setActiveBucket(isActive ? '' : bucket);
+    const hasFilterKey = filterKey && todayTasks.some(t => t.status === filterKey);
+    setActiveStatus(isActive ? '' : (hasFilterKey ? filterKey : ''));
+    setTimeout(() => {
+      tasksSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
+  function handleStatusChange(status: string) {
+    setActiveStatus(status);
+    setActiveBucket('');
+  }
+
   if (isLoading) return <DashboardSkeleton />;
 
   const greeting = isAr
     ? `مرحباً، ${user?.fullName ?? ''}`
     : `Welcome, ${user?.fullName ?? ''}`;
-
-  const pending = Math.max(0, tasksOverview.totalAssigned - tasksOverview.completed - tasksOverview.inProgress);
 
   return (
     <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
@@ -71,38 +119,22 @@ export function SeoMemberDashboardPage() {
       <WorkTimerCard layoutScope="seo" variant="card" initialData={checkIn} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashboardStatCard
-          icon={<CheckCircle size={20} className="text-[#709028]" />}
-          iconBg="bg-[#D8EBAE] dark:bg-[#A0CD39]/20"
-          value={tasksOverview.completed}
-          labelAr="مكتمل"
-          labelEn="Completed"
-          isAr={isAr}
-        />
-        <DashboardStatCard
-          icon={<Eye size={20} className="text-purple-600" />}
-          iconBg="bg-purple-100 dark:bg-purple-900/30"
-          value={0}
-          labelAr="بحاجة للمراجعة"
-          labelEn="Needs Review"
-          isAr={isAr}
-        />
-        <DashboardStatCard
-          icon={<RefreshCw size={20} className="text-amber-600" />}
-          iconBg="bg-amber-100 dark:bg-amber-900/30"
-          value={tasksOverview.inProgress}
-          labelAr="قيد التنفيذ"
-          labelEn="In Progress"
-          isAr={isAr}
-        />
-        <DashboardStatCard
-          icon={<Clock size={20} className="text-gray-500" />}
-          iconBg="bg-gray-100 dark:bg-gray-700"
-          value={pending}
-          labelAr="قيد الانتظار"
-          labelEn="Pending"
-          isAr={isAr}
-        />
+        {statCards.map(card => {
+          const { icon, iconBg } = STAT_ICONS[card.bucket];
+          return (
+            <DashboardStatCard
+              key={card.bucket}
+              icon={icon}
+              iconBg={iconBg}
+              value={card.count}
+              labelAr={card.labelAr}
+              labelEn={card.labelEn}
+              isAr={isAr}
+              isActive={activeBucket === card.bucket}
+              onClick={() => handleStatClick(card.bucket, card.filterKey)}
+            />
+          );
+        })}
       </div>
 
       <div>
@@ -143,7 +175,18 @@ export function SeoMemberDashboardPage() {
         )}
       </div>
 
-      <SeoHomeTasksSection tasks={todayTasks} isLoading={tasksLoading} isAr={isAr} />
+      <div ref={tasksSectionRef}>
+        <SeoHomeTasksSection
+          tasks={todayTasks}
+          isLoading={tasksLoading}
+          isAr={isAr}
+          externalStatus={activeStatus}
+          externalBucket={activeBucket}
+          statusOptions={statusOptions}
+          onStatusChange={handleStatusChange}
+          onBucketClear={() => setActiveBucket('')}
+        />
+      </div>
 
     </div>
   );

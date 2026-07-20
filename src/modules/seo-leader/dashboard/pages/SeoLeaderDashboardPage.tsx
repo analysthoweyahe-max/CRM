@@ -13,7 +13,8 @@ export function SeoLeaderDashboardPage() {
   const isAr                            = lang === 'ar';
   const navigate                        = useNavigate();
   const { isLoading, stats, campaigns } = useSeoLeaderDashboard();
-  const canCreate = usePermission('create-seo-project');
+  const canCreate   = usePermission('create-seo-project');
+  const canViewTasks = usePermission('view-seo-tasks');
 
   if (isLoading) return <SeoLeaderDashboardSkeleton />;
 
@@ -40,15 +41,17 @@ export function SeoLeaderDashboardPage() {
           isAr={isAr}
           onClick={() => navigate(ROUTES.SEO_LEADER.TEAM)}
         />
-        <StatCard
-          icon={<ListChecks size={22} className="text-amber-600" />}
-          iconBg="bg-amber-100 dark:bg-amber-900/30"
-          value={stats?.pending_tasks ?? 0}
-          labelAr="المهام المعلقة"
-          labelEn="Pending Tasks"
-          isAr={isAr}
-          onClick={() => navigate(ROUTES.SEO_LEADER.TASKS)}
-        />
+        {canViewTasks && (
+          <StatCard
+            icon={<ListChecks size={22} className="text-amber-600" />}
+            iconBg="bg-amber-100 dark:bg-amber-900/30"
+            value={stats?.pending_tasks ?? 0}
+            labelAr="المهام المعلقة"
+            labelEn="Pending Tasks"
+            isAr={isAr}
+            onClick={() => navigate(ROUTES.SEO_LEADER.TASKS)}
+          />
+        )}
         <StatCard
           icon={<CheckCircle2 size={22} className="text-emerald-600" />}
           iconBg="bg-emerald-100 dark:bg-emerald-900/30"
