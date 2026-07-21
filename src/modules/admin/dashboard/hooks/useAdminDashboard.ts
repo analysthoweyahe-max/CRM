@@ -4,13 +4,25 @@ import { employeeApi } from '@/modules/hr/employees/api/employee.api';
 import { pmProjectsApi } from '@/modules/project-manager/projects/api/project.api';
 import { seoLeaderDashboardApi } from '@/modules/seo-leader/dashboard/api/seoLeaderDashboard.api';
 import { getRoleLabel } from '@/modules/admin/employees/types/adminEmployee.types';
-import type { AdminDashboardData, RoleDistributionItem, DepartmentDistributionItem } from '../types/adminDashboard.types';
-import type { EmployeeListResponse } from '@/modules/hr/employees/types/employee.types';
+import type { AdminDashboardData, AdminTeamStats, RoleDistributionItem, DepartmentDistributionItem } from '../types/adminDashboard.types';
+import type { ApiEmployee, EmployeeListResponse } from '@/modules/hr/employees/types/employee.types';
 import type { PmProjectListApiResponse } from '@/modules/project-manager/projects/types/project.types';
 import type { PaginatedProjects } from '@/modules/seo-leader/dashboard/types/dashboard.types';
 import type { ApiResponse } from '@/shared/types/api.types';
 
 const ROLE_COLORS = ['#A0CD39', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+
+// Backend role slugs (see ROLE_SLUG_MAP in role.types.ts) used to bucket each
+// employee into the PM or SEO team for the split dashboard stats.
+const SEO_ROLE_SLUGS = new Set(['seo-manager', 'seo-leader', 'seo-employee', 'seo-member']);
+const PM_ROLE_SLUGS  = new Set(['project-manager', 'pm-employee', 'manager', 'employee']);
+
+function classifyEmployeeTeam(roles?: string[]): 'pm' | 'seo' | null {
+  if (!roles?.length) return null;
+  if (roles.some((r) => SEO_ROLE_SLUGS.has(r))) return 'seo';
+  if (roles.some((r) => PM_ROLE_SLUGS.has(r))) return 'pm';
+  return null;
+}
 
 const EMPTY_EMPLOYEES: EmployeeListResponse['data'] = { data: [], total: 0, current_page: 1, last_page: 1 };
 const EMPTY_PM: PmProjectListApiResponse['data'] = { data: [], total: 0, current_page: 1, last_page: 1 };
@@ -67,15 +79,33 @@ export function useAdminDashboard(): AdminDashboardData & { isLoading: boolean }
   const pmTotal     = pmData?.total ?? pmProjects.length;
   const seoTotal    = seoData?.total ?? seoProjects.length;
 
-  const stats = useMemo(() => ({
-    totalEmployees:    employeesData?.total ?? employees.length,
-    activeEmployees:   employees.filter((e) => e.status === 'active').length,
-    inactiveEmployees: employees.filter((e) => e.status === 'inactive').length,
-    activeProjects:
-      pmProjects.filter((p) => p.status === 'in_progress').length +
-      seoProjects.filter((p) => p.status === 'in_progress').length,
-    totalProjects: pmTotal + seoTotal,
-  }), [employees, employeesData, pmProjects, seoProjects, pmTotal, seoTotal]);
+  const { pmEmployees, seoEmployees } = useMemo(() => {
+    const pm: ApiEmployee[] = [];
+    const seo: ApiEmployee[] = [];
+    employees.forEach((e) => {
+      const team = classifyEmployeeTeam(e.roles);
+      if (team === 'seo') seo.push(e);
+      else if (team === 'pm') pm.push(e);
+    });
+    return { pmEmployees: pm, seoEmployees: seo };
+  }, [employees]);
+
+  const stats = useMemo<{ pm: AdminTeamStats; seo: AdminTeamStats }>(() => ({
+    pm: {
+      totalEmployees:    pmEmployees.length,
+      activeEmployees:   pmEmployees.filter((e) => e.status === 'active').length,
+      inactiveEmployees: pmEmployees.filter((e) => e.status === 'inactive').length,
+      activeProjects:    pmProjects.filter((p) => p.status === 'in_progress').length,
+      totalProjects:     pmTotal,
+    },
+    seo: {
+      totalEmployees:    seoEmployees.length,
+      activeEmployees:   seoEmployees.filter((e) => e.status === 'active').length,
+      inactiveEmployees: seoEmployees.filter((e) => e.status === 'inactive').length,
+      activeProjects:    seoProjects.filter((p) => p.status === 'in_progress').length,
+      totalProjects:     seoTotal,
+    },
+  }), [pmEmployees, seoEmployees, pmProjects, seoProjects, pmTotal, seoTotal]);
 
   const roleDistribution = useMemo<RoleDistributionItem[]>(() => {
     const counts = new Map<string, number>();

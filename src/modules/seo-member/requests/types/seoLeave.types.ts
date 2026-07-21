@@ -69,7 +69,7 @@ export interface SeoLeaveCreateResponse {
 
 export interface SeoLeaveCreatePayload {
   leave_type:  string;
-  reason?:     string;
+  reason:      string;
   start_date:  string;
   end_date:    string;
   attachment?: File;

@@ -81,7 +81,7 @@ export function SeoLeaveRequestModal({ open, onClose, isAr }: SeoLeaveRequestMod
         </div>
 
         {/* Reason */}
-        <FormField label={isAr ? 'السبب' : 'Reason'}>
+        <FormField label={isAr ? 'السبب' : 'Reason'} required>
           <textarea
             value={reason}
             onChange={e => setReason(e.target.value)}

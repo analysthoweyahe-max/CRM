@@ -1,9 +1,14 @@
-export interface AdminDashboardStats {
+export interface AdminTeamStats {
   totalEmployees:    number;
   activeEmployees:   number;
   inactiveEmployees: number;
   activeProjects:    number;
   totalProjects:     number;
+}
+
+export interface AdminDashboardStats {
+  pm:  AdminTeamStats;
+  seo: AdminTeamStats;
 }
 
 export interface RoleDistributionItem {

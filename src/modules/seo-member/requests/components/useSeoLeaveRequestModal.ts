@@ -25,7 +25,8 @@ export function useSeoLeaveRequestModal(onClose: () => void, isAr: boolean) {
   }
 
   function handleSubmit() {
-    if (!leaveType || !startDate || !endDate || creating) return;
+    const trimmedReason = reason.trim();
+    if (!leaveType || !startDate || !endDate || !trimmedReason || creating) return;
 
     const onSuccess = () => {
       toast.success(isAr ? 'تم تقديم طلب الإجازة بنجاح' : 'Leave request submitted');
@@ -38,19 +39,23 @@ export function useSeoLeaveRequestModal(onClose: () => void, isAr: boolean) {
       fd.append('leave_type', leaveType);
       fd.append('start_date', startDate);
       fd.append('end_date',   endDate);
-      if (reason) fd.append('reason', reason);
+      fd.append('reason', trimmedReason);
       fd.append('attachment', file);
       create(fd, { onSuccess, onError });
     } else {
-      const body: Record<string, string> = { leave_type: leaveType, start_date: startDate, end_date: endDate };
-      if (reason) body.reason = reason;
+      const body: Record<string, string> = {
+        leave_type: leaveType,
+        start_date: startDate,
+        end_date: endDate,
+        reason: trimmedReason,
+      };
       create(body, { onSuccess, onError });
     }
   }
 
   const comboItems = types.map(t => ({ id: t.value, label: t.label }));
 
-  const isValid = !!leaveType && !!startDate && !!endDate;
+  const isValid = !!leaveType && !!startDate && !!endDate && !!reason.trim();
 
   return {
     leaveType, setLeaveType,
