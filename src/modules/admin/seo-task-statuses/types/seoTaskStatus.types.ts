@@ -1,37 +1,35 @@
 export interface ApiSeoTaskStatus {
-  id:             number;
-  key:            string;
-  label:          string;
-  labelEn:        string;
-  labelAr:        string;
-  color:          string;
-  sortOrder:      number;
-  isActive:       boolean;
-  isDefault:      boolean;
+  id: number;
+  label: string;
+  labelEn: string;
+  labelAr: string;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+  isDefault: boolean;
   marksCompleted: boolean;
-  createdAt:      string;
-  updatedAt:      string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SeoTaskStatusListResponse {
-  status:  string;
+  status: string;
   message: string;
-  data:    ApiSeoTaskStatus[];
+  data: ApiSeoTaskStatus[];
 }
 
 export interface SeoTaskStatusSingleResponse {
-  status:  string;
+  status: string;
   message: string;
-  data:    ApiSeoTaskStatus;
+  data: ApiSeoTaskStatus;
 }
 
 export interface CreateSeoTaskStatusPayload {
-  key:             string;
-  label_en:        string;
-  label_ar:        string;
-  color?:          string;
-  sort_order:      number;
-  is_active:       boolean;
+  label_en: string;
+  label_ar: string;
+  color?: string;
+  sort_order: number;
+  is_active: boolean;
   marks_completed: boolean;
 }
 

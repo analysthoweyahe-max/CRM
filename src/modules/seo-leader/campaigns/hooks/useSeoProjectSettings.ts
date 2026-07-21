@@ -15,9 +15,9 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
   const queryClient = useQueryClient();
 
   const { data: settings, isLoading } = useQuery({
-    queryKey:  ['seo-project-settings', projectId],
-    queryFn:   () => campaignApi.getSettings(projectId).then(r => r.data.data),
-    enabled:   !!projectId,
+    queryKey: ['seo-project-settings', projectId],
+    queryFn: () => campaignApi.getSettings(projectId).then(r => r.data.data),
+    enabled: !!projectId,
     staleTime: 60_000,
   });
 
@@ -64,30 +64,30 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
     setIsSaving(true);
     try {
       const next = {
-        name:         name.trim(),
-        description:  desc.trim(),
+        name: name.trim(),
+        description: desc.trim(),
         targetDomain: domain.trim() || null,
         campaignType: type,
-        status,
-        startDate:    startDate || undefined,
+        status_id: Number(status) || undefined,
+        startDate: startDate || undefined,
         expectedEndDate: expectedEndDate || null,
-        githubLink:   optionalLink(githubLink),
-        driveLink:    optionalLink(driveLink),
+        githubLink: optionalLink(githubLink),
+        driveLink: optionalLink(driveLink),
         contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
-        isDraft:      settings?.isDraft ?? false,
+        isDraft: settings?.isDraft ?? false,
       };
       const baseline = {
-        name:         settings?.name ?? '',
-        description:  settings?.description ?? '',
+        name: settings?.name ?? '',
+        description: settings?.description ?? '',
         targetDomain: settings?.targetDomain ?? null,
         campaignType: settings?.campaignType ?? '',
-        status:       settings?.status ?? '',
-        startDate:    settings?.startDate || undefined,
+        status_id: settings?.status ? Number(settings.status) : undefined,
+        startDate: settings?.startDate || undefined,
         expectedEndDate: settings?.expectedEndDate ?? null,
-        githubLink:   settings?.githubLink ?? null,
-        driveLink:    settings?.driveLink ?? null,
+        githubLink: settings?.githubLink ?? null,
+        driveLink: settings?.driveLink ?? null,
         contractDurationMonths: settings?.contractDurationMonths ?? null,
-        isDraft:      settings?.isDraft ?? false,
+        isDraft: settings?.isDraft ?? false,
       };
       const payload = Object.fromEntries(
         Object.entries(next).filter(([key, value]) => value !== baseline[key as keyof typeof baseline]),
@@ -126,7 +126,7 @@ export function useSeoProjectSettings(projectId: string, isAr: boolean) {
   }
 
   const statusOptions: SelectOption[] = settings?.statusOptions ?? [];
-  const typeOptions:   SelectOption[] = settings?.campaignTypeOptions ?? [];
+  const typeOptions: SelectOption[] = settings?.campaignTypeOptions ?? [];
   const hasOptionalErrors = Object.keys(optionalFieldErrors).length > 0;
 
   function clearFieldError(field: keyof ProjectOptionalFieldErrors) {

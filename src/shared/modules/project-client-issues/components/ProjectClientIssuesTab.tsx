@@ -25,8 +25,8 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
     updateIssue,
     deleteIssue,
     updateStatus,
-    uploadImage,
-    uploadFile,
+    uploadImages,
+    uploadFiles,
     removeAttachment,
     isCreating,
     isUpdating,
@@ -57,23 +57,30 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
 
   async function handleCreate(
     payload: CreateClientIssuePayload,
-    image?: File | null,
-    file?: File | null,
+    images?: File[],
+    files?: File[],
   ) {
     const created = await createIssue(payload);
-    if (image) await uploadImage(created, image);
-    if (file) await uploadFile(created, file);
+    if (images?.length) await uploadImages(created, images);
+    if (files?.length) await uploadFiles(created, files);
   }
 
   async function handleUpdate(
     payload: CreateClientIssuePayload,
-    image?: File | null,
-    file?: File | null,
+    images?: File[],
+    files?: File[],
   ) {
     if (!editing) return;
-    await updateIssue(editing, payload);
-    if (image) await uploadImage(editing, image);
-    if (file) await uploadFile(editing, file);
+    // Form includes links → send full replace (including [] to clear).
+    await updateIssue(editing, {
+      problem:  payload.problem,
+      impact:   payload.impact,
+      solution: payload.solution,
+      links:    payload.links ?? [],
+    });
+    // Uploads append — they never replace existing attachments.
+    if (images?.length) await uploadImages(editing, images);
+    if (files?.length) await uploadFiles(editing, files);
     setEditing(null);
     setSelected(null);
   }
@@ -168,8 +175,8 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
           if (!selectedFromList) return;
           void updateStatus(selectedFromList, status);
         }}
-        onUploadImage={(file) => selectedFromList && uploadImage(selectedFromList, file)}
-        onUploadFile={(file) => selectedFromList && uploadFile(selectedFromList, file)}
+        onUploadImages={(files) => selectedFromList && uploadImages(selectedFromList, files)}
+        onUploadFiles={(files) => selectedFromList && uploadFiles(selectedFromList, files)}
         onRemoveAttachment={(attachmentId) =>
           selectedFromList && removeAttachment(selectedFromList, attachmentId)}
       />

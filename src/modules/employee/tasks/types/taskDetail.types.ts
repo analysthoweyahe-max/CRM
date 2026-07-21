@@ -2,22 +2,23 @@ import type { EmpTaskPriority, EmpTaskStatus } from './employeeTask.types';
 import type { MentionRef } from '@/shared/components/chat';
 
 export interface TaskDetail {
-  id:             string;
-  projectId:      string;
-  title:          string;
-  description:    string;
-  project:        string;
-  stage:          string | null;
-  createdAt:      string | null;
-  deadline:       string;
-  priority:       EmpTaskPriority;
-  status:         EmpTaskStatus;
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  project: string;
+  stage: string | null;
+  createdAt: string | null;
+  deadline: string;
+  priority: EmpTaskPriority;
+  statusId?: number | null;
+  status: EmpTaskStatus;
   allocatedHours: number;
-  dueAt?:         string | null;
-  isOverdue?:     boolean;
-  isDelayed?:     boolean;
-  overdueLabel?:  string | null;
-  canExtend?:     boolean;
+  dueAt?: string | null;
+  isOverdue?: boolean;
+  isDelayed?: boolean;
+  overdueLabel?: string | null;
+  canExtend?: boolean;
   importantLinks?: string[];
 }
 

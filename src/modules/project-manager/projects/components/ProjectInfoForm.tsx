@@ -42,20 +42,20 @@ function lookupLabel(l: PmLookupItem, isAr: boolean): string {
 
 function toComboboxItems(lookups: PmLookupItem[], isAr: boolean): ComboboxItem[] {
   return lookups.map(l => ({
-    id:    l.value,
+    id: l.value,
     label: lookupLabel(l, isAr),
   }));
 }
 
 interface Props {
   projectId: string;
-  isAr:      boolean;
+  isAr: boolean;
   readOnly?: boolean;
 }
 
 export function ProjectInfoForm({ projectId, isAr, readOnly = false }: Props) {
   const { user } = useAuth();
-  const isAdmin  = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
   const queryClient = useQueryClient();
   const { settings, isLoading } = useProjectSettings(projectId);
   const { statuses, types, managers } = usePmProjectLookups({ includeManagers: isAdmin });
@@ -105,29 +105,29 @@ export function ProjectInfoForm({ projectId, isAr, readOnly = false }: Props) {
     setSaving(true);
     try {
       const next = {
-        name:            name.trim(),
-        description:     description.trim(),
-        projectTypeId:   Number(projectType) || undefined,
-        status,
-        isDraft:         settings.isDraft ?? false,
-        startDate:       startDate || null,
-        deadline:        deadline || null,
-        githubLink:      optionalLink(githubLink),
-        driveLink:       optionalLink(driveLink),
+        name: name.trim(),
+        description: description.trim(),
+        projectTypeId: Number(projectType) || undefined,
+        status_id: Number(status) || undefined,
+        isDraft: settings.isDraft ?? false,
+        startDate: startDate || null,
+        deadline: deadline || null,
+        githubLink: optionalLink(githubLink),
+        driveLink: optionalLink(driveLink),
         contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
         ...(isAdmin && managerId ? { managerIds: [managerId] as string[] } : {}),
       };
 
       const baseline = {
-        name:            settings.name,
-        description:     settings.description ?? '',
-        projectTypeId:   settings.projectTypeId ?? undefined,
-        status:          settings.status,
-        isDraft:         settings.isDraft ?? false,
-        startDate:       settings.startDate || null,
-        deadline:        settings.deadline || null,
-        githubLink:      settings.githubLink ?? null,
-        driveLink:       settings.driveLink ?? null,
+        name: settings.name,
+        description: settings.description ?? '',
+        projectTypeId: settings.projectTypeId ?? undefined,
+        status_id: settings.status ? Number(settings.status) : undefined,
+        isDraft: settings.isDraft ?? false,
+        startDate: settings.startDate || null,
+        deadline: settings.deadline || null,
+        githubLink: settings.githubLink ?? null,
+        driveLink: settings.driveLink ?? null,
         contractDurationMonths: settings.contractDurationMonths ?? null,
         ...(isAdmin ? { managerIds: settings.manager?.id ? [settings.manager.id] : [] } : {}),
       };

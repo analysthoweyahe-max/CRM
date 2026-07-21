@@ -13,6 +13,7 @@ import {
   mergeGroupedTasksAcrossProjects,
   resolveMyTasksConfig,
   resolveTasksRole,
+  stampProjectOnGroupedTasks,
 } from '../utils/myTasks.utils';
 import type {
   GroupedTasksData,
@@ -46,27 +47,27 @@ function writeRememberedProjectFilter(tasksRole: TasksApiRole | null, id: string
 
 export interface UseMyTasksPageOptions {
   routeProjectId?: string;
-  tasksApiUrl?:   string;
+  tasksApiUrl?: string;
 }
 
 export interface UseMyTasksPageResult {
-  config:          MyTasksPageConfig | null;
-  tasksRole:       TasksApiRole | null;
-  isAr:            boolean;
-  projectId:       string;
-  setProjectId:    (id: string) => void;
-  projectOptions:  { id: number | string; name: string }[];
-  data:            GroupedTasksData | undefined;
+  config: MyTasksPageConfig | null;
+  tasksRole: TasksApiRole | null;
+  isAr: boolean;
+  projectId: string;
+  setProjectId: (id: string) => void;
+  projectOptions: { id: number | string; name: string }[];
+  data: GroupedTasksData | undefined;
   /** Only populated for the employee client-aggregate path (cross-project,
    *  unfiltered) — one unmerged result per project, for a per-project view. */
-  perProjectData:  { project: { id: number | string; name: string }; data: GroupedTasksData }[] | undefined;
-  isLoading:       boolean;
-  isError:         boolean;
-  errorStatus:     number | undefined;
-  updateStatus:    (projectId: number | string, taskId: number | string, status: string) => Promise<void>;
-  updatePhase:     (projectId: number | string, taskId: number | string, phase: TaskPhase) => Promise<void>;
-  isUpdating:      boolean;
-  getTaskId:       (task: import('../types/myTasks.types').MyTask) => string | number;
+  perProjectData: { project: { id: number | string; name: string }; data: GroupedTasksData }[] | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  errorStatus: number | undefined;
+  updateStatus: (projectId: number | string, taskId: number | string, status: string) => Promise<void>;
+  updatePhase: (projectId: number | string, taskId: number | string, phase: TaskPhase) => Promise<void>;
+  isUpdating: boolean;
+  getTaskId: (task: import('../types/myTasks.types').MyTask) => string | number;
 }
 
 export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {}): UseMyTasksPageResult {
@@ -115,7 +116,7 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     return {
       ...base,
       canAddSelfTask: base.canAddSelfTask && canEdit,
-      canDragStatus:  base.canDragStatus && canEdit,
+      canDragStatus: base.canDragStatus && canEdit,
     };
   }, [tasksRole, can]);
 
@@ -136,14 +137,14 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
 
   const employeeProjectsQuery = useQuery({
     queryKey: ['my-tasks', tasksRole, 'employee-projects'],
-    queryFn:  () => myTasksApi.listEmployeeProjects(tasksRole!),
-    enabled:  isEmployeeRole,
+    queryFn: () => myTasksApi.listEmployeeProjects(tasksRole!),
+    enabled: isEmployeeRole,
     staleTime: 60_000,
   });
 
   const query = useQuery({
     queryKey: ['my-tasks', tasksRole, scopedProjectId, tasksApiUrl],
-    queryFn:  () => myTasksApi.list(tasksRole!, {
+    queryFn: () => myTasksApi.list(tasksRole!, {
       projectId: scopedProjectId,
       tasksApiUrl: tasksApiUrl ?? undefined,
     }),
@@ -172,16 +173,7 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
         .filter((r): r is NonNullable<typeof r> => r !== null)
         .map(({ project, data }) => ({
           project,
-          data: {
-            ...data,
-            columns: data.columns.map((col) => ({
-              ...col,
-              tasks: col.tasks.map((task) => ({
-                ...task,
-                project: task.project ?? project,
-              })),
-            })),
-          },
+          data: stampProjectOnGroupedTasks(data, project),
         }));
       return { merged: mergeGroupedTasksAcrossProjects(perProject), perProject };
     },
@@ -190,8 +182,8 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
 
   const allProjectsQuery = useQuery({
     queryKey: ['my-tasks', 'all', tasksRole],
-    queryFn:  () => myTasksApi.list(tasksRole!),
-    enabled:  !!tasksRole && !scopedProjectId && !tasksApiUrl && !isEmployeeRole,
+    queryFn: () => myTasksApi.list(tasksRole!),
+    enabled: !!tasksRole && !scopedProjectId && !tasksApiUrl && !isEmployeeRole,
     staleTime: 60_000,
   });
 
@@ -214,9 +206,9 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
       status,
     }: {
       projectId: number | string;
-      taskId:    number | string;
-      status:    string;
-    }) => myTasksApi.updateStatus(tasksRole!, pid, taskId, status),
+      taskId: number | string;
+      status: string;
+    }) => myTasksApi.updateStatus(tasksRole!, pid, taskId, Number(status)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-tasks', tasksRole] });
       qc.invalidateQueries({ queryKey: ['pm-dashboard'] });
@@ -241,8 +233,8 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
       phase,
     }: {
       projectId: number | string;
-      taskId:    number | string;
-      phase:     TaskPhase;
+      taskId: number | string;
+      phase: TaskPhase;
     }) => myTasksApi.updatePhase(tasksRole!, pid, taskId, phase),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-tasks', tasksRole] });
@@ -261,7 +253,19 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     tasksRole ? getTaskRouteId(task, tasksRole) : task.id;
 
   const rawPerProjectData = needsClientAggregate ? aggregateQuery.data?.perProject : undefined;
-  const rawData = needsClientAggregate ? aggregateQuery.data?.merged : (query.data as GroupedTasksData | undefined);
+  const rawQueryData = needsClientAggregate
+    ? aggregateQuery.data?.merged
+    : (query.data as GroupedTasksData | undefined);
+
+  // Same omission as the aggregate path: when a single project is filtered,
+  // the project-scoped endpoint rarely repeats `project` on each task.
+  const scopedProjectMeta = scopedProjectId
+    ? (projectOptions.find((p) => String(p.id) === String(scopedProjectId))
+      ?? { id: scopedProjectId, name: '' })
+    : null;
+  const rawData = rawQueryData && scopedProjectMeta
+    ? stampProjectOnGroupedTasks(rawQueryData, scopedProjectMeta)
+    : rawQueryData;
 
   const statusCatalog = isSeoEmployee ? seoStatusCatalog : [];
   const withCatalog = rawData && statusCatalog.length > 0
@@ -269,9 +273,9 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     : rawData;
   const withCatalogPerProject = rawPerProjectData && statusCatalog.length > 0
     ? rawPerProjectData.map(({ project, data: projectData }) => ({
-        project,
-        data: { ...projectData, columns: fillCatalogColumns(projectData.columns, statusCatalog) },
-      }))
+      project,
+      data: { ...projectData, columns: fillCatalogColumns(projectData.columns, statusCatalog) },
+    }))
     : rawPerProjectData;
 
   // Employee / SEO-member boards stamp isMine so partner cards stay read-only.
@@ -281,9 +285,9 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     : withCatalog;
   const perProjectData = withCatalogPerProject && ownershipUser
     ? withCatalogPerProject.map(({ project, data: projectData }) => ({
-        project,
-        data: annotateGroupedTasksOwnership(projectData, ownershipUser),
-      }))
+      project,
+      data: annotateGroupedTasksOwnership(projectData, ownershipUser),
+    }))
     : withCatalogPerProject;
 
   return {
@@ -296,11 +300,11 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     data,
     perProjectData,
     isLoading,
-    isError:     activeQuery.isError,
+    isError: activeQuery.isError,
     errorStatus: activeQuery.isError ? extractApiStatus(activeQuery.error) : undefined,
     updateStatus,
     updatePhase,
-    isUpdating:  mutation.isPending,
+    isUpdating: mutation.isPending,
     getTaskId,
   };
 }

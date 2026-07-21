@@ -156,10 +156,14 @@ export function MyTasksPage() {
           isAr={isAr}
           showProjectName={config.showProjectName && !projectId}
           canDrag={config.canDragStatus}
+          fallbackProjectId={projectId || undefined}
           onOpen={handleOpen}
           onStatusChange={async (task, toStatus) => {
             const pid = task.project?.id ?? (projectId || undefined);
-            if (!pid) return;
+            if (!pid) {
+              toast.error(isAr ? 'لا يمكن تحديث المهمة بدون مشروع' : 'Cannot update task without a project');
+              return;
+            }
             await handleStatusChange(task, toStatus, pid);
           }}
         />

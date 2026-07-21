@@ -9,18 +9,18 @@ import {
 } from '../utils/myTasks.utils';
 
 interface TasksApiEnvelope {
-  status:  string;
+  status: string;
   message: string;
-  data:    unknown;
+  data: unknown;
 }
 
 export interface ListMyTasksOptions {
-  projectId?:    number | string;
-  tasksApiUrl?:  string;
+  projectId?: number | string;
+  tasksApiUrl?: string;
 }
 
 export interface EmployeeProjectSummary {
-  id:   number | string;
+  id: number | string;
   name: string;
 }
 
@@ -49,7 +49,7 @@ export const myTasksApi = {
       // GET /v1/seo/employee/projects
       const projects = await myProjectsApi.listSeoEmployeeProjects();
       return projects.map((p) => ({
-        id:   p.id,
+        id: p.id,
         name: p.name,
       }));
     }
@@ -57,7 +57,7 @@ export const myTasksApi = {
     // GET /v1/employee/projects — membership only
     const projects = await myProjectsApi.listEmployeeProjects();
     return projects.map((p) => ({
-      id:   p.uuid || p.id,
+      id: p.uuid || p.id,
       name: p.name,
     }));
   },
@@ -70,28 +70,28 @@ export const myTasksApi = {
     tasksRole: TasksApiRole,
     projectId: number | string,
     taskId: number | string,
-    status: string,
+    statusId: number,
   ) {
     switch (tasksRole) {
       case 'pm-employee':
         return http.patch(
           `/v1/pm/projects/${projectId}/tasks/${taskId}/status`,
-          { status },
+          { status_id: statusId },
         );
       case 'project-manager':
         return http.put(
           `/v1/pm/projects/${projectId}/tasks/${taskId}`,
-          { status },
+          { status_id: statusId },
         );
       case 'seo-employee':
         return http.patch(
           `/v1/seo/projects/${projectId}/tasks/${taskId}/status`,
-          { status },
+          { status_id: statusId },
         );
       case 'seo-manager':
         return http.put(
           `/v1/seo/projects/${projectId}/tasks/${taskId}`,
-          { status },
+          { status_id: statusId },
           { skip401Redirect: true },
         );
     }

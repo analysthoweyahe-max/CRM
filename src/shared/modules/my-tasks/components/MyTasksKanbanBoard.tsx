@@ -23,6 +23,8 @@ interface Props {
   isAr:            boolean;
   showProjectName: boolean;
   canDrag:         boolean;
+  /** When the board is filtered to one project, payloads may omit task.project. */
+  fallbackProjectId?: number | string;
   onOpen:          (task: MyTask) => void;
   onStatusChange?: (task: MyTask, toStatus: string) => Promise<void>;
 }
@@ -32,6 +34,7 @@ export function MyTasksKanbanBoard({
   isAr,
   showProjectName,
   canDrag,
+  fallbackProjectId,
   onOpen,
   onStatusChange,
 }: Props) {
@@ -68,12 +71,16 @@ export function MyTasksKanbanBoard({
       toast.info(isAr ? 'لا يمكن تحديث مهام الشركاء' : 'Partner tasks cannot be updated');
       return;
     }
-    if (!task.project?.id) {
+    const projectId = task.project?.id ?? fallbackProjectId;
+    if (projectId == null || projectId === '') {
       toast.error(isAr ? 'لا يمكن تحديث المهمة بدون مشروع' : 'Cannot update task without a project');
       return;
     }
     try {
-      await onStatusChange(task, toStatus);
+      await onStatusChange(
+        task.project ? task : { ...task, project: { id: projectId, name: task.project?.name ?? '' } },
+        toStatus,
+      );
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
     } catch {
       toast.error(isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status');

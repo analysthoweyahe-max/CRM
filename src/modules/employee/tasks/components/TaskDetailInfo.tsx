@@ -1,21 +1,21 @@
 import { type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { Badge }    from '@/shared/components/ui/Badge';
+import { Badge } from '@/shared/components/ui/Badge';
 import { Combobox } from '@/shared/components/form/Combobox';
 import { RichTextView } from '@/shared/components/form/RichTextView';
 import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
-import { useAuth }  from '@/modules/auth/context/AuthContext';
+import { useAuth } from '@/modules/auth/context/AuthContext';
+import { usePmTaskLookups } from '@/modules/project-manager/projects/hooks/usePmTaskLookups';
 import { useUpdateTaskStatus } from '../hooks/useTaskDetail';
 import { fmtDeadline, PRIORITY_MAP } from './useTasksTable';
 import type { TaskDetail } from '../types/taskDetail.types';
-import type { EmpTaskStatus } from '../types/employeeTask.types';
 
 interface Props {
-  task:      TaskDetail | undefined;
+  task: TaskDetail | undefined;
   isLoading: boolean;
-  isAr:      boolean;
+  isAr: boolean;
   projectId: string;
-  taskId:    string;
+  taskId: string;
 }
 
 function InfoRow({ label, value }: { label: string; value: ReactNode }) {
@@ -40,25 +40,25 @@ function Skeleton() {
   );
 }
 
-const STATUS_OPTIONS: { value: EmpTaskStatus; ar: string; en: string }[] = [
-  { value: 'inProgress', ar: 'قيد التنفيذ', en: 'In Progress' },
-  { value: 'completed',  ar: 'مكتملة',      en: 'Completed'   },
-  { value: 'pending',    ar: 'معلقة',        en: 'Pending'     },
-];
-
 export function TaskDetailInfo({ task, isLoading, isAr, projectId, taskId }: Props) {
   const { user } = useAuth();
   const { mutate: updateStatus, isPending: updatingStatus } = useUpdateTaskStatus(projectId, taskId);
+  const { statuses } = usePmTaskLookups();
 
   if (isLoading || !task) return <Skeleton />;
 
   const priority = PRIORITY_MAP[task.priority];
-  const initial  = (user?.fullName ?? 'E').slice(0, 1).toUpperCase();
+  const initial = (user?.fullName ?? 'E').slice(0, 1).toUpperCase();
 
-  const statusItems = STATUS_OPTIONS.map(o => ({ id: o.value, label: isAr ? o.ar : o.en }));
+  const statusItems = statuses.map(s => ({
+    id: s.value,
+    label: isAr ? (s.labelAr ?? s.label) : s.label,
+  }));
 
   function handleStatusChange(value: string) {
-    updateStatus(value as EmpTaskStatus, {
+    const statusId = Number(value);
+    if (!Number.isFinite(statusId)) return;
+    updateStatus(statusId, {
       onError: () => toast.error(isAr ? 'تعذّر تحديث الحالة' : 'Failed to update status'),
     });
   }
@@ -107,7 +107,7 @@ export function TaskDetailInfo({ task, isLoading, isAr, projectId, taskId }: Pro
       {task.createdAt && (
         <InfoRow label={isAr ? 'تاريخ الإنشاء' : 'Created At'} value={fmtDeadline(task.createdAt, isAr)} />
       )}
-      <InfoRow label={isAr ? 'تاريخ التسليم' : 'Deadline'}       value={fmtDeadline(task.deadline, isAr)} />
+      <InfoRow label={isAr ? 'تاريخ التسليم' : 'Deadline'} value={fmtDeadline(task.deadline, isAr)} />
       <InfoRow
         label={isAr ? 'الأولوية' : 'Priority'}
         value={
@@ -124,9 +124,9 @@ export function TaskDetailInfo({ task, isLoading, isAr, projectId, taskId }: Pro
           <div className="w-40">
             <Combobox
               items={statusItems}
-              value={task.status}
+              value={task.statusId != null ? String(task.statusId) : ''}
               onChange={handleStatusChange}
-              disabled={updatingStatus}
+              disabled={updatingStatus || statusItems.length === 0}
               searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
               noResultsText={isAr ? 'لا نتائج' : 'No results'}
             />

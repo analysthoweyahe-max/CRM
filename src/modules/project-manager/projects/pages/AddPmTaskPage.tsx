@@ -3,14 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useLang }    from '@/app/providers/LanguageProvider';
-import { Card }       from '@/shared/components/ui/Card';
+import { useLang } from '@/app/providers/LanguageProvider';
+import { Card } from '@/shared/components/ui/Card';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
-import { Button }     from '@/shared/components/ui/Button';
+import { Button } from '@/shared/components/ui/Button';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
-import { ROUTES }     from '@/app/router/routes';
-import { useProjectDetails }   from '../hooks/useProjectDetails';
-import { usePmTaskLookups }    from '../hooks/usePmTaskLookups';
+import { ROUTES } from '@/app/router/routes';
+import { useProjectDetails } from '../hooks/useProjectDetails';
+import { usePmTaskLookups } from '../hooks/usePmTaskLookups';
 import { pmProjectTeamApi, pmProjectsApi } from '../api/project.api';
 import type { PmProjectTeamMember, PmProjectPhase } from '../types/project.types';
 import { pmTaskApi, normalizePmTaskPriority } from '../../tasks/api/task.api';
@@ -28,9 +28,9 @@ const INITIAL: PmTaskFormState = {
 };
 
 export function AddPmTaskPage() {
-  const { lang }  = useLang();
-  const isAr      = lang === 'ar';
-  const navigate  = useNavigate();
+  const { lang } = useLang();
+  const isAr = lang === 'ar';
+  const navigate = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
 
   const { project, isLoading } = useProjectDetails(id);
@@ -48,7 +48,7 @@ export function AddPmTaskPage() {
 
   const { data: projectPhases = [], isError: phasesError } = useQuery({
     queryKey: ['pm-project', id, 'phases'],
-    queryFn:  async () => {
+    queryFn: async () => {
       const res = await pmProjectsApi.phases(id);
       return toApiArray<PmProjectPhase>(res.data.data);
     },
@@ -70,9 +70,9 @@ export function AddPmTaskPage() {
     return [...byId.values()];
   }, [teamMembers, project?.teamMembers]);
 
-  const [form, setForm]         = useState<PmTaskFormState>(INITIAL);
+  const [form, setForm] = useState<PmTaskFormState>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
-  const [touched, setTouched]           = useState<Record<string, boolean>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   function set<K extends keyof PmTaskFormState>(key: K, val: PmTaskFormState[K]) {
@@ -99,28 +99,28 @@ export function AddPmTaskPage() {
   const BackIcon = isAr ? ArrowRight : ArrowLeft;
 
   const teamItems: ComboboxItem[] = assignees.map(m => ({
-    id:     m.id,
-    label:  m.name,
+    id: m.id,
+    label: m.name,
     detail: m.jobTitle || m.projectRole || undefined,
   }));
   const phases = projectPhases.length > 0 ? projectPhases : (project?.phases ?? []);
-  const phaseItems:    ComboboxItem[] = phases.map(p => ({ id: String(p.id), label: p.name }));
+  const phaseItems: ComboboxItem[] = phases.map(p => ({ id: String(p.id), label: p.name }));
   const priorityItems: ComboboxItem[] = priorities.map(p => ({
-    id:    p.value,
+    id: p.value,
     label: translateProjectLookup(p.value, p.label, isAr, p.labelAr),
   }));
   const statusItems: ComboboxItem[] = statuses.map(s => ({
-    id:    s.value,
+    id: s.value,
     label: translateProjectLookup(s.value, s.label, isAr, s.labelAr),
   }));
 
   const fieldErrors: Record<string, string> = {};
-  if (!form.title.trim()) fieldErrors.title      = isAr ? 'عنوان المهمة مطلوب' : 'Task title is required';
-  if (!form.assigneeId)   fieldErrors.assigneeId = isAr ? 'اختر المسؤول' : 'Assignee is required';
-  if (!form.priority)     fieldErrors.priority   = isAr ? 'اختر الأولوية' : 'Priority is required';
-  if (!form.status)       fieldErrors.status     = isAr ? 'اختر الحالة الابتدائية' : 'Initial status is required';
-  if (!form.dueDate)      fieldErrors.dueDate    = isAr ? 'تاريخ التسليم مطلوب' : 'Due date is required';
-  if (!form.phaseId)      fieldErrors.phaseId    = isAr ? 'اختر المرحلة' : 'Stage is required';
+  if (!form.title.trim()) fieldErrors.title = isAr ? 'عنوان المهمة مطلوب' : 'Task title is required';
+  if (!form.assigneeId) fieldErrors.assigneeId = isAr ? 'اختر المسؤول' : 'Assignee is required';
+  if (!form.priority) fieldErrors.priority = isAr ? 'اختر الأولوية' : 'Priority is required';
+  if (!form.status) fieldErrors.status = isAr ? 'اختر الحالة الابتدائية' : 'Initial status is required';
+  if (!form.dueDate) fieldErrors.dueDate = isAr ? 'تاريخ التسليم مطلوب' : 'Due date is required';
+  if (!form.phaseId) fieldErrors.phaseId = isAr ? 'اختر المرحلة' : 'Stage is required';
   const linksError = validateImportantLinks(form.importantLinks, isAr);
   if (linksError) fieldErrors.importantLinks = linksError;
 
@@ -142,16 +142,16 @@ export function AddPmTaskPage() {
     try {
       const importantLinks = normalizeImportantLinks(form.importantLinks);
       await pmTaskApi.create(id, {
-        title:           form.title.trim(),
-        description:     form.description.trim() || undefined,
-        employeeId:      form.assigneeId,
-        employee_id:     form.assigneeId,
-        priority:        normalizePmTaskPriority(form.priority),
-        dueDate:         form.dueDate,
-        estimatedHours:  form.estimatedHours ? Number(form.estimatedHours) : undefined,
+        title: form.title.trim(),
+        description: form.description.trim() || undefined,
+        employeeId: form.assigneeId,
+        employee_id: form.assigneeId,
+        priority: normalizePmTaskPriority(form.priority),
+        dueDate: form.dueDate,
+        estimatedHours: form.estimatedHours ? Number(form.estimatedHours) : undefined,
         estimatedMinutes: form.estimatedMinutes ? Number(form.estimatedMinutes) : undefined,
-        phaseId:         Number(form.phaseId),
-        status:          form.status,
+        phaseId: Number(form.phaseId),
+        status_id: Number(form.status),
         ...(importantLinks.length ? { importantLinks } : {}),
       });
       invalidateTasks();

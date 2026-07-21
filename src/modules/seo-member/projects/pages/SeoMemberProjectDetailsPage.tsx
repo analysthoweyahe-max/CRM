@@ -52,12 +52,12 @@ const UNKNOWN_CREATOR = '__unknown_creator__';
 type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'info';
 
 const TABS: { key: TabKey; ar: string; en: string }[] = [
-  { key: 'tasks',    ar: 'المهام',           en: 'Tasks'         },
-  { key: 'client',   ar: 'متطلبات العميل',   en: 'Client Updates'},
-  { key: 'info',     ar: 'التفاصيل',         en: 'Details'       },
-  { key: 'messages', ar: 'الرسائل',          en: 'Messages'      },
-  { key: 'team',     ar: 'الفريق',           en: 'Team'          },
-  { key: 'progress', ar: 'الإنجاز',          en: 'Progress'      },
+  { key: 'tasks', ar: 'المهام', en: 'Tasks' },
+  { key: 'client', ar: 'متطلبات العميل', en: 'Client Updates' },
+  { key: 'info', ar: 'التفاصيل', en: 'Details' },
+  { key: 'messages', ar: 'الرسائل', en: 'Messages' },
+  { key: 'team', ar: 'الفريق', en: 'Team' },
+  { key: 'progress', ar: 'الإنجاز', en: 'Progress' },
 ];
 
 const AVATAR_COLORS = [
@@ -80,15 +80,19 @@ function coarseStatus(rawKey: string, marksCompleted: boolean): TaskStatus {
 
 const PRIORITY_MAP: Record<string, Task['priority']> = {
   urgent: 'urgent',
-  high:   'high',
+  high: 'high',
   normal: 'normal',
   medium: 'normal',
-  low:    'low',
+  low: 'low',
 };
 
 export interface SeoMemberTaskVM extends Task {
   rawStatus: string;
   assigneeIds: string[];
+}
+
+function resolveSeoTaskStatusKey(t: Pick<SeoTask, 'statusId' | 'status'>): string {
+  return t.statusId != null ? String(t.statusId) : String(t.status ?? '');
 }
 
 function toLocalTask(
@@ -104,28 +108,30 @@ function toLocalTask(
     .map(a => a.id)
     .filter(Boolean);
   if (assigneeIds.length === 0 && primary?.id) assigneeIds.push(String(primary.id));
+  const statusKey = resolveSeoTaskStatusKey(t);
   return {
-    id:              String(t.id),
-    uuid:            t.uuid || undefined,
+    id: String(t.id),
+    uuid: t.uuid || undefined,
     projectId,
-    title:           t.title,
-    description:     t.description ?? '',
-    phaseId:         readSeoTaskPhaseId(t),
-    phaseName:       t.phase ?? t.taskTypeLabel ?? 'مهمة SEO',
-    priority:        PRIORITY_MAP[t.priority] ?? 'normal',
-    assigneeId:      primary?.id ? String(primary.id) : undefined,
-    assigneeName:    assignee,
+    title: t.title,
+    description: t.description ?? '',
+    phaseId: readSeoTaskPhaseId(t),
+    phaseName: t.phase ?? t.taskTypeLabel ?? 'مهمة SEO',
+    priority: PRIORITY_MAP[t.priority] ?? 'normal',
+    assigneeId: primary?.id ? String(primary.id) : undefined,
+    assigneeName: assignee,
     assigneeInitial: assignee ? assignee[0].toUpperCase() : '?',
-    assigneeColor:   avatarColor(assignee),
-    dueDate:         t.dueDate ?? '',
-    estimatedHours:  undefined,
-    status:          coarseStatus(t.status, marksCompletedByKey[t.status] ?? false),
-    rawStatus:       t.status,
-    taskNumber:      `#${t.taskNumber ?? t.id}`,
-    importantLinks:  t.importantLinks,
-    createdAt:       t.createdAt,
-    createdById:     createdBy?.id,
-    createdByName:   createdBy?.name,
+    assigneeColor: avatarColor(assignee),
+    dueDate: t.dueDate ?? '',
+    estimatedHours: undefined,
+    statusId: t.statusId ?? null,
+    status: coarseStatus(statusKey, marksCompletedByKey[statusKey] ?? false),
+    rawStatus: statusKey,
+    taskNumber: `#${t.taskNumber ?? t.id}`,
+    importantLinks: t.importantLinks,
+    createdAt: t.createdAt,
+    createdById: createdBy?.id,
+    createdByName: createdBy?.name,
     assigneeIds,
   };
 }
@@ -145,9 +151,9 @@ export function SeoMemberProjectDetailsPage() {
   const contextTypeParam = searchParams.get('contextType');
   const initialTab: TabKey =
     tabParam === 'client-updates' ? 'client'
-    : tabParam === 'messages' || tabParam === 'team' || tabParam === 'progress' || tabParam === 'info'
-      ? tabParam
-      : 'tasks';
+      : tabParam === 'messages' || tabParam === 'team' || tabParam === 'progress' || tabParam === 'info'
+        ? tabParam
+        : 'tasks';
 
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
@@ -159,8 +165,8 @@ export function SeoMemberProjectDetailsPage() {
 
   const { data: campaign, isLoading: campaignLoading } = useQuery({
     queryKey: ['seo-member-project', id],
-    queryFn:  async () => (await campaignApi.getById(id)).data.data,
-    enabled:  !!id,
+    queryFn: async () => (await campaignApi.getById(id)).data.data,
+    enabled: !!id,
     staleTime: 30_000,
     retry: 1,
   });
@@ -169,8 +175,8 @@ export function SeoMemberProjectDetailsPage() {
 
   const { data: settings } = useQuery({
     queryKey: ['seo-member-project-settings', projectKey],
-    queryFn:  async () => (await campaignApi.getSettings(projectKey)).data.data,
-    enabled:  !!projectKey,
+    queryFn: async () => (await campaignApi.getSettings(projectKey)).data.data,
+    enabled: !!projectKey,
     staleTime: 30_000,
     retry: 1,
   });
@@ -181,13 +187,13 @@ export function SeoMemberProjectDetailsPage() {
     [statuses],
   );
   const [viewMode, setViewMode] = useState<'status' | 'phase'>('status');
-  const [phaseFilter,    setPhaseFilter]    = useState('');
+  const [phaseFilter, setPhaseFilter] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
-  const [creatorFilter,  setCreatorFilter]  = useState('');
-  const [statusFilter,   setStatusFilter]   = useState('');
-  const [periodFilter,   setPeriodFilter]   = useState<TaskPeriodFilter>('');
-  const [dateFrom,       setDateFrom]       = useState('');
-  const [dateTo,         setDateTo]         = useState('');
+  const [creatorFilter, setCreatorFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [periodFilter, setPeriodFilter] = useState<TaskPeriodFilter>('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const { data: projectPhases = [], isLoading: phasesLoading } = useSeoProjectPhases(projectKey);
 
@@ -213,13 +219,13 @@ export function SeoMemberProjectDetailsPage() {
     () => baseTasks.map(t =>
       statusOverrides[t.id]
         ? {
-            ...t,
-            rawStatus: statusOverrides[t.id],
-            status: coarseStatus(
-              statusOverrides[t.id],
-              marksCompletedByKey[statusOverrides[t.id]] ?? false,
-            ),
-          }
+          ...t,
+          rawStatus: statusOverrides[t.id],
+          status: coarseStatus(
+            statusOverrides[t.id],
+            marksCompletedByKey[statusOverrides[t.id]] ?? false,
+          ),
+        }
         : t,
     ),
     [baseTasks, statusOverrides, marksCompletedByKey],
@@ -345,7 +351,7 @@ export function SeoMemberProjectDetailsPage() {
   const phaseColumns = useMemo(
     () => buildSeoPhaseKanbanColumns({
       phases: projectPhases,
-      tasks:  filteredTasks,
+      tasks: filteredTasks,
       phaseFilter,
       isAr,
     }),
@@ -356,7 +362,7 @@ export function SeoMemberProjectDetailsPage() {
     const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
     setStatusOverrides(prev => ({ ...prev, [taskId]: toStatusKey }));
     myTasksApi
-      .updateStatus('seo-employee', projectKey, task ? taskResourceKey(task) : taskId, toStatusKey)
+      .updateStatus('seo-employee', projectKey, task ? taskResourceKey(task) : taskId, Number(toStatusKey))
       .then(() => {
         qc.invalidateQueries({ queryKey: ['seo-member-project-tasks', projectKey] });
         qc.invalidateQueries({ queryKey: ['my-tasks'] });
@@ -503,8 +509,8 @@ export function SeoMemberProjectDetailsPage() {
                 className={`px-3 py-2.5 text-sm font-medium border-b-2 transition-colors
                             duration-150 whitespace-nowrap
                             ${isActive
-                              ? 'border-[#A0CD39] text-[#709028] dark:text-[#A0CD39]'
-                              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    ? 'border-[#A0CD39] text-[#709028] dark:text-[#A0CD39]'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
               >
                 {isAr ? tab.ar : tab.en}
               </button>
@@ -593,11 +599,11 @@ export function SeoMemberProjectDetailsPage() {
               columns={
                 viewMode === 'status'
                   ? displayColumns.map(status => ({
-                      key:   status.key,
-                      label: status.label,
-                      color: status.color,
-                      items: filteredTasks.filter(t => t.rawStatus === status.key),
-                    }))
+                    key: status.key,
+                    label: status.label,
+                    color: status.color,
+                    items: filteredTasks.filter(t => t.rawStatus === status.key),
+                  }))
                   : phaseColumns
               }
               isAr={isAr}
@@ -605,7 +611,7 @@ export function SeoMemberProjectDetailsPage() {
               renderCard={(task: Task) => (
                 <KanbanTaskCard task={task} isAr={isAr} onOpen={handleOpenTask} />
               )}
-              onDrop={viewMode === 'status' ? handleDrop : () => {}}
+              onDrop={viewMode === 'status' ? handleDrop : () => { }}
               draggable={viewMode === 'status'}
             />
           </>

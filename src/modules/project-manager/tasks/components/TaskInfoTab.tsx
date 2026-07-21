@@ -6,7 +6,7 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextView }      from '@/shared/components/form/RichTextView';
 import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { formatEstimatedTime } from '@/shared/utils/format.utils';
-import type { Task, TaskStatus } from '../types/task.types';
+import type { Task } from '../types/task.types';
 import { usePmTaskLookups } from '../../projects/hooks/usePmTaskLookups';
 
 interface Props {
@@ -112,7 +112,7 @@ export function TaskInfoTab({ task, onDeleteClick, onEditClick, onExtendClick, o
           <p className="text-xs text-gray-400 text-right">{isAr ? 'الحالة' : 'Status'}</p>
           <Combobox
             items={statusItems}
-            value={task.status as TaskStatus}
+            value={task.statusId != null ? String(task.statusId) : task.status}
             onChange={onStatusChange}
             disabled={!canEdit || changingStatus}
             placeholder={isAr ? 'الحالة' : 'Status'}

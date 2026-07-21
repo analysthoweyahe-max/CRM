@@ -1,32 +1,21 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeeApi } from '@/modules/hr/employees/api/employee.api';
-import { pmProjectsApi } from '@/modules/project-manager/projects/api/project.api';
-import { seoLeaderDashboardApi } from '@/modules/seo-leader/dashboard/api/seoLeaderDashboard.api';
 import { getRoleLabel } from '@/modules/admin/employees/types/adminEmployee.types';
-import type { AdminDashboardData, AdminTeamStats, RoleDistributionItem, DepartmentDistributionItem } from '../types/adminDashboard.types';
-import type { ApiEmployee, EmployeeListResponse } from '@/modules/hr/employees/types/employee.types';
-import type { PmProjectListApiResponse } from '@/modules/project-manager/projects/types/project.types';
-import type { PaginatedProjects } from '@/modules/seo-leader/dashboard/types/dashboard.types';
-import type { ApiResponse } from '@/shared/types/api.types';
+import type {
+  AdminDashboardData,
+  AdminDashboardStats,
+  RoleDistributionItem,
+  DepartmentDistributionItem,
+} from '../types/adminDashboard.types';
+import type { EmployeeListResponse } from '@/modules/hr/employees/types/employee.types';
+import { usePmDashboard } from '@/modules/project-manager/dashboard/hooks/usePmDashboard';
+import { usePmTeamCount } from '@/modules/project-manager/team/hooks/usePmTeamCount';
+import { useSeoLeaderDashboard } from '@/modules/seo-leader/dashboard/hooks/useSeoLeaderDashboard';
 
 const ROLE_COLORS = ['#A0CD39', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
 
-// Backend role slugs (see ROLE_SLUG_MAP in role.types.ts) used to bucket each
-// employee into the PM or SEO team for the split dashboard stats.
-const SEO_ROLE_SLUGS = new Set(['seo-manager', 'seo-leader', 'seo-employee', 'seo-member']);
-const PM_ROLE_SLUGS  = new Set(['project-manager', 'pm-employee', 'manager', 'employee']);
-
-function classifyEmployeeTeam(roles?: string[]): 'pm' | 'seo' | null {
-  if (!roles?.length) return null;
-  if (roles.some((r) => SEO_ROLE_SLUGS.has(r))) return 'seo';
-  if (roles.some((r) => PM_ROLE_SLUGS.has(r))) return 'pm';
-  return null;
-}
-
 const EMPTY_EMPLOYEES: EmployeeListResponse['data'] = { data: [], total: 0, current_page: 1, last_page: 1 };
-const EMPTY_PM: PmProjectListApiResponse['data'] = { data: [], total: 0, current_page: 1, last_page: 1 };
-const EMPTY_SEO: PaginatedProjects = { data: [], total: 0, current_page: 1, last_page: 1 };
 
 async function fetchEmployees() {
   try {
@@ -37,75 +26,32 @@ async function fetchEmployees() {
   }
 }
 
-async function fetchPmProjects() {
-  try {
-    const { data } = await pmProjectsApi.list({ per_page: 100 });
-    return data.data;
-  } catch {
-    return EMPTY_PM;
-  }
-}
-
-async function fetchSeoProjects() {
-  try {
-    const { data } = await seoLeaderDashboardApi.getProjects();
-    const payload = data.data as PaginatedProjects | ApiResponse<PaginatedProjects>['data'];
-    if (Array.isArray(payload)) return { ...EMPTY_SEO, data: payload, total: payload.length };
-    return payload ?? EMPTY_SEO;
-  } catch {
-    return EMPTY_SEO;
-  }
-}
-
 export function useAdminDashboard(): AdminDashboardData & { isLoading: boolean } {
+  const pmDashboard = usePmDashboard();
+  const pmTeamCount = usePmTeamCount();
+  const seoDashboard = useSeoLeaderDashboard();
+
   const { data: employeesData, isPending: loadingEmployees } = useQuery({
     queryKey: ['admin', 'dashboard', 'employees'],
-    queryFn:  fetchEmployees,
+    queryFn: fetchEmployees,
   });
 
-  const { data: pmData, isPending: loadingPm } = useQuery({
-    queryKey: ['admin', 'dashboard', 'pm-projects'],
-    queryFn:  fetchPmProjects,
-  });
+  const employees = employeesData?.data ?? [];
 
-  const { data: seoData, isPending: loadingSeo } = useQuery({
-    queryKey: ['admin', 'dashboard', 'seo-projects'],
-    queryFn:  fetchSeoProjects,
-  });
-
-  const employees   = employeesData?.data ?? [];
-  const pmProjects  = pmData?.data ?? [];
-  const seoProjects = seoData?.data ?? [];
-  const pmTotal     = pmData?.total ?? pmProjects.length;
-  const seoTotal    = seoData?.total ?? seoProjects.length;
-
-  const { pmEmployees, seoEmployees } = useMemo(() => {
-    const pm: ApiEmployee[] = [];
-    const seo: ApiEmployee[] = [];
-    employees.forEach((e) => {
-      const team = classifyEmployeeTeam(e.roles);
-      if (team === 'seo') seo.push(e);
-      else if (team === 'pm') pm.push(e);
-    });
-    return { pmEmployees: pm, seoEmployees: seo };
-  }, [employees]);
-
-  const stats = useMemo<{ pm: AdminTeamStats; seo: AdminTeamStats }>(() => ({
+  const stats = useMemo<AdminDashboardStats>(() => ({
     pm: {
-      totalEmployees:    pmEmployees.length,
-      activeEmployees:   pmEmployees.filter((e) => e.status === 'active').length,
-      inactiveEmployees: pmEmployees.filter((e) => e.status === 'inactive').length,
-      activeProjects:    pmProjects.filter((p) => p.status === 'in_progress').length,
-      totalProjects:     pmTotal,
+      dailyReports: pmDashboard.stats.dailyReports,
+      teamMembers: pmTeamCount,
+      activeTasks: pmDashboard.stats.activeTasks,
+      activeProjects: pmDashboard.stats.activeProjects,
     },
     seo: {
-      totalEmployees:    seoEmployees.length,
-      activeEmployees:   seoEmployees.filter((e) => e.status === 'active').length,
-      inactiveEmployees: seoEmployees.filter((e) => e.status === 'inactive').length,
-      activeProjects:    seoProjects.filter((p) => p.status === 'in_progress').length,
-      totalProjects:     seoTotal,
+      total_projects: seoDashboard.stats.total_projects,
+      active_employees: seoDashboard.stats.active_employees,
+      pending_tasks: seoDashboard.stats.pending_tasks,
+      completed_projects: seoDashboard.stats.completed_projects,
     },
-  }), [pmEmployees, seoEmployees, pmProjects, seoProjects, pmTotal, seoTotal]);
+  }), [pmDashboard.stats, pmTeamCount, seoDashboard.stats]);
 
   const roleDistribution = useMemo<RoleDistributionItem[]>(() => {
     const counts = new Map<string, number>();
@@ -118,7 +64,7 @@ export function useAdminDashboard(): AdminDashboardData & { isLoading: boolean }
         labelEn: getRoleLabel(role, false),
         value,
         percent: Math.round((value / total) * 100),
-        color:   ROLE_COLORS[i % ROLE_COLORS.length],
+        color: ROLE_COLORS[i % ROLE_COLORS.length],
       }));
   }, [employees]);
 
@@ -134,7 +80,7 @@ export function useAdminDashboard(): AdminDashboardData & { isLoading: boolean }
   }, [employees]);
 
   return {
-    isLoading: loadingEmployees || loadingPm || loadingSeo,
+    isLoading: loadingEmployees || pmDashboard.isLoading || seoDashboard.isLoading,
     stats,
     roleDistribution,
     departmentDistribution,

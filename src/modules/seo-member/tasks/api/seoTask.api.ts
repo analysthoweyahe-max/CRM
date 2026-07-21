@@ -13,25 +13,27 @@ export interface RawSeoTaskRef {
 }
 
 export interface RawSeoTask {
-  id:             number;
-  uuid?:          string;
-  taskNumber:     number;
-  title:          string;
-  description?:   string | null;
-  status:         string;
-  statusLabel:    string;
-  priority:       string;
-  priorityLabel:  string;
-  dueDate?:       string | null;
-  taskType?:      string;
+  id: number;
+  uuid?: string;
+  taskNumber: number;
+  title: string;
+  description?: string | null;
+  statusId?: number | null;
+  status_id?: number | null;
+  status: string;
+  statusLabel: string;
+  priority: string;
+  priorityLabel: string;
+  dueDate?: string | null;
+  taskType?: string;
   taskTypeLabel?: string;
-  phase?:         string | null;
-  project?:       RawSeoTaskRef | null;
-  dueAt?:         string | null;
-  isOverdue?:     boolean;
-  isDelayed?:     boolean;
-  overdueLabel?:  string | null;
-  canExtend?:     boolean;
+  phase?: string | null;
+  project?: RawSeoTaskRef | null;
+  dueAt?: string | null;
+  isOverdue?: boolean;
+  isDelayed?: boolean;
+  overdueLabel?: string | null;
+  canExtend?: boolean;
   importantLinks?: string[];
   important_links?: string[];
 }
@@ -66,26 +68,29 @@ const PRIORITY_FROM_WIRE: Record<string, SeoTaskPriority> = {
 };
 
 export function toSeoTask(raw: RawSeoTask): SeoTask {
+  const statusId = raw.statusId ?? raw.status_id ?? null;
   return {
-    id:            raw.id,
-    uuid:          raw.uuid ?? String(raw.id),
-    taskNumber:    raw.taskNumber,
-    title:         raw.title,
-    phase:         raw.phase ?? null,
-    taskType:      raw.taskType ?? '',
+    id: raw.id,
+    uuid: raw.uuid ?? String(raw.id),
+    taskNumber: raw.taskNumber,
+    title: raw.title,
+    phase: raw.phase ?? null,
+    taskType: raw.taskType ?? '',
     taskTypeLabel: raw.taskTypeLabel ?? '',
-    status:        raw.status,
-    statusLabel:   raw.statusLabel,
-    priority:      PRIORITY_FROM_WIRE[raw.priority] ?? 'normal',
+    statusId,
+    // Prefer numeric id for selects / status_id writes; keep legacy key as fallback.
+    status: statusId != null ? String(statusId) : raw.status,
+    statusLabel: raw.statusLabel,
+    priority: PRIORITY_FROM_WIRE[raw.priority] ?? 'normal',
     priorityLabel: raw.priorityLabel,
-    dueDate:       raw.dueDate ?? null,
-    description:   raw.description ?? null,
-    project:       raw.project ? { id: String(raw.project.id), name: raw.project.name } : null,
-    dueAt:         raw.dueAt ?? null,
-    isOverdue:     raw.isOverdue,
-    isDelayed:     raw.isDelayed,
-    overdueLabel:  raw.overdueLabel ?? null,
-    canExtend:     raw.canExtend,
+    dueDate: raw.dueDate ?? null,
+    description: raw.description ?? null,
+    project: raw.project ? { id: String(raw.project.id), name: raw.project.name } : null,
+    dueAt: raw.dueAt ?? null,
+    isOverdue: raw.isOverdue,
+    isDelayed: raw.isDelayed,
+    overdueLabel: raw.overdueLabel ?? null,
+    canExtend: raw.canExtend,
     importantLinks: parseImportantLinks(raw),
   };
 }

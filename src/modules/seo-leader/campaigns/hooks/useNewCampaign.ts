@@ -91,21 +91,24 @@ export function useNewCampaign() {
   }
 
   const mutation = useMutation({
-    mutationFn: (asDraft: boolean) => campaignApi.create({
-      name:          name.trim(),
-      domain:        domain.trim(),
-      description:   description.trim(),
-      campaign_type: campaignType,
-      status:        asDraft ? 'draft' : status,
-      is_draft:      asDraft,
-      start_date:    startDate,
-      end_date:      endDate,
-      keywords:      keywords.filter(Boolean),
-      references:    links.filter(Boolean),
-      githubLink:    optionalLink(githubLink),
-      driveLink:     optionalLink(driveLink),
-      contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
-    }),
+    mutationFn: (asDraft: boolean) => {
+      const statusId = Number(status);
+      return campaignApi.create({
+        name: name.trim(),
+        domain: domain.trim(),
+        description: description.trim(),
+        campaign_type: campaignType,
+        ...(Number.isFinite(statusId) ? { status_id: statusId } : {}),
+        is_draft: asDraft,
+        start_date: startDate,
+        end_date: endDate,
+        keywords: keywords.filter(Boolean),
+        references: links.filter(Boolean),
+        githubLink: optionalLink(githubLink),
+        driveLink: optionalLink(driveLink),
+        contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
+      });
+    },
     onSuccess: (_data, asDraft) => {
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'projects'] });
       queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });

@@ -1,14 +1,13 @@
-export interface AdminTeamStats {
-  totalEmployees:    number;
-  activeEmployees:   number;
-  inactiveEmployees: number;
-  activeProjects:    number;
-  totalProjects:     number;
+import type { PmDashboardStats } from '@/modules/project-manager/dashboard/hooks/usePmDashboard';
+import type { SeoManagerStats } from '@/modules/seo-leader/dashboard/types/dashboard.types';
+
+export interface AdminPmDashboardStats extends PmDashboardStats {
+  teamMembers: number;
 }
 
 export interface AdminDashboardStats {
-  pm:  AdminTeamStats;
-  seo: AdminTeamStats;
+  pm:  AdminPmDashboardStats;
+  seo: SeoManagerStats;
 }
 
 export interface RoleDistributionItem {

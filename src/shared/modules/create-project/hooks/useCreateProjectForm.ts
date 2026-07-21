@@ -24,7 +24,7 @@ import type {
 } from '../types/createProject.types';
 
 export interface UseCreateProjectFormOptions {
-  module:      CreateProjectModule;
+  module: CreateProjectModule;
   templateId?: string;
 }
 
@@ -37,12 +37,12 @@ const DEFAULT_STATUS_OPTIONS: StatusLookup[] = [
 ];
 
 export function useCreateProjectForm({ module, templateId }: UseCreateProjectFormOptions) {
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user }    = useAuth();
-  const { lang }    = useLang();
-  const isAr        = lang === 'ar';
-  const isAdmin     = user?.role === 'admin';
+  const { user } = useAuth();
+  const { lang } = useLang();
+  const isAr = lang === 'ar';
+  const isAdmin = user?.role === 'admin';
 
   const [departmentId, setDepartmentId] = useState('');
   const [projectTypeId, setProjectTypeId] = useState('');
@@ -54,7 +54,7 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
   const [contractDurationMonths, setContractDurationMonths] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [status, setStatus] = useState('not_started');
+  const [status, setStatus] = useState('');
   const [saveAsDraft, setSaveAsDraft] = useState(false);
   const [managerIds, setManagerIds] = useState<string[]>([]);
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
@@ -71,30 +71,30 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
 
   const departmentsQ = useQuery({
     queryKey: ['create-project', 'departments'],
-    queryFn:  () => createProjectApi.departments(),
-    enabled:  isAdmin,
+    queryFn: () => createProjectApi.departments(),
+    enabled: isAdmin,
     staleTime: 5 * 60 * 1000,
   });
 
   const typesQ = useQuery({
     queryKey: ['create-project', module, 'types', isAdmin ? (deptNum ?? 'none') : 'default'],
-    queryFn:  () => (isAdmin && deptNum
+    queryFn: () => (isAdmin && deptNum
       ? createProjectApi.projectTypesForDepartment(module, deptNum)
       : createProjectApi.projectTypes(module)),
-    enabled:  !isAdmin || !!deptNum,
+    enabled: !isAdmin || !!deptNum,
     staleTime: 60_000,
   });
 
   const statusesQ = useQuery({
     queryKey: ['create-project', module, 'statuses'],
-    queryFn:  () => createProjectApi.statuses(module),
+    queryFn: () => createProjectApi.statuses(module),
     staleTime: 5 * 60 * 1000,
   });
 
   const employeesQ = useQuery({
     queryKey: ['create-project', module, 'employees', typeNum, employeeSearch],
-    queryFn:  () => createProjectApi.employees(module, typeNum!, employeeSearch.trim() || undefined),
-    enabled:  !!typeNum,
+    queryFn: () => createProjectApi.employees(module, typeNum!, employeeSearch.trim() || undefined),
+    enabled: !!typeNum,
     staleTime: 30_000,
   });
 
@@ -110,8 +110,8 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
 
   const managersQ = useQuery({
     queryKey: ['create-project', module, 'managers', typeNum ?? 'all'],
-    queryFn:  () => createProjectApi.managersForCreate(module, typeNum),
-    enabled:  isAdmin,
+    queryFn: () => createProjectApi.managersForCreate(module, typeNum),
+    enabled: isAdmin,
     staleTime: 60_000,
   });
 
@@ -122,17 +122,17 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
 
   const departmentItems = useMemo(() =>
     (departmentsQ.data ?? []).map(d => ({
-      id:    String(d.id),
+      id: String(d.id),
       label: isAr && d.nameAr ? d.nameAr : d.name,
     })),
-  [departmentsQ.data, isAr]);
+    [departmentsQ.data, isAr]);
 
   const projectTypeItems = useMemo(() =>
     projectTypes.map(t => ({
-      id:    String(t.id),
+      id: String(t.id),
       label: projectTypeLabel(t, isAr),
     })),
-  [projectTypes, isAr]);
+    [projectTypes, isAr]);
 
   const statusOptions = useMemo(() => {
     if (statusesQ.data && statusesQ.data.length > 0) return statusesQ.data;
@@ -141,30 +141,30 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
 
   const statusItems = useMemo(() =>
     statusOptions.map(s => ({
-      id:    s.value,
+      id: s.value,
       label: translateProjectLookup(s.value, s.label, isAr),
     })),
-  [statusOptions, isAr]);
+    [statusOptions, isAr]);
 
   const employeeItems = useMemo(() =>
     (employeesQ.data?.data ?? []).map(e => ({
-      id:     e.id,
-      label:  e.name,
+      id: e.id,
+      label: e.name,
       detail: e.email,
-      meta:   [e.jobTitle, e.department]
+      meta: [e.jobTitle, e.department]
         .map(v => resolveDisplayText(v, isAr))
         .filter(Boolean)
         .join(' · '),
     })),
-  [employeesQ.data, isAr]);
+    [employeesQ.data, isAr]);
 
   const managerItems = useMemo(() => {
     const q = managerSearch.trim().toLowerCase();
     return (managersQ.data ?? [])
       .filter(m => !q || m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
       .map(m => ({
-        id:     m.id,
-        label:  m.name,
+        id: m.id,
+        label: m.name,
         detail: m.email,
       }));
   }, [managersQ.data, managerSearch]);
@@ -220,22 +220,24 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
         : (selfId ? [String(selfId)] : undefined);
 
       const common = {
-        name:                   name.trim(),
-        description:            description.trim() || null,
-        projectTypeId:          Number(projectTypeId),
-        githubLink:             optionalLink(githubLink),
-        driveLink:              optionalLink(driveLink),
+        name: name.trim(),
+        description: description.trim() || null,
+        projectTypeId: Number(projectTypeId),
+        githubLink: optionalLink(githubLink),
+        driveLink: optionalLink(driveLink),
         contractDurationMonths: optionalContractDurationMonths(contractDurationMonths),
-        employeeIds:            effectiveEmployeeIds,
-        status:                 status || 'not_started',
-        isDraft:                asDraft,
-        startDate:              startDate || null,
+        employeeIds: effectiveEmployeeIds,
+        isDraft: asDraft,
+        startDate: startDate || null,
       };
+      const statusId = Number(status);
+      const statusPayload = Number.isFinite(statusId) ? { status_id: statusId } : {};
 
       if (module === 'pm') {
         return createProjectApi.createPm({
           ...common,
-          deadline:   endDate || null,
+          ...statusPayload,
+          deadline: endDate || null,
           templateId: templateId || null,
           managerIds: isAdmin ? managerIds : undefined,
         }, attachments);
@@ -243,10 +245,11 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
 
       return createProjectApi.createSeo({
         ...common,
-        targetDomain:     targetDomain.trim() || null,
-        expectedEndDate:  endDate || null,
-        templateId:       templateId || null,
-        managerIds:       isAdmin ? managerIds : undefined,
+        ...statusPayload,
+        targetDomain: targetDomain.trim() || null,
+        expectedEndDate: endDate || null,
+        templateId: templateId || null,
+        managerIds: isAdmin ? managerIds : undefined,
       }, attachments);
     },
     onSuccess: (res, asDraft) => {

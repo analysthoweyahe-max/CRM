@@ -13,21 +13,23 @@ import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadl
 /* ── Raw backend shape — GET /v1/pm/projects/{project_id}/tasks/{task_id} ──
    Same task resource confirmed for GET /v1/pm/projects/{id}/tasks. */
 interface RawPmTaskDetail {
-  id:             number;
-  title:          string;
-  description:    string | null;
-  status:         string;
-  priority:       string;
-  dueDate:        string | null;
+  id: number;
+  title: string;
+  description: string | null;
+  statusId?: number | null;
+  status_id?: number | null;
+  status: string;
+  priority: string;
+  dueDate: string | null;
   estimatedHours: string | number | null;
-  phase:          { id: number; name: string } | null;
-  project?:       { id: number; name: string } | null;
-  createdAt:      string | null;
-  dueAt?:         string | null;
-  isOverdue?:     boolean;
-  isDelayed?:     boolean;
-  overdueLabel?:  string | null;
-  canExtend?:     boolean;
+  phase: { id: number; name: string } | null;
+  project?: { id: number; name: string } | null;
+  createdAt: string | null;
+  dueAt?: string | null;
+  isOverdue?: boolean;
+  isDelayed?: boolean;
+  overdueLabel?: string | null;
+  canExtend?: boolean;
   importantLinks?: string[];
   important_links?: string[];
 }
@@ -47,15 +49,9 @@ interface RawTaskMutationResponse {
 }
 
 const STATUS_MAP: Record<string, EmpTaskStatus> = {
-  pending:     'pending',
+  pending: 'pending',
   in_progress: 'inProgress',
-  completed:   'completed',
-};
-
-const REVERSE_STATUS_MAP: Record<EmpTaskStatus, string> = {
-  pending:    'pending',
-  inProgress: 'in_progress',
-  completed:  'completed',
+  completed: 'completed',
 };
 
 const PRIORITY_MAP: Record<string, EmpTaskPriority> = {
@@ -71,23 +67,25 @@ const REVERSE_PRIORITY_MAP: Record<EmpTaskPriority, string> = {
 };
 
 function toTaskDetail(raw: RawPmTaskDetail, projectId: string): TaskDetail {
+  const statusId = raw.statusId ?? raw.status_id ?? null;
   return {
-    id:             String(raw.id),
+    id: String(raw.id),
     projectId,
-    title:          raw.title,
-    description:    raw.description ?? '',
-    project:        raw.project?.name ?? '',
-    stage:          raw.phase?.name ?? null,
-    createdAt:      raw.createdAt,
-    deadline:       raw.dueDate ?? '',
-    priority:       PRIORITY_MAP[raw.priority] ?? 'medium',
-    status:         STATUS_MAP[raw.status]     ?? 'pending',
+    title: raw.title,
+    description: raw.description ?? '',
+    project: raw.project?.name ?? '',
+    stage: raw.phase?.name ?? null,
+    createdAt: raw.createdAt,
+    deadline: raw.dueDate ?? '',
+    priority: PRIORITY_MAP[raw.priority] ?? 'medium',
+    statusId,
+    status: STATUS_MAP[raw.status] ?? 'pending',
     allocatedHours: Number(raw.estimatedHours ?? 0),
-    dueAt:          raw.dueAt ?? null,
-    isOverdue:      raw.isOverdue,
-    isDelayed:      raw.isDelayed,
-    overdueLabel:   raw.overdueLabel ?? null,
-    canExtend:      raw.canExtend,
+    dueAt: raw.dueAt ?? null,
+    isOverdue: raw.isOverdue,
+    isDelayed: raw.isDelayed,
+    overdueLabel: raw.overdueLabel ?? null,
+    canExtend: raw.canExtend,
     importantLinks: parseImportantLinks(raw),
   };
 }
@@ -198,10 +196,10 @@ export const taskDetailApi = {
     return { data: toTaskDetail(res.data.data.task, projectId) };
   },
 
-  async updateStatus(projectId: string, taskId: string, status: EmpTaskStatus): Promise<{ data: TaskDetail }> {
+  async updateStatus(projectId: string, taskId: string, statusId: number): Promise<{ data: TaskDetail }> {
     const res = await http.patch<RawTaskMutationResponse>(
       `/v1/pm/projects/${projectId}/tasks/${taskId}/status`,
-      { status: REVERSE_STATUS_MAP[status] },
+      { status_id: statusId },
     );
     return { data: toTaskDetail(res.data.data, projectId) };
   },

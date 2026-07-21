@@ -7,20 +7,21 @@ import { GoogleDriveIcon } from '@/shared/components/icons/GoogleDriveIcon';
 import { ensureHttpUrl } from '@/shared/utils';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { toast } from 'sonner';
-import { useLang }         from '@/app/providers/LanguageProvider';
-import { Card }            from '@/shared/components/ui/Card';
-import { Button }          from '@/shared/components/ui/Button';
-import { Combobox }        from '@/shared/components/form/Combobox';
+import { useLang } from '@/app/providers/LanguageProvider';
+import { Card } from '@/shared/components/ui/Card';
+import { Button } from '@/shared/components/ui/Button';
+import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
-import { ROUTES }          from '@/app/router/routes';
+import { ROUTES } from '@/app/router/routes';
 import { extractApiError } from '@/shared/utils/error.utils';
-import { useProjectDetails }   from '../hooks/useProjectDetails';
+import { useProjectDetails } from '../hooks/useProjectDetails';
 import { usePmProjectLookups } from '../hooks/usePmProjectLookups';
+import { usePmTaskLookups } from '../hooks/usePmTaskLookups';
 import { pmProjectsApi } from '../api/project.api';
 import { useProjectTasks } from '../../tasks/store/taskStore';
-import { KanbanBoard }     from '../components/KanbanBoard';
-import { ProgressLogTab }     from '../components/ProgressLogTab';import { ProjectSettingsTab } from '../components/ProjectSettingsTab';
-import { ProjectTeamTab }     from '../components/ProjectTeamTab';
+import { KanbanBoard } from '../components/KanbanBoard';
+import { ProgressLogTab } from '../components/ProgressLogTab'; import { ProjectSettingsTab } from '../components/ProjectSettingsTab';
+import { ProjectTeamTab } from '../components/ProjectTeamTab';
 import { ProjectMessagesTab } from '../components/ProjectMessagesTab';
 import { ProjectClientUpdatesTab } from '../components/ProjectClientUpdatesTab';
 import { ProjectDetailsSkeleton } from '../components/ProjectDetailsSkeleton';
@@ -29,24 +30,24 @@ import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings';
 
 const TABS: { key: TabKey; ar: string; en: string }[] = [
-  { key: 'tasks',    ar: 'المهام',          en: 'Tasks'          },
-  { key: 'client',   ar: 'متطلبات العميل',  en: 'Client Updates' },
-  { key: 'messages', ar: 'رسائل المشروع',   en: 'Messages'       },
-  { key: 'team',     ar: 'فريق العمل',      en: 'Team'           },
-  { key: 'progress', ar: 'سجل الإنجاز',     en: 'Progress Log'   },
-  { key: 'settings', ar: 'إعدادات المشروع', en: 'Settings'       },
+  { key: 'tasks', ar: 'المهام', en: 'Tasks' },
+  { key: 'client', ar: 'متطلبات العميل', en: 'Client Updates' },
+  { key: 'messages', ar: 'رسائل المشروع', en: 'Messages' },
+  { key: 'team', ar: 'فريق العمل', en: 'Team' },
+  { key: 'progress', ar: 'سجل الإنجاز', en: 'Progress Log' },
+  { key: 'settings', ar: 'إعدادات المشروع', en: 'Settings' },
 ];
 
 export function ProjectDetailsPage() {
-  const { lang }  = useLang();
-  const isAr      = lang === 'ar';
-  const navigate  = useNavigate();
-  const { id }    = useParams<{ id: string }>();
+  const { lang } = useLang();
+  const isAr = lang === 'ar';
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const queryClient    = useQueryClient();
+  const queryClient = useQueryClient();
 
   const { project, isLoading, isError, refetch } = useProjectDetails(id);
-  const { statuses }                              = usePmProjectLookups();
+  const { statuses } = usePmProjectLookups();
   const canAddTask = usePermission('edit-pm-tasks');
   const canEditProject = usePermission('edit-pm-project');
   const projectKey = project
@@ -57,12 +58,12 @@ export function ProjectDetailsPage() {
   const tabParam = searchParams.get('tab');
   const initialTab: TabKey =
     tabParam === 'messages' ? 'messages'
-    : tabParam === 'settings' ? 'settings'
-    : tabParam === 'team' ? 'team'
-    : tabParam === 'client' || tabParam === 'client-updates' ? 'client'
-    : tabParam === 'progress' ? 'progress'
-    : 'tasks';
-  const [activeTab,      setActiveTab]      = useState<TabKey>(initialTab);
+      : tabParam === 'settings' ? 'settings'
+        : tabParam === 'team' ? 'team'
+          : tabParam === 'client' || tabParam === 'client-updates' ? 'client'
+            : tabParam === 'progress' ? 'progress'
+              : 'tasks';
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
 
   useEffect(() => {
     if (tabParam === 'messages') setActiveTab('messages');
@@ -72,7 +73,7 @@ export function ProjectDetailsPage() {
     else if (tabParam === 'progress') setActiveTab('progress');
   }, [tabParam]);
   const [changingStatus, setChangingStatus] = useState(false);
-  const [publishing, setPublishing]         = useState(false);
+  const [publishing, setPublishing] = useState(false);
   if (isLoading) return <ProjectDetailsSkeleton />;
 
   if (isError || !project) {
@@ -81,10 +82,12 @@ export function ProjectDetailsPage() {
   }
 
   async function handleStatusChange(status: string) {
-    if (status === project!.status || changingStatus) return;
+    const statusId = Number(status);
+    const current = project!.statusId != null ? String(project!.statusId) : project!.status;
+    if (!Number.isFinite(statusId) || status === current || changingStatus) return;
     setChangingStatus(true);
     try {
-      await pmProjectsApi.updateStatus(projectKey, status);
+      await pmProjectsApi.updateStatus(projectKey, statusId);
       toast.success(isAr ? 'تم تحديث حالة المشروع' : 'Project status updated');
       await refetch();
       queryClient.invalidateQueries({ queryKey: ['pm-project-settings', projectKey] });
@@ -100,7 +103,7 @@ export function ProjectDetailsPage() {
     setPublishing(true);
     try {
       await pmProjectsApi.updateSettings(projectKey, {
-        name:    project!.name,
+        name: project!.name,
         isDraft: false,
       });
       toast.success(isAr ? 'تم نشر المشروع' : 'Project published');
@@ -116,14 +119,20 @@ export function ProjectDetailsPage() {
   }
 
   const statusItems: ComboboxItem[] = statuses.map(s => ({
-    id:    s.value,
+    id: s.value,
     label: translateProjectLookup(s.value, s.label, isAr),
   }));
 
   // No progress/task-count fields on the project API yet — computed from the local Kanban tasks for now.
-  const tasksTotal     = tasks.length;
-  const tasksCompleted = tasks.filter(t => t.status === 'completed').length;
-  const progress       = tasksTotal ? Math.round((tasksCompleted / tasksTotal) * 100) : 0;
+  const { statuses: taskStatuses } = usePmTaskLookups();
+  const completedStatusIds = new Set(
+    taskStatuses.filter(s => s.marksCompleted).map(s => s.value),
+  );
+  const tasksTotal = tasks.length;
+  const tasksCompleted = tasks.filter(t =>
+    completedStatusIds.has(t.status) || t.status === 'completed',
+  ).length;
+  const progress = tasksTotal ? Math.round((tasksCompleted / tasksTotal) * 100) : 0;
 
   const BackIcon = isAr ? ArrowRight : ArrowLeft;
 
@@ -135,7 +144,7 @@ export function ProjectDetailsPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            onClick={() => navigate(ROUTES.PROJECT_MANAGER.INFO(String(project.id)))}            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600
+            onClick={() => navigate(ROUTES.PROJECT_MANAGER.INFO(String(project.id)))} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600
                        bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200
                        hover:border-[#A0CD39] hover:text-[#709028] dark:hover:text-[#A0CD39] transition-colors"
           >
@@ -193,7 +202,7 @@ export function ProjectDetailsPage() {
           <div className="w-40">
             <Combobox
               items={statusItems}
-              value={project.status}
+              value={project.statusId != null ? String(project.statusId) : project.status}
               onChange={handleStatusChange}
               disabled={changingStatus}
               searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
@@ -293,7 +302,7 @@ export function ProjectDetailsPage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'tasks'    && (
+      {activeTab === 'tasks' && (
         <KanbanBoard
           projectId={projectKey}
           tasks={tasks}
@@ -302,12 +311,12 @@ export function ProjectDetailsPage() {
           teamMembers={project.teamMembers}
         />
       )}
-      {activeTab === 'client'   && <ProjectClientUpdatesTab projectId={projectKey} isAr={isAr} />}
-      {activeTab === 'team'     && <ProjectTeamTab projectId={projectKey} isAr={isAr} />}
+      {activeTab === 'client' && <ProjectClientUpdatesTab projectId={projectKey} isAr={isAr} />}
+      {activeTab === 'team' && <ProjectTeamTab projectId={projectKey} isAr={isAr} />}
       {activeTab === 'progress' && <ProgressLogTab projectId={projectKey} tasks={tasks} isAr={isAr} />}
       {activeTab === 'settings' && (
         <ProjectSettingsTab project={project} isAr={isAr} onPublished={refetch} />
       )}
       {activeTab === 'messages' && <ProjectMessagesTab projectId={projectKey} isAr={isAr} />}
-    </div>  );
+    </div>);
 }

@@ -1,14 +1,14 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import { Card }   from '@/shared/components/ui/Card';
+import { Card } from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui/Button';
-import { Badge }  from '@/shared/components/ui/Badge';
+import { Badge } from '@/shared/components/ui/Badge';
 import type { ApiSeoProjectStatus } from '../types/seoProjectStatus.types';
 
 interface Props {
-  status:   ApiSeoProjectStatus;
-  isAr:     boolean;
+  status: ApiSeoProjectStatus;
+  isAr: boolean;
   isLocked: boolean;
-  onEdit:   () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }
 
@@ -42,7 +42,7 @@ export function SeoProjectStatusCard({ status, isAr, isLocked, onEdit, onDelete 
           {isAr ? status.labelAr : status.labelEn}
         </h3>
         <p className="text-xs text-gray-400 dark:text-gray-500 font-mono break-all mt-0.5">
-          {status.key}
+          {status.id}
         </p>
         <div className="flex items-center justify-end gap-1.5 mt-2 flex-wrap">
           {status.isDefault && <Badge label={isAr ? 'افتراضية' : 'Default'} variant="gray" />}

@@ -294,14 +294,13 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
   /* ── Status change (Info tab) ── */
   const [changingStatus, setChangingStatus] = useState(false);
   async function changeStatus(status: string) {
-    if (!task || !taskKey || status === task.status || changingStatus) return;
+    const statusId = Number(status);
+    const currentId = task?.statusId != null ? String(task.statusId) : task?.status;
+    if (!task || !taskKey || !Number.isFinite(statusId) || status === currentId || changingStatus) return;
     setChangingStatus(true);
     try {
-      // Not the dedicated PATCH .../status sub-route — per the backend's own
-      // Postman collection, that route is only ever exercised with an
-      // employee token; a manager (admin token) instead goes through the
-      // general task-update endpoint with `status` in the body.
-      await pmTaskApi.update(projectId, taskKey, { status });
+      // Manager tokens use the general task-update endpoint with status_id.
+      await pmTaskApi.update(projectId, taskKey, { status_id: statusId });
       invalidateProjectTasks();
       invalidateDetail();
       queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });

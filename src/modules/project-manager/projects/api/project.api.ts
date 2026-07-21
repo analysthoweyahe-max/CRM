@@ -59,8 +59,8 @@ export const pmProjectsApi = {
     return http.put<PmProjectDetailsApiResponse>(`/v1/pm/projects/${id}`, payload);
   },
 
-  updateStatus(id: number | string, status: string) {
-    return http.patch<PmProjectApiResponse>(`/v1/pm/projects/${id}/status`, { status });
+  updateStatus(id: number | string, statusId: number) {
+    return http.patch<PmProjectApiResponse>(`/v1/pm/projects/${id}/status`, { status_id: statusId });
   },
 
   remove(id: number | string) {
@@ -103,7 +103,9 @@ export const pmProjectLookupsApi = {
     return http.get<PmAvailableMembersApiResponse>('/v1/pm/projects/lookups/employees', { params });
   },
   taskStatuses() {
-    return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/task-statuses');
+    return http.get<PmLookupApiResponse | { status: string; message: string; data: unknown }>(
+      '/v1/pm/task-statuses',
+    );
   },
   taskPriorities() {
     return http.get<PmLookupApiResponse>('/v1/pm/projects/lookups/task-priorities');

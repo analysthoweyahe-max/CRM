@@ -1,4 +1,5 @@
 import { Calendar, ImageIcon, Paperclip, Trash2 } from 'lucide-react';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { formatDateShort } from '@/shared/utils/date.utils';
 import type { ClientIssue } from '../types/projectClientIssue.types';
 
@@ -10,8 +11,10 @@ interface Props {
 }
 
 export function ClientIssueKanbanCard({ issue, isAr, onOpen, onDelete }: Props) {
-  const hasImage = !!issue.imageAttachment;
-  const hasFile  = !!issue.fileAttachment;
+  const imageCount = issue.imageAttachments?.length ?? 0;
+  const fileCount  = issue.fileAttachments?.length ?? 0;
+  const links      = issue.links ?? [];
+  const hasMedia   = imageCount > 0 || fileCount > 0;
 
   return (
     <div
@@ -46,10 +49,26 @@ export function ClientIssueKanbanCard({ issue, isAr, onOpen, onDelete }: Props) 
         </p>
       )}
 
-      {(hasImage || hasFile) && (
-        <div className="flex items-center gap-2 mb-2 text-gray-400">
-          {hasImage && <ImageIcon size={13} />}
-          {hasFile && <Paperclip size={13} />}
+      {links.length > 0 && (
+        <div className="mb-2">
+          <ImportantLinksDisplay links={links} isAr={isAr} compact />
+        </div>
+      )}
+
+      {hasMedia && (
+        <div className="flex items-center gap-3 mb-2 text-gray-400 text-[11px]">
+          {imageCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <ImageIcon size={13} />
+              {imageCount > 1 ? imageCount : null}
+            </span>
+          )}
+          {fileCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Paperclip size={13} />
+              {fileCount > 1 ? fileCount : null}
+            </span>
+          )}
         </div>
       )}
 

@@ -27,21 +27,27 @@ export interface ClientIssueUser {
   name: string;
 }
 
+/**
+ * Client issue model aligned with the API contract.
+ * Attachments and links are always arrays after normalization.
+ * Legacy singular attachment fields are accepted only as a fallback in the normalizer.
+ */
 export interface ClientIssue {
-  id:              number;
-  uuid?:           string;
-  problem:         string;
-  impact:          string;
-  solution:        string | null;
-  status:          ClientIssueStatus;
-  statusLabel?:    string;
-  imageAttachment: ClientIssueAttachment | null;
-  fileAttachment:  ClientIssueAttachment | null;
-  createdBy:       ClientIssueUser;
-  createdAt:       string;
-  updatedAt:       string;
-  canEdit?:        boolean;
-  canDelete?:      boolean;
+  id:               number;
+  uuid?:            string;
+  problem:          string;
+  impact:           string;
+  solution:         string | null;
+  status:           ClientIssueStatus;
+  statusLabel?:     string;
+  imageAttachments: ClientIssueAttachment[];
+  fileAttachments:  ClientIssueAttachment[];
+  links:            string[];
+  createdBy:        ClientIssueUser;
+  createdAt:        string;
+  updatedAt:        string;
+  canEdit?:         boolean;
+  canDelete?:       boolean;
   canUpdateStatus?: boolean;
 }
 
@@ -75,12 +81,19 @@ export interface CreateClientIssuePayload {
   impact:   string;
   solution?: string | null;
   status?:  ClientIssueStatus;
+  /** Optional. Absolute http(s) URLs only. Send [] for none. */
+  links?:   string[];
 }
 
 export interface UpdateClientIssuePayload {
   problem?:  string;
   impact?:   string;
   solution?: string | null;
+  /**
+   * Optional. When sent, replaces the full links list.
+   * Omit to leave existing links unchanged. Send [] to clear.
+   */
+  links?:    string[];
 }
 
 export interface UpdateClientIssueStatusPayload {

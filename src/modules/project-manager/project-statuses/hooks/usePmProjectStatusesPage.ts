@@ -7,8 +7,7 @@ import {
 import type { ApiPmProjectStatus, CreatePmProjectStatusPayload } from '../types/pmProjectStatus.types';
 
 function toUpdatePayload(payload: CreatePmProjectStatusPayload) {
-  const { key: _key, ...rest } = payload;
-  return rest;
+  return payload;
 }
 
 export function usePmProjectStatusesPage(isAr: boolean) {

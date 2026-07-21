@@ -2,9 +2,11 @@ import {
   CLIENT_ISSUE_STATUS_COLORS,
   CLIENT_ISSUE_STATUS_KEYS,
 } from '../constants/clientIssueStatuses';
+import { normalizeImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import type {
   ClientIssue,
+  ClientIssueAttachment,
   ClientIssueCapabilities,
   ClientIssueListPayload,
   ClientIssueStatus,
@@ -69,6 +71,103 @@ function normalizeCapabilities(
   };
 }
 
+function normalizeAttachment(
+  raw: unknown,
+  fallbackType: 'image' | 'file',
+): ClientIssueAttachment | null {
+  const obj = asRecord(raw);
+  if (!obj || obj.id == null) return null;
+  const url = String(obj.url ?? '');
+  if (!url) return null;
+  const typeRaw = obj.type;
+  const type: 'image' | 'file' =
+    typeRaw === 'image' || typeRaw === 'file' ? typeRaw : fallbackType;
+  return {
+    id:       Number(obj.id),
+    name:     String(obj.name ?? obj.file_name ?? obj.fileName ?? 'attachment'),
+    url,
+    mimeType: typeof obj.mimeType === 'string'
+      ? obj.mimeType
+      : typeof obj.mime_type === 'string'
+        ? obj.mime_type
+        : undefined,
+    type,
+  };
+}
+
+/**
+ * Prefer plural array when present (including empty `[]`).
+ * Fallback only when plural is missing: singular ? [singular] : []
+ * Matches: imageAttachments ?? (imageAttachment ? [imageAttachment] : [])
+ */
+function normalizeAttachments(
+  plural: unknown,
+  singular: unknown,
+  fallbackType: 'image' | 'file',
+): ClientIssueAttachment[] {
+  const list: unknown[] = Array.isArray(plural)
+    ? plural
+    : plural == null && singular != null
+      ? [singular]
+      : plural != null && !Array.isArray(plural)
+        ? [plural]
+        : [];
+
+  const seen = new Set<number>();
+  const out: ClientIssueAttachment[] = [];
+  for (const item of list) {
+    const att = normalizeAttachment(item, fallbackType);
+    if (!att || seen.has(att.id)) continue;
+    seen.add(att.id);
+    out.push(att);
+  }
+  return out;
+}
+
+function linkFromUnknown(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    for (const key of ['url', 'link', 'href', 'value'] as const) {
+      const candidate = record[key];
+      if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+    }
+  }
+  return null;
+}
+
+function coerceLinkList(value: unknown): string[] {
+  if (value == null) return [];
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[')) {
+      try {
+        return coerceLinkList(JSON.parse(trimmed));
+      } catch {
+        return [trimmed];
+      }
+    }
+    return [trimmed];
+  }
+  if (Array.isArray(value)) {
+    return value.map(linkFromUnknown).filter((v): v is string => !!v);
+  }
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>)
+      .map(linkFromUnknown)
+      .filter((v): v is string => !!v);
+  }
+  return [];
+}
+
+function parseIssueLinks(obj: Record<string, unknown>): string[] {
+  return normalizeImportantLinks(coerceLinkList(obj.links));
+}
+
 function normalizeIssue(raw: unknown): ClientIssue | null {
   const obj = asRecord(raw);
   if (!obj || obj.id == null) return null;
@@ -87,8 +186,17 @@ function normalizeIssue(raw: unknown): ClientIssue | null {
       : typeof obj.status_label === 'string'
         ? obj.status_label
         : undefined,
-    imageAttachment: (obj.imageAttachment ?? obj.image_attachment ?? null) as ClientIssue['imageAttachment'],
-    fileAttachment:  (obj.fileAttachment ?? obj.file_attachment ?? null) as ClientIssue['fileAttachment'],
+    imageAttachments: normalizeAttachments(
+      obj.imageAttachments ?? obj.image_attachments,
+      obj.imageAttachment ?? obj.image_attachment,
+      'image',
+    ),
+    fileAttachments: normalizeAttachments(
+      obj.fileAttachments ?? obj.file_attachments,
+      obj.fileAttachment ?? obj.file_attachment,
+      'file',
+    ),
+    links: parseIssueLinks(obj),
     createdBy: {
       id:   String(createdBy?.id ?? ''),
       name: String(createdBy?.name ?? ''),
@@ -99,6 +207,11 @@ function normalizeIssue(raw: unknown): ClientIssue | null {
     canDelete:        readBool(obj.canDelete, obj.can_delete),
     canUpdateStatus:  readBool(obj.canUpdateStatus, obj.can_update_status),
   };
+}
+
+/** Normalize a single issue from create/update/upload API responses. */
+export function normalizeClientIssue(raw: unknown): ClientIssue | null {
+  return normalizeIssue(raw);
 }
 
 /**

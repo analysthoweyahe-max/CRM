@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import { ImageIcon, Paperclip } from 'lucide-react';
+import { ImageIcon, Paperclip, X } from 'lucide-react';
 import { Modal } from '@/shared/components/ui/Modal';
 import { Button } from '@/shared/components/ui/Button';
 import { FormField, inputCls } from '@/shared/components/form/FormField';
+import { ArrayInput } from '@/shared/components/form/ArrayInput';
+import {
+  normalizeImportantLinks,
+  validateImportantLinks,
+} from '@/shared/utils/importantLinks.utils';
 import type { ClientIssue, CreateClientIssuePayload } from '../types/projectClientIssue.types';
 
 interface Props {
   open:       boolean;
   onClose:    () => void;
-  onSubmit:   (payload: CreateClientIssuePayload, image?: File | null, file?: File | null) => Promise<void>;
+  onSubmit:   (
+    payload: CreateClientIssuePayload,
+    images?: File[],
+    files?: File[],
+  ) => Promise<void>;
   initial?:   ClientIssue | null;
   isLoading:  boolean;
   isAr:       boolean;
@@ -20,8 +29,10 @@ export function ClientIssueFormModal({
   open, onClose, onSubmit, initial, isLoading, isAr,
 }: Props) {
   const [form, setForm] = useState(EMPTY);
-  const [image, setImage] = useState<File | null>(null);
-  const [file, setFile]   = useState<File | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [files, setFiles]   = useState<File[]>([]);
+  const [links, setLinks]   = useState<string[]>([]);
+  const [linksError, setLinksError] = useState<string | undefined>();
   const imageRef = useRef<HTMLInputElement>(null);
   const fileRef  = useRef<HTMLInputElement>(null);
 
@@ -30,19 +41,30 @@ export function ClientIssueFormModal({
     setForm(initial
       ? { problem: initial.problem, impact: initial.impact, solution: initial.solution ?? '' }
       : EMPTY);
-    setImage(null);
-    setFile(null);
+    setImages([]);
+    setFiles([]);
+    setLinks(initial?.links?.length ? [...initial.links] : []);
+    setLinksError(undefined);
   }, [open, initial]);
 
   const isValid = !!(form.problem.trim() && form.impact.trim());
 
   async function handleSubmit() {
     if (!isValid) return;
+    const linksErr = validateImportantLinks(links, isAr);
+    if (linksErr) {
+      setLinksError(linksErr);
+      return;
+    }
+    setLinksError(undefined);
+    const cleanedLinks = normalizeImportantLinks(links);
+    // Always send links from this form: [] clears on update; create accepts optional array.
     await onSubmit({
       problem:  form.problem.trim(),
       impact:   form.impact.trim(),
       solution: form.solution.trim() || null,
-    }, image, file);
+      links:    cleanedLinks,
+    }, images, files);
     onClose();
   }
 
@@ -124,12 +146,50 @@ export function ClientIssueFormModal({
             </tr>
             <tr>
               <td className="py-3 px-3 align-top font-medium text-gray-700 dark:text-gray-300">
-                {isAr ? 'إرفاق صورة' : 'Attach Image'}
+                {isAr ? 'الروابط' : 'Links'}
               </td>
               <td className="py-3 px-3">
+                <FormField label="" error={linksError}>
+                  <ArrayInput
+                    values={links}
+                    type="url"
+                    placeholder="https://..."
+                    addLabel={isAr ? 'إضافة رابط' : 'Add link'}
+                    onAdd={() => setLinks(prev => [...prev, ''])}
+                    onUpdate={(i, v) => {
+                      setLinks(prev => {
+                        const next = [...prev];
+                        next[i] = v;
+                        return next;
+                      });
+                      setLinksError(undefined);
+                    }}
+                    onRemove={i => setLinks(prev => prev.filter((_, idx) => idx !== i))}
+                    minItems={0}
+                    dir="ltr"
+                    error={!!linksError}
+                  />
+                </FormField>
+              </td>
+            </tr>
+            <tr>
+              <td className="py-3 px-3 align-top font-medium text-gray-700 dark:text-gray-300">
+                {isAr ? 'إرفاق صور' : 'Attach Images'}
+              </td>
+              <td className="py-3 px-3 space-y-2">
                 <FormField label="">
-                  <input ref={imageRef} type="file" accept="image/*" className="hidden"
-                    onChange={e => setImage(e.target.files?.[0] ?? null)} />
+                  <input
+                    ref={imageRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={e => {
+                      const selected = Array.from(e.target.files ?? []);
+                      if (selected.length) setImages(prev => [...prev, ...selected]);
+                      e.target.value = '';
+                    }}
+                  />
                   <Button
                     type="button"
                     variant="secondary"
@@ -137,19 +197,47 @@ export function ClientIssueFormModal({
                     startIcon={<ImageIcon size={14} />}
                     onClick={() => imageRef.current?.click()}
                   >
-                    {image?.name ?? (isAr ? 'اختر صورة' : 'Choose image')}
+                    {isAr ? 'اختر صوراً' : 'Choose images'}
                   </Button>
                 </FormField>
+                {images.length > 0 && (
+                  <ul className="space-y-1">
+                    {images.map((file, i) => (
+                      <li key={`${file.name}-${i}`}
+                        className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <ImageIcon size={12} className="shrink-0 text-gray-400" />
+                        <span className="truncate flex-1" dir="ltr">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
+                          className="text-gray-400 hover:text-red-500 p-0.5"
+                          aria-label={isAr ? 'إزالة' : 'Remove'}
+                        >
+                          <X size={12} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </td>
             </tr>
             <tr>
               <td className="py-3 px-3 align-top font-medium text-gray-700 dark:text-gray-300">
-                {isAr ? 'إرفاق ملف' : 'Attach File'}
+                {isAr ? 'إرفاق ملفات' : 'Attach Files'}
               </td>
-              <td className="py-3 px-3">
+              <td className="py-3 px-3 space-y-2">
                 <FormField label="">
-                  <input ref={fileRef} type="file" className="hidden"
-                    onChange={e => setFile(e.target.files?.[0] ?? null)} />
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={e => {
+                      const selected = Array.from(e.target.files ?? []);
+                      if (selected.length) setFiles(prev => [...prev, ...selected]);
+                      e.target.value = '';
+                    }}
+                  />
                   <Button
                     type="button"
                     variant="secondary"
@@ -157,9 +245,28 @@ export function ClientIssueFormModal({
                     startIcon={<Paperclip size={14} />}
                     onClick={() => fileRef.current?.click()}
                   >
-                    {file?.name ?? (isAr ? 'اختر ملفاً' : 'Choose file')}
+                    {isAr ? 'اختر ملفات' : 'Choose files'}
                   </Button>
                 </FormField>
+                {files.length > 0 && (
+                  <ul className="space-y-1">
+                    {files.map((file, i) => (
+                      <li key={`${file.name}-${i}`}
+                        className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <Paperclip size={12} className="shrink-0 text-gray-400" />
+                        <span className="truncate flex-1" dir="ltr">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))}
+                          className="text-gray-400 hover:text-red-500 p-0.5"
+                          aria-label={isAr ? 'إزالة' : 'Remove'}
+                        >
+                          <X size={12} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </td>
             </tr>
           </tbody>

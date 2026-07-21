@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import {
+  projectStatusValue,
+  type RawProjectStatusItem,
+} from '@/shared/utils/projectStatusLookups.utils';
 import { campaignApi } from '../api/campaign.api';
 import type { SeoTaskStatusLookupItem } from '../api/campaign.api';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
@@ -9,26 +13,27 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
  *  canonical known-phase list used across SEO task create/edit forms and
  *  Kanban phase columns. */
 export const SEO_TASK_PHASE_ITEMS: ComboboxItem[] = [
-  { id: 'keyword_research',     label: 'بحث الكلمات المفتاحية' },
-  { id: 'on_page',              label: 'داخل الصفحة'            },
-  { id: 'technical',            label: 'تقنية'                  },
-  { id: 'content',              label: 'محتوى'                  },
-  { id: 'off_page',             label: 'خارج الصفحة'            },
-  { id: 'link_building',        label: 'بناء روابط'             },
-  { id: 'reporting',            label: 'تقارير'                 },
-  { id: 'content_optimization', label: 'تحسين المحتوى'          },
-  { id: 'technical_seo',        label: 'تحسين تقني'             },
-  { id: 'competitor_analysis',  label: 'تحليل المنافسين'         },
-  { id: 'on_page_seo',          label: 'تحسين على الصفحة'        },
-  { id: 'off_page_seo',         label: 'تحسين خارج الصفحة'       },
+  { id: 'keyword_research', label: 'بحث الكلمات المفتاحية' },
+  { id: 'on_page', label: 'داخل الصفحة' },
+  { id: 'technical', label: 'تقنية' },
+  { id: 'content', label: 'محتوى' },
+  { id: 'off_page', label: 'خارج الصفحة' },
+  { id: 'link_building', label: 'بناء روابط' },
+  { id: 'reporting', label: 'تقارير' },
+  { id: 'content_optimization', label: 'تحسين المحتوى' },
+  { id: 'technical_seo', label: 'تحسين تقني' },
+  { id: 'competitor_analysis', label: 'تحليل المنافسين' },
+  { id: 'on_page_seo', label: 'تحسين على الصفحة' },
+  { id: 'off_page_seo', label: 'تحسين خارج الصفحة' },
 ];
 
 export interface SeoTaskStatusOption {
-  key:            string;
-  label:          string;
-  color:          string;
-  sortOrder:      number;
-  isActive:       boolean;
+  /** Stringified numeric status id — used for kanban columns and status_id writes. */
+  key: string;
+  label: string;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
   marksCompleted: boolean;
 }
 
@@ -45,43 +50,42 @@ export function badgeVariantForStatus(key: string, marksCompleted: boolean): Seo
 }
 
 function normalizeStatus(item: SeoTaskStatusLookupItem, index: number, isAr: boolean): SeoTaskStatusOption {
-  const key = item.key ?? item.value ?? '';
+  const key = projectStatusValue(item as RawProjectStatusItem);
   const label = isAr
     ? (item.labelAr || item.label || key)
     : (item.labelEn || item.label || key);
   return {
     key,
     label,
-    color:          item.color ?? colorForKey(key),
-    sortOrder:      item.sortOrder ?? index,
-    isActive:       item.isActive ?? true,
-    marksCompleted: item.marksCompleted ?? (key === 'completed' || key === 'done'),
+    color: item.color ?? colorForKey(key),
+    sortOrder: item.sortOrder ?? index,
+    isActive: item.isActive ?? true,
+    marksCompleted: item.marksCompleted ?? false,
   };
 }
 
 /** Project-scoped SEO task-status/priority lookups (manager view), mirroring
- *  the PM module's usePmTaskLookups. Status shape is unverified against the
- *  real backend, so every extra field is optional with a sane fallback.
+ *  the PM module's usePmTaskLookups.
  *  Pass `enabled: false` to skip fetching for roles that never need it. */
 export function useSeoTaskLookups(isAr: boolean, options: { enabled?: boolean } = {}) {
   const { enabled = true } = options;
 
   const statuses = useQuery({
     queryKey: ['seo-task-lookups', 'statuses'],
-    queryFn:  () => campaignApi.getTaskStatuses().then(r => r.data.data ?? []),
+    queryFn: () => campaignApi.getTaskStatuses().then(r => r.data.data ?? []),
     staleTime: 5 * 60 * 1000,
     enabled,
   });
 
   const priorities = useQuery({
     queryKey: ['seo-task-lookups', 'priorities'],
-    queryFn:  () => campaignApi.getTaskPriorities().then(r => r.data.data ?? []),
+    queryFn: () => campaignApi.getTaskPriorities().then(r => r.data.data ?? []),
     staleTime: 5 * 60 * 1000,
     enabled,
   });
 
   const priorityItems = (priorities.data ?? []).map(p => ({
-    id:    p.value,
+    id: p.value,
     label: translateProjectLookup(p.value, p.label, isAr),
   }));
 

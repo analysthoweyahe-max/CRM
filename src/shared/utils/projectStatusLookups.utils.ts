@@ -2,52 +2,52 @@ import type { StatusLookupItem } from '@/shared/modules/my-projects/types/myProj
 
 /** Raw shape from GET /v1/{pm|seo}/project-statuses or legacy lookups/statuses. */
 export interface RawProjectStatusItem {
-  id?:             number | string | null;
-  key?:            string | null;
-  value?:          string | null;
-  label?:          string | null;
-  labelEn?:        string | null;
-  label_en?:       string | null;
-  labelAr?:        string | null;
-  label_ar?:       string | null;
-  color?:          string | null;
-  sortOrder?:      number | null;
-  sort_order?:     number | null;
-  isActive?:       boolean | null;
-  is_active?:      boolean | null;
+  id?: number | string | null;
+  key?: string | null;
+  value?: string | null;
+  label?: string | null;
+  labelEn?: string | null;
+  label_en?: string | null;
+  labelAr?: string | null;
+  label_ar?: string | null;
+  color?: string | null;
+  sortOrder?: number | null;
+  sort_order?: number | null;
+  isActive?: boolean | null;
+  is_active?: boolean | null;
   marksCompleted?: boolean | null;
   marks_completed?: boolean | null;
 }
 
 export interface ProjectStatusOption extends StatusLookupItem {
-  color?:          string;
-  sortOrder?:      number;
-  isActive?:       boolean;
+  color?: string;
+  sortOrder?: number;
+  isActive?: boolean;
   marksCompleted?: boolean;
 }
 
 function readDisplayLabel(raw: RawProjectStatusItem): string {
-  const key = projectStatusKey(raw);
-  return String(raw.label ?? raw.labelEn ?? raw.label_en ?? key);
+  const value = projectStatusValue(raw);
+  return String(raw.label ?? raw.labelEn ?? raw.label_en ?? value);
 }
 
 function readLabelAr(raw: RawProjectStatusItem): string | null {
   return raw.labelAr ?? raw.label_ar ?? null;
 }
 
-export function projectStatusKey(raw: RawProjectStatusItem): string {
-  return String(raw.key ?? raw.value ?? '');
+export function projectStatusValue(raw: RawProjectStatusItem): string {
+  return String(raw.id ?? raw.key ?? raw.value ?? '');
 }
 
 export function normalizeProjectStatusItem(raw: RawProjectStatusItem, index = 0): ProjectStatusOption {
-  const value = projectStatusKey(raw);
+  const value = projectStatusValue(raw);
   return {
     value,
-    label:          readDisplayLabel(raw) || value,
-    labelAr:        readLabelAr(raw),
-    color:          raw.color ?? undefined,
-    sortOrder:      raw.sortOrder ?? raw.sort_order ?? index,
-    isActive:       raw.isActive ?? raw.is_active ?? true,
+    label: readDisplayLabel(raw) || value,
+    labelAr: readLabelAr(raw),
+    color: raw.color ?? undefined,
+    sortOrder: raw.sortOrder ?? raw.sort_order ?? index,
+    isActive: raw.isActive ?? raw.is_active ?? true,
     marksCompleted: raw.marksCompleted ?? raw.marks_completed ?? (value === 'completed'),
   };
 }

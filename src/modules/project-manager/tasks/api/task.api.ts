@@ -5,40 +5,40 @@ import { appendImportantLinks } from '@/shared/utils/importantLinks.utils';
 
 /** POST /v1/pm/projects/{id}/tasks — accepts camelCase (preferred) or snake_case. */
 export interface PmCreateTaskPayload {
-  title:            string;
-  description?:     string;
-  employeeId?:      string;
+  title: string;
+  description?: string;
+  employeeId?: string;
   /** Snake_case alias — some backends only read employee_id. */
-  employee_id?:     string;
-  priority?:        string;
-  dueDate?:         string;
-  estimatedHours?:  number;
+  employee_id?: string;
+  priority?: string;
+  dueDate?: string;
+  estimatedHours?: number;
   estimatedMinutes?: number;
-  phaseId?:         number;
-  status?:          string;
-  importantLinks?:  string[];
+  phaseId?: number;
+  status_id?: number;
+  importantLinks?: string[];
 }
 
 export interface PmCreateSelfTaskPayload {
-  title:            string;
-  description?:     string;
-  priority?:        string;
-  dueDate?:         string;
-  estimatedHours?:  number;
-  phaseId?:         number;
-  file?:            File;
-  importantLinks?:  string[];
+  title: string;
+  description?: string;
+  priority?: string;
+  dueDate?: string;
+  estimatedHours?: number;
+  phaseId?: number;
+  file?: File;
+  importantLinks?: string[];
 }
 
 function buildSelfTaskFormData(payload: PmCreateSelfTaskPayload): FormData {
   const fd = new FormData();
   fd.append('title', payload.title);
-  if (payload.description)    fd.append('description', payload.description);
-  if (payload.priority)       fd.append('priority', payload.priority);
-  if (payload.dueDate)        fd.append('dueDate', payload.dueDate);
+  if (payload.description) fd.append('description', payload.description);
+  if (payload.priority) fd.append('priority', payload.priority);
+  if (payload.dueDate) fd.append('dueDate', payload.dueDate);
   if (payload.estimatedHours != null) fd.append('estimatedHours', String(payload.estimatedHours));
-  if (payload.phaseId != null)        fd.append('phaseId', String(payload.phaseId));
-  if (payload.file)           fd.append('file', payload.file);
+  if (payload.phaseId != null) fd.append('phaseId', String(payload.phaseId));
+  if (payload.file) fd.append('file', payload.file);
   appendImportantLinks(fd, payload.importantLinks);
   return fd;
 }
@@ -49,183 +49,185 @@ export function normalizePmTaskPriority(value: string): string {
 }
 
 export interface PmUpdateTaskPayload {
-  title?:           string;
-  description?:     string;
-  employeeId?:      string;
-  employee_id?:     string;
-  priority?:        string;
-  dueDate?:         string;
-  due_date?:        string;
-  estimatedHours?:  number;
+  title?: string;
+  description?: string;
+  employeeId?: string;
+  employee_id?: string;
+  priority?: string;
+  dueDate?: string;
+  due_date?: string;
+  estimatedHours?: number;
   estimated_hours?: number;
   estimatedMinutes?: number;
   estimated_minutes?: number;
-  phaseId?:         number;
-  phase_id?:        number;
-  status?:          string;
-  importantLinks?:  string[];
+  phaseId?: number;
+  phase_id?: number;
+  importantLinks?: string[];
+  status_id?: number;
 }
 
 export interface PmTaskApiResponse {
   success?: boolean;
-  status?:  string;
-  message:  string;
-  data:     {
-    id:         number;
-    uuid?:      string;
+  status?: string;
+  message: string;
+  data: {
+    id: number;
+    uuid?: string;
     taskNumber?: number;
-    title?:     string;
-    status?:    string;
-    priority?:  string;
-    assignee?:  { id: string; name: string };
+    title?: string;
+    status?: string;
+    priority?: string;
+    assignee?: { id: string; name: string };
   };
 }
 
 export interface PmTimeLogPayload {
-  work_date:  string;
+  work_date: string;
   started_at: string;
-  ended_at:   string;
-  notes?:     string;
+  ended_at: string;
+  notes?: string;
 }
 
 /* ── Raw backend shapes — GET /v1/pm/projects/{id}/tasks (+ /{task_id}) ──── */
 export interface RawPmTaskPhase {
-  id:   number;
+  id: number;
   name: string;
 }
 
 export interface RawPmTaskAssignee {
-  id:            string;
-  name:          string;
-  email?:        string;
-  avatarUrl:     string | null;
+  id: string;
+  name: string;
+  email?: string;
+  avatarUrl: string | null;
   avatarInitial: string;
 }
 
 export interface RawPmTaskAttachment {
-  id:         number;
-  fileName?:  string;
-  name?:      string;
-  mimeType?:  string;
-  size?:      number;
-  url?:       string;
+  id: number;
+  fileName?: string;
+  name?: string;
+  mimeType?: string;
+  size?: number;
+  url?: string;
   uploadedAt?: string | null;
   uploadedBy?: { id: string; name: string } | null;
 }
 
 export interface RawPmTask {
-  id:               number;
-  uuid:             string;
-  taskNumber:       number;
-  title:            string;
-  description:      string | null;
-  status:           string;
-  statusLabel:      string;
-  priority:         string;
-  priorityLabel:    string;
-  dueDate:          string | null;
-  estimatedHours:   string | number | null;
+  id: number;
+  uuid: string;
+  taskNumber: number;
+  title: string;
+  description: string | null;
+  statusId?: number | null;
+  status_id?: number | null;
+  status: string;
+  statusLabel: string;
+  priority: string;
+  priorityLabel: string;
+  dueDate: string | null;
+  estimatedHours: string | number | null;
   estimatedMinutes: string | number | null;
-  phase?:           RawPmTaskPhase | null;
-  assignee?:        RawPmTaskAssignee | null;
-  completedAt:      string | null;
-  attachments:      RawPmTaskAttachment[];
+  phase?: RawPmTaskPhase | null;
+  assignee?: RawPmTaskAssignee | null;
+  completedAt: string | null;
+  attachments: RawPmTaskAttachment[];
   attachmentsCount: number;
-  createdAt:        string;
-  updatedAt:        string;
-  createdBy?:       { id: string; name: string } | null;
-  created_by?:      { id: string; name: string } | null;
-  dueAt?:           string | null;
-  isOverdue?:       boolean;
-  isDelayed?:       boolean;
-  overdueLabel?:    string | null;
-  canExtend?:       boolean;
-  importantLinks?:  string[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: { id: string; name: string } | null;
+  created_by?: { id: string; name: string } | null;
+  dueAt?: string | null;
+  isOverdue?: boolean;
+  isDelayed?: boolean;
+  overdueLabel?: string | null;
+  canExtend?: boolean;
+  importantLinks?: string[];
   important_links?: string[];
 }
 
 export interface RawPmTaskColumn {
-  status:      string;
+  status: string;
   statusLabel: string;
-  tasks:       RawPmTask[];
+  tasks: RawPmTask[];
 }
 
 export interface PmTaskListResponse {
-  status:  string;
+  status: string;
   message: string;
   data: {
     columns: RawPmTaskColumn[];
-    total:   number;
+    total: number;
   };
 }
 
 export interface RawPmTimeLogSession {
-  id:            number;
-  workDate:      string;
-  startedAt:     string;
-  endedAt:       string;
+  id: number;
+  workDate: string;
+  startedAt: string;
+  endedAt: string;
   durationHours: number;
-  notes:         string | null;
-  employee:      { id: string; name: string };
-  createdAt:     string;
+  notes: string | null;
+  employee: { id: string; name: string };
+  createdAt: string;
 }
 
 export interface PmTaskDetailResponse {
-  status:  string;
+  status: string;
   message: string;
   data: {
     task: RawPmTask & { commentsCount: number };
     tabs: {
       information: boolean;
       timeTracking: {
-        sessions:        RawPmTimeLogSession[];
-        totalHours:      number;
-        estimatedHours:  number;
-        remainingHours:  number;
+        sessions: RawPmTimeLogSession[];
+        totalHours: number;
+        estimatedHours: number;
+        remainingHours: number;
         progressPercent: number;
       };
       attachmentsCount: number;
-      commentsCount:    number;
+      commentsCount: number;
     };
   };
 }
 
 export interface RawPmCommentSender {
-  id:            string;
-  name:          string;
-  type:          string;
-  avatarUrl:     string | null;
+  id: string;
+  name: string;
+  type: string;
+  avatarUrl: string | null;
   avatarInitial: string;
 }
 
 export interface RawPmComment {
-  id:        number;
-  body:      string;
-  sender:    RawPmCommentSender;
-  sentAt:    string;
+  id: number;
+  body: string;
+  sender: RawPmCommentSender;
+  sentAt: string;
   mentions?: unknown[];
   editedAt?: string | null;
   edited_at?: string | null;
   isEdited?: boolean;
   is_edited?: boolean;
-  replies?:  RawPmComment[];
+  replies?: RawPmComment[];
 }
 
 export interface PmCommentListResponse {
-  status:  string;
+  status: string;
   message: string;
   data: {
-    data:         RawPmComment[];
+    data: RawPmComment[];
     current_page: number;
-    last_page:    number;
-    total:        number;
+    last_page: number;
+    total: number;
   };
 }
 
 export interface PmCommentCreateResponse {
-  status:  string;
+  status: string;
   message: string;
-  data:    RawPmComment;
+  data: RawPmComment;
 }
 
 export const pmTaskApi = {
@@ -261,8 +263,8 @@ export const pmTaskApi = {
     return http.delete<{ status: string; message: string }>(`/v1/pm/projects/${projectId}/tasks/${taskId}`);
   },
 
-  updateStatus(projectId: number | string, taskId: string, status: string) {
-    return http.patch<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/status`, { status });
+  updateStatus(projectId: number | string, taskId: string, statusId: number) {
+    return http.patch<PmTaskApiResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/status`, { status_id: statusId });
   },
 
   extendDeadline(projectId: number | string, taskId: string, payload: ExtendDeadlinePayload) {

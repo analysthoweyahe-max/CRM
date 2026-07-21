@@ -5,6 +5,7 @@ import { projectClientIssueApi } from '../api/projectClientIssue.api';
 import {
   clientIssueResourceKey,
   defaultClientIssueCapabilities,
+  normalizeClientIssue,
   normalizeClientIssueList,
 } from '../utils/clientIssue.utils';
 import { extractApiError } from '@/shared/utils/error.utils';
@@ -63,8 +64,12 @@ export function useProjectClientIssues(
   }
 
   const createMutation = useMutation({
-    mutationFn: (payload: CreateClientIssuePayload) =>
-      projectClientIssueApi.create(portal, projectId, payload).then(r => r.data.data),
+    mutationFn: async (payload: CreateClientIssuePayload) => {
+      const res = await projectClientIssueApi.create(portal, projectId, payload);
+      const normalized = normalizeClientIssue(res.data.data);
+      if (!normalized) throw new Error('Invalid create response');
+      return normalized;
+    },
     onSuccess: () => {
       toast.success(isAr ? 'تم إضافة المشكلة' : 'Issue added');
       invalidate();
@@ -75,10 +80,17 @@ export function useProjectClientIssues(
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ issue, payload }: { issue: ClientIssue; payload: UpdateClientIssuePayload }) =>
-      projectClientIssueApi
-        .update(portal, projectId, clientIssueResourceKey(issue), payload)
-        .then(r => r.data.data),
+    mutationFn: async ({ issue, payload }: { issue: ClientIssue; payload: UpdateClientIssuePayload }) => {
+      const res = await projectClientIssueApi.update(
+        portal,
+        projectId,
+        clientIssueResourceKey(issue),
+        payload,
+      );
+      const normalized = normalizeClientIssue(res.data.data);
+      if (!normalized) throw new Error('Invalid update response');
+      return normalized;
+    },
     onSuccess: () => {
       toast.success(isAr ? 'تم تحديث المشكلة' : 'Issue updated');
       invalidate();
@@ -136,6 +148,26 @@ export function useProjectClientIssues(
     }
   }
 
+  async function uploadImages(issue: ClientIssue, files: File[]) {
+    if (!files.length) return;
+    try {
+      await projectClientIssueApi.uploadImages(
+        portal,
+        projectId,
+        clientIssueResourceKey(issue),
+        files,
+      );
+      toast.success(
+        isAr
+          ? (files.length === 1 ? 'تم رفع الصورة' : `تم رفع ${files.length} صور`)
+          : (files.length === 1 ? 'Image uploaded' : `${files.length} images uploaded`),
+      );
+      invalidate();
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر رفع الصور' : 'Failed to upload images'));
+    }
+  }
+
   async function uploadFile(issue: ClientIssue, file: File) {
     try {
       await projectClientIssueApi.uploadFile(portal, projectId, clientIssueResourceKey(issue), file);
@@ -143,6 +175,26 @@ export function useProjectClientIssues(
       invalidate();
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر رفع الملف' : 'Failed to upload file'));
+    }
+  }
+
+  async function uploadFiles(issue: ClientIssue, files: File[]) {
+    if (!files.length) return;
+    try {
+      await projectClientIssueApi.uploadFiles(
+        portal,
+        projectId,
+        clientIssueResourceKey(issue),
+        files,
+      );
+      toast.success(
+        isAr
+          ? (files.length === 1 ? 'تم رفع الملف' : `تم رفع ${files.length} ملفات`)
+          : (files.length === 1 ? 'File uploaded' : `${files.length} files uploaded`),
+      );
+      invalidate();
+    } catch (err) {
+      toast.error(extractApiError(err) || (isAr ? 'تعذر رفع الملفات' : 'Failed to upload files'));
     }
   }
 
@@ -187,7 +239,9 @@ export function useProjectClientIssues(
     deleteIssue: (issue: ClientIssue) => deleteMutation.mutateAsync(issue),
     updateStatus,
     uploadImage,
+    uploadImages,
     uploadFile,
+    uploadFiles,
     removeAttachment,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,

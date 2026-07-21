@@ -7,8 +7,7 @@ import {
 import type { ApiSeoProjectStatus, CreateSeoProjectStatusPayload } from '../types/seoProjectStatus.types';
 
 function toUpdatePayload(payload: CreateSeoProjectStatusPayload) {
-  const { key: _key, ...rest } = payload;
-  return rest;
+  return payload;
 }
 
 export function useAdminSeoProjectStatusesPage(isAr: boolean) {

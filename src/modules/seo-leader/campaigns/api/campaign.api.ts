@@ -1,16 +1,16 @@
-import { http }                    from '@/shared/services/http.service';
-import type { ApiResponse }         from '@/shared/types/api.types';
-import { env }                      from '@/app/config/env';
-import { TOKEN_KEY }                from '@/app/config/constants';
+import { http } from '@/shared/services/http.service';
+import type { ApiResponse } from '@/shared/types/api.types';
+import { env } from '@/app/config/env';
+import { TOKEN_KEY } from '@/app/config/constants';
 import type {
   CreateCampaignPayload,
   CampaignLookupResponse,
   CampaignLookupItem,
 } from '../types/campaign.types';
-import type { SeoCampaign }          from '../../dashboard/types/dashboard.types';
+import type { SeoCampaign } from '../../dashboard/types/dashboard.types';
 import type { ProjectActivityApiResponse } from '@/modules/project-manager/projects/types/projectActivity.types';
 import type { CreateSeoTaskPayload } from '../components/AddSeoTaskModal.types';
-import type { SeoTaskDetail }        from '../components/SeoTaskModal.types';
+import type { SeoTaskDetail } from '../components/SeoTaskModal.types';
 import { appendSeoTaskFiles, normalizeSeoAttachments, type SeoTaskAttachment } from '@/shared/utils/seoTaskAttachment.utils';
 import { appendImportantLinks, parseImportantLinks } from '@/shared/utils/importantLinks.utils';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
@@ -28,171 +28,171 @@ function unwrapLookupArray<T>(value: unknown): T[] {
   return [];
 }
 
-/** Shape is unverified against the real backend — every field but `value`/
- *  `key` is optional so callers must supply sane fallbacks. */
+/** Shape from GET /v1/seo/task-statuses (and legacy lookups). Prefer `id`. */
 export interface SeoTaskStatusLookupItem {
-  key?:            string;
-  value?:          string;
-  label?:          string;
-  labelAr?:        string;
-  labelEn?:        string;
-  color?:          string;
-  sortOrder?:      number;
-  isActive?:       boolean;
+  id?: number | string;
+  key?: string;
+  value?: string;
+  label?: string;
+  labelAr?: string;
+  labelEn?: string;
+  color?: string;
+  sortOrder?: number;
+  isActive?: boolean;
   marksCompleted?: boolean;
 }
 
 export interface SeoTaskAssignee {
-  id:             string;
-  name:           string;
-  email?:         string;
-  avatarUrl?:     string | null;
+  id: string;
+  name: string;
+  email?: string;
+  avatarUrl?: string | null;
   avatarInitial?: string;
 }
 
 export interface SeoTask {
-  id:              number;
-  uuid?:           string;
-  taskNumber:      number;
-  phase:           string | null;
-  phaseId?:        number | null;
-  title:           string;
-  description?:    string | null;
-  taskType:        string;
-  taskTypeLabel:   string;
-  statusId?:       number | null;
-  status:          string;
-  statusLabel?:    string;
-  priority:        string;
-  priorityLabel?:  string;
-  startDate?:      string | null;
-  dueDate?:        string | null;
+  id: number;
+  uuid?: string;
+  taskNumber: number;
+  phase: string | null;
+  phaseId?: number | null;
+  title: string;
+  description?: string | null;
+  taskType: string;
+  taskTypeLabel: string;
+  statusId?: number | null;
+  status: string;
+  statusLabel?: string;
+  priority: string;
+  priorityLabel?: string;
+  startDate?: string | null;
+  dueDate?: string | null;
   estimatedHours?: number | string | null;
   estimatedMinutes?: number | string | null;
-  siteLinks:       string[];
-  notes?:          string | null;
-  referenceLinks:  string[];
+  siteLinks: string[];
+  notes?: string | null;
+  referenceLinks: string[];
   importantLinks?: string[];
-  assignees:       SeoTaskAssignee[];
-  attachments:     SeoTaskAttachment[];
+  assignees: SeoTaskAssignee[];
+  attachments: SeoTaskAttachment[];
   attachmentsCount?: number;
-  completedAt?:    string | null;
-  createdAt:       string;
-  updatedAt:       string;
-  createdBy?:      { id: string; name: string } | null;
-  created_by?:     { id: string; name: string } | null;
-  dueAt?:          string | null;
-  isOverdue?:      boolean;
-  isDelayed?:      boolean;
-  overdueLabel?:   string | null;
-  canExtend?:      boolean;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: { id: string; name: string } | null;
+  created_by?: { id: string; name: string } | null;
+  dueAt?: string | null;
+  isOverdue?: boolean;
+  isDelayed?: boolean;
+  overdueLabel?: string | null;
+  canExtend?: boolean;
 }
 
 export interface SeoTaskPhaseGroup {
-  phase:    string;
+  phase: string;
   phaseId?: number | null;
-  tasks:    SeoTask[];
+  tasks: SeoTask[];
 }
 
 export interface PhasedTasksResponse {
-  phases:  SeoTaskPhaseGroup[];
+  phases: SeoTaskPhaseGroup[];
   columns?: { status: string; statusLabel?: string; tasks: SeoTask[] }[];
-  total:   number;
+  total: number;
 }
 
 export interface SeoProjectPhase {
-  id:           number;
-  uuid:         string;
-  name:         string;
-  sortOrder:    number;
+  id: number;
+  uuid: string;
+  name: string;
+  sortOrder: number;
   description?: string | null;
   deliveryDate?: string | null;
-  tasksCount?:  number;
+  tasksCount?: number;
 }
 
 export interface SeoMessageSender {
-  id:             string;
-  name:           string;
-  type?:          string;
-  avatarUrl?:     string | null;
+  id: string;
+  name: string;
+  type?: string;
+  avatarUrl?: string | null;
   avatarInitial?: string;
 }
 
 export interface SeoMessageAttachment {
-  id:         number;
-  fileName:   string;
-  mimeType:   string;
-  size:       number;
-  url:        string;
+  id: number;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  url: string;
   uploadedAt: string;
 }
 
 export interface SeoMessage {
-  id:          number;
-  body:        string | null;
-  type:        string;
-  sender:      SeoMessageSender;
-  isMine:      boolean;
-  mentions:    unknown[];
+  id: number;
+  body: string | null;
+  type: string;
+  sender: SeoMessageSender;
+  isMine: boolean;
+  mentions: unknown[];
   attachments: SeoMessageAttachment[];
-  sentAt:      string;
-  sentTime:    string;
+  sentAt: string;
+  sentTime: string;
 }
 
 export interface Mentionable {
-  id:    string;
-  name:  string;
+  id: string;
+  name: string;
   type?: string;
   role?: string | null;
   roles?: Array<string | { name?: string; slug?: string; role?: string }>;
 }
 
 export interface SeoComment {
-  id:          number;
-  body:        string;
-  type:        string;
-  sender:      { id: string; name: string; type: string; avatarUrl: string | null };
-  mentions:    unknown[];
+  id: number;
+  body: string;
+  type: string;
+  sender: { id: string; name: string; type: string; avatarUrl: string | null };
+  mentions: unknown[];
   attachments: unknown[];
-  sentAt:      string;
-  editedAt?:   string | null;
-  edited_at?:  string | null;
-  isEdited?:   boolean;
-  is_edited?:  boolean;
-  replies?:    SeoComment[];
+  sentAt: string;
+  editedAt?: string | null;
+  edited_at?: string | null;
+  isEdited?: boolean;
+  is_edited?: boolean;
+  replies?: SeoComment[];
 }
 
 export interface SeoCommentsPage {
-  data:         SeoComment[];
+  data: SeoComment[];
   current_page: number;
-  last_page:    number;
-  total:        number;
+  last_page: number;
+  total: number;
 }
 
 export interface SeoTaskTimeLog {
-  id:            number;
-  workDate:      string;
-  startedAt:     string;
-  endedAt:       string;
+  id: number;
+  workDate: string;
+  startedAt: string;
+  endedAt: string;
   durationHours: number;
-  notes?:        string | null;
-  employee:      { id: string; name: string };
-  createdAt:     string;
+  notes?: string | null;
+  employee: { id: string; name: string };
+  createdAt: string;
 }
 
 export interface SeoTaskTimeLogSummary {
-  sessions:        SeoTaskTimeLog[];
-  totalHours:      number;
-  estimatedHours:  number;
-  remainingHours:  number;
+  sessions: SeoTaskTimeLog[];
+  totalHours: number;
+  estimatedHours: number;
+  remainingHours: number;
   progressPercent: number;
 }
 
 export interface SeoTaskUploadResponse {
-  id:               number;
-  uuid?:            string;
-  title?:           string;
-  attachments:      SeoTaskAttachment[];
+  id: number;
+  uuid?: string;
+  title?: string;
+  attachments: SeoTaskAttachment[];
   attachmentsCount: number;
 }
 
@@ -208,10 +208,10 @@ function unwrapTaskDetail(data: unknown): SeoTaskDetail {
   };
 }
 export interface AddSeoTimeLogPayload {
-  work_date:  string;
+  work_date: string;
   started_at: string;
-  ended_at:   string;
-  notes?:     string;
+  ended_at: string;
+  notes?: string;
 }
 
 export interface SelectOption {
@@ -220,82 +220,82 @@ export interface SelectOption {
 }
 
 export interface SeoProjectSettings {
-  id:                  number;
-  uuid?:               string;
-  sectionTitle:        string;
-  name:                string;
-  startDate:           string;
-  expectedEndDate?:    string | null;
-  targetDomain:        string | null;
-  description:         string;
-  status:              string;
-  statusLabel:         string;
-  isDraft?:            boolean;
-  campaignType:        string;
-  campaignTypeLabel:   string;
+  id: number;
+  uuid?: string;
+  sectionTitle: string;
+  name: string;
+  startDate: string;
+  expectedEndDate?: string | null;
+  targetDomain: string | null;
+  description: string;
+  status: string;
+  statusLabel: string;
+  isDraft?: boolean;
+  campaignType: string;
+  campaignTypeLabel: string;
   /** Numeric project type id when backend provides it (for template filtering). */
-  projectTypeId?:      number | null;
-  githubLink?:              string | null;
-  driveLink?:               string | null;
-  contractDurationMonths?:  number | null;
-  labels:              Record<string, string>;
-  statusOptions:       SelectOption[];
+  projectTypeId?: number | null;
+  githubLink?: string | null;
+  driveLink?: string | null;
+  contractDurationMonths?: number | null;
+  labels: Record<string, string>;
+  statusOptions: SelectOption[];
   campaignTypeOptions: SelectOption[];
 }
 
 export interface SeoProjectUpdatePayload {
-  name?:                    string;
-  description?:             string;
-  targetDomain?:            string | null;
-  projectTypeId?:           number;
-  campaignType?:            string;
-  status?:                  string;
-  startDate?:               string;
-  expectedEndDate?:         string | null;
-  githubLink?:              string | null;
-  driveLink?:               string | null;
-  contractDurationMonths?:  number | null;
-  isDraft?:                 boolean;
-  targetKeywords?:          string[];
-  referenceLinks?:          string[];
-  managerIds?:              string[];
-  employeeIds?:             string[];
+  name?: string;
+  description?: string;
+  targetDomain?: string | null;
+  projectTypeId?: number;
+  campaignType?: string;
+  status_id?: number;
+  startDate?: string;
+  expectedEndDate?: string | null;
+  githubLink?: string | null;
+  driveLink?: string | null;
+  contractDurationMonths?: number | null;
+  isDraft?: boolean;
+  targetKeywords?: string[];
+  referenceLinks?: string[];
+  managerIds?: string[];
+  employeeIds?: string[];
 }
 
 /** PUT/PATCH /v1/seo/projects/{uuid}/tasks/{taskUuid} */
 export interface SeoUpdateTaskPayload {
-  title?:            string;
-  description?:      string;
+  title?: string;
+  description?: string;
   /** String fallback when phaseId is unknown (orphan column). */
-  phase?:            string;
+  phase?: string;
   /** Canonical phase move field for managers — preferred over `phase`. */
-  phaseId?:          number;
-  phase_id?:         number;
-  taskType?:         string;
-  status?:           string;
-  priority?:         string;
-  startDate?:        string;
-  dueDate?:          string;
-  estimatedHours?:   number;
+  phaseId?: number;
+  phase_id?: number;
+  taskType?: string;
+  status_id?: number;
+  priority?: string;
+  startDate?: string;
+  dueDate?: string;
+  estimatedHours?: number;
   estimatedMinutes?: number;
-  siteLinks?:        string[];
-  notes?:            string;
-  referenceLinks?:   string[];
-  importantLinks?:   string[];
+  siteLinks?: string[];
+  notes?: string;
+  referenceLinks?: string[];
+  importantLinks?: string[];
   /* snake_case aliases still accepted by backend */
-  start_date?:       string;
-  due_date?:         string;
-  estimated_hours?:  number;
+  start_date?: string;
+  due_date?: string;
+  estimated_hours?: number;
   estimated_minutes?: number;
-  site_links?:       string[];
-  reference_links?:  string[];
-  important_links?:  string[];
-  target_keyword?:   string;
-  target_url?:       string;
-  search_intent?:    string;
-  search_volume?:    number;
+  site_links?: string[];
+  reference_links?: string[];
+  important_links?: string[];
+  target_keyword?: string;
+  target_url?: string;
+  search_intent?: string;
+  search_volume?: number;
   keyword_difficulty?: number;
-  meta_title?:       string;
+  meta_title?: string;
   meta_description?: string;
 }
 
@@ -316,17 +316,17 @@ function normalizeSeoPhaseRecord(raw: Record<string, unknown>, index: number): S
   const id = raw.id;
   if (id == null) return null;
   return {
-    id:           Number(id),
-    uuid:         String(raw.uuid ?? id),
-    name:         String(raw.name ?? ''),
-    sortOrder:    Number(raw.sortOrder ?? raw.sort_order ?? index),
-    description:  raw.description != null ? String(raw.description) : null,
+    id: Number(id),
+    uuid: String(raw.uuid ?? id),
+    name: String(raw.name ?? ''),
+    sortOrder: Number(raw.sortOrder ?? raw.sort_order ?? index),
+    description: raw.description != null ? String(raw.description) : null,
     deliveryDate: raw.deliveryDate != null
       ? String(raw.deliveryDate)
       : raw.delivery_date != null
         ? String(raw.delivery_date)
         : null,
-    tasksCount:   raw.tasksCount != null
+    tasksCount: raw.tasksCount != null
       ? Number(raw.tasksCount)
       : raw.tasks_count != null
         ? Number(raw.tasks_count)
@@ -373,10 +373,10 @@ export const campaignApi = {
     return http.put<ApiResponse<SeoCampaign>>(`/v1/seo/projects/${id}`, payload);
   },
 
-  updateProjectStatus(id: string | number, status: string) {
+  updateProjectStatus(id: string | number, statusId: number) {
     return http.patch<ApiResponse<SeoCampaign>>(
       `/v1/seo/projects/${id}/status`,
-      { status },
+      { status_id: statusId },
     );
   },
 
@@ -397,15 +397,10 @@ export const campaignApi = {
     return http.get<CampaignLookupResponse>('/v1/seo/projects/lookups/statuses');
   },
 
-  /** Project-scoped task-status catalog (manager view). May return a plain
-   *  {value,label} list or the richer admin shape — callers must treat
-   *  color/marksCompleted/sortOrder/isActive as optional either way.
-   *  Unverified against the real backend — skip401Redirect so that if this
-   *  route 401s (wrong guard/not deployed) it doesn't force-logout the user
-   *  out of an otherwise-working page over an optional lookup. */
+  /** Active SEO task-status catalog — prefer /v1/seo/task-statuses (id-based). */
   getTaskStatuses() {
     return http.get<ApiResponse<SeoTaskStatusLookupItem[]>>(
-      '/v1/seo/projects/lookups/task-statuses',
+      '/v1/seo/task-statuses',
       { skip401Redirect: true },
     ).then(res => ({
       ...res,
@@ -475,13 +470,13 @@ export const campaignApi = {
       fd.append('title', payload.title);
       fd.append('phase', payload.phase);
       payload.employee_ids.forEach((id, i) => fd.append(`employee_ids[${i}]`, id));
-      if (payload.description)      fd.append('description', payload.description);
-      if (payload.priority)         fd.append('priority', payload.priority);
-      if (payload.due_date)         fd.append('due_date', payload.due_date);
+      if (payload.description) fd.append('description', payload.description);
+      if (payload.priority) fd.append('priority', payload.priority);
+      if (payload.due_date) fd.append('due_date', payload.due_date);
       if (payload.estimated_hours != null) fd.append('estimated_hours', String(payload.estimated_hours));
       if (payload.estimated_minutes != null) fd.append('estimated_minutes', String(payload.estimated_minutes));
-      if (payload.target_keyword)   fd.append('target_keyword', payload.target_keyword);
-      if (payload.target_url)       fd.append('target_url', payload.target_url);
+      if (payload.target_keyword) fd.append('target_keyword', payload.target_keyword);
+      if (payload.target_url) fd.append('target_url', payload.target_url);
       appendImportantLinks(fd, payload.importantLinks);
       appendSeoTaskFiles(fd, files);
       return http.post<ApiResponse<SeoTask>>(
@@ -500,9 +495,9 @@ export const campaignApi = {
     );
   },
 
-  updateTaskStatus(projectId: string | number, taskId: string | number, status: string) {
+  updateTaskStatus(projectId: string | number, taskId: string | number, statusId: number) {
     return http.patch<ApiResponse<{ status: string }>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status }
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status_id: statusId }
     );
   },
 
@@ -594,17 +589,17 @@ export const campaignApi = {
   },
 
   async sendMedia(projectId: string | number, file: File) {
-    const fd    = new FormData();
+    const fd = new FormData();
     fd.append('file', file);
     console.log('[sendMedia] file:', file.name, file.type, file.size);
     const token = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY) ?? '';
-    const res   = await fetch(
+    const res = await fetch(
       `${env.apiBaseUrl}/v1/seo/projects/${projectId}/messages`,
       {
-        method:  'POST',
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept:        'application/json',
+          Accept: 'application/json',
           /* No Content-Type — browser sets multipart/form-data + boundary automatically */
         },
         body: fd,

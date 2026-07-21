@@ -186,8 +186,32 @@ interface RawTaskWire {
   is_mine?:         boolean;
 }
 
+/** Prefer nested `project`, then flat `project_id` / `projectId` (+ optional name). */
+function readProjectFromWire(raw: Record<string, unknown>): RawTaskWire['project'] {
+  const nested = readRecord(raw.project);
+  if (nested?.id != null && String(nested.id) !== '') {
+    return {
+      id: nested.id as number | string,
+      name: String(nested.name ?? ''),
+    };
+  }
+  const flatId = raw.project_id ?? raw.projectId;
+  if (flatId == null || String(flatId) === '') return null;
+  const nameRaw = raw.project_name ?? raw.projectName;
+  return {
+    id: flatId as number | string,
+    name: typeof nameRaw === 'string' ? nameRaw : '',
+  };
+}
+
+/** Keep UUID / non-numeric project ids intact — `Number(uuid)` is NaN. */
+function normalizeProjectId(id: number | string): number | string {
+  if (typeof id === 'number') return id;
+  const asNum = Number(id);
+  return Number.isFinite(asNum) && String(asNum) === String(id).trim() ? asNum : id;
+}
+
 function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
-  const project = readRecord(raw.project);
   const phase = raw.phase;
   const phaseObj = readRecord(phase);
   const importantRaw = raw.importantLinks ?? raw.important_links;
@@ -206,8 +230,13 @@ function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
     taskNumber:       Number(raw.taskNumber ?? raw.task_number ?? raw.id),
     title:            String(raw.title ?? ''),
     description:      (raw.description as string | null | undefined) ?? null,
-    status:           String(raw.status ?? 'pending'),
-    statusLabel:      String(raw.statusLabel ?? raw.status_label ?? raw.status ?? 'pending'),
+    status: String(
+      raw.statusId
+      ?? raw.status_id
+      ?? raw.status
+      ?? 'pending',
+    ),
+    statusLabel: String(raw.statusLabel ?? raw.status_label ?? raw.status ?? 'pending'),
     priority:         String(raw.priority ?? 'normal'),
     priorityLabel:    String(raw.priorityLabel ?? raw.priority_label ?? raw.priority ?? 'normal'),
     dueDate:          (raw.dueDate ?? raw.due_date ?? null) as string | null,
@@ -216,9 +245,7 @@ function wireFromRecord(raw: Record<string, unknown>): RawTaskWire {
       : raw.estimated_hours != null
         ? Number(raw.estimated_hours)
         : null,
-    project:          project
-      ? { id: project.id as number | string, name: String(project.name ?? '') }
-      : null,
+    project:          readProjectFromWire(raw),
     phase:            phaseObj
       ? { id: phaseObj.id as number | string, name: String(phaseObj.name ?? '') }
       : typeof phase === 'string'
@@ -296,7 +323,7 @@ function normalizeTask(raw: RawTaskWire | Record<string, unknown>): MyTask {
     dueDate:          wire.dueDate ?? null,
     estimatedHours:   wire.estimatedHours ?? null,
     project:          wire.project
-      ? { id: Number(wire.project.id), name: wire.project.name }
+      ? { id: normalizeProjectId(wire.project.id), name: wire.project.name }
       : undefined,
     phase:            normalizePhase(wire.phase),
     assignee:         normalizeAssignee(wire),
@@ -345,9 +372,9 @@ export function normalizeGroupedTasks(payload: unknown): GroupedTasksData {
   if (Array.isArray(data.columns)) {
     columns = (data.columns as Array<Record<string, unknown>>)
       .map((col) => ({
-        status:      String(col.status ?? 'pending'),
+        status: String(col.statusId ?? col.status_id ?? col.status ?? 'pending'),
         statusLabel: String(col.statusLabel ?? col.status_label ?? col.status ?? 'pending'),
-        tasks:       (Array.isArray(col.tasks) ? col.tasks : []).map((task) =>
+        tasks: (Array.isArray(col.tasks) ? col.tasks : []).map((task) =>
           normalizeTask(task as Record<string, unknown>),
         ),
       }));
@@ -415,6 +442,31 @@ function groupTasksByStatus(tasks: MyTask[]): MyTaskColumn[] {
 }
 
 /**
+ * Project-scoped list payloads often omit `task.project`. Stamp it so drag
+ * status updates and detail navigation always have a project id.
+ */
+export function stampProjectOnGroupedTasks(
+  data: GroupedTasksData,
+  project: { id: number | string; name: string },
+): GroupedTasksData {
+  const stamp = (task: MyTask): MyTask => ({
+    ...task,
+    project: task.project ?? project,
+  });
+  return {
+    ...data,
+    columns: data.columns.map((col) => ({
+      ...col,
+      tasks: col.tasks.map(stamp),
+    })),
+    phases: data.phases?.map((group) => ({
+      ...group,
+      tasks: group.tasks.map(stamp),
+    })),
+  };
+}
+
+/**
  * Merge per-project task fetches into one combined view — used for PM
  * employees, whose backend "all my tasks across projects" endpoint doesn't
  * reliably aggregate (confirmed empty even when per-project data exists).
@@ -427,16 +479,13 @@ export function mergeGroupedTasksAcrossProjects(
   const columnMap = new Map<string, MyTaskColumn>();
 
   for (const { project, data } of perProject) {
-    for (const col of data.columns) {
+    const stamped = stampProjectOnGroupedTasks(data, project);
+    for (const col of stamped.columns) {
       const existing = columnMap.get(col.status);
-      const stampedTasks = col.tasks.map((task) => ({
-        ...task,
-        project: task.project ?? project,
-      }));
       if (existing) {
-        existing.tasks.push(...stampedTasks);
+        existing.tasks.push(...col.tasks);
       } else {
-        columnMap.set(col.status, { status: col.status, statusLabel: col.statusLabel, tasks: [...stampedTasks] });
+        columnMap.set(col.status, { status: col.status, statusLabel: col.statusLabel, tasks: [...col.tasks] });
       }
     }
   }
@@ -501,8 +550,10 @@ export function resolveTaskIsMine(task: MyTask, user: OwnershipUser): boolean {
   return false;
 }
 
-/** Own tasks only — partner cards must not open detail or call mutations. */
+/** Own tasks only — partner cards must not open detail or call mutations.
+ *  When the API omits ownership (manager / leader boards), treat as editable. */
 export function isEditableMyTask(task: MyTask): boolean {
+  if (task.is_mine == null && task.isMine == null) return true;
   return readTaskIsMine(task);
 }
 

@@ -1,6 +1,6 @@
-import { useState, useEffect }                  from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast }                                 from 'sonner';
+import { toast } from 'sonner';
 import { extractApiError, extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import {
   excludeSelfFromActors,
@@ -9,13 +9,13 @@ import {
   normalizeTaskCommentFields,
 } from '@/shared/utils/chatNormalize.utils';
 import { toApiArray } from '@/shared/utils/apiList.utils';
-import { campaignApi }                           from '../api/campaign.api';
-import type { Mentionable, SeoComment }          from '../api/campaign.api'; // used in extractComments + toTaskComment
-import type { SeoDrawerTab }                     from './SeoTaskModal.types';
-import type { ComboboxItem }                     from '@/shared/components/form/Combobox';
-import type { TaskComment, TimeSession }         from '@/modules/project-manager/tasks/types/taskModal.types';
-import type { ExtendDeadlinePayload }            from '@/shared/components/form/ExtendDeadlineModal';
-import type { MentionRef }                       from '@/shared/components/chat';
+import { campaignApi } from '../api/campaign.api';
+import type { Mentionable, SeoComment } from '../api/campaign.api'; // used in extractComments + toTaskComment
+import type { SeoDrawerTab } from './SeoTaskModal.types';
+import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import type { TaskComment, TimeSession } from '@/modules/project-manager/tasks/types/taskModal.types';
+import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
+import type { MentionRef } from '@/shared/components/chat';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 
 function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
@@ -27,7 +27,7 @@ function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
 }
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
-const AVATAR_COLORS = ['bg-violet-500','bg-sky-500','bg-amber-500','bg-rose-500','bg-teal-500','bg-indigo-500'];
+const AVATAR_COLORS = ['bg-violet-500', 'bg-sky-500', 'bg-amber-500', 'bg-rose-500', 'bg-teal-500', 'bg-indigo-500'];
 function colorFor(name: string) {
   let h = 0;
   for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) & 0xffff;
@@ -51,32 +51,32 @@ function toTaskComment(
   const name = c.sender?.name ?? 'مجهول';
   const edit = normalizeTaskCommentFields(c);
   return {
-    id:            String(c.id),
-    author:        name,
+    id: String(c.id),
+    author: name,
     authorInitial: name[0]?.toUpperCase() ?? '?',
-    authorColor:   colorFor(name),
-    text:          c.body,
-    dateLabel:     c.sentAt ?? '',
-    isMine:        isSameActorId(c.sender?.id, user),
-    mentions:      edit.mentions ?? toMentionRefs(c.mentions),
-    isEdited:      edit.isEdited,
-    editedAt:      edit.editedAt,
-    replies:       (c.replies ?? []).map(r => toTaskComment(r, user)),
+    authorColor: colorFor(name),
+    text: c.body,
+    dateLabel: c.sentAt ?? '',
+    isMine: isSameActorId(c.sender?.id, user),
+    mentions: edit.mentions ?? toMentionRefs(c.mentions),
+    isEdited: edit.isEdited,
+    editedAt: edit.editedAt,
+    replies: (c.replies ?? []).map(r => toTaskComment(r, user)),
   };
 }
 
 /* ── Hook ────────────────────────────────────────────────────────────── */
 export function useSeoTaskDrawer(
   projectId: string,
-  taskId:    string | null,
-  isAr:      boolean,
+  taskId: string | null,
+  isAr: boolean,
   options?: { initialTab?: SeoDrawerTab },
 ) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   /* ── Tab ───────────────────────────────────────────────────────────── */
-  const [tab,        setTab]        = useState<SeoDrawerTab>(options?.initialTab ?? 'info');
+  const [tab, setTab] = useState<SeoDrawerTab>(options?.initialTab ?? 'info');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [extendOpen, setExtendOpen] = useState(false);
 
@@ -85,38 +85,38 @@ export function useSeoTaskDrawer(
   }, [options?.initialTab, taskId]);
 
   /* ── Form state ─────────────────────────────────────────────────────── */
-  const [description,       setDescription]       = useState('');
-  const [taskType,          setTaskType]           = useState('');
-  const [priority,          setPriority]           = useState('medium');
-  const [status,            setStatus]             = useState('pending');
-  const [startDate,         setStartDate]          = useState('');
-  const [dueDate,           setDueDate]            = useState('');
-  const [assigneeId,        setAssigneeId]         = useState('');
-  const [targetUrl,         setTargetUrl]          = useState('');
-  const [targetKeyword,     setTargetKeyword]      = useState('');
-  const [searchIntent,      setSearchIntent]       = useState('');
-  const [searchVolume,      setSearchVolume]       = useState('');
-  const [keywordDifficulty, setKeywordDifficulty]  = useState('');
-  const [metaTitle,         setMetaTitle]          = useState('');
-  const [metaDescription,   setMetaDescription]    = useState('');
-  const [siteLinks,         setSiteLinks]          = useState<string[]>([]);
-  const [referenceLinks,    setReferenceLinks]     = useState<string[]>([]);
-  const [notes,             setNotes]              = useState('');
-  const [commentText,       setCommentText]        = useState('');
+  const [description, setDescription] = useState('');
+  const [taskType, setTaskType] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [status, setStatus] = useState('pending');
+  const [startDate, setStartDate] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [assigneeId, setAssigneeId] = useState('');
+  const [targetUrl, setTargetUrl] = useState('');
+  const [targetKeyword, setTargetKeyword] = useState('');
+  const [searchIntent, setSearchIntent] = useState('');
+  const [searchVolume, setSearchVolume] = useState('');
+  const [keywordDifficulty, setKeywordDifficulty] = useState('');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  const [siteLinks, setSiteLinks] = useState<string[]>([]);
+  const [referenceLinks, setReferenceLinks] = useState<string[]>([]);
+  const [notes, setNotes] = useState('');
+  const [commentText, setCommentText] = useState('');
 
   /* ── Fetch task ─────────────────────────────────────────────────────── */
   const { data: task, isLoading } = useQuery({
     queryKey: ['seo-task', projectId, taskId],
-    queryFn:  () => campaignApi.getTask(projectId, taskId!).then(r => r.data.data),
-    enabled:  !!taskId && !!projectId,
+    queryFn: () => campaignApi.getTask(projectId, taskId!).then(r => r.data.data),
+    enabled: !!taskId && !!projectId,
     staleTime: 30_000,
   });
 
   /* ── Fetch comments ─────────────────────────────────────────────────── */
   const { data: rawComments } = useQuery({
     queryKey: ['seo-task-comments', projectId, taskId],
-    queryFn:  () => campaignApi.getComments(projectId, taskId!).then(r => r.data.data),
-    enabled:  !!taskId && !!projectId,
+    queryFn: () => campaignApi.getComments(projectId, taskId!).then(r => r.data.data),
+    enabled: !!taskId && !!projectId,
     refetchInterval: 15_000,
   });
 
@@ -125,11 +125,11 @@ export function useSeoTaskDrawer(
   /* ── Mentionables (picker excludes self; used for @mentions in comments) ─── */
   const { data: mentionablesRaw } = useQuery({
     queryKey: ['seo-mentionables', projectId],
-    queryFn:  () => campaignApi.getMentionables(projectId)
+    queryFn: () => campaignApi.getMentionables(projectId)
       .then(r => filterSeoProjectMentions(
         excludeSelfFromActors(toApiArray<Mentionable>(r.data.data), user),
       )),
-    enabled:  !!projectId,
+    enabled: !!projectId,
     staleTime: 60_000,
   });
   const mentionables = mentionablesRaw ?? [];
@@ -137,23 +137,23 @@ export function useSeoTaskDrawer(
   /* ── Populate form ──────────────────────────────────────────────────── */
   useEffect(() => {
     if (!task) return;
-    setDescription(task.description        ?? '');
-    setTaskType(task.taskType              ?? '');
-    setPriority(task.priority              ?? 'medium');
-    setStatus(task.status                  ?? 'pending');
-    setStartDate(task.startDate            ?? '');
-    setDueDate(task.dueDate                ?? '');
-    setAssigneeId(task.assignees?.[0]?.id  ?? '');
-    setTargetUrl(task.targetUrl            ?? '');
-    setTargetKeyword(task.targetKeyword    ?? '');
-    setSearchIntent(task.searchIntent      ?? '');
+    setDescription(task.description ?? '');
+    setTaskType(task.taskType ?? '');
+    setPriority(task.priority ?? 'medium');
+    setStatus(task.statusId != null ? String(task.statusId) : (task.status ?? 'pending'));
+    setStartDate(task.startDate ?? '');
+    setDueDate(task.dueDate ?? '');
+    setAssigneeId(task.assignees?.[0]?.id ?? '');
+    setTargetUrl(task.targetUrl ?? '');
+    setTargetKeyword(task.targetKeyword ?? '');
+    setSearchIntent(task.searchIntent ?? '');
     setSearchVolume(task.searchVolume != null ? String(task.searchVolume) : '');
     setKeywordDifficulty(task.keywordDifficulty != null ? String(task.keywordDifficulty) : '');
-    setMetaTitle(task.metaTitle            ?? '');
+    setMetaTitle(task.metaTitle ?? '');
     setMetaDescription(task.metaDescription ?? '');
-    setSiteLinks(task.siteLinks            ?? []);
-    setReferenceLinks(task.referenceLinks  ?? []);
-    setNotes(task.notes                    ?? '');
+    setSiteLinks(task.siteLinks ?? []);
+    setReferenceLinks(task.referenceLinks ?? []);
+    setNotes(task.notes ?? '');
   }, [task]);
 
   /* ── Reset tab when opening a different task ────────────────────────── */
@@ -163,26 +163,26 @@ export function useSeoTaskDrawer(
   const saveMutation = useMutation({
     mutationFn: () => {
       const next = {
-        description:     description.trim() || undefined,
-        taskType:        taskType || undefined,
+        description: description.trim() || undefined,
+        taskType: taskType || undefined,
         priority,
-        status,
-        startDate:       startDate || undefined,
-        dueDate:         dueDate || undefined,
-        siteLinks:       siteLinks.filter(Boolean),
-        referenceLinks:  referenceLinks.filter(Boolean),
-        notes:           notes.trim() || undefined,
+        status_id: Number(status) || undefined,
+        startDate: startDate || undefined,
+        dueDate: dueDate || undefined,
+        siteLinks: siteLinks.filter(Boolean),
+        referenceLinks: referenceLinks.filter(Boolean),
+        notes: notes.trim() || undefined,
       };
       const baseline = {
-        description:     task?.description ?? undefined,
-        taskType:        task?.taskType ?? undefined,
-        priority:        task?.priority,
-        status:          task?.status,
-        startDate:       task?.startDate ?? undefined,
-        dueDate:         task?.dueDate ?? undefined,
-        siteLinks:       task?.siteLinks ?? [],
-        referenceLinks:  task?.referenceLinks ?? [],
-        notes:           task?.notes ?? undefined,
+        description: task?.description ?? undefined,
+        taskType: task?.taskType ?? undefined,
+        priority: task?.priority,
+        status_id: task?.statusId ?? undefined,
+        startDate: task?.startDate ?? undefined,
+        dueDate: task?.dueDate ?? undefined,
+        siteLinks: task?.siteLinks ?? [],
+        referenceLinks: task?.referenceLinks ?? [],
+        notes: task?.notes ?? undefined,
       };
       const payload = Object.fromEntries(
         Object.entries(next).filter(([key, value]) => {
@@ -210,7 +210,7 @@ export function useSeoTaskDrawer(
      handler: that route is manager-guarded to employee tokens only per
      the backend's own Postman collection. */
   const statusMutation = useMutation({
-    mutationFn: (newStatus: string) => campaignApi.updateTask(projectId, taskId!, { status: newStatus }),
+    mutationFn: (newStatus: string) => campaignApi.updateTask(projectId, taskId!, { status_id: Number(newStatus) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
       queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
@@ -294,29 +294,29 @@ export function useSeoTaskDrawer(
   const timeLogsKey = ['seo-task-time-logs', projectId, taskId];
   const { data: timeLogs } = useQuery({
     queryKey: timeLogsKey,
-    queryFn:  () => campaignApi.getTimeLogs(projectId, taskId!).then(r => r.data.data),
-    enabled:  !!taskId && !!projectId,
+    queryFn: () => campaignApi.getTimeLogs(projectId, taskId!).then(r => r.data.data),
+    enabled: !!taskId && !!projectId,
   });
 
   const sessions: TimeSession[] = (timeLogs?.sessions ?? []).map(s => ({
-    id:    String(s.id),
-    date:  s.workDate,
-    from:  s.startedAt,
-    to:    s.endedAt,
+    id: String(s.id),
+    date: s.workDate,
+    from: s.startedAt,
+    to: s.endedAt,
     hours: s.durationHours,
   }));
-  const totalHours     = timeLogs?.totalHours      ?? 0;
-  const estimatedHours = timeLogs?.estimatedHours  ?? task?.estimatedHours ?? 0;
-  const remainingHours = timeLogs?.remainingHours  ?? 0;
-  const progress       = timeLogs?.progressPercent ?? 0;
+  const totalHours = timeLogs?.totalHours ?? 0;
+  const estimatedHours = timeLogs?.estimatedHours ?? task?.estimatedHours ?? 0;
+  const remainingHours = timeLogs?.remainingHours ?? 0;
+  const progress = timeLogs?.progressPercent ?? 0;
 
   const timeLogMutation = useMutation({
     mutationFn: (payload: { workDate: string; startedAt: string; endedAt: string; notes: string }) =>
       campaignApi.addTimeLog(projectId, taskId!, {
-        work_date:  payload.workDate,
+        work_date: payload.workDate,
         started_at: payload.startedAt,
-        ended_at:   payload.endedAt,
-        notes:      payload.notes || undefined,
+        ended_at: payload.endedAt,
+        notes: payload.notes || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: timeLogsKey });
@@ -370,24 +370,24 @@ export function useSeoTaskDrawer(
     extendOpen, setExtendOpen,
     extendDeadline: (payload: ExtendDeadlinePayload) => extendMutation.mutate(payload),
     extendingDeadline: extendMutation.isPending,
-    description,       setDescription,
-    taskType,          setTaskType,
-    priority,          setPriority,
-    status,            setStatus: changeStatus,
-    startDate,         setStartDate,
-    dueDate,           setDueDate,
-    assigneeId,        setAssigneeId,
+    description, setDescription,
+    taskType, setTaskType,
+    priority, setPriority,
+    status, setStatus: changeStatus,
+    startDate, setStartDate,
+    dueDate, setDueDate,
+    assigneeId, setAssigneeId,
     assigneeItems,
-    targetUrl,         setTargetUrl,
-    targetKeyword,     setTargetKeyword,
-    searchIntent,      setSearchIntent,
-    searchVolume,      setSearchVolume,
+    targetUrl, setTargetUrl,
+    targetKeyword, setTargetKeyword,
+    searchIntent, setSearchIntent,
+    searchVolume, setSearchVolume,
     keywordDifficulty, setKeywordDifficulty,
-    metaTitle,         setMetaTitle,
-    metaDescription,   setMetaDescription,
-    siteLinks,         setSiteLinks,
-    referenceLinks,    setReferenceLinks,
-    notes,             setNotes,
+    metaTitle, setMetaTitle,
+    metaDescription, setMetaDescription,
+    siteLinks, setSiteLinks,
+    referenceLinks, setReferenceLinks,
+    notes, setNotes,
     handleSave,
     isSaving: saveMutation.isPending || assigneeMutation.isPending,
     attachments: task?.attachments ?? [],

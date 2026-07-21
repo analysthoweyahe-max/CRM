@@ -5,7 +5,6 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import { taskDetailApi } from '../api/taskDetail.api';
 import { normalizeTimeLogSummary } from '@/shared/utils/timeLog.utils';
-import type { EmpTaskStatus } from '../types/employeeTask.types';
 import type { UpdateTaskPayload, SendCommentPayload, EditCommentPayload, TaskTimeLogSummary } from '../types/taskDetail.types';
 
 export function useTaskDetail(projectId: string, taskId: string) {
@@ -19,7 +18,7 @@ export function useTaskDetail(projectId: string, taskId: string) {
 export function useUpdateTaskStatus(projectId: string, taskId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (status: EmpTaskStatus) => taskDetailApi.updateStatus(projectId, taskId, status),
+    mutationFn: (statusId: number) => taskDetailApi.updateStatus(projectId, taskId, statusId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['task-detail', projectId, taskId] });
       qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });

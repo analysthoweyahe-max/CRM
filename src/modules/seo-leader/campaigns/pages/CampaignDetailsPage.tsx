@@ -1,26 +1,26 @@
-import { useState, useMemo, useEffect }     from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Plus }        from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast }                  from 'sonner';
-import { useLang }                from '@/app/providers/LanguageProvider';
+import { toast } from 'sonner';
+import { useLang } from '@/app/providers/LanguageProvider';
 import { useProjectStatusLookups } from '@/shared/hooks/useProjectStatusLookups';
-import { Card }                   from '@/shared/components/ui/Card';
-import { Button }                 from '@/shared/components/ui/Button';
-import { Combobox }               from '@/shared/components/form/Combobox';
-import type { ComboboxItem }      from '@/shared/components/form/Combobox';
-import { GoogleDriveIcon }        from '@/shared/components/icons/GoogleDriveIcon';
-import { ROUTES }                 from '@/app/router/routes';
-import { extractApiError }        from '@/shared/utils/error.utils';
-import { ensureHttpUrl }          from '@/shared/utils';
-import { usePermission }          from '@/shared/hooks/usePermission';
-import { campaignApi }                       from '../api/campaign.api';
-import type { SeoTask }                      from '../api/campaign.api';
-import { SeoTaskDrawer }          from '../components/SeoTaskDrawer';
-import { ProjectMessages }        from '../components/ProjectMessages';
-import { SeoProjectTeamTab }      from '../../projects/components/SeoProjectTeamTab';
-import { SeoProjectSettingsTab }  from '../components/SeoProjectSettingsTab';
-import { SeoProgressTab }         from '../components/SeoProgressTab';
+import { Card } from '@/shared/components/ui/Card';
+import { Button } from '@/shared/components/ui/Button';
+import { Combobox } from '@/shared/components/form/Combobox';
+import type { ComboboxItem } from '@/shared/components/form/Combobox';
+import { GoogleDriveIcon } from '@/shared/components/icons/GoogleDriveIcon';
+import { ROUTES } from '@/app/router/routes';
+import { extractApiError } from '@/shared/utils/error.utils';
+import { ensureHttpUrl } from '@/shared/utils';
+import { usePermission } from '@/shared/hooks/usePermission';
+import { campaignApi } from '../api/campaign.api';
+import type { SeoTask } from '../api/campaign.api';
+import { SeoTaskDrawer } from '../components/SeoTaskDrawer';
+import { ProjectMessages } from '../components/ProjectMessages';
+import { SeoProjectTeamTab } from '../../projects/components/SeoProjectTeamTab';
+import { SeoProjectSettingsTab } from '../components/SeoProjectSettingsTab';
+import { SeoProgressTab } from '../components/SeoProgressTab';
 import { ProjectClientIssuesTab } from '@/shared/modules/project-client-issues/components/ProjectClientIssuesTab';
 import { useSeoTaskLookups } from '../hooks/useSeoTaskLookups';
 import type { SeoTaskStatusOption } from '../hooks/useSeoTaskLookups';
@@ -34,8 +34,8 @@ import {
   seoPhaseDropPayload,
 } from '../utils/seoKanban.utils';
 import { KanbanBoard as SharedKanbanBoard } from '@/shared/components/kanban/KanbanBoard';
-import { KanbanTaskCard }         from '@/modules/project-manager/projects/components/KanbanTaskCard';
-import { KanbanTaskFilters }      from '@/modules/project-manager/projects/components/KanbanTaskFilters';
+import { KanbanTaskCard } from '@/modules/project-manager/projects/components/KanbanTaskCard';
+import { KanbanTaskFilters } from '@/modules/project-manager/projects/components/KanbanTaskFilters';
 import {
   matchesTaskPeriod,
   type TaskPeriodFilter,
@@ -46,18 +46,16 @@ import {
   findSeoTaskIdForComment,
   isSeoTaskCommentContext,
 } from '@/shared/utils/mentionDeepLink.utils';
-import type { Task, TaskStatus }  from '@/modules/project-manager/tasks/types/task.types';
+import type { Task, TaskStatus } from '@/modules/project-manager/tasks/types/task.types';
 
 const UNASSIGNED = '__unassigned__';
 const UNKNOWN_CREATOR = '__unknown_creator__';
 
-/* Task.status is typed as the PM's fixed 4-value union, but the real set of
-   SEO task statuses is whatever's configured in "SEO Task Statuses" (admin
-   module) — including custom keys like "blocked" or "custom_status" that
-   don't fit that union. We keep the real backend key on `rawStatus` (used
-   for the Kanban columns + the status-update API call) and only use this
-   coarse mapping for the other tabs (SeoProgressTab) that still expect the
-   narrow union for their stats. */
+/* Task.status is typed loosely — the real set of SEO task statuses is
+   whatever's configured in "SEO Task Statuses" (admin module). We keep the
+   numeric status id (preferred) or legacy status string on `rawStatus` for
+   Kanban columns + status_id writes, and only use this coarse mapping for
+   tabs that still expect the narrow PM TaskStatus union. */
 function coarseStatus(rawKey: string, marksCompleted: boolean): TaskStatus {
   if (marksCompleted) return 'completed';
   if (rawKey === 'in_progress') return 'in_progress';
@@ -65,9 +63,13 @@ function coarseStatus(rawKey: string, marksCompleted: boolean): TaskStatus {
   return 'pending';
 }
 
+function resolveSeoTaskStatusKey(t: Pick<SeoTask, 'statusId' | 'status'>): string {
+  return t.statusId != null ? String(t.statusId) : String(t.status ?? '');
+}
+
 const AVATAR_COLORS = [
   'bg-violet-500', 'bg-sky-500', 'bg-amber-500',
-  'bg-rose-500',   'bg-teal-500', 'bg-indigo-500',
+  'bg-rose-500', 'bg-teal-500', 'bg-indigo-500',
 ];
 
 function avatarColor(name: string) {
@@ -78,15 +80,14 @@ function avatarColor(name: string) {
 
 const PRIORITY_MAP: Record<string, Task['priority']> = {
   urgent: 'urgent',
-  high:   'high',
+  high: 'high',
   normal: 'normal',
   medium: 'normal',
-  low:    'low',
+  low: 'low',
 };
 
 export interface SeoTaskVM extends Task {
-  /** The real backend status key (e.g. "blocked", "custom_status") — the
-   *  Kanban board groups/drags by this, not by the coarse `status` union. */
+  /** Backend status id (preferred) or legacy status string — Kanban groups/drags by this. */
   rawStatus: string;
   /** All assignee ids on the SEO task (list may have multiple). */
   assigneeIds: string[];
@@ -97,28 +98,30 @@ function toLocalTask(t: SeoTask, projectId: string, marksCompletedByKey: Record<
   const assignee = primary?.name ?? '';
   const createdBy = t.createdBy ?? t.created_by ?? null;
   const assigneeIds = (t.assignees ?? []).map(a => a.id).filter(Boolean);
+  const statusKey = resolveSeoTaskStatusKey(t);
   return {
-    id:              String(t.id),
-    uuid:            t.uuid || undefined,
+    id: String(t.id),
+    uuid: t.uuid || undefined,
     projectId,
-    title:           t.title,
-    description:     t.description ?? '',
-    phaseId:         readSeoTaskPhaseId(t),
-    phaseName:       t.phase ?? t.taskTypeLabel ?? 'مهمة SEO',
-    priority:        PRIORITY_MAP[t.priority] ?? 'normal',
-    assigneeId:      primary?.id,
-    assigneeName:    assignee,
+    title: t.title,
+    description: t.description ?? '',
+    phaseId: readSeoTaskPhaseId(t),
+    phaseName: t.phase ?? t.taskTypeLabel ?? 'مهمة SEO',
+    priority: PRIORITY_MAP[t.priority] ?? 'normal',
+    assigneeId: primary?.id,
+    assigneeName: assignee,
     assigneeInitial: assignee ? assignee[0].toUpperCase() : '?',
-    assigneeColor:   avatarColor(assignee),
-    dueDate:         t.dueDate ?? '',
-    estimatedHours:  undefined,
-    status:          coarseStatus(t.status, marksCompletedByKey[t.status] ?? false),
-    rawStatus:       t.status,
-    taskNumber:      `#${t.taskNumber ?? t.id}`,
-    importantLinks:  t.importantLinks,
-    createdAt:       t.createdAt,
-    createdById:     createdBy?.id,
-    createdByName:   createdBy?.name,
+    assigneeColor: avatarColor(assignee),
+    dueDate: t.dueDate ?? '',
+    estimatedHours: undefined,
+    statusId: t.statusId ?? null,
+    status: coarseStatus(statusKey, marksCompletedByKey[statusKey] ?? false),
+    rawStatus: statusKey,
+    taskNumber: `#${t.taskNumber ?? t.id}`,
+    importantLinks: t.importantLinks,
+    createdAt: t.createdAt,
+    createdById: createdBy?.id,
+    createdByName: createdBy?.name,
     assigneeIds,
   };
 }
@@ -126,23 +129,23 @@ function toLocalTask(t: SeoTask, projectId: string, marksCompletedByKey: Record<
 type TabKey = 'tasks' | 'client' | 'messages' | 'team' | 'progress' | 'settings';
 
 const TABS: { key: TabKey; ar: string; en: string }[] = [
-  { key: 'tasks',    ar: 'المهام',    en: 'Tasks'    },
-  { key: 'client',   ar: 'متطلبات العميل', en: 'Client Updates' },
-  { key: 'messages', ar: 'الرسائل',   en: 'Messages' },
-  { key: 'team',     ar: 'الفريق',    en: 'Team'     },
-  { key: 'progress', ar: 'الإنجاز',   en: 'Progress' },
+  { key: 'tasks', ar: 'المهام', en: 'Tasks' },
+  { key: 'client', ar: 'متطلبات العميل', en: 'Client Updates' },
+  { key: 'messages', ar: 'الرسائل', en: 'Messages' },
+  { key: 'team', ar: 'الفريق', en: 'Team' },
+  { key: 'progress', ar: 'الإنجاز', en: 'Progress' },
   { key: 'settings', ar: 'الإعدادات', en: 'Settings' },
 ];
 
 /* ── Component ───────────────────────────────────────────────────────── */
 export function CampaignDetailsPage() {
-  const { lang }    = useLang();
-  const isAr        = lang === 'ar';
-  const navigate    = useNavigate();
+  const { lang } = useLang();
+  const isAr = lang === 'ar';
+  const navigate = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const canAddTask  = usePermission(['edit-seo-tasks', 'create-seo-project']);
+  const canAddTask = usePermission(['edit-seo-tasks', 'create-seo-project']);
 
   const tabParam = searchParams.get('tab');
   const taskParam = searchParams.get('task');
@@ -151,7 +154,7 @@ export function CampaignDetailsPage() {
   const initialTab: TabKey = tabParam === 'messages' || tabParam === 'client-updates'
     ? (tabParam === 'client-updates' ? 'client' : 'messages')
     : 'tasks';
-  const [activeTab,      setActiveTab]      = useState<TabKey>(initialTab);
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(taskParam);
   const [highlightCommentId, setHighlightCommentId] = useState<string | null>(
     commentParam && (tabParam === 'comments' || !taskParam || !!contextTypeParam)
@@ -184,8 +187,8 @@ export function CampaignDetailsPage() {
   /* ── Campaign header ──────────────────────────────────────────────── */
   const { data: campaign, isLoading: campaignLoading, refetch: refetchCampaign } = useQuery({
     queryKey: ['campaign-detail', id],
-    queryFn:  async () => (await campaignApi.getById(id)).data.data,
-    enabled:   !!id,
+    queryFn: async () => (await campaignApi.getById(id)).data.data,
+    enabled: !!id,
     staleTime: 30_000,
   });
 
@@ -199,13 +202,13 @@ export function CampaignDetailsPage() {
     [statuses],
   );
   const [viewMode, setViewMode] = useState<'status' | 'phase'>('status');
-  const [phaseFilter,    setPhaseFilter]    = useState('');
+  const [phaseFilter, setPhaseFilter] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
-  const [creatorFilter,  setCreatorFilter]  = useState('');
-  const [statusFilter,   setStatusFilter]   = useState('');
-  const [periodFilter,   setPeriodFilter]   = useState<TaskPeriodFilter>('');
-  const [dateFrom,       setDateFrom]       = useState('');
-  const [dateTo,         setDateTo]         = useState('');
+  const [creatorFilter, setCreatorFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [periodFilter, setPeriodFilter] = useState<TaskPeriodFilter>('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const { data: projectPhases = [], isLoading: phasesLoading } = useSeoProjectPhases(projectKey);
 
@@ -217,11 +220,11 @@ export function CampaignDetailsPage() {
      the user out (surfaces as this page silently redirecting to login). */
   const { data: rawTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['campaign-tasks', projectKey],
-    queryFn:  async () => {
+    queryFn: async () => {
       const r = await campaignApi.getTasks(projectKey, { per_page: 100 });
       return flattenSeoPhasedTasks(r.data.data);
     },
-    enabled:   !!projectKey,
+    enabled: !!projectKey,
     staleTime: 30_000,
   });
 
@@ -369,7 +372,7 @@ export function CampaignDetailsPage() {
   const phaseColumns = useMemo(
     () => buildSeoPhaseKanbanColumns({
       phases: projectPhases,
-      tasks:  filteredTasks,
+      tasks: filteredTasks,
       phaseFilter,
       isAr,
     }),
@@ -385,7 +388,7 @@ export function CampaignDetailsPage() {
     const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
     setStatusOverrides(prev => ({ ...prev, [taskId]: toStatusKey }));
     campaignApi
-      .updateTask(projectKey, task ? taskResourceKey(task) : taskId, { status: toStatusKey })
+      .updateTask(projectKey, task ? taskResourceKey(task) : taskId, { status_id: Number(toStatusKey) })
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectKey] });
         queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
@@ -419,10 +422,16 @@ export function CampaignDetailsPage() {
   }
 
   async function handleStatusChange(nextStatus: string) {
-    if (!campaign || nextStatus === campaign.status || changingStatus) return;
+    const statusId = Number(nextStatus);
+    const current = campaign?.statusId != null
+      ? String(campaign.statusId)
+      : campaign?.status_id != null
+        ? String(campaign.status_id)
+        : campaign?.status;
+    if (!campaign || !Number.isFinite(statusId) || nextStatus === current || changingStatus) return;
     setChangingStatus(true);
     try {
-      await campaignApi.updateProjectStatus(projectKey, nextStatus);
+      await campaignApi.updateProjectStatus(projectKey, statusId);
       toast.success(isAr ? 'تم تحديث حالة المشروع' : 'Project status updated');
       await refetchCampaign();
       queryClient.invalidateQueries({ queryKey: ['seo-project-settings', projectKey] });
@@ -440,7 +449,7 @@ export function CampaignDetailsPage() {
     setPublishing(true);
     try {
       await campaignApi.updateSettings(projectKey, {
-        name:    campaign.name,
+        name: campaign.name,
         isDraft: false,
       });
       toast.success(isAr ? 'تم نشر المشروع' : 'Project published');
@@ -469,12 +478,12 @@ export function CampaignDetailsPage() {
   }
 
   const statusItems: ComboboxItem[] = projectStatuses.map(s => ({
-    id:    s.value,
+    id: s.value,
     label: translateProjectLookup(s.value, isAr ? (s.labelAr ?? s.label) : s.label, isAr),
   }));
   const tasksTotal = tasks.length;
-  const tasksDone  = tasks.filter(t => marksCompletedByKey[t.rawStatus]).length;
-  const progress   = tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0;
+  const tasksDone = tasks.filter(t => marksCompletedByKey[t.rawStatus]).length;
+  const progress = tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0;
 
   return (
     <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
@@ -521,7 +530,13 @@ export function CampaignDetailsPage() {
             <div className="w-40">
               <Combobox
                 items={statusItems}
-                value={campaign?.status ?? ''}
+                value={
+                  campaign?.statusId != null
+                    ? String(campaign.statusId)
+                    : campaign?.status_id != null
+                      ? String(campaign.status_id)
+                      : (campaign?.status ?? '')
+                }
                 onChange={handleStatusChange}
                 disabled={changingStatus || statusItems.length === 0}
                 searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
@@ -588,8 +603,8 @@ export function CampaignDetailsPage() {
                 className={`px-3 py-2.5 text-sm font-medium border-b-2 transition-colors
                             duration-150 whitespace-nowrap
                             ${isActive
-                              ? 'border-[#A0CD39] text-[#709028] dark:text-[#A0CD39]'
-                              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    ? 'border-[#A0CD39] text-[#709028] dark:text-[#A0CD39]'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
               >
                 {isAr ? tab.ar : tab.en}
               </button>
@@ -679,11 +694,11 @@ export function CampaignDetailsPage() {
               columns={
                 viewMode === 'status'
                   ? displayColumns.map(status => ({
-                      key:   status.key,
-                      label: status.label,
-                      color: status.color,
-                      items: filteredTasks.filter(t => t.rawStatus === status.key),
-                    }))
+                    key: status.key,
+                    label: status.label,
+                    color: status.color,
+                    items: filteredTasks.filter(t => t.rawStatus === status.key),
+                  }))
                   : phaseColumns
               }
               isAr={isAr}

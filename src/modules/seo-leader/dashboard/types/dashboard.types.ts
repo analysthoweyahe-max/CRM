@@ -8,9 +8,11 @@ export interface SeoCampaign {
   targetDomain:     string | null;
   campaignType:     string;
   campaignTypeLabel: string;
-  status:           string;
-  statusLabel:      string;
-  isDraft:          boolean;
+  statusId?: number | null;
+  status_id?: number | null;
+  status: string;
+  statusLabel: string;
+  isDraft: boolean;
   startDate:        string;
   expectedEndDate:  string | null;
   targetKeywords:   string[];

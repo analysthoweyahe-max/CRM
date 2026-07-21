@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Modal }  from '@/shared/components/ui/Modal';
+import { Modal } from '@/shared/components/ui/Modal';
 import { Button } from '@/shared/components/ui/Button';
 import { usePermission } from '@/shared/hooks/usePermission';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
@@ -29,33 +29,33 @@ const UNKNOWN_CREATOR = '__unknown_creator__';
 /** Colors for the common, well-known statuses; anything else (an admin-added
  *  status not in this map) falls back to the deterministic hash color. */
 const STATUS_COLOR: Record<string, string> = {
-  pending:      '#9CA3AF',
-  in_progress:  '#A0CD39',
+  pending: '#9CA3AF',
+  in_progress: '#A0CD39',
   needs_review: '#F59E0B',
-  completed:    '#10B981',
+  completed: '#10B981',
 };
 
 interface Props {
-  projectId:   string;
-  tasks:       Task[];
-  isAr:        boolean;
-  phases?:     PmProjectPhase[];
+  projectId: string;
+  tasks: Task[];
+  isAr: boolean;
+  phases?: PmProjectPhase[];
   teamMembers?: PmProjectTeamMember[];
 }
 
 export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers = [] }: Props) {
   const queryClient = useQueryClient();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [deleteTarget,   setDeleteTarget]   = useState<Task | null>(null);
-  const [deleting,       setDeleting]       = useState(false);
-  const [phaseFilter,    setPhaseFilter]    = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [phaseFilter, setPhaseFilter] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
-  const [creatorFilter,  setCreatorFilter]  = useState('');
-  const [statusFilter,   setStatusFilter]   = useState('');
-  const [periodFilter,   setPeriodFilter]   = useState<TaskPeriodFilter>('');
-  const [dateFrom,       setDateFrom]       = useState('');
-  const [dateTo,         setDateTo]         = useState('');
-  const [viewMode,       setViewMode]       = useState<'status' | 'phase'>('status');
+  const [creatorFilter, setCreatorFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [periodFilter, setPeriodFilter] = useState<TaskPeriodFilter>('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [viewMode, setViewMode] = useState<'status' | 'phase'>('status');
   const invalidateTasks = useInvalidateProjectTasks(projectId);
   const { statuses: statusLookup } = usePmTaskLookups();
   const canEditTasks = usePermission('edit-pm-tasks');
@@ -115,9 +115,7 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
   }, [tasks, isAr]);
 
   const statusItems: ComboboxItem[] = useMemo(() => {
-    const keys = statusLookup.length > 0
-      ? statusLookup.map(s => s.value)
-      : ['pending', 'in_progress', 'needs_review', 'completed'];
+    const keys = statusLookup.map(s => s.value);
     return [
       { id: '', label: isAr ? 'كل الحالات' : 'All statuses' },
       ...keys.map(key => {
@@ -152,12 +150,9 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
     ? tasks.find(t => t.id === selectedTaskId) ?? null
     : null;
 
-  /* ── Status columns — driven by the admin-configured lookup, falling
-     back to the 4 well-known keys while the lookup is still loading ──── */
+  /* ── Status columns — driven by the admin-configured lookup ─────────── */
   const statusColumns = useMemo(() => {
-    const keys = statusLookup.length > 0
-      ? statusLookup.map(s => s.value)
-      : ['pending', 'in_progress', 'needs_review', 'completed'];
+    const keys = statusLookup.map(s => s.value);
     const visibleKeys = statusFilter ? keys.filter(key => key === statusFilter) : keys;
     // If filter points at a key missing from the lookup, still show that column.
     const columnKeys = visibleKeys.length > 0
@@ -217,13 +212,10 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
 
   async function handleStatusDrop(taskId: string, toStatus: string) {
     const task = tasks.find(t => t.id === taskId);
-    if (!task || task.status === toStatus) return;
+    const statusId = Number(toStatus);
+    if (!task || !Number.isFinite(statusId) || task.status === toStatus) return;
     try {
-      // Not the dedicated PATCH .../status sub-route — per the backend's own
-      // Postman collection, that route is only ever exercised with an
-      // employee token; a manager (admin token) instead goes through the
-      // general task-update endpoint with `status` in the body.
-      await pmTaskApi.update(projectId, taskResourceKey(task), { status: toStatus });
+      await pmTaskApi.update(projectId, taskResourceKey(task), { status_id: statusId });
       invalidateTasks();
       queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
@@ -335,7 +327,7 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
             onDelete={canEditTasks ? t => setDeleteTarget(t) : undefined}
           />
         )}
-        onDrop={canEditTasks ? (viewMode === 'status' ? handleStatusDrop : handlePhaseDrop) : () => {}}
+        onDrop={canEditTasks ? (viewMode === 'status' ? handleStatusDrop : handlePhaseDrop) : () => { }}
         draggable={canEditTasks}
       />
 

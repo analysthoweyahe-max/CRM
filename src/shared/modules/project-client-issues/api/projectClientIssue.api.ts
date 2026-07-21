@@ -82,6 +82,20 @@ export const projectClientIssueApi = {
     );
   },
 
+  /** Upload multiple images sequentially via the single-image endpoint. */
+  async uploadImages(
+    portal: ProjectClientIssuePortal,
+    projectId: string | number,
+    issueId: string | number,
+    files: File[],
+  ) {
+    let last = null as Awaited<ReturnType<typeof projectClientIssueApi.uploadImage>> | null;
+    for (const file of files) {
+      last = await projectClientIssueApi.uploadImage(portal, projectId, issueId, file);
+    }
+    return last;
+  },
+
   uploadFile(
     portal: ProjectClientIssuePortal,
     projectId: string | number,
@@ -95,6 +109,20 @@ export const projectClientIssueApi = {
       fd,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
+  },
+
+  /** Upload multiple files sequentially via the single-file endpoint. */
+  async uploadFiles(
+    portal: ProjectClientIssuePortal,
+    projectId: string | number,
+    issueId: string | number,
+    files: File[],
+  ) {
+    let last = null as Awaited<ReturnType<typeof projectClientIssueApi.uploadFile>> | null;
+    for (const file of files) {
+      last = await projectClientIssueApi.uploadFile(portal, projectId, issueId, file);
+    }
+    return last;
   },
 
   removeAttachment(

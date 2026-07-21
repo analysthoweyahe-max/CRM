@@ -1,43 +1,44 @@
-/** The admin-configured `seo_task_statuses` catalog key — dynamic, not a
+/** The admin-configured `seo_task_statuses` catalog — dynamic, not a
  *  fixed set. Fetch labels/colors from `useSeoTaskLookups` (GET
- *  /v1/seo/projects/lookups/task-statuses), never hardcode the option list. */
-export type SeoTaskStatus   = string;
+ *  /v1/seo/task-statuses). Prefer numeric `statusId` for API writes. */
+export type SeoTaskStatus = string;
 export type SeoTaskPriority = 'high' | 'normal' | 'low';
 
 export interface SeoTaskProjectRef {
-  id:   string;
+  id: string;
   name: string;
 }
 
 export interface SeoTask {
-  id:            number;
-  uuid:          string;
-  taskNumber:    number;
-  title:         string;
-  phase:         string | null;
-  taskType:      string;
+  id: number;
+  uuid: string;
+  taskNumber: number;
+  title: string;
+  phase: string | null;
+  taskType: string;
   taskTypeLabel: string;
-  status:        SeoTaskStatus;
-  statusLabel:   string;
-  priority:      SeoTaskPriority;
+  statusId?: number | null;
+  status: SeoTaskStatus;
+  statusLabel: string;
+  priority: SeoTaskPriority;
   priorityLabel: string;
-  dueDate:       string | null;
-  description:   string | null;
-  project:       SeoTaskProjectRef | null;
-  dueAt?:        string | null;
-  isOverdue?:    boolean;
-  isDelayed?:    boolean;
+  dueDate: string | null;
+  description: string | null;
+  project: SeoTaskProjectRef | null;
+  dueAt?: string | null;
+  isOverdue?: boolean;
+  isDelayed?: boolean;
   overdueLabel?: string | null;
-  canExtend?:    boolean;
+  canExtend?: boolean;
   importantLinks?: string[];
 }
 
 export interface CreateSelfSeoTaskPayload {
-  title:            string;
-  phase:            string;
-  description?:     string;
-  priority:         SeoTaskPriority;
-  due_date?:        string;
+  title: string;
+  phase: string;
+  description?: string;
+  priority: SeoTaskPriority;
+  due_date?: string;
   estimated_hours?: number;
-  importantLinks?:  string[];
+  importantLinks?: string[];
 }

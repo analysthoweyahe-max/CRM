@@ -17,55 +17,55 @@ import { appendImportantLinks, parseImportantLinks } from '@/shared/utils/import
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 
 interface RawSeoAssignee {
-  id:        string | number;
-  name:      string;
+  id: string | number;
+  name: string;
   initials?: string;
-  avatar?:   string | null;
+  avatar?: string | null;
 }
 
 interface RawSeoTaskDetail extends RawSeoTask {
-  assignees?:         RawSeoAssignee[];
-  createdBy?:         RawSeoTaskRef | null;
-  startDate?:         string | null;
-  siteLinks?:         string[];
-  referenceLinks?:    string[];
-  importantLinks?:    string[];
-  important_links?:   string[];
-  notes?:             string | null;
-  targetUrl?:         string | null;
-  targetKeyword?:     string | null;
-  searchIntent?:      string | null;
-  searchVolume?:      number | null;
+  assignees?: RawSeoAssignee[];
+  createdBy?: RawSeoTaskRef | null;
+  startDate?: string | null;
+  siteLinks?: string[];
+  referenceLinks?: string[];
+  importantLinks?: string[];
+  important_links?: string[];
+  notes?: string | null;
+  targetUrl?: string | null;
+  targetKeyword?: string | null;
+  searchIntent?: string | null;
+  searchVolume?: number | null;
   keywordDifficulty?: number | null;
-  metaTitle?:         string | null;
-  metaDescription?:   string | null;
-  allocatedHours?:    number;
-  estimatedHours?:    number;
-  estimated_hours?:   number;
-  allocated_hours?:   number;
-  attachments?:       unknown[];
-  attachmentsCount?:  number;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  allocatedHours?: number;
+  estimatedHours?: number;
+  estimated_hours?: number;
+  allocated_hours?: number;
+  attachments?: unknown[];
+  attachmentsCount?: number;
 }
 
 export interface SeoUpdateTaskPayload {
-  title?:           string;
-  priority?:        string;
-  dueDate?:         string;
-  importantLinks?:  string[];
+  title?: string;
+  priority?: string;
+  dueDate?: string;
+  importantLinks?: string[];
 }
 
 interface SeoTaskUploadResponse {
-  id:               number;
-  uuid?:            string;
-  title?:           string;
-  attachments:      SeoTaskAttachment[];
+  id: number;
+  uuid?: string;
+  title?: string;
+  attachments: SeoTaskAttachment[];
   attachmentsCount: number;
 }
 
 function toAssignee(raw: RawSeoAssignee): SeoAssignee {
   const name = raw.name ?? '';
   return {
-    id:       String(raw.id),
+    id: String(raw.id),
     name,
     initials: raw.initials ?? name.charAt(0).toUpperCase(),
     avatarBg: 'bg-brand-500',
@@ -76,20 +76,20 @@ function toSeoTaskDetail(raw: RawSeoTaskDetail): SeoTaskDetail {
   const attachments = normalizeSeoAttachments(raw.attachments);
   return {
     ...mapSeoTask(raw),
-    assignees:         (raw.assignees ?? []).map(toAssignee),
-    createdBy:         raw.createdBy ? { id: String(raw.createdBy.id), name: raw.createdBy.name } : null,
-    startDate:         raw.startDate ?? null,
-    siteLinks:         raw.siteLinks ?? [],
-    referenceLinks:    raw.referenceLinks ?? [],
-    importantLinks:    parseImportantLinks(raw),
-    notes:             raw.notes ?? null,
-    targetUrl:         raw.targetUrl ?? null,
-    targetKeyword:     raw.targetKeyword ?? null,
-    searchIntent:      raw.searchIntent ?? null,
-    searchVolume:      raw.searchVolume ?? null,
+    assignees: (raw.assignees ?? []).map(toAssignee),
+    createdBy: raw.createdBy ? { id: String(raw.createdBy.id), name: raw.createdBy.name } : null,
+    startDate: raw.startDate ?? null,
+    siteLinks: raw.siteLinks ?? [],
+    referenceLinks: raw.referenceLinks ?? [],
+    importantLinks: parseImportantLinks(raw),
+    notes: raw.notes ?? null,
+    targetUrl: raw.targetUrl ?? null,
+    targetKeyword: raw.targetKeyword ?? null,
+    searchIntent: raw.searchIntent ?? null,
+    searchVolume: raw.searchVolume ?? null,
     keywordDifficulty: raw.keywordDifficulty ?? null,
-    metaTitle:         raw.metaTitle ?? null,
-    metaDescription:   raw.metaDescription ?? null,
+    metaTitle: raw.metaTitle ?? null,
+    metaDescription: raw.metaDescription ?? null,
     allocatedHours: Number(
       raw.allocatedHours
       ?? raw.estimatedHours
@@ -98,7 +98,7 @@ function toSeoTaskDetail(raw: RawSeoTaskDetail): SeoTaskDetail {
       ?? 0,
     ),
     attachments,
-    attachmentsCount:  raw.attachmentsCount ?? attachments.length,
+    attachmentsCount: raw.attachmentsCount ?? attachments.length,
   };
 }
 
@@ -135,7 +135,7 @@ export const seoTaskDetailApi = {
      successful update, surfacing as a false error toast. Callers should
      refetch (invalidate the detail query) instead of trusting this return. */
   async updateStatus(projectId: string, taskId: string, status: SeoTaskStatus): Promise<void> {
-    await http.patch(`/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status });
+    await http.patch(`/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status_id: Number(status) });
   },
 
   async extendDeadline(projectId: string, taskId: string, payload: ExtendDeadlinePayload): Promise<SeoTaskDetail> {
@@ -160,8 +160,8 @@ export const seoTaskDetailApi = {
       fd.append('title', payload.title);
       fd.append('phase', payload.phase);
       fd.append('priority', payload.priority);
-      if (payload.description)      fd.append('description', payload.description);
-      if (payload.due_date)         fd.append('due_date', payload.due_date);
+      if (payload.description) fd.append('description', payload.description);
+      if (payload.due_date) fd.append('due_date', payload.due_date);
       if (payload.estimated_hours != null) fd.append('estimated_hours', String(payload.estimated_hours));
       appendImportantLinks(fd, payload.importantLinks);
       appendSeoTaskFiles(fd, files);

@@ -35,12 +35,12 @@ function toProjectTypeApiPayload(payload: CreateProjectTypePayload) {
   };
 }
 
-const PM_MANAGER_ROLES  = new Set(['project-manager', 'super-admin']);
+const PM_MANAGER_ROLES = new Set(['project-manager', 'super-admin']);
 const SEO_MANAGER_ROLES = new Set(['seo-manager', 'super-admin']);
 
 interface AdminManagerRecord {
-  id:    string;
-  name:  string;
+  id: string;
+  name: string;
   email: string;
   roles?: string[];
 }

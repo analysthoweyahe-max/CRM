@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, UserX, FolderKanban, FolderOpenDot } from 'lucide-react';
+import { ClipboardList, Users, ListChecks, FolderKanban, FolderOpenDot, CheckCircle2 } from 'lucide-react';
 import { StatCard } from '@/shared/components/ui/StatCard';
 import { ROUTES } from '@/app/router/routes';
-import type { AdminDashboardStats, AdminTeamStats } from '../types/adminDashboard.types';
+import type { AdminDashboardStats } from '../types/adminDashboard.types';
 
 interface Props {
   stats: AdminDashboardStats;
@@ -21,37 +21,37 @@ interface CardDef {
   to:        string;
 }
 
-function buildCards(stats: AdminTeamStats, teamRoute: string, projectsRoute: string): CardDef[] {
+function buildPmCards(stats: AdminDashboardStats['pm']): CardDef[] {
   return [
     {
-      key: 'total',
-      value: stats.totalEmployees,
-      labelAr: 'إجمالي الموظفين',
-      labelEn: 'Total Employees',
-      icon: Users,
-      iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20',
-      iconColor: 'text-[#709028] dark:text-[#A0CD39]',
-      to: teamRoute,
+      key: 'dailyReports',
+      value: stats.dailyReports,
+      labelAr: 'التقارير اليومية',
+      labelEn: 'Daily Reports',
+      icon: ClipboardList,
+      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+      iconColor: 'text-blue-600',
+      to: ROUTES.PROJECT_MANAGER.REPORTS,
     },
     {
-      key: 'active',
-      value: stats.activeEmployees,
+      key: 'teamMembers',
+      value: stats.teamMembers,
       labelAr: 'الموظفون النشطون',
       labelEn: 'Active Employees',
-      icon: UserCheck,
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
-      iconColor: 'text-emerald-600',
-      to: teamRoute,
+      icon: Users,
+      iconBg: 'bg-purple-100 dark:bg-purple-900/30',
+      iconColor: 'text-purple-600',
+      to: ROUTES.PROJECT_MANAGER.TEAM,
     },
     {
-      key: 'inactive',
-      value: stats.inactiveEmployees,
-      labelAr: 'الموظفون المعطلون',
-      labelEn: 'Inactive Employees',
-      icon: UserX,
-      iconBg: 'bg-rose-100 dark:bg-rose-900/30',
-      iconColor: 'text-rose-600',
-      to: teamRoute,
+      key: 'activeTasks',
+      value: stats.activeTasks,
+      labelAr: 'المهام قيد التنفيذ',
+      labelEn: 'Active Tasks',
+      icon: ListChecks,
+      iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+      iconColor: 'text-amber-600',
+      to: ROUTES.PROJECT_MANAGER.TASKS,
     },
     {
       key: 'activeProjects',
@@ -61,17 +61,52 @@ function buildCards(stats: AdminTeamStats, teamRoute: string, projectsRoute: str
       icon: FolderOpenDot,
       iconBg: 'bg-blue-100 dark:bg-blue-900/30',
       iconColor: 'text-blue-600',
-      to: projectsRoute,
+      to: ROUTES.PROJECT_MANAGER.MY_PROJECTS,
     },
+  ];
+}
+
+function buildSeoCards(stats: AdminDashboardStats['seo']): CardDef[] {
+  return [
     {
       key: 'totalProjects',
-      value: stats.totalProjects,
+      value: stats.total_projects,
       labelAr: 'إجمالي المشاريع',
       labelEn: 'Total Projects',
       icon: FolderKanban,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-      iconColor: 'text-blue-600',
-      to: projectsRoute,
+      iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20',
+      iconColor: 'text-[#709028] dark:text-[#A0CD39]',
+      to: ROUTES.SEO_LEADER.MY_PROJECTS,
+    },
+    {
+      key: 'activeEmployees',
+      value: stats.active_employees,
+      labelAr: 'الموظفين النشطين',
+      labelEn: 'Active Employees',
+      icon: Users,
+      iconBg: 'bg-purple-100 dark:bg-purple-900/30',
+      iconColor: 'text-purple-600',
+      to: ROUTES.SEO_LEADER.TEAM,
+    },
+    {
+      key: 'pendingTasks',
+      value: stats.pending_tasks,
+      labelAr: 'المهام المعلقة',
+      labelEn: 'Pending Tasks',
+      icon: ListChecks,
+      iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+      iconColor: 'text-amber-600',
+      to: ROUTES.SEO_LEADER.TASKS,
+    },
+    {
+      key: 'completedProjects',
+      value: stats.completed_projects,
+      labelAr: 'المشاريع المكتملة',
+      labelEn: 'Completed Projects',
+      icon: CheckCircle2,
+      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+      iconColor: 'text-emerald-600',
+      to: ROUTES.SEO_LEADER.MY_PROJECTS,
     },
   ];
 }
@@ -111,8 +146,8 @@ function StatCardGroup({ titleAr, titleEn, cards, isAr, onNavigate }: GroupProps
 export function AdminStatCards({ stats, isAr }: Props) {
   const navigate = useNavigate();
 
-  const pmCards  = buildCards(stats.pm, ROUTES.PROJECT_MANAGER.TEAM, ROUTES.PROJECT_MANAGER.MY_PROJECTS);
-  const seoCards = buildCards(stats.seo, ROUTES.SEO_LEADER.TEAM, ROUTES.SEO_LEADER.MY_PROJECTS);
+  const pmCards  = buildPmCards(stats.pm);
+  const seoCards = buildSeoCards(stats.seo);
 
   return (
     <div className="space-y-6">

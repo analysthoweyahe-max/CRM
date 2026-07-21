@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from 'react';
 import { X, Pencil, Trash2, ExternalLink, ImageIcon, Paperclip } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { Combobox } from '@/shared/components/form/Combobox';
+import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
 import { formatDateShort } from '@/shared/utils/date.utils';
 import { buildStatusComboboxItems, buildStatusLabelMap, statusLabelFor } from '../utils/clientIssue.utils';
 import type { ClientIssue, ClientIssueStatus } from '../types/projectClientIssue.types';
@@ -17,15 +18,15 @@ interface Props {
   onEdit:              () => void;
   onDelete:            () => void;
   onStatusChange:      (status: ClientIssueStatus) => void;
-  onUploadImage:       (file: File) => void;
-  onUploadFile:        (file: File) => void;
+  onUploadImages:      (files: File[]) => void;
+  onUploadFiles:       (files: File[]) => void;
   onRemoveAttachment:  (attachmentId: number) => void;
 }
 
 export function ClientIssueDetailDrawer({
   issue, allIssues, isAr, canEdit, canDelete, canUpdateStatus,
   onClose, onEdit, onDelete, onStatusChange,
-  onUploadImage, onUploadFile, onRemoveAttachment,
+  onUploadImages, onUploadFiles, onRemoveAttachment,
 }: Props) {
   const imageRef = useRef<HTMLInputElement>(null);
   const fileRef  = useRef<HTMLInputElement>(null);
@@ -34,6 +35,9 @@ export function ClientIssueDetailDrawer({
 
   const statusLabelMap = buildStatusLabelMap(allIssues);
   const statusItems = buildStatusComboboxItems(statusLabelMap, isAr);
+  const images = issue.imageAttachments ?? [];
+  const files  = issue.fileAttachments ?? [];
+  const links  = issue.links ?? [];
 
   const rows: { label: string; value: ReactNode }[] = [
     { label: isAr ? 'المشكلة' : 'Problem', value: issue.problem },
@@ -96,33 +100,11 @@ export function ClientIssueDetailDrawer({
                 <tr>
                   <th className="py-3 px-4 text-start font-semibold text-gray-600 dark:text-gray-300
                                  bg-gray-50/80 dark:bg-gray-800/50 align-top">
-                    {isAr ? 'الصورة' : 'Image'}
+                    {isAr ? 'الروابط' : 'Links'}
                   </th>
-                  <td className="py-3 px-4 space-y-2">
-                    {issue.imageAttachment ? (
-                      <div className="flex items-start gap-2">
-                        <a href={issue.imageAttachment.url} target="_blank" rel="noreferrer"
-                          className="block max-w-xs rounded-lg overflow-hidden border border-gray-100 dark:border-gray-700">
-                          <img src={issue.imageAttachment.url} alt={issue.imageAttachment.name}
-                            className="w-full h-auto object-cover" />
-                        </a>
-                        {canEdit && (
-                          <button type="button" onClick={() => onRemoveAttachment(issue.imageAttachment!.id)}
-                            className="text-gray-400 hover:text-red-500 transition-colors p-1">
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    ) : canEdit ? (
-                      <>
-                        <input ref={imageRef} type="file" accept="image/*" className="hidden"
-                          onChange={e => { const f = e.target.files?.[0]; if (f) onUploadImage(f); e.target.value = ''; }} />
-                        <Button type="button" variant="secondary" size="sm"
-                          startIcon={<ImageIcon size={14} />}
-                          onClick={() => imageRef.current?.click()}>
-                          {isAr ? 'رفع صورة' : 'Upload image'}
-                        </Button>
-                      </>
+                  <td className="py-3 px-4">
+                    {links.length > 0 ? (
+                      <ImportantLinksDisplay links={links} isAr={isAr} showLabel={false} />
                     ) : (
                       <span className="text-gray-400">—</span>
                     )}
@@ -131,35 +113,99 @@ export function ClientIssueDetailDrawer({
                 <tr>
                   <th className="py-3 px-4 text-start font-semibold text-gray-600 dark:text-gray-300
                                  bg-gray-50/80 dark:bg-gray-800/50 align-top">
-                    {isAr ? 'الملف' : 'File'}
+                    {isAr ? 'الصور' : 'Images'}
                   </th>
                   <td className="py-3 px-4 space-y-2">
-                    {issue.fileAttachment ? (
-                      <div className="flex items-center gap-2">
-                        <a href={issue.fileAttachment.url} target="_blank" rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-[#709028] dark:text-[#A0CD39] hover:underline">
-                          <ExternalLink size={14} />
-                          {issue.fileAttachment.name}
-                        </a>
-                        {canEdit && (
-                          <button type="button" onClick={() => onRemoveAttachment(issue.fileAttachment!.id)}
-                            className="text-gray-400 hover:text-red-500 transition-colors p-1">
-                            <Trash2 size={14} />
-                          </button>
-                        )}
+                    {images.length > 0 ? (
+                      <div className="space-y-2">
+                        {images.map(att => (
+                          <div key={att.id} className="flex items-start gap-2">
+                            <a href={att.url} target="_blank" rel="noreferrer"
+                              className="block max-w-xs rounded-lg overflow-hidden border border-gray-100 dark:border-gray-700">
+                              <img src={att.url} alt={att.name}
+                                className="w-full h-auto object-cover" />
+                            </a>
+                            {canEdit && (
+                              <button type="button" onClick={() => onRemoveAttachment(att.id)}
+                                className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ) : canEdit ? (
+                    ) : !canEdit ? (
+                      <span className="text-gray-400">—</span>
+                    ) : null}
+                    {canEdit && (
                       <>
-                        <input ref={fileRef} type="file" className="hidden"
-                          onChange={e => { const f = e.target.files?.[0]; if (f) onUploadFile(f); e.target.value = ''; }} />
+                        <input
+                          ref={imageRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={e => {
+                            const selected = Array.from(e.target.files ?? []);
+                            if (selected.length) onUploadImages(selected);
+                            e.target.value = '';
+                          }}
+                        />
+                        <Button type="button" variant="secondary" size="sm"
+                          startIcon={<ImageIcon size={14} />}
+                          onClick={() => imageRef.current?.click()}>
+                          {isAr ? 'رفع صور' : 'Upload images'}
+                        </Button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <th className="py-3 px-4 text-start font-semibold text-gray-600 dark:text-gray-300
+                                 bg-gray-50/80 dark:bg-gray-800/50 align-top">
+                    {isAr ? 'الملفات' : 'Files'}
+                  </th>
+                  <td className="py-3 px-4 space-y-2">
+                    {files.length > 0 ? (
+                      <ul className="space-y-1.5">
+                        {files.map(att => (
+                          <li key={att.id} className="flex items-center gap-2">
+                            <a href={att.url} target="_blank" rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 text-sm text-[#709028] dark:text-[#A0CD39] hover:underline min-w-0">
+                              <ExternalLink size={14} className="shrink-0" />
+                              <span className="truncate">{att.name}</span>
+                            </a>
+                            {canEdit && (
+                              <button type="button" onClick={() => onRemoveAttachment(att.id)}
+                                className="text-gray-400 hover:text-red-500 transition-colors p-1 shrink-0">
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : !canEdit ? (
+                      <span className="text-gray-400">—</span>
+                    ) : null}
+                    {canEdit && (
+                      <>
+                        <input
+                          ref={fileRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={e => {
+                            const selected = Array.from(e.target.files ?? []);
+                            if (selected.length) onUploadFiles(selected);
+                            e.target.value = '';
+                          }}
+                        />
                         <Button type="button" variant="secondary" size="sm"
                           startIcon={<Paperclip size={14} />}
                           onClick={() => fileRef.current?.click()}>
-                          {isAr ? 'رفع ملف' : 'Upload file'}
+                          {isAr ? 'رفع ملفات' : 'Upload files'}
                         </Button>
                       </>
-                    ) : (
-                      <span className="text-gray-400">—</span>
                     )}
                   </td>
                 </tr>
