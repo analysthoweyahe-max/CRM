@@ -78,7 +78,7 @@ export function MyTasksKanbanBoard({
     }
     try {
       await onStatusChange(
-        task.project ? task : { ...task, project: { id: projectId, name: task.project?.name ?? '' } },
+        task.project ? task : { ...task, project: { id: projectId, name: '' } },
         toStatus,
       );
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
