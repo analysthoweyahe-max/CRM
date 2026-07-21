@@ -122,9 +122,10 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
 
   // SEO task statuses are admin-configurable (not a fixed set) — fetch the
   // full catalog so the board always shows every status column, not just
-  // whichever ones the current tasks happen to occupy.
-  const isSeoEmployee = tasksRole === 'seo-employee';
-  const { statusOptions: seoStatusCatalog } = useSeoTaskLookups(isAr, { enabled: isSeoEmployee });
+  // whichever ones the current tasks happen to occupy. Applies to both SEO
+  // portals so legacy `pending` columns don't appear next to the catalog.
+  const isSeoRole = tasksRole === 'seo-employee' || tasksRole === 'seo-manager';
+  const { statusOptions: seoStatusCatalog } = useSeoTaskLookups(isAr, { enabled: isSeoRole });
 
   const scopedProjectId = projectId || undefined;
 
@@ -267,7 +268,7 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     ? stampProjectOnGroupedTasks(rawQueryData, scopedProjectMeta)
     : rawQueryData;
 
-  const statusCatalog = isSeoEmployee ? seoStatusCatalog : [];
+  const statusCatalog = isSeoRole ? seoStatusCatalog : [];
   const withCatalog = rawData && statusCatalog.length > 0
     ? { ...rawData, columns: fillCatalogColumns(rawData.columns, statusCatalog) }
     : rawData;

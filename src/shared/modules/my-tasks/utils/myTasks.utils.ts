@@ -402,21 +402,81 @@ export function normalizeGroupedTasks(payload: unknown): GroupedTasksData {
   return { columns, phases, total };
 }
 
+/** Known legacy status slug labels — used to merge API `pending` columns into
+ *  an admin catalog status that already uses the same Arabic/English label. */
+const LEGACY_STATUS_LABELS: Record<string, string[]> = {
+  pending:      ['pending', 'قيد الانتظار'],
+  in_progress:  ['in_progress', 'in progress', 'قيد التنفيذ'],
+  in_review:    ['in_review', 'in review', 'needs_review', 'قيد المراجعة', 'مراجعة'],
+  needs_review: ['needs_review', 'in_review', 'review', 'مراجعة', 'قيد المراجعة'],
+  blocked:      ['blocked', 'محظورة', 'محظور'],
+  completed:    ['completed', 'done', 'مكتمل'],
+  cancelled:    ['cancelled', 'canceled', 'ملغي'],
+};
+
 /** Backfill columns for every catalog status that has no current tasks, so
  *  the board always shows the full admin-configured set instead of only
- *  whichever statuses happen to have a task right now. Any status found on
- *  a task but missing from the catalog (renamed/deactivated after the task
- *  was created) is kept as a trailing extra column instead of being dropped. */
+ *  whichever statuses happen to have a task right now.
+ *
+ *  Legacy slug columns (e.g. `pending` → "قيد الانتظار") are merged into a
+ *  catalog column with the same label when possible, so the board doesn't
+ *  show a duplicate empty/partial pending column next to the real status id.
+ *  Unmatched extras are kept only when they still have tasks. */
 export function fillCatalogColumns(
   columns: MyTaskColumn[],
   catalog: { key: string; label: string }[],
 ): MyTaskColumn[] {
   if (catalog.length === 0) return columns;
-  const byStatus = new Map(columns.map((c) => [c.status, c]));
+
+  const norm = (s: string) => s.trim().toLowerCase();
+
+  function resolveCatalogKey(col: MyTaskColumn): string | null {
+    if (catalog.some((c) => c.key === col.status)) return col.status;
+
+    const legacyAliases = LEGACY_STATUS_LABELS[norm(col.status)] ?? [];
+    const colLabels = new Set(
+      [col.status, col.statusLabel, ...legacyAliases].map(norm).filter(Boolean),
+    );
+
+    for (const c of catalog) {
+      if (colLabels.has(norm(c.label)) || colLabels.has(norm(c.key))) return c.key;
+    }
+    return null;
+  }
+
+  const merged = new Map<string, MyTaskColumn>();
+
+  for (const col of columns) {
+    const catalogKey = resolveCatalogKey(col);
+    const targetKey = catalogKey ?? col.status;
+    const catalogMeta = catalog.find((c) => c.key === targetKey);
+    const statusLabel = catalogMeta?.label ?? col.statusLabel;
+    const tasks = col.tasks.map((t) => ({
+      ...t,
+      status: targetKey,
+      statusLabel,
+    }));
+
+    const existing = merged.get(targetKey);
+    if (existing) {
+      existing.tasks.push(...tasks);
+    } else {
+      merged.set(targetKey, {
+        status: targetKey,
+        statusLabel,
+        tasks,
+      });
+    }
+  }
+
   const filled = catalog.map((c) =>
-    byStatus.get(c.key) ?? { status: c.key, statusLabel: c.label, tasks: [] },
+    merged.get(c.key) ?? { status: c.key, statusLabel: c.label, tasks: [] as MyTask[] },
   );
-  const extras = columns.filter((c) => !catalog.some((cat) => cat.key === c.status));
+
+  const extras = [...merged.values()].filter(
+    (c) => !catalog.some((cat) => cat.key === c.status) && c.tasks.length > 0,
+  );
+
   return [...filled, ...extras];
 }
 
