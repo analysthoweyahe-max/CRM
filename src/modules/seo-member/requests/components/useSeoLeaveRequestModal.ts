@@ -3,14 +3,14 @@ import { toast } from 'sonner';
 import { useSeoLeaveTypes, useSeoLeaveCreate } from '../hooks/useSeoLeave';
 
 export function useSeoLeaveRequestModal(onClose: () => void, isAr: boolean) {
-  const { data: types = [] }                  = useSeoLeaveTypes();
+  const { data: types = [] } = useSeoLeaveTypes();
   const { mutate: create, isPending: creating } = useSeoLeaveCreate();
 
-  const [leaveType,  setLeaveType]  = useState('');
-  const [reason,     setReason]     = useState('');
-  const [startDate,  setStartDate]  = useState('');
-  const [endDate,    setEndDate]    = useState('');
-  const [file,       setFile]       = useState<File | null>(null);
+  const [leaveType, setLeaveType] = useState('');
+  const [reason, setReason] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function reset() {
@@ -38,7 +38,7 @@ export function useSeoLeaveRequestModal(onClose: () => void, isAr: boolean) {
       const fd = new FormData();
       fd.append('leave_type', leaveType);
       fd.append('start_date', startDate);
-      fd.append('end_date',   endDate);
+      fd.append('end_date', endDate);
       fd.append('reason', trimmedReason);
       fd.append('attachment', file);
       create(fd, { onSuccess, onError });
