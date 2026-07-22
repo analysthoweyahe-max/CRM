@@ -51,7 +51,7 @@ function buildPmCards(stats: AdminDashboardStats['pm']): CardDef[] {
       icon: ListChecks,
       iconBg: 'bg-amber-100 dark:bg-amber-900/30',
       iconColor: 'text-amber-600',
-      to: ROUTES.PROJECT_MANAGER.TASKS,
+      to: "#",
     },
     {
       key: 'activeProjects',
@@ -96,7 +96,7 @@ function buildSeoCards(stats: AdminDashboardStats['seo']): CardDef[] {
       icon: ListChecks,
       iconBg: 'bg-amber-100 dark:bg-amber-900/30',
       iconColor: 'text-amber-600',
-      to: ROUTES.SEO_LEADER.TASKS,
+      to: "#",
     },
     {
       key: 'completedProjects',
