@@ -6,11 +6,7 @@ import { Combobox }            from '@/shared/components/form/Combobox';
 import { RichTextEditor }      from '@/shared/components/form/RichTextEditor';
 import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
 import { SeoTaskFilesInput }   from '@/modules/seo-leader/campaigns/components/SeoTaskFilesInput';
-import { SEO_TASK_PHASE_ITEMS } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
 import { useAddSelfSeoTask }   from './useAddSelfSeoTask';
-
-/** Phase is a free-text API field — store the display label, not the slug id. */
-const PHASE_ITEMS = SEO_TASK_PHASE_ITEMS.map(({ label }) => ({ id: label, label }));
 
 interface Props {
   open:              boolean;
@@ -31,7 +27,7 @@ export function AddSelfSeoTaskModal({
     projectId, setProjectId, projectItems,
     lockProject: projectLocked,
     title, setTitle,
-    phase, setPhase,
+    phase, setPhase, phaseItems, phasesLoading,
     description, setDescription,
     priority, setPriority, priorityItems,
     dueDate, setDueDate,
@@ -94,11 +90,20 @@ export function AddSelfSeoTaskModal({
 
         <FormField label={isAr ? 'المرحلة' : 'Phase'} required error={errors.phase}>
           <Combobox
-            items={PHASE_ITEMS}
+            items={phaseItems}
             value={phase}
             onChange={setPhase}
             error={!!errors.phase}
-            placeholder={isAr ? 'اختر المرحلة' : 'Select phase'}
+            disabled={!projectId || phasesLoading || phaseItems.length === 0}
+            placeholder={
+              !projectId
+                ? (isAr ? 'اختر المشروع أولاً' : 'Select a project first')
+                : phasesLoading
+                  ? (isAr ? 'جاري التحميل...' : 'Loading…')
+                  : phaseItems.length === 0
+                    ? (isAr ? 'لا توجد مراحل' : 'No phases')
+                    : (isAr ? 'اختر المرحلة' : 'Select phase')
+            }
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
             noResultsText={isAr ? 'لا نتائج' : 'No results'}
           />

@@ -15,7 +15,11 @@ export interface AddSeoTaskForm {
 /** POST /v1/seo/projects/{id}/tasks — title/phase/employee_ids required, rest optional */
 export interface CreateSeoTaskPayload {
   title: string;
+  /** Phase display name (required by create API). */
   phase: string;
+  /** Canonical phase id from project template phases — preferred when available. */
+  phaseId?: number;
+  phase_id?: number;
   employee_ids: string[];
   description?: string;
   priority?: string;

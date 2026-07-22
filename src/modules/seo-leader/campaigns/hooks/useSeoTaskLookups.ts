@@ -7,25 +7,6 @@ import {
 } from '@/shared/utils/projectStatusLookups.utils';
 import { campaignApi } from '../api/campaign.api';
 import type { SeoTaskStatusLookupItem } from '../api/campaign.api';
-import type { ComboboxItem } from '@/shared/components/form/Combobox';
-
-/** No admin-managed phase catalog exists for SEO tasks — this is the
- *  canonical known-phase list used across SEO task create/edit forms and
- *  Kanban phase columns. */
-export const SEO_TASK_PHASE_ITEMS: ComboboxItem[] = [
-  { id: 'keyword_research', label: 'بحث الكلمات المفتاحية' },
-  { id: 'on_page', label: 'داخل الصفحة' },
-  { id: 'technical', label: 'تقنية' },
-  { id: 'content', label: 'محتوى' },
-  { id: 'off_page', label: 'خارج الصفحة' },
-  { id: 'link_building', label: 'بناء روابط' },
-  { id: 'reporting', label: 'تقارير' },
-  { id: 'content_optimization', label: 'تحسين المحتوى' },
-  { id: 'technical_seo', label: 'تحسين تقني' },
-  { id: 'competitor_analysis', label: 'تحليل المنافسين' },
-  { id: 'on_page_seo', label: 'تحسين على الصفحة' },
-  { id: 'off_page_seo', label: 'تحسين خارج الصفحة' },
-];
 
 export interface SeoTaskStatusOption {
   /** Stringified numeric status id — used for kanban columns and status_id writes. */

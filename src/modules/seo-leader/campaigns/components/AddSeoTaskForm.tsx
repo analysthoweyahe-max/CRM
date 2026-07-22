@@ -4,12 +4,9 @@ import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
 import { clampMinutesInput } from '@/shared/utils/number.utils';
-import { useSeoTaskLookups, SEO_TASK_PHASE_ITEMS } from '../hooks/useSeoTaskLookups';
+import { useSeoTaskLookups } from '../hooks/useSeoTaskLookups';
 import { SeoTaskFilesInput } from './SeoTaskFilesInput';
 import type { AddSeoTaskForm } from './AddSeoTaskModal.types';
-
-/** Phase is a free-text API field — store the display label, not the slug id. */
-const PHASE_ITEMS = SEO_TASK_PHASE_ITEMS.map(({ label }) => ({ id: label, label }));
 
 /* ── Shared style tokens ─────────────────────────────────────────────── */
 const INPUT = [
@@ -36,6 +33,8 @@ interface Props {
   set:        <K extends keyof AddSeoTaskForm>(key: K, val: AddSeoTaskForm[K]) => void;
   errors?:    Record<string, string>;
   teamItems:  ComboboxItem[];
+  phaseItems: ComboboxItem[];
+  phasesLoading?: boolean;
   isAr:       boolean;
   files?:     File[];
   onFilesChange?: (files: File[]) => void;
@@ -43,7 +42,10 @@ interface Props {
   onFileError?: (msg: string | null) => void;
 }
 
-export function AddSeoTaskForm({ form, set, errors = {}, teamItems, isAr, files = [], onFilesChange, fileError, onFileError }: Props) {
+export function AddSeoTaskForm({
+  form, set, errors = {}, teamItems, phaseItems, phasesLoading = false,
+  isAr, files = [], onFilesChange, fileError, onFileError,
+}: Props) {
   const { priorityItems } = useSeoTaskLookups(isAr);
   return (
     <div className="space-y-4">
@@ -64,18 +66,25 @@ export function AddSeoTaskForm({ form, set, errors = {}, teamItems, isAr, files 
         {errors.title && <p className={ERROR_TEXT}>{errors.title}</p>}
       </div>
 
-      {/* Phase */}
+      {/* Phase — project template phases from API */}
       <div>
         <label className={LABEL}>
           {isAr ? 'المرحلة' : 'Phase'}
           <span className="text-red-500 ms-1">*</span>
         </label>
         <Combobox
-          items={PHASE_ITEMS}
+          items={phaseItems}
           value={form.phase}
           onChange={v => set('phase', v)}
           error={!!errors.phase}
-          placeholder={isAr ? 'اختر المرحلة' : 'Select phase'}
+          disabled={phasesLoading || phaseItems.length === 0}
+          placeholder={
+            phasesLoading
+              ? (isAr ? 'جاري التحميل...' : 'Loading…')
+              : phaseItems.length === 0
+                ? (isAr ? 'لا توجد مراحل — طبّق قالباً أولاً' : 'No phases — apply a template first')
+                : (isAr ? 'اختر المرحلة' : 'Select phase')
+          }
           searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
           noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
         />

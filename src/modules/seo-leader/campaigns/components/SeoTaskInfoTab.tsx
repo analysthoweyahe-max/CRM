@@ -1,11 +1,14 @@
 import { Pencil, Trash2, Plus, X as XIcon, CalendarClock } from 'lucide-react';
+import { useMemo }       from 'react';
 import { Button }        from '@/shared/components/ui/Button';
 import { Badge }         from '@/shared/components/ui/Badge';
 import { Combobox }      from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
-import { useSeoTaskLookups, SEO_TASK_PHASE_ITEMS } from '../hooks/useSeoTaskLookups';
+import { useSeoTaskLookups } from '../hooks/useSeoTaskLookups';
+import { useSeoProjectPhases } from '../hooks/useSeoProjectPhases';
+import { seoPhasesToComboboxItems } from '../utils/seoPhase.utils';
 import type { SeoTaskFull } from './SeoTaskModal.types';
 
 /* ── Style tokens ─────────────────────────────────────────────────────── */
@@ -19,9 +22,6 @@ const INPUT = [
 
 const LABEL = 'text-xs text-gray-400 dark:text-gray-500 mb-1 block text-end';
 const ROW   = 'flex items-center justify-between gap-4';
-
-/* ── Lookup data ──────────────────────────────────────────────────────── */
-const PHASE_ITEMS = SEO_TASK_PHASE_ITEMS;
 
 const INTENT_ITEMS: ComboboxItem[] = [
   { id: 'informational',  label: 'معلوماتية'   },
@@ -130,6 +130,7 @@ function KdBar({ kd }: { kd: number }) {
 /* ── Props ────────────────────────────────────────────────────────────── */
 export interface SeoTaskInfoTabProps {
   task:              SeoTaskFull;
+  projectId:         string;
   isAr:              boolean;
   /* base fields */
   description:       string;  setDescription:  (v: string) => void;
@@ -161,7 +162,7 @@ export interface SeoTaskInfoTabProps {
 
 /* ── Component ────────────────────────────────────────────────────────── */
 export function SeoTaskInfoTab({
-  task, isAr,
+  task, projectId, isAr,
   description, setDescription,
   taskType, setTaskType,
   priority, setPriority,
@@ -185,6 +186,11 @@ export function SeoTaskInfoTab({
   const kd = Number(keywordDifficulty) || 0;
   const { priorityItems, statusOptions } = useSeoTaskLookups(isAr);
   const statusItems: ComboboxItem[] = statusOptions.map(s => ({ id: s.key, label: s.label }));
+  const { data: projectPhases = [], isLoading: phasesLoading } = useSeoProjectPhases(projectId);
+  const phaseItems = useMemo(
+    () => seoPhasesToComboboxItems(projectPhases),
+    [projectPhases],
+  );
 
   function addSiteLink(v: string)       { setSiteLinks([...siteLinks, v]);         }
   function removeSiteLink(i: number)    { setSiteLinks(siteLinks.filter((_,x)=>x!==i)); }
@@ -223,10 +229,17 @@ export function SeoTaskInfoTab({
       <div className={ROW}>
         <div className="w-44 shrink-0">
           <Combobox
-            items={PHASE_ITEMS}
+            items={phaseItems}
             value={taskType}
             onChange={setTaskType}
-            placeholder={isAr ? 'اختر المرحلة' : 'Select phase'}
+            disabled={phasesLoading || phaseItems.length === 0}
+            placeholder={
+              phasesLoading
+                ? (isAr ? 'جاري التحميل...' : 'Loading…')
+                : phaseItems.length === 0
+                  ? (isAr ? 'لا توجد مراحل' : 'No phases')
+                  : (isAr ? 'اختر المرحلة' : 'Select phase')
+            }
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
             noResultsText={isAr ? 'لا نتائج' : 'No results'}
           />

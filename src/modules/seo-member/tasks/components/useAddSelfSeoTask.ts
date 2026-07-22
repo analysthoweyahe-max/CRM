@@ -4,6 +4,11 @@ import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { invalidateSeoMemberHomeTasks } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
+import { useSeoProjectPhases } from '@/modules/seo-leader/campaigns/hooks/useSeoProjectPhases';
+import {
+  resolveSeoPhasePayload,
+  seoPhasesToComboboxItems,
+} from '@/modules/seo-leader/campaigns/utils/seoPhase.utils';
 import { useSeoMemberDashboard } from '../../dashboard/hooks/useSeoMemberDashboard';
 import { seoTaskDetailApi } from '../api/seoTaskDetail.api';
 import type { CreateSelfSeoTaskPayload, SeoTaskPriority } from '../types/seoTask.types';
@@ -43,17 +48,35 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
   const [touched,         setTouched]         = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
+  const { data: projectPhases = [], isLoading: phasesLoading } = useSeoProjectPhases(projectId);
+  const phaseItems = useMemo(
+    () => seoPhasesToComboboxItems(projectPhases),
+    [projectPhases],
+  );
+
   function markTouched(field: string) {
     setTouched(prev => (prev[field] ? prev : { ...prev, [field]: true }));
   }
 
-  function setProjectId(v: string) { setProjectIdState(v); markTouched('projectId'); }
+  function setProjectId(v: string) {
+    setProjectIdState(v);
+    setPhaseState('');
+    markTouched('projectId');
+  }
   function setTitle(v: string)     { setTitleState(v);     markTouched('title'); }
   function setPhase(v: string)     { setPhaseState(v);     markTouched('phase'); }
 
   useEffect(() => {
     if (options.initialProjectId) setProjectIdState(options.initialProjectId);
   }, [options.initialProjectId]);
+
+  // Drop phase if it no longer exists for the selected project.
+  useEffect(() => {
+    if (!phase) return;
+    if (!projectPhases.some(p => String(p.id) === phase)) {
+      setPhaseState('');
+    }
+  }, [projectPhases, phase]);
 
   function reset() {
     setProjectIdState(options.lockProject ? (options.initialProjectId ?? '') : '');
@@ -80,7 +103,9 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
   const fieldErrors: Record<string, string> = {};
   if (!projectId)      fieldErrors.projectId = isAr ? 'اختر المشروع' : 'Project is required';
   if (!title.trim())   fieldErrors.title     = isAr ? 'العنوان مطلوب' : 'Title is required';
-  if (!phase.trim())   fieldErrors.phase     = isAr ? 'المرحلة مطلوبة' : 'Phase is required';
+  if (!phase.trim() || !resolveSeoPhasePayload(projectPhases, phase)) {
+    fieldErrors.phase = isAr ? 'المرحلة مطلوبة' : 'Phase is required';
+  }
   const linksError = validateImportantLinks(importantLinks, isAr);
   if (linksError) fieldErrors.importantLinks = linksError;
 
@@ -95,10 +120,15 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
     setSubmitAttempted(true);
     if (!isValid || creating) return;
 
+    const resolved = resolveSeoPhasePayload(projectPhases, phase);
+    if (!resolved) return;
+
     const links = normalizeImportantLinks(importantLinks);
     const payload: CreateSelfSeoTaskPayload = {
       title:    title.trim(),
-      phase:    phase.trim(),
+      phase:    resolved.phase,
+      phaseId:  resolved.phaseId,
+      phase_id: resolved.phaseId,
       priority,
       ...(description.trim() ? { description: description.trim() } : {}),
       ...(dueDate             ? { due_date: dueDate } : {}),
@@ -122,7 +152,7 @@ export function useAddSelfSeoTask(onClose: () => void, isAr: boolean, options: O
     projectId, setProjectId, projectItems,
     lockProject: Boolean(options.lockProject),
     title, setTitle,
-    phase, setPhase,
+    phase, setPhase, phaseItems, phasesLoading,
     description, setDescription,
     priority, setPriority, priorityItems,
     dueDate, setDueDate,

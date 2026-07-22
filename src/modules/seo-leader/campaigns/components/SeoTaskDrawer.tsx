@@ -166,6 +166,7 @@ export function SeoTaskDrawer({
             {d.tab === 'info' && (
               <SeoTaskInfoTab
                 task={d.task}
+                projectId={projectId}
                 isAr={isAr}
                 description={d.description}             setDescription={d.setDescription}
                 taskType={d.taskType}                   setTaskType={d.setTaskType}

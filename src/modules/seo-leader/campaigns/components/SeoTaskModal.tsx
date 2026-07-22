@@ -1,4 +1,4 @@
-import { useRef }       from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { X, Upload, Download, UserMinus, Users, Paperclip } from 'lucide-react';
 import { Button }        from '@/shared/components/ui/Button';
 import { CopyAttachmentLinkButton } from '@/shared/components/ui/CopyAttachmentLinkButton';
@@ -7,6 +7,11 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { buildAuthMediaUrl }  from '@/shared/components/chat/authMediaUrl';
 import { useSeoTaskModal }   from './useSeoTaskModal';
 import type { SeoTaskTab }   from './SeoTaskModal.types';
+import { useSeoProjectPhases } from '../hooks/useSeoProjectPhases';
+import {
+  matchSeoPhaseComboboxValue,
+  seoPhasesToComboboxItems,
+} from '../utils/seoPhase.utils';
 
 /* ── Style tokens ────────────────────────────────────────────────────── */
 const INPUT = [
@@ -31,17 +36,6 @@ const STATUS_ITEMS: ComboboxItem[] = [
   { id: 'in_progress', label: 'جارية'         },
   { id: 'in_review',   label: 'مراجعة'        },
   { id: 'completed',   label: 'مكتملة'        },
-];
-
-const STAGE_ITEMS: ComboboxItem[] = [
-  { id: 'keyword_research',     label: 'بحث الكلمات المفتاحية' },
-  { id: 'content_optimization', label: 'تحسين المحتوى'          },
-  { id: 'link_building',        label: 'بناء الروابط'           },
-  { id: 'competitor_analysis',  label: 'تحليل المنافسين'         },
-  { id: 'technical_seo',        label: 'تحسين تقني'             },
-  { id: 'on_page_seo',          label: 'تحسين على الصفحة'        },
-  { id: 'off_page_seo',         label: 'تحسين خارج الصفحة'       },
-  { id: 'reporting',            label: 'التقارير والتحليل'       },
 ];
 
 const TABS: { key: SeoTaskTab; ar: string; en: string; }[] = [
@@ -70,6 +64,22 @@ interface Props {
 export function SeoTaskModal({ taskId, projectId, onClose, isAr }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const m       = useSeoTaskModal(projectId, taskId);
+  const { data: projectPhases = [], isLoading: phasesLoading } = useSeoProjectPhases(projectId);
+  const stageItems = useMemo(
+    () => seoPhasesToComboboxItems(projectPhases),
+    [projectPhases],
+  );
+
+  useEffect(() => {
+    if (!m.task) return;
+    const matched = matchSeoPhaseComboboxValue(projectPhases, {
+      phaseId: m.task.phaseId,
+      phase:   m.task.phase,
+      stage:   m.task.stage,
+    });
+    if (matched && matched !== m.stage) m.setStage(matched);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [m.task, projectPhases]);
 
   if (!taskId) return null;
 
@@ -223,10 +233,17 @@ export function SeoTaskModal({ taskId, projectId, onClose, isAr }: Props) {
               <div>
                 <label className={LABEL}>{isAr ? 'المرحلة' : 'Stage'}</label>
                 <Combobox
-                  items={STAGE_ITEMS}
+                  items={stageItems}
                   value={m.stage}
                   onChange={m.setStage}
-                  placeholder={isAr ? 'اختر المرحلة' : 'Select stage'}
+                  disabled={phasesLoading || stageItems.length === 0}
+                  placeholder={
+                    phasesLoading
+                      ? (isAr ? 'جاري التحميل...' : 'Loading…')
+                      : stageItems.length === 0
+                        ? (isAr ? 'لا توجد مراحل' : 'No phases')
+                        : (isAr ? 'اختر المرحلة' : 'Select stage')
+                  }
                   searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
                   noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
                 />

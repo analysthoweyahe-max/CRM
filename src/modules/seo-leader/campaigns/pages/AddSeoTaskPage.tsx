@@ -25,6 +25,8 @@ export function AddSeoTaskPage() {
     setFileError,
     apiError,
     errors,
+    phaseItems,
+    phasesLoading,
     isSaving,
     handleAdd,
     goBack,
@@ -68,6 +70,8 @@ export function AddSeoTaskPage() {
           set={set}
           errors={errors}
           teamItems={teamItems}
+          phaseItems={phaseItems}
+          phasesLoading={phasesLoading}
           isAr={isAr}
           files={files}
           onFilesChange={setFiles}

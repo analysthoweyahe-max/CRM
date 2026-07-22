@@ -17,6 +17,11 @@ import type { TaskComment, TimeSession } from '@/modules/project-manager/tasks/t
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 import type { MentionRef } from '@/shared/components/chat';
 import { useAuth } from '@/modules/auth/context/AuthContext';
+import { useSeoProjectPhases } from '../hooks/useSeoProjectPhases';
+import {
+  matchSeoPhaseComboboxValue,
+  resolveSeoPhasePayload,
+} from '../utils/seoPhase.utils';
 
 function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
   const refs = (raw ?? [])
@@ -134,11 +139,17 @@ export function useSeoTaskDrawer(
   });
   const mentionables = mentionablesRaw ?? [];
 
+  const { data: projectPhases = [] } = useSeoProjectPhases(projectId);
+
   /* ── Populate form ──────────────────────────────────────────────────── */
   useEffect(() => {
     if (!task) return;
     setDescription(task.description ?? '');
-    setTaskType(task.taskType ?? '');
+    setTaskType(matchSeoPhaseComboboxValue(projectPhases, {
+      phaseId: task.phaseId,
+      phase:   task.phase,
+      stage:   task.stage,
+    }));
     setPriority(task.priority ?? 'medium');
     setStatus(task.statusId != null ? String(task.statusId) : (task.status ?? 'pending'));
     setStartDate(task.startDate ?? '');
@@ -154,7 +165,7 @@ export function useSeoTaskDrawer(
     setSiteLinks(task.siteLinks ?? []);
     setReferenceLinks(task.referenceLinks ?? []);
     setNotes(task.notes ?? '');
-  }, [task]);
+  }, [task, projectPhases]);
 
   /* ── Reset tab when opening a different task ────────────────────────── */
   useEffect(() => { setTab('info'); }, [taskId]);
@@ -162,9 +173,12 @@ export function useSeoTaskDrawer(
   /* ── Save task ──────────────────────────────────────────────────────── */
   const saveMutation = useMutation({
     mutationFn: () => {
+      const resolvedPhase = resolveSeoPhasePayload(projectPhases, taskType);
       const next = {
         description: description.trim() || undefined,
-        taskType: taskType || undefined,
+        ...(resolvedPhase
+          ? { phase: resolvedPhase.phase, phaseId: resolvedPhase.phaseId, phase_id: resolvedPhase.phaseId }
+          : {}),
         priority,
         status_id: Number(status) || undefined,
         startDate: startDate || undefined,
@@ -173,9 +187,12 @@ export function useSeoTaskDrawer(
         referenceLinks: referenceLinks.filter(Boolean),
         notes: notes.trim() || undefined,
       };
+      const baselinePhaseId = task?.phaseId ?? null;
       const baseline = {
         description: task?.description ?? undefined,
-        taskType: task?.taskType ?? undefined,
+        phase: task?.phase ?? undefined,
+        phaseId: baselinePhaseId ?? undefined,
+        phase_id: baselinePhaseId ?? undefined,
         priority: task?.priority,
         status_id: task?.statusId ?? undefined,
         startDate: task?.startDate ?? undefined,

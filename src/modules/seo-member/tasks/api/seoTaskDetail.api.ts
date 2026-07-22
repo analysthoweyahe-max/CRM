@@ -159,6 +159,8 @@ export const seoTaskDetailApi = {
       const fd = new FormData();
       fd.append('title', payload.title);
       fd.append('phase', payload.phase);
+      if (payload.phaseId != null) fd.append('phaseId', String(payload.phaseId));
+      if (payload.phase_id != null) fd.append('phase_id', String(payload.phase_id));
       fd.append('priority', payload.priority);
       if (payload.description) fd.append('description', payload.description);
       if (payload.due_date) fd.append('due_date', payload.due_date);

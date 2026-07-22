@@ -5,6 +5,7 @@ export interface SeoTaskFull {
   uuid?:            string;
   taskNumber:       number;
   phase:            string;
+  phaseId?:         number | null;
   title:            string;
   description?:     string | null;
   taskType:         string;

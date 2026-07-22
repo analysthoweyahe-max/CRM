@@ -469,6 +469,8 @@ export const campaignApi = {
       const fd = new FormData();
       fd.append('title', payload.title);
       fd.append('phase', payload.phase);
+      if (payload.phaseId != null) fd.append('phaseId', String(payload.phaseId));
+      if (payload.phase_id != null) fd.append('phase_id', String(payload.phase_id));
       payload.employee_ids.forEach((id, i) => fd.append(`employee_ids[${i}]`, id));
       if (payload.description) fd.append('description', payload.description);
       if (payload.priority) fd.append('priority', payload.priority);

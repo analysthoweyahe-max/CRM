@@ -1,7 +1,12 @@
-import { useState }                        from 'react';
+import { useMemo, useState }               from 'react';
 import { useMutation, useQueryClient }      from '@tanstack/react-query';
 import { campaignApi }                      from '../api/campaign.api';
 import type { AddSeoTaskForm }              from './AddSeoTaskModal.types';
+import { useSeoProjectPhases }              from '../hooks/useSeoProjectPhases';
+import {
+  resolveSeoPhasePayload,
+  seoPhasesToComboboxItems,
+} from '../utils/seoPhase.utils';
 import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
 import { parseEstimatedMinutes } from '@/shared/utils/number.utils';
 import { invalidateSeoMemberHomeTasks } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
@@ -34,6 +39,12 @@ export function useAddSeoTask(
   const [touched, setTouched]           = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
+  const { data: projectPhases = [], isLoading: phasesLoading } = useSeoProjectPhases(campaignId);
+  const phaseItems = useMemo(
+    () => seoPhasesToComboboxItems(projectPhases),
+    [projectPhases],
+  );
+
   function set<K extends keyof AddSeoTaskForm>(key: K, val: AddSeoTaskForm[K]) {
     setForm(prev => ({ ...prev, [key]: val }));
     setTouched(prev => (prev[key] ? prev : { ...prev, [key]: true }));
@@ -42,10 +53,16 @@ export function useAddSeoTask(
 
   const mutation = useMutation({
     mutationFn: () => {
+      const resolved = resolveSeoPhasePayload(projectPhases, form.phase);
+      if (!resolved) {
+        return Promise.reject(new Error(isAr ? 'اختر مرحلة صحيحة' : 'Pick a valid phase'));
+      }
       const importantLinks = normalizeImportantLinks(form.importantLinks);
       const payload = {
         title:            form.title.trim(),
-        phase:            form.phase.trim(),
+        phase:            resolved.phase,
+        phaseId:          resolved.phaseId,
+        phase_id:         resolved.phaseId,
         employee_ids:     form.assignees,
         description:      form.description.trim() || undefined,
         priority:         form.priority || undefined,
@@ -84,7 +101,9 @@ export function useAddSeoTask(
   const fieldErrors: Record<string, string> = {};
   if (!form.title.trim())  fieldErrors.title    = isAr ? 'عنوان المهمة مطلوب' : 'Task title is required';
   if (form.assignees.length === 0) fieldErrors.assignees = isAr ? 'اختر مسؤولاً واحداً على الأقل' : 'Select at least one assignee';
-  if (!form.phase.trim())  fieldErrors.phase    = isAr ? 'المرحلة مطلوبة' : 'Phase is required';
+  if (!form.phase.trim() || !resolveSeoPhasePayload(projectPhases, form.phase)) {
+    fieldErrors.phase = isAr ? 'المرحلة مطلوبة' : 'Phase is required';
+  }
   const linksError = validateImportantLinks(form.importantLinks, isAr);
   if (linksError) fieldErrors.importantLinks = linksError;
 
@@ -105,6 +124,8 @@ export function useAddSeoTask(
     set,
     isValid,
     errors,
+    phaseItems,
+    phasesLoading,
     isSaving:  mutation.isPending,
     handleAdd: () => {
       setSubmitAttempted(true);

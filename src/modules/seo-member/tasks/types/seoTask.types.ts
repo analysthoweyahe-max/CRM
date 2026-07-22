@@ -36,6 +36,8 @@ export interface SeoTask {
 export interface CreateSelfSeoTaskPayload {
   title: string;
   phase: string;
+  phaseId?: number;
+  phase_id?: number;
   description?: string;
   priority: SeoTaskPriority;
   due_date?: string;
