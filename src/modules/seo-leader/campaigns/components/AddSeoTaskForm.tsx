@@ -3,6 +3,7 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
+import { clampMinutesInput } from '@/shared/utils/number.utils';
 import { useSeoTaskLookups, SEO_TASK_PHASE_ITEMS } from '../hooks/useSeoTaskLookups';
 import { SeoTaskFilesInput } from './SeoTaskFilesInput';
 import type { AddSeoTaskForm } from './AddSeoTaskModal.types';
@@ -151,7 +152,7 @@ export function AddSeoTaskForm({ form, set, errors = {}, teamItems, isAr, files 
             min="0"
             max="59"
             value={form.estimatedMinutes}
-            onChange={e => set('estimatedMinutes', e.target.value)}
+            onChange={e => set('estimatedMinutes', clampMinutesInput(e.target.value))}
             placeholder="30"
             className={INPUT}
           />

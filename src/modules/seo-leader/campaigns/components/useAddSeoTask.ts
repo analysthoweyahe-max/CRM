@@ -3,6 +3,7 @@ import { useMutation, useQueryClient }      from '@tanstack/react-query';
 import { campaignApi }                      from '../api/campaign.api';
 import type { AddSeoTaskForm }              from './AddSeoTaskModal.types';
 import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
+import { parseEstimatedMinutes } from '@/shared/utils/number.utils';
 import { invalidateSeoMemberHomeTasks } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 
 const INITIAL: AddSeoTaskForm = {
@@ -50,7 +51,7 @@ export function useAddSeoTask(
         priority:         form.priority || undefined,
         due_date:         form.dueDate            || undefined,
         estimated_hours:  form.estimatedHours ? Number(form.estimatedHours) : undefined,
-        estimated_minutes: form.estimatedMinutes ? Number(form.estimatedMinutes) : undefined,
+        estimated_minutes: parseEstimatedMinutes(form.estimatedMinutes),
         target_keyword:   form.targetKeyword.trim() || undefined,
         target_url:       form.targetUrl.trim()     || undefined,
         ...(importantLinks.length ? { importantLinks } : {}),

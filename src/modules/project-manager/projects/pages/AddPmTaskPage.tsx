@@ -20,6 +20,7 @@ import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { toApiArray } from '@/shared/utils/apiList.utils';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
+import { parseEstimatedMinutes } from '@/shared/utils/number.utils';
 
 const INITIAL: PmTaskFormState = {
   title: '', description: '', priority: '', status: '',
@@ -149,7 +150,7 @@ export function AddPmTaskPage() {
         priority: normalizePmTaskPriority(form.priority),
         dueDate: form.dueDate,
         estimatedHours: form.estimatedHours ? Number(form.estimatedHours) : undefined,
-        estimatedMinutes: form.estimatedMinutes ? Number(form.estimatedMinutes) : undefined,
+        estimatedMinutes: parseEstimatedMinutes(form.estimatedMinutes),
         phaseId: Number(form.phaseId),
         status_id: Number(form.status),
         ...(importantLinks.length ? { importantLinks } : {}),

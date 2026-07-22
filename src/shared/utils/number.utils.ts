@@ -6,6 +6,22 @@ export function toSafeNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+/** Clamp a minutes form input to 0–max (default 59). Empty stays empty. */
+export function clampMinutesInput(value: string, max = 59): string {
+  if (value === '') return '';
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '';
+  return String(Math.min(max, Math.max(0, Math.trunc(n))));
+}
+
+/** Parse optional minutes for API payloads, capped at 0–max (default 59). */
+export function parseEstimatedMinutes(value: string | number | null | undefined, max = 59): number | undefined {
+  if (value === '' || value == null) return undefined;
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return undefined;
+  return Math.min(max, Math.max(0, Math.trunc(n)));
+}
+
 export function formatLocaleNumber(
   value: unknown,
   locales?: string | string[],

@@ -2,6 +2,7 @@ import { Combobox }    from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { ImportantLinksField } from '@/shared/components/form/ImportantLinksField';
+import { clampMinutesInput } from '@/shared/utils/number.utils';
 
 const INPUT = [
   'w-full rounded-xl border border-gray-200 dark:border-gray-600',
@@ -148,7 +149,7 @@ export function PmTaskFormFields({
             min="0"
             max="59"
             value={form.estimatedMinutes}
-            onChange={e => set('estimatedMinutes', e.target.value)}
+            onChange={e => set('estimatedMinutes', clampMinutesInput(e.target.value))}
             placeholder="30"
             className={INPUT}
           />

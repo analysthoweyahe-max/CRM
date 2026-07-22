@@ -13,6 +13,7 @@ import {
 } from '@/shared/utils/chatNormalize.utils';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import { normalizeImportantLinks, parseImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
+import { parseEstimatedMinutes } from '@/shared/utils/number.utils';
 import { toApiArray } from '@/shared/utils/apiList.utils';
 import { useRemoveTaskLocally, useInvalidateProjectTasks } from '../store/taskStore';
 import { pmTaskApi } from '../api/task.api';
@@ -255,7 +256,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
         priority:        editPriority || undefined,
         dueDate:         editDueDate || undefined,
         estimatedHours:  editEstHours ? Number(editEstHours) : undefined,
-        estimatedMinutes: editEstMinutes ? Number(editEstMinutes) : undefined,
+        estimatedMinutes: parseEstimatedMinutes(editEstMinutes),
         importantLinks:  links,
       };
       const baseline = {

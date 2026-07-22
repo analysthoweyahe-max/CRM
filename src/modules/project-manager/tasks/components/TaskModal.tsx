@@ -14,6 +14,7 @@ import { usePermission }         from '@/shared/hooks/usePermission';
 import { usePmTaskLookups }      from '../../projects/hooks/usePmTaskLookups';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey }       from '@/shared/utils/resourceKey.utils';
+import { clampMinutesInput }     from '@/shared/utils/number.utils';
 import type { Task }             from '../types/task.types';
 import type { TaskModalTab }     from '../types/taskModal.types';
 import type { MentionRef, ResolvedMention } from '@/shared/components/chat';
@@ -245,7 +246,7 @@ export function TaskModal({ task, onClose, projectId, isAr }: Props) {
                 min={0}
                 max={59}
                 value={modal.editEstMinutes}
-                onChange={e => modal.setEditEstMinutes(e.target.value)}
+                onChange={e => modal.setEditEstMinutes(clampMinutesInput(e.target.value))}
                 className={`${inputCls(false)} text-right`}
               />
             </div>
