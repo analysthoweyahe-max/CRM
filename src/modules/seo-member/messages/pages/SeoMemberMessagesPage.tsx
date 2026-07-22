@@ -97,7 +97,7 @@ function SeoMemberChatWindow({
   conversation, isAr, onConversationUpdate, onLeftGroup, onOpenSidebar, onMentionStartChat,
   focusMessageId, onFocusMessageConsumed,
 }: ChatProps) {
-  const { user, isSuperAdmin } = useAuth();
+  const { user } = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef  = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
@@ -121,8 +121,8 @@ function SeoMemberChatWindow({
   const { data: detail } = useSeoConversation(conversation.id, true);
   const liveConversation = detail ?? conversation;
   const canSend = useMemo(
-    () => canSendSeoMessengerMessage(liveConversation, user, isSuperAdmin),
-    [liveConversation, user, isSuperAdmin],
+    () => canSendSeoMessengerMessage(liveConversation, user),
+    [liveConversation, user],
   );
 
   const {

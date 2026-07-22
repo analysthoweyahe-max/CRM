@@ -20,21 +20,25 @@ export function isUserInSeoGroup(conv: SeoConversation, user: Pick<AuthUser, 'id
   return (conv.participants ?? []).some(p => ids.has(p.id));
 }
 
-/** Whether the open thread should show the message composer. */
+/**
+ * Whether the open thread should show the message composer.
+ * Super-admin may send in their own chats; observer / monitor threads stay read-only.
+ */
 export function canSendSeoMessengerMessage(
   conv: SeoConversation,
   user: Pick<AuthUser, 'id' | 'employeeId'> | null | undefined,
-  isSuperAdmin: boolean,
 ): boolean {
   if (!user) return false;
 
-  const raw = conv as ConversationWithObserver;
-  if (typeof raw.canSend === 'boolean') return raw.canSend;
-  if (typeof raw.can_send === 'boolean') return raw.can_send;
-
-  if (isSuperAdmin) return false;
+  // Observer / monitor mode is always read-only (including super-admin).
   if (isSeoConversationObserver(conv)) return false;
-  if (conv.type === 'group' && !isUserInSeoGroup(conv, user)) return false;
 
+  const raw = conv as ConversationWithObserver;
+  if (raw.canSend === true || raw.can_send === true) return true;
+
+  // Group threads: send only when the user is an actual member.
+  if (conv.type === 'group') return isUserInSeoGroup(conv, user);
+
+  // Direct threads in the user's inbox are their own chats.
   return true;
 }
