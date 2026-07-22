@@ -4,6 +4,7 @@ import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
 import { StatCard }    from '@/shared/components/ui/StatCard';
 import { WorkTimerCard } from '@/shared/modules/attendance/components/WorkTimerCard';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { useSeoLeaderDashboard }      from '../hooks/useSeoLeaderDashboard';
 import { CampaignsSection }           from '../components/CampaignsSection';
@@ -13,6 +14,7 @@ export function SeoLeaderDashboardPage() {
   const { lang }                        = useLang();
   const isAr                            = lang === 'ar';
   const navigate                        = useNavigate();
+  const { isSuperAdmin }                = useAuth();
   const { isLoading, stats, campaigns, checkIn } = useSeoLeaderDashboard();
   const canCreate   = usePermission('create-seo-project');
   const canViewTasks = usePermission('view-seo-tasks');
@@ -44,7 +46,7 @@ export function SeoLeaderDashboardPage() {
           isAr={isAr}
           onClick={() => navigate(ROUTES.SEO_LEADER.TEAM)}
         />
-        {canViewTasks && (
+        {canViewTasks && !isSuperAdmin && (
           <StatCard
             icon={<ListChecks size={22} className="text-amber-600" />}
             iconBg="bg-amber-100 dark:bg-amber-900/30"

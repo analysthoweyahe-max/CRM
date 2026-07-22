@@ -7,6 +7,7 @@ import {
   ensureDesktopNotificationPermission,
   showDesktopNotification,
 } from '@/shared/utils/desktopNotification.utils';
+import { playNotificationSound } from '@/shared/utils/sound.utils';
 import {
   isAttendanceRunning,
   pauseAttendanceIfRunning,
@@ -101,6 +102,7 @@ export function useAttendanceInactivityGuard(): void {
       });
 
       toast.warning(title, { description: body, duration: 10_000 });
+      playNotificationSound();
     };
 
     const pauseForInactivity = async () => {

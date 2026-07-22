@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Users, ListChecks, FolderKanban, FolderOpenDot, CheckCircle2 } from 'lucide-react';
+import { ClipboardList, Users, FolderKanban, FolderOpenDot, CheckCircle2 } from 'lucide-react';
 import { StatCard } from '@/shared/components/ui/StatCard';
 import { ROUTES } from '@/app/router/routes';
 import type { AdminDashboardStats } from '../types/adminDashboard.types';
@@ -44,16 +44,6 @@ function buildPmCards(stats: AdminDashboardStats['pm']): CardDef[] {
       to: ROUTES.PROJECT_MANAGER.TEAM,
     },
     {
-      key: 'activeTasks',
-      value: stats.activeTasks,
-      labelAr: 'المهام قيد التنفيذ',
-      labelEn: 'Active Tasks',
-      icon: ListChecks,
-      iconBg: 'bg-amber-100 dark:bg-amber-900/30',
-      iconColor: 'text-amber-600',
-      to: "#",
-    },
-    {
       key: 'activeProjects',
       value: stats.activeProjects,
       labelAr: 'المشاريع النشطة',
@@ -87,16 +77,6 @@ function buildSeoCards(stats: AdminDashboardStats['seo']): CardDef[] {
       iconBg: 'bg-purple-100 dark:bg-purple-900/30',
       iconColor: 'text-purple-600',
       to: ROUTES.SEO_LEADER.TEAM,
-    },
-    {
-      key: 'pendingTasks',
-      value: stats.pending_tasks,
-      labelAr: 'المهام المعلقة',
-      labelEn: 'Pending Tasks',
-      icon: ListChecks,
-      iconBg: 'bg-amber-100 dark:bg-amber-900/30',
-      iconColor: 'text-amber-600',
-      to: "#",
     },
     {
       key: 'completedProjects',
