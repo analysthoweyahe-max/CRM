@@ -14,6 +14,7 @@ import {
   normalizeTaskCommentFields,
 } from '@/shared/utils/chatNormalize.utils';
 import { normalizeTimeLogSummary } from '@/shared/utils/timeLog.utils';
+import { invalidateAfterSeoTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 
 const detailKey = (projectId?: string, taskId?: string) =>
@@ -36,13 +37,7 @@ export function useUpdateSeoTaskStatus(projectId: string | undefined, taskId: st
   return useMutation({
     mutationFn: (status: SeoTaskStatus) => seoTaskDetailApi.updateStatus(projectId!, taskId!, status),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: detailKey(projectId, taskId) });
-      qc.invalidateQueries({ queryKey: ['my-tasks'] });
-      qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
-      qc.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
-      qc.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
-      qc.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
-      qc.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+      invalidateAfterSeoTaskUpdate(qc, projectId, taskId);
       toast.success(isAr ? 'تم تحديث الحالة' : 'Status updated');
     },
     onError: () => toast.error(isAr ? 'تعذّر تحديث الحالة' : 'Failed to update status'),
@@ -53,12 +48,8 @@ export function useUpdateSeoTask(projectId: string | undefined, taskId: string |
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: SeoUpdateTaskPayload) => seoTaskDetailApi.updateTask(projectId!, taskId!, payload),
-    onSuccess: (detail) => {
-      qc.setQueryData(detailKey(projectId, taskId), (prev: { task: typeof detail; tabs?: unknown } | undefined) =>
-        prev ? { ...prev, task: detail } : { task: detail },
-      );
-      qc.invalidateQueries({ queryKey: ['my-tasks'] });
-      qc.invalidateQueries({ queryKey: ['seo-member', 'tasks'] });
+    onSuccess: () => {
+      invalidateAfterSeoTaskUpdate(qc, projectId, taskId);
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
     },
     onError: (err) => toast.error(extractApiError(err) || (isAr ? 'تعذّر حفظ التعديلات' : 'Failed to save changes')),

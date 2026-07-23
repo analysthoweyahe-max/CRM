@@ -5,7 +5,7 @@ import { Card }    from '@/shared/components/ui/Card';
 import { Button }  from '@/shared/components/ui/Button';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { LeaveBalancePanel }      from '@/modules/employee/requests/components/LeaveBalancePanel';
-import { useSeoLeaveSummary, useSeoLeaveHistory, useSeoLeaveCancel } from '../hooks/useSeoLeave';
+import { useSeoLeaveSummary, useSeoLeaveCancel } from '../hooks/useSeoLeave';
 import { SeoLeaveRequestsTable }  from '../components/SeoLeaveRequestsTable';
 import { SeoLeaveRequestModal }   from '../components/SeoLeaveRequestModal';
 
@@ -25,9 +25,17 @@ export function SeoMemberRequestsPage() {
   const [showModal,  setShowModal]  = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
 
-  const { data: summary  = [], isLoading: summaryLoading  } = useSeoLeaveSummary();
-  const { data: requests = [], isLoading: reqLoading      } = useSeoLeaveHistory();
-  const { mutate: cancel }                                   = useSeoLeaveCancel();
+  const { data: summary, isLoading: summaryLoading } = useSeoLeaveSummary();
+  const { mutate: cancel } = useSeoLeaveCancel();
+
+  const balances = (summary?.balances ?? []).map((b) => ({
+    leaveType:      b.leaveType,
+    leaveTypeLabel: b.leaveTypeLabel,
+    entitled:       b.entitled,
+    used:           b.used,
+    remaining:      b.remaining,
+  }));
+  const requests = summary?.requests ?? [];
 
   function handleCancel(id: string) {
     setCancelling(id);
@@ -80,7 +88,7 @@ export function SeoMemberRequestsPage() {
           {tab === 'requests' && (
             <SeoLeaveRequestsTable
               requests={requests}
-              isLoading={reqLoading}
+              isLoading={summaryLoading}
               isAr={isAr}
               onCancel={handleCancel}
               cancelling={cancelling}
@@ -88,7 +96,7 @@ export function SeoMemberRequestsPage() {
           )}
           {tab === 'balance' && (
             <LeaveBalancePanel
-              summary={summary}
+              summary={balances}
               isLoading={summaryLoading}
               isAr={isAr}
             />

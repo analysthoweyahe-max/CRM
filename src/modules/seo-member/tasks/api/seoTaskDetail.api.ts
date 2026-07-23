@@ -1,4 +1,5 @@
 import { http } from '@/shared/services/http.service';
+import type { AxiosRequestConfig } from 'axios';
 import { toSeoTask as mapSeoTask } from './seoTask.api';
 import type { RawSeoTask, RawSeoTaskRef } from './seoTask.api';
 import type { SeoTaskStatus } from '../types/seoTask.types';
@@ -15,6 +16,40 @@ import {
 } from '@/shared/utils/seoTaskAttachment.utils';
 import { appendImportantLinks, parseImportantLinks } from '@/shared/utils/importantLinks.utils';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
+
+/** Axios rejects 2xx responses when the body is empty/non-JSON. Mutation
+ *  endpoints often return that shape after a successful write — tolerate it
+ *  so callers don't show a false error toast. */
+const IGNORE_BODY: AxiosRequestConfig = {
+  transformResponse: [(data: unknown) => {
+    if (data == null || data === '') return {};
+    if (typeof data !== 'string') return data;
+    try {
+      return JSON.parse(data);
+    } catch {
+      return {};
+    }
+  }],
+};
+
+/** UI uses `normal`; wire/lookups commonly use `medium`. */
+function toWirePriority(priority: string | undefined): string | undefined {
+  if (!priority) return undefined;
+  return priority === 'normal' ? 'medium' : priority;
+}
+
+function toUpdateTaskBody(payload: SeoUpdateTaskPayload) {
+  return {
+    ...(payload.title !== undefined ? { title: payload.title } : {}),
+    ...(payload.priority !== undefined ? { priority: toWirePriority(payload.priority) } : {}),
+    ...(payload.dueDate !== undefined
+      ? { dueDate: payload.dueDate, due_date: payload.dueDate }
+      : {}),
+    ...(payload.importantLinks !== undefined
+      ? { importantLinks: payload.importantLinks, important_links: payload.importantLinks }
+      : {}),
+  };
+}
 
 interface RawSeoAssignee {
   id: string | number;
@@ -135,23 +170,31 @@ export const seoTaskDetailApi = {
      successful update, surfacing as a false error toast. Callers should
      refetch (invalidate the detail query) instead of trusting this return. */
   async updateStatus(projectId: string, taskId: string, status: SeoTaskStatus): Promise<void> {
-    await http.patch(`/v1/seo/projects/${projectId}/tasks/${taskId}/status`, { status_id: Number(status) });
+    await http.patch(
+      `/v1/seo/projects/${projectId}/tasks/${taskId}/status`,
+      { status_id: Number(status) },
+      IGNORE_BODY,
+    );
   },
 
-  async extendDeadline(projectId: string, taskId: string, payload: ExtendDeadlinePayload): Promise<SeoTaskDetail> {
-    const res = await http.post<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
+  /* Same rationale as updateStatus — mutation responses may omit the nested
+     `task` object (or place fields directly under `data`). Parsing that as
+     `data.task` throws after a successful write and shows a false error toast.
+     Callers should invalidate the detail query instead of trusting a return. */
+  async extendDeadline(projectId: string, taskId: string, payload: ExtendDeadlinePayload): Promise<void> {
+    await http.post(
       `/v1/seo/projects/${projectId}/tasks/${taskId}/extend`,
       payload,
+      IGNORE_BODY,
     );
-    return toSeoTaskDetail(res.data.data.task);
   },
 
-  async updateTask(projectId: string, taskId: string, payload: SeoUpdateTaskPayload): Promise<SeoTaskDetail> {
-    const res = await http.put<{ status: string; message: string; data: { task: RawSeoTaskDetail } }>(
+  async updateTask(projectId: string, taskId: string, payload: SeoUpdateTaskPayload): Promise<void> {
+    await http.put(
       `/v1/seo/projects/${projectId}/tasks/${taskId}`,
-      payload,
+      toUpdateTaskBody(payload),
+      IGNORE_BODY,
     );
-    return toSeoTaskDetail(res.data.data.task);
   },
 
   createSelfTask(projectId: string, payload: CreateSelfSeoTaskPayload, files?: File[]) {

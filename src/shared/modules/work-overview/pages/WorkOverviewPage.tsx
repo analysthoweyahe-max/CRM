@@ -90,7 +90,7 @@ export function WorkOverviewPage({ layoutScope, seoRouteVariant }: WorkOverviewP
 
 function placeholderOverview(month: string) {
   return {
-    employee: { id: '', name: '', employeeNumber: '' },
+    employee: { id: '', name: '', employeeNumber: '', currency: null },
     month,
     attendance: {
       month,

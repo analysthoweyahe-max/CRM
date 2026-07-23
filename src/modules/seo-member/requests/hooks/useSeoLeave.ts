@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { seoLeaveApi } from '../api/seoLeave.api';
-import type { SeoLeaveType, SeoLeaveRequest, SeoLeaveBalance } from '../types/seoLeave.types';
+import type {
+  SeoLeaveType,
+  SeoLeaveRequest,
+  SeoLeaveBalance,
+  SeoLeaveSummary,
+} from '../types/seoLeave.types';
 import type { EmpLeaveSummaryItem } from '@/modules/employee/requests/types/employeeLeave.types';
 
 const KEYS = {
@@ -8,6 +13,25 @@ const KEYS = {
   summary: ['seo-member', 'leave', 'summary'] as const,
   history: ['seo-member', 'leave', 'history'] as const,
 };
+
+function selectSummary(res: Awaited<ReturnType<typeof seoLeaveApi.summary>>): SeoLeaveSummary {
+  const data = res.data.data;
+  return {
+    balances:           data?.balances ?? [],
+    requests:           data?.requests ?? [],
+    viewFullHistoryUrl: data?.viewFullHistoryUrl ?? '',
+  };
+}
+
+function toBalanceItems(balances: SeoLeaveBalance[]): EmpLeaveSummaryItem[] {
+  return balances.map((b) => ({
+    leaveType:      b.leaveType,
+    leaveTypeLabel: b.leaveTypeLabel,
+    entitled:       b.entitled,
+    used:           b.used,
+    remaining:      b.remaining,
+  }));
+}
 
 export function useSeoLeaveTypes() {
   return useQuery({
@@ -18,24 +42,27 @@ export function useSeoLeaveTypes() {
   });
 }
 
+/** Full summary: balances + recent requests from GET /v1/seo/leave/summary */
 export function useSeoLeaveSummary() {
   return useQuery({
     queryKey: KEYS.summary,
     queryFn:  () => seoLeaveApi.summary(),
-    select:   res => {
-      const balances: SeoLeaveBalance[] = res.data.data?.balances ?? [];
-      return balances.map((b): EmpLeaveSummaryItem => ({
-        leaveType:      b.leaveType,
-        leaveTypeLabel: b.leaveTypeLabel,
-        entitled:       b.entitled,
-        used:           b.used,
-        remaining:      b.remaining,
-      }));
-    },
+    select:   selectSummary,
     staleTime: 60_000,
   });
 }
 
+/** Balance rows only — for LeaveBalancePanel */
+export function useSeoLeaveBalances() {
+  return useQuery({
+    queryKey: KEYS.summary,
+    queryFn:  () => seoLeaveApi.summary(),
+    select:   (res): EmpLeaveSummaryItem[] => toBalanceItems(selectSummary(res).balances),
+    staleTime: 60_000,
+  });
+}
+
+/** Paginated full history — use when summary.requests is not enough */
 export function useSeoLeaveHistory() {
   return useQuery({
     queryKey: KEYS.history,

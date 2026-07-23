@@ -1,4 +1,4 @@
-export type EmpLeaveStatus = 'pending' | 'approved' | 'rejected';
+export type EmpLeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
 export interface EmpLeaveType {
   value:         string;
@@ -23,8 +23,17 @@ export interface EmpLeaveRequest {
   status:          EmpLeaveStatus;
   statusLabel:     string;
   requestDate:     string;
-  period:          EmpLeavePeriod;
+  period?:         EmpLeavePeriod;
+  /** HR rejection / review notes (present when rejected) */
+  hrNotes?:        string | null;
   viewDetailsUrl?: string;
+}
+
+/** Full leave summary payload from GET …/leave/summary */
+export interface EmpLeaveSummaryData {
+  balances:            EmpLeaveSummaryItem[];
+  requests:            EmpLeaveRequest[];
+  viewFullHistoryUrl?: string;
 }
 
 export interface EmpLeaveDetail extends EmpLeaveRequest {
@@ -71,11 +80,7 @@ export interface EmpLeaveListResponse {
 export interface EmpLeaveSummaryResponse {
   status:  string;
   message: string;
-  data: {
-    balances:            EmpLeaveSummaryItem[];
-    requests:            EmpLeaveRequest[];
-    viewFullHistoryUrl?: string;
-  };
+  data:    EmpLeaveSummaryData;
 }
 
 export interface EmpLeaveCreatePayload {

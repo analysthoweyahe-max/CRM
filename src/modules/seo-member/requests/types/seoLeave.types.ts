@@ -6,6 +6,12 @@ export interface SeoLeaveType {
   tracksBalance: boolean;
 }
 
+export interface SeoLeavePeriod {
+  startDate: string;
+  endDate: string;
+  daysCount: number;
+}
+
 export interface SeoLeaveRequest {
   id: string;
   leaveType: string;
@@ -17,7 +23,11 @@ export interface SeoLeaveRequest {
   status: SeoLeaveStatus;
   statusLabel: string;
   requestDate: string;
+  period?: SeoLeavePeriod;
+  /** HR rejection / review notes (present when rejected) */
+  hrNotes?: string | null;
   rejectionReason?: string | null;
+  viewDetailsUrl?: string;
 }
 
 export interface SeoLeaveBalance {

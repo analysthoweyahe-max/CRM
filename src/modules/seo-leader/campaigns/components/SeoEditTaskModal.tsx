@@ -10,6 +10,7 @@ import type { SeoTaskFull }             from './SeoTaskModal.types';
 import { taskResourceKey }              from '@/shared/utils/resourceKey.utils';
 import { extractApiError }              from '@/shared/utils/error.utils';
 import { normalizeImportantLinks, validateImportantLinks } from '@/shared/utils/importantLinks.utils';
+import { invalidateAfterSeoTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import { toast }                        from 'sonner';
 
 const INPUT = [
@@ -60,8 +61,8 @@ export function SeoEditTaskModal({ task, projectId, isAr, onClose }: Props) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskKey] });
-      queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+      invalidateAfterSeoTaskUpdate(queryClient, projectId, taskKey);
+      toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
       onClose();
     },
     onError: (err) => {

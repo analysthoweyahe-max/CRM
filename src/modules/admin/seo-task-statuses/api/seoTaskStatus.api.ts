@@ -9,8 +9,11 @@ import type {
 } from '../types/seoTaskStatus.types';
 
 export const seoTaskStatusApi = {
+  /** Management list — `?manage=1` returns inactive/default flags for CRUD. */
   list() {
-    return http.get<SeoTaskStatusListResponse>('/v1/seo/task-statuses');
+    return http.get<SeoTaskStatusListResponse>('/v1/seo/task-statuses', {
+      params: { manage: 1 },
+    });
   },
 
   get(id: number | string) {

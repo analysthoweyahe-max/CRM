@@ -40,7 +40,9 @@ function SeoMemberEditTaskModalForm({
   const { mutate: updateTask, isPending } = useUpdateSeoTask(projectId, taskId, isAr);
 
   const [title,    setTitle]    = useState(task.title       ?? '');
-  const [priority, setPriority] = useState<string>(task.priority ?? 'normal');
+  const [priority, setPriority] = useState<string>(
+    task.priority === 'normal' ? 'medium' : (task.priority ?? 'medium'),
+  );
   const [dueDate,  setDueDate]  = useState(task.dueDate      ?? '');
   const [importantLinks, setImportantLinks] = useState<string[]>(task.importantLinks ?? []);
   const [linksError, setLinksError] = useState<string | null>(null);
@@ -56,7 +58,7 @@ function SeoMemberEditTaskModalForm({
     updateTask(
       {
         title: title.trim(),
-        priority,
+        priority: priority === 'normal' ? 'medium' : priority,
         dueDate: dueDate || undefined,
         importantLinks: normalizeImportantLinks(importantLinks),
       },

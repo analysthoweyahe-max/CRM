@@ -41,13 +41,6 @@ interface RawTaskDetailResponse {
   data:    { task: RawPmTaskDetail };
 }
 
-/** PATCH .../tasks/{task_id} and .../status return the task fields directly under `data`. */
-interface RawTaskMutationResponse {
-  status:  string;
-  message: string;
-  data:    RawPmTaskDetail;
-}
-
 const STATUS_MAP: Record<string, EmpTaskStatus> = {
   pending: 'pending',
   in_progress: 'inProgress',
@@ -196,16 +189,15 @@ export const taskDetailApi = {
     return { data: toTaskDetail(res.data.data.task, projectId) };
   },
 
-  async updateStatus(projectId: string, taskId: string, statusId: number): Promise<{ data: TaskDetail }> {
-    const res = await http.patch<RawTaskMutationResponse>(
-      `/v1/pm/projects/${projectId}/tasks/${taskId}/status`,
-      { status_id: statusId },
-    );
-    return { data: toTaskDetail(res.data.data, projectId) };
+  /* Don't parse mutation bodies — shape varies (`data` vs `data.task`, or
+     message-only). Mapping mismatches previously threw after a successful
+     write and surfaced as a false "Failed to save" toast. Callers invalidate. */
+  async updateStatus(projectId: string, taskId: string, statusId: number): Promise<void> {
+    await http.patch(`/v1/pm/projects/${projectId}/tasks/${taskId}/status`, { status_id: statusId });
   },
 
-  async update(projectId: string, taskId: string, payload: UpdateTaskPayload): Promise<{ data: TaskDetail }> {
-    const res = await http.patch<RawTaskMutationResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}`, {
+  async update(projectId: string, taskId: string, payload: UpdateTaskPayload): Promise<void> {
+    await http.patch(`/v1/pm/projects/${projectId}/tasks/${taskId}`, {
       title:           payload.title,
       description:     payload.description,
       priority:        REVERSE_PRIORITY_MAP[payload.priority],
@@ -215,12 +207,10 @@ export const taskDetailApi = {
         ? { importantLinks: payload.importantLinks }
         : {}),
     });
-    return { data: toTaskDetail(res.data.data, projectId) };
   },
 
-  async extendDeadline(projectId: string, taskId: string, payload: ExtendDeadlinePayload): Promise<{ data: TaskDetail }> {
-    const res = await http.post<RawTaskMutationResponse>(`/v1/pm/projects/${projectId}/tasks/${taskId}/extend`, payload);
-    return { data: toTaskDetail(res.data.data, projectId) };
+  async extendDeadline(projectId: string, taskId: string, payload: ExtendDeadlinePayload): Promise<void> {
+    await http.post(`/v1/pm/projects/${projectId}/tasks/${taskId}/extend`, payload);
   },
 
   async getComments(

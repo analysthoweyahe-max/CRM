@@ -34,11 +34,22 @@ export function formatLocaleNumber(
   return n.toLocaleString(locales, options);
 }
 
-/** Money display: 2 decimals + EGP / ج.م. Null/NaN → 0.00 currency. */
-export function formatMoneyAmount(amount: unknown, isAr: boolean): string {
+/**
+ * Money display: 2 decimals + currency label.
+ * `currency` is an ISO code from the API; null/empty falls back to EGP.
+ * Arabic EGP keeps the local abbr ج.م; all other codes show as-is.
+ * Null/NaN amount → 0.00 currency.
+ */
+export function formatMoneyAmount(
+  amount: unknown,
+  isAr: boolean,
+  currency?: string | null,
+): string {
+  const code = currency?.trim().toUpperCase() || 'EGP';
   const formatted = formatLocaleNumber(amount, isAr ? 'ar-EG' : 'en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }, '0.00');
-  return `${formatted} ${isAr ? 'ج.م' : 'EGP'}`;
+  const label = isAr && code === 'EGP' ? 'ج.م' : code;
+  return `${formatted} ${label}`;
 }

@@ -22,6 +22,7 @@ import {
   matchSeoPhaseComboboxValue,
   resolveSeoPhasePayload,
 } from '../utils/seoPhase.utils';
+import { invalidateAfterSeoTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 
 function toMentionRefs(raw: unknown[] | undefined): MentionRef[] | undefined {
   const refs = (raw ?? [])
@@ -213,8 +214,7 @@ export function useSeoTaskDrawer(
       return campaignApi.updateTask(projectId, taskId!, payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
-      queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+      invalidateAfterSeoTaskUpdate(queryClient, projectId, taskId);
     },
   });
 
@@ -229,11 +229,7 @@ export function useSeoTaskDrawer(
   const statusMutation = useMutation({
     mutationFn: (newStatus: string) => campaignApi.updateTask(projectId, taskId!, { status_id: Number(newStatus) }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
-      queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
+      invalidateAfterSeoTaskUpdate(queryClient, projectId, taskId);
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
     },
     onError: (err) => {
@@ -349,8 +345,7 @@ export function useSeoTaskDrawer(
     mutationFn: (payload: ExtendDeadlinePayload) =>
       campaignApi.extendTaskDeadline(projectId, taskId!, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
-      queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+      invalidateAfterSeoTaskUpdate(queryClient, projectId, taskId);
       toast.success(isAr ? 'تم تمديد الموعد النهائي' : 'Deadline extended');
       setExtendOpen(false);
     },

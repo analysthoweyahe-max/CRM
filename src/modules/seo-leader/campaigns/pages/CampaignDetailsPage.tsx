@@ -14,6 +14,7 @@ import { ROUTES } from '@/app/router/routes';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { ensureHttpUrl } from '@/shared/utils';
 import { usePermission } from '@/shared/hooks/usePermission';
+import { invalidateAfterSeoTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import { campaignApi } from '../api/campaign.api';
 import type { SeoTask } from '../api/campaign.api';
 import { SeoTaskDrawer } from '../components/SeoTaskDrawer';
@@ -390,10 +391,7 @@ export function CampaignDetailsPage() {
     campaignApi
       .updateTask(projectKey, task ? taskResourceKey(task) : taskId, { status_id: Number(toStatusKey) })
       .then(() => {
-        queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectKey] });
-        queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
+        invalidateAfterSeoTaskUpdate(queryClient, projectKey, task ? taskResourceKey(task) : taskId);
       })
       .catch((err) => {
         console.error(err);
@@ -410,10 +408,7 @@ export function CampaignDetailsPage() {
     campaignApi
       .updateTask(projectKey, taskResourceKey(task), payload)
       .then(() => {
-        queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectKey] });
-        queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
+        invalidateAfterSeoTaskUpdate(queryClient, projectKey, taskResourceKey(task));
       })
       .catch((err) => {
         console.error(err);

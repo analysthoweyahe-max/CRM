@@ -55,6 +55,7 @@ export function useAdminSeoProjectStatusesPage(isAr: boolean) {
   return {
     statuses: statuses ?? [],
     isLoading,
+    // Defaults stay non-deletable; admins may still edit label/color/flags.
     isLocked: (s: ApiSeoProjectStatus) => s.isDefault,
     showAdd, openAdd: () => setShowAdd(true), closeAdd: () => setShowAdd(false),
     submitAdd, creating,

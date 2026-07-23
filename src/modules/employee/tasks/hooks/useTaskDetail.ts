@@ -5,6 +5,7 @@ import { useLang } from '@/app/providers/LanguageProvider';
 import { extractEditApiError, extractApiStatus } from '@/shared/utils/error.utils';
 import { taskDetailApi } from '../api/taskDetail.api';
 import { normalizeTimeLogSummary } from '@/shared/utils/timeLog.utils';
+import { invalidateAfterPmTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import type { UpdateTaskPayload, SendCommentPayload, EditCommentPayload, TaskTimeLogSummary } from '../types/taskDetail.types';
 
 export function useTaskDetail(projectId: string, taskId: string) {
@@ -20,10 +21,7 @@ export function useUpdateTaskStatus(projectId: string, taskId: string) {
   return useMutation({
     mutationFn: (statusId: number) => taskDetailApi.updateStatus(projectId, taskId, statusId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['task-detail', projectId, taskId] });
-      qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });
-      qc.invalidateQueries({ queryKey: ['pm-dashboard'] });
-      qc.invalidateQueries({ queryKey: ['my-tasks'] });
+      invalidateAfterPmTaskUpdate(qc, projectId, taskId);
     },
   });
 }
@@ -33,10 +31,7 @@ export function useUpdateTask(projectId: string, taskId: string) {
   return useMutation({
     mutationFn: (payload: UpdateTaskPayload) => taskDetailApi.update(projectId, taskId, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['task-detail', projectId, taskId] });
-      qc.invalidateQueries({ queryKey: ['employee', 'tasks'] });
-      qc.invalidateQueries({ queryKey: ['pm-dashboard'] });
-      qc.invalidateQueries({ queryKey: ['my-tasks'] });
+      invalidateAfterPmTaskUpdate(qc, projectId, taskId);
     },
   });
 }

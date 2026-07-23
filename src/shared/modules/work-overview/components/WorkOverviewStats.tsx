@@ -8,7 +8,7 @@ import {
   TrendingDown,
 } from 'lucide-react';
 import { Card } from '@/shared/components/ui/Card';
-import { formatMoney, formatWorkHours } from '../utils/workOverview.utils';
+import { formatMoney, formatWorkHours, resolveWorkCurrency } from '../utils/workOverview.utils';
 import type { WorkOverviewData } from '../types/workOverview.types';
 
 interface WorkOverviewStatsProps {
@@ -39,6 +39,7 @@ export function WorkOverviewStats({ data, isAr, isLoading }: WorkOverviewStatsPr
   }
 
   const att = data.attendance;
+  const currency = resolveWorkCurrency(data.salary?.currency ?? data.employee?.currency);
   const stats: StatDef[] = [
     {
       key: 'present',
@@ -76,7 +77,7 @@ export function WorkOverviewStats({ data, isAr, isLoading }: WorkOverviewStatsPr
       key: 'deductions',
       labelAr: 'إجمالي الخصومات',
       labelEn: 'Deductions total',
-      value: formatMoney(data.deductions?.totalAmount, isAr),
+      value: formatMoney(data.deductions?.totalAmount, isAr, currency),
       icon: <TrendingDown size={18} className="text-red-500" />,
       iconBg: 'bg-red-50 dark:bg-red-900/20',
       valueClass: 'text-red-600 dark:text-red-400',
@@ -85,7 +86,7 @@ export function WorkOverviewStats({ data, isAr, isLoading }: WorkOverviewStatsPr
       key: 'bonuses',
       labelAr: 'إجمالي المكافآت',
       labelEn: 'Bonuses total',
-      value: formatMoney(data.bonuses?.totalAmount, isAr),
+      value: formatMoney(data.bonuses?.totalAmount, isAr, currency),
       icon: <Gift size={18} className="text-[#709028]" />,
       iconBg: 'bg-[#D8EBAE]/60 dark:bg-[#A0CD39]/15',
       valueClass: 'text-[#709028] dark:text-[#A0CD39]',

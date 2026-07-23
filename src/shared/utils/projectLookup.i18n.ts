@@ -16,7 +16,7 @@ const LOOKUP_LABELS: Record<string, { ar: string; en: string }> = {
   urgent:       { ar: 'عاجلة',         en: 'Urgent'       },
   high:         { ar: 'عالية',         en: 'High'         },
   medium:       { ar: 'متوسطة',        en: 'Medium'       },
-  normal:       { ar: 'متوسطة',        en: 'Normal'       },
+  normal:       { ar: 'عادية',         en: 'Normal'       },
   low:          { ar: 'منخفضة',        en: 'Low'          },
 
   /* ── Task statuses ────────────────────────────── */
@@ -56,26 +56,46 @@ const LABEL_AR: Record<string, string> = Object.fromEntries(
   Object.values(LOOKUP_LABELS).map(({ en, ar }) => [en, ar]),
 );
 
+const LABEL_EN: Record<string, string> = Object.fromEntries(
+  Object.values(LOOKUP_LABELS).map(({ en, ar }) => [ar, en]),
+);
+
 function normalizeKey(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
 }
 
-/** Translate PM/SEO lookup option labels when the API returns English only. */
+function hasArabic(text: string): boolean {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
+/**
+ * Localize PM/SEO lookup option labels.
+ * APIs often return Arabic-only `label` — map by value for EN, and prefer the
+ * API Arabic label (or labelAr) for AR so medium/normal stay distinct.
+ */
 export function translateProjectLookup(
   value: string | null | undefined,
   label: string | null | undefined,
   isAr: boolean,
   labelAr?: string | null,
 ): string {
-  const safeLabel = label ?? '';
-  if (!isAr) return safeLabel;
-  if (labelAr?.trim()) return labelAr.trim();
+  const safeLabel = (label ?? '').trim();
+  const mapped = LOOKUP_LABELS[normalizeKey(value)];
 
-  const byValue = LOOKUP_LABELS[normalizeKey(value)]?.ar;
-  if (byValue) return byValue;
+  if (isAr) {
+    if (labelAr?.trim()) return labelAr.trim();
+    // Prefer API Arabic when present (SEO: medium=متوسطة, normal=عادية;
+    // PM: normal=متوسطة — different product meaning, trust the wire label).
+    if (safeLabel && hasArabic(safeLabel)) return safeLabel;
+    if (mapped?.ar) return mapped.ar;
+    const byEnLabel = LABEL_AR[safeLabel];
+    if (byEnLabel) return byEnLabel;
+    return safeLabel;
+  }
 
-  const byLabel = LABEL_AR[safeLabel.trim()];
-  if (byLabel) return byLabel;
-
+  if (mapped?.en) return mapped.en;
+  if (safeLabel && !hasArabic(safeLabel)) return safeLabel;
+  const byArLabel = LABEL_EN[safeLabel];
+  if (byArLabel) return byArLabel;
   return safeLabel;
 }

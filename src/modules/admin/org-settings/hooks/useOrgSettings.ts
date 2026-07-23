@@ -35,7 +35,12 @@ export function useOrgSettingsPage(isAr: boolean) {
   const [draft, setDraft] = useState<OrgSettings | null>(null);
 
   useEffect(() => {
-    if (data) setDraft(data);
+    if (!data) return;
+    setDraft({
+      ...data,
+      casualLeave: data.casualLeave ?? 0,
+      leaveTypes:  data.leaveTypes ?? [],
+    });
   }, [data]);
 
   function set<K extends keyof OrgSettings>(key: K, value: OrgSettings[K]) {
@@ -52,7 +57,12 @@ export function useOrgSettingsPage(isAr: boolean) {
   }
 
   function cancel() {
-    if (data) setDraft(data);
+    if (!data) return;
+    setDraft({
+      ...data,
+      casualLeave: data.casualLeave ?? 0,
+      leaveTypes:  data.leaveTypes ?? [],
+    });
   }
 
   return { settings: draft, isLoading, set, save, cancel, saving };

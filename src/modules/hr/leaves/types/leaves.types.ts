@@ -126,11 +126,29 @@ export interface LeaveListParams {
   with?:         string;
 }
 
-export interface EmployeeLeaveSummary {
+export interface EmployeeLeaveBalance {
+  leaveType:      string;
+  leaveTypeLabel: string;
+  entitled:       number;
+  used:           number;
+  remaining:      number;
+}
+
+/** New shape from GET /v1/hr/employees/{id}/leave/summary */
+export interface EmployeeLeaveSummaryV2 {
+  balances: EmployeeLeaveBalance[];
+  requests?: unknown[];
+  viewFullHistoryUrl?: string;
+}
+
+/** Legacy flat shape (kept for backward compatibility) */
+export interface EmployeeLeaveSummaryLegacy {
   annual_balance: number;
   used:           number;
   remaining:      number;
 }
+
+export type EmployeeLeaveSummary = EmployeeLeaveSummaryV2 | EmployeeLeaveSummaryLegacy;
 
 export interface EmployeeLeaveSummaryResponse {
   status:  string;

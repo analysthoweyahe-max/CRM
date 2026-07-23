@@ -1,11 +1,20 @@
+export interface OrgLeaveType {
+  value:         string;
+  labelEn:       string;
+  labelAr:       string;
+  tracksBalance: boolean;
+}
+
 export interface OrgSettings {
   companyName:          string;
   officialEmail:        string;
   timezone:             string;
   annualLeave:          number;
+  casualLeave:          number;
   sickLeave:            number;
   maxCarryover:         number;
   notifyBeforeDays:     number;
+  leaveTypes:           OrgLeaveType[];
   dailyWorkHours:          number;
   lateAllowanceMinutes:    number;
   normalStartWindowFrom:   string;

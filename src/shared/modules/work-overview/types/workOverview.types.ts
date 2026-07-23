@@ -6,6 +6,8 @@ export interface WorkOverviewEmployee {
   id:             string;
   name:           string;
   employeeNumber: string;
+  /** ISO currency code (EGP | USD | EUR | SAR | AED | GBP | QAR | KWD). Null → display as EGP. */
+  currency:       string | null;
 }
 
 export interface WorkedDay {
@@ -40,6 +42,8 @@ export interface WorkOverviewSalary {
   overtime:       number | null;
   bonus:          number | null;
   netSalary:      number | null;
+  /** Same ISO code as employee.currency; null → display as EGP. */
+  currency:       string | null;
 }
 
 export interface WorkOverviewLinks {

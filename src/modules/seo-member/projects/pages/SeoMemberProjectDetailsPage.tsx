@@ -15,6 +15,7 @@ import { ensureHttpUrl } from '@/shared/utils';
 import { usePermission } from '@/shared/hooks/usePermission';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
+import { invalidateAfterSeoTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import {
   findSeoTaskIdForComment,
   isSeoTaskCommentContext,
@@ -364,11 +365,7 @@ export function SeoMemberProjectDetailsPage() {
     myTasksApi
       .updateStatus('seo-employee', projectKey, task ? taskResourceKey(task) : taskId, Number(toStatusKey))
       .then(() => {
-        qc.invalidateQueries({ queryKey: ['seo-member-project-tasks', projectKey] });
-        qc.invalidateQueries({ queryKey: ['my-tasks'] });
-        qc.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
-        qc.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
-        qc.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
+        invalidateAfterSeoTaskUpdate(qc, projectKey, task ? taskResourceKey(task) : taskId);
       })
       .catch((err) => {
         setStatusOverrides(prev => {

@@ -17,3 +17,38 @@ export function invalidateSeoMemberHomeTasks(qc: QueryClient) {
   qc.invalidateQueries({ queryKey: ['my-tasks'] });
   qc.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
 }
+
+/**
+ * After any SEO task update (edit / status / phase): refresh detail drawers,
+ * campaign/member boards, and home/dashboard lists.
+ */
+export function invalidateAfterSeoTaskUpdate(
+  qc: QueryClient,
+  projectId?: string | null,
+  taskId?: string | null,
+) {
+  if (projectId && taskId) {
+    qc.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
+    qc.invalidateQueries({ queryKey: ['seo-member', 'task-detail', projectId, taskId] });
+  }
+  if (projectId) {
+    qc.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
+    qc.invalidateQueries({ queryKey: ['seo-member-project-tasks', projectId] });
+  }
+  invalidateSeoMemberHomeTasks(qc);
+}
+
+/**
+ * After any PM/employee task update: refresh detail pages and home boards.
+ */
+export function invalidateAfterPmTaskUpdate(
+  qc: QueryClient,
+  projectId?: string | null,
+  taskId?: string | null,
+) {
+  if (projectId && taskId) {
+    qc.invalidateQueries({ queryKey: ['task-detail', projectId, taskId] });
+    qc.invalidateQueries({ queryKey: ['pm-task-detail', projectId, taskId] });
+  }
+  invalidateEmployeeHomeTasks(qc);
+}

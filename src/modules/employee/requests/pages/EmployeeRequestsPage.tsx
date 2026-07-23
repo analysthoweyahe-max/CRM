@@ -4,11 +4,10 @@ import { useLang }  from '@/app/providers/LanguageProvider';
 import { Card }     from '@/shared/components/ui/Card';
 import { Button }   from '@/shared/components/ui/Button';
 import { usePermission } from '@/shared/hooks/usePermission';
-import { useEmpLeaveSummary, useEmpLeaveList } from '../hooks/useEmployeeLeave';
+import { useEmpLeaveSummary } from '../hooks/useEmployeeLeave';
 import { LeaveRequestsTable }    from '../components/LeaveRequestsTable';
 import { LeaveBalancePanel }     from '../components/LeaveBalancePanel';
 import { NewLeaveRequestModal }  from '../components/NewLeaveRequestModal';
-import type { EmpLeaveRequest, EmpLeaveSummaryItem } from '../types/employeeLeave.types';
 
 type Tab = 'requests' | 'balance';
 
@@ -26,8 +25,9 @@ export function EmployeeRequestsPage() {
 
   const canRequestLeave = usePermission('request-leave');
 
-  const { data: summary  = [], isLoading: summaryLoading } = useEmpLeaveSummary();
-  const { data: requests = [], isLoading: reqLoading }     = useEmpLeaveList();
+  const { data: summary, isLoading: summaryLoading } = useEmpLeaveSummary();
+  const balances = summary?.balances ?? [];
+  const requests = summary?.requests ?? [];
 
   return (
     <div className="space-y-5">
@@ -72,14 +72,14 @@ export function EmployeeRequestsPage() {
         <div className="p-4 pt-3">
           {tab === 'requests' && (
             <LeaveRequestsTable
-              requests={requests as EmpLeaveRequest[]}
-              isLoading={reqLoading}
+              requests={requests}
+              isLoading={summaryLoading}
               isAr={isAr}
             />
           )}
           {tab === 'balance' && (
             <LeaveBalancePanel
-              summary={summary as EmpLeaveSummaryItem[]}
+              summary={balances}
               isLoading={summaryLoading}
               isAr={isAr}
             />

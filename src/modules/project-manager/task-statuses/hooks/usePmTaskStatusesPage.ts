@@ -51,6 +51,7 @@ export function usePmTaskStatusesPage(isAr: boolean) {
   return {
     statuses: statuses ?? [],
     isLoading,
+    // Defaults stay non-deletable; admins may still edit label/color/flags.
     isLocked: (s: ApiPmTaskStatus) => s.isDefault,
     showAdd, openAdd: () => setShowAdd(true), closeAdd: () => setShowAdd(false),
     submitAdd, creating,

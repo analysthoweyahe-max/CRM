@@ -8,6 +8,7 @@ import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { taskResourceKey } from '@/shared/utils/resourceKey.utils';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
+import { invalidateAfterPmTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import { KanbanBoard as SharedKanbanBoard } from '@/shared/components/kanban/KanbanBoard';
 import { colorForKey } from '@/shared/components/kanban/kanbanColors';
 import type { Task } from '../../tasks/types/task.types';
@@ -217,7 +218,7 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
     try {
       await pmTaskApi.update(projectId, taskResourceKey(task), { status_id: statusId });
       invalidateTasks();
-      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
+      invalidateAfterPmTaskUpdate(queryClient, projectId, taskResourceKey(task));
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));
@@ -232,6 +233,7 @@ export function KanbanBoard({ projectId, tasks, isAr, phases = [], teamMembers =
     try {
       await pmTaskApi.update(projectId, taskResourceKey(task), { phaseId });
       invalidateTasks();
+      invalidateAfterPmTaskUpdate(queryClient, projectId, taskResourceKey(task));
       toast.success(isAr ? 'تم تحديث مرحلة المهمة' : 'Task phase updated');
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث مرحلة المهمة' : 'Failed to update task phase'));

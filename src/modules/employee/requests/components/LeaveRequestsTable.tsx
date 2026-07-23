@@ -63,11 +63,21 @@ export function LeaveRequestsTable({ requests, isLoading, isAr }: LeaveRequestsT
     col.display({
       id:     'description',
       header: isAr ? 'الوصف' : 'Description',
-      cell:   ({ row }) => (
-        <p className="max-w-xs text-gray-700 dark:text-gray-300 truncate">
-          {row.original.reason ?? '–'}
-        </p>
-      ),
+      cell:   ({ row }) => {
+        const notes = row.original.hrNotes;
+        return (
+          <div className="max-w-xs">
+            <p className="text-gray-700 dark:text-gray-300 truncate">
+              {row.original.reason ?? '–'}
+            </p>
+            {notes ? (
+              <p className="text-xs text-red-500 dark:text-red-400 truncate mt-0.5">
+                {notes}
+              </p>
+            ) : null}
+          </div>
+        );
+      },
     }),
     col.display({
       id:     'date',

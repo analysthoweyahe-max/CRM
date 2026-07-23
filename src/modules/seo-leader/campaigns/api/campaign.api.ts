@@ -493,7 +493,20 @@ export const campaignApi = {
 
   updateTask(projectId: string | number, taskId: string | number, payload: SeoUpdateTaskPayload) {
     return http.put<ApiResponse<SeoTaskDetail>>(
-      `/v1/seo/projects/${projectId}/tasks/${taskId}`, payload
+      `/v1/seo/projects/${projectId}/tasks/${taskId}`,
+      payload,
+      {
+        // Successful writes sometimes return empty/non-JSON bodies; don't reject.
+        transformResponse: [(data: unknown) => {
+          if (data == null || data === '') return {};
+          if (typeof data !== 'string') return data;
+          try {
+            return JSON.parse(data);
+          } catch {
+            return {};
+          }
+        }],
+      },
     );
   },
 

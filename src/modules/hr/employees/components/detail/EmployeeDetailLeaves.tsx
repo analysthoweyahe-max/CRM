@@ -3,9 +3,43 @@ import { ROUTES } from '@/app/router/routes';
 import { useEmployeeLeaveSummary, useEmployeeLeaveHistory } from '@/modules/hr/leaves/hooks/useLeaves';
 import { formatDateShort } from '@/shared/utils/date.utils';
 import { formatLeaveDuration } from '@/modules/hr/leaves/utils/leave.utils';
-import type { LeaveStatus, ApiLeaveRequest } from '@/modules/hr/leaves/types/leaves.types';
+import type {
+  LeaveStatus,
+  ApiLeaveRequest,
+  EmployeeLeaveSummary,
+  EmployeeLeaveBalance,
+} from '@/modules/hr/leaves/types/leaves.types';
 
 interface Props { employeeId: string; isAr: boolean }
+
+function isBalancesSummary(
+  summary: EmployeeLeaveSummary | undefined,
+): summary is { balances: EmployeeLeaveBalance[] } {
+  return !!summary && 'balances' in summary && Array.isArray(summary.balances);
+}
+
+function pickAnnualStats(summary: EmployeeLeaveSummary | undefined) {
+  if (!summary) return { annual: 0, used: 0, remaining: 0 };
+
+  if (isBalancesSummary(summary)) {
+    const annual = summary.balances.find((b) => b.leaveType === 'annual');
+    if (annual) {
+      return { annual: annual.entitled, used: annual.used, remaining: annual.remaining };
+    }
+    const first = summary.balances[0];
+    return {
+      annual:    first?.entitled  ?? 0,
+      used:      first?.used      ?? 0,
+      remaining: first?.remaining ?? 0,
+    };
+  }
+
+  return {
+    annual:    summary.annual_balance ?? 0,
+    used:      summary.used           ?? 0,
+    remaining: summary.remaining      ?? 0,
+  };
+}
 
 const STATUS_CFG: Record<LeaveStatus, { bg: string; text: string; dot: string; label: (isAr: boolean) => string }> = {
   approved: { bg: 'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10', text: 'text-[#709028] dark:text-[#A0CD39]', dot: 'bg-[#709028]', label: (a) => a ? 'موافق' : 'Approved' },
@@ -30,10 +64,8 @@ export function EmployeeDetailLeaves({ employeeId, isAr }: Props) {
   const { data: summary, isLoading: summaryLoading } = useEmployeeLeaveSummary(employeeId);
   const { data: historyPage, isLoading: historyLoading } = useEmployeeLeaveHistory(employeeId, { per_page: 10 });
 
-  const annual    = summary?.annual_balance ?? 0;
-  const used      = summary?.used           ?? 0;
-  const remaining = summary?.remaining      ?? 0;
-  const rows      = historyPage?.data       ?? [];
+  const { annual, used, remaining } = pickAnnualStats(summary);
+  const rows = historyPage?.data ?? [];
 
   return (
     <div className="space-y-4">

@@ -3,6 +3,7 @@ import { empLeaveApi } from '../api/employeeLeave.api';
 import type {
   EmpLeaveRequest,
   EmpLeaveType,
+  EmpLeaveSummaryData,
   EmpLeaveSummaryItem,
   EmpLeaveCreatePayload,
 } from '../types/employeeLeave.types';
@@ -13,11 +14,32 @@ const KEYS = {
   list:    ['employee', 'leave', 'list']    as const,
 };
 
+function selectSummary(res: Awaited<ReturnType<typeof empLeaveApi.summary>>): EmpLeaveSummaryData {
+  const data = res.data.data;
+  return {
+    balances:            data?.balances ?? [],
+    requests:            data?.requests ?? [],
+    viewFullHistoryUrl:  data?.viewFullHistoryUrl,
+  };
+}
+
+/** Full summary: balances + recent requests from GET /v1/employee/leave/summary */
 export function useEmpLeaveSummary() {
   return useQuery({
     queryKey: KEYS.summary,
     queryFn:  () => empLeaveApi.summary(),
-    select:   res => res.data.data.balances as EmpLeaveSummaryItem[],
+    select:   selectSummary,
+    staleTime: 60_000,
+  });
+}
+
+/** Balance rows only — for dashboards that only need the progress bars */
+export function useEmpLeaveBalances() {
+  return useQuery({
+    queryKey: KEYS.summary,
+    queryFn:  () => empLeaveApi.summary(),
+    select:   (res): EmpLeaveSummaryItem[] => selectSummary(res).balances,
+    staleTime: 60_000,
   });
 }
 
@@ -29,6 +51,7 @@ export function useEmpLeaveTypes() {
   });
 }
 
+/** Paginated full history — use when summary.requests is not enough */
 export function useEmpLeaveList() {
   return useQuery({
     queryKey: KEYS.list,

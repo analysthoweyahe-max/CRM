@@ -29,7 +29,6 @@ export function SeoTaskStatusCard({ status, isAr, isLocked, onEdit, onDelete }: 
             variant="icon"
             aria-label={isAr ? 'تعديل الحالة' : 'Edit status'}
             onClick={onEdit}
-            disabled={isLocked}
           >
             <Pencil size={15} />
           </Button>

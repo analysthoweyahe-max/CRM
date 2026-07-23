@@ -46,8 +46,17 @@ export function formatTimeHHmm(time: string | null | undefined): string {
   return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
 }
 
-export function formatMoney(amount: number | null | undefined, isAr: boolean): string {
-  return formatMoneyAmount(amount, isAr);
+/** Resolve work-overview currency; API null → EGP for display only. */
+export function resolveWorkCurrency(currency: string | null | undefined): string {
+  return currency?.trim().toUpperCase() || 'EGP';
+}
+
+export function formatMoney(
+  amount: number | null | undefined,
+  isAr: boolean,
+  currency?: string | null,
+): string {
+  return formatMoneyAmount(amount, isAr, currency);
 }
 
 export function formatWorkHours(hours: number | null | undefined): string {

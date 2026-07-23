@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { campaignApi } from '../api/campaign.api';
+import { invalidateAfterSeoTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import type { SeoTaskTab } from './SeoTaskModal.types';
 
 export function useSeoTaskModal(
@@ -54,11 +55,7 @@ export function useSeoTaskModal(
       estimatedHours: estimatedHours ? Number(estimatedHours) : undefined,
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seo-task', projectId, taskId] });
-      queryClient.invalidateQueries({ queryKey: ['campaign-tasks', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['seo-leader', 'dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['seo-member', 'dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['seo-member', 'employee-projects'] });
+      invalidateAfterSeoTaskUpdate(queryClient, projectId, taskId);
     },
   });
 

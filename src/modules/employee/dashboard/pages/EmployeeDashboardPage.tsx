@@ -5,7 +5,7 @@ import { useAuth } from '@/modules/auth/context/AuthContext';
 import { ROUTES }  from '@/app/router/routes';
 import { Card }    from '@/shared/components/ui/Card';
 import { useEmployeeTasks } from '@/modules/employee/tasks/hooks/useEmployeeTasks';
-import { useEmpLeaveSummary } from '@/modules/employee/requests/hooks/useEmployeeLeave';
+import { useEmpLeaveBalances } from '@/modules/employee/requests/hooks/useEmployeeLeave';
 import { LeaveBalancePanel }  from '@/modules/employee/requests/components/LeaveBalancePanel';
 import { WorkTimerCard } from '@/shared/modules/attendance/components/WorkTimerCard';
 import { EmpStatCards }      from '../components/EmpStatCards';
@@ -21,7 +21,7 @@ export function EmployeeDashboardPage() {
 
   const { isLoading, overview, pending, projects } = useEmpDashboard();
   const { data: tasks = [] } = useEmployeeTasks();
-  const { data: leaveSummary = [], isLoading: leaveLoading } = useEmpLeaveSummary();
+  const { data: leaveBalances = [], isLoading: leaveLoading } = useEmpLeaveBalances();
 
   if (isLoading) {
     return (
@@ -58,7 +58,7 @@ export function EmployeeDashboardPage() {
               {isAr ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
             </button>
           </div>
-          <LeaveBalancePanel summary={leaveSummary} isLoading={leaveLoading} isAr={isAr} />
+          <LeaveBalancePanel summary={leaveBalances} isLoading={leaveLoading} isAr={isAr} />
         </Card>
       </div>
 

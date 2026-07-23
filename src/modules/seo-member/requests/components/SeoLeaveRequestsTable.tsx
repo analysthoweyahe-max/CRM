@@ -68,11 +68,21 @@ export function SeoLeaveRequestsTable({ requests, isLoading, isAr, onCancel, can
     }),
     col.accessor('reason', {
       header: isAr ? 'السبب' : 'Reason',
-      cell:   info => (
-        <p className="max-w-xs text-gray-700 dark:text-gray-300 truncate">
-          {info.getValue() || '–'}
-        </p>
-      ),
+      cell:   info => {
+        const notes = info.row.original.hrNotes ?? info.row.original.rejectionReason;
+        return (
+          <div className="max-w-xs">
+            <p className="text-gray-700 dark:text-gray-300 truncate">
+              {info.getValue() || '–'}
+            </p>
+            {notes ? (
+              <p className="text-xs text-red-500 dark:text-red-400 truncate mt-0.5">
+                {notes}
+              </p>
+            ) : null}
+          </div>
+        );
+      },
     }),
     col.accessor('status', {
       header: isAr ? 'الحالة' : 'Status',

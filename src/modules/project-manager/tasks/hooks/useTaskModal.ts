@@ -18,6 +18,7 @@ import { toApiArray } from '@/shared/utils/apiList.utils';
 import { useRemoveTaskLocally, useInvalidateProjectTasks } from '../store/taskStore';
 import { pmTaskApi } from '../api/task.api';
 import { pmProjectMessagesApi } from '@/modules/project-manager/projects/api/messages.api';
+import { invalidateAfterPmTaskUpdate } from '@/shared/modules/my-tasks/utils/invalidateHomeTasks.utils';
 import type { RawPmComment, RawPmTaskAttachment } from '../api/task.api';
 import type { ExtendDeadlinePayload } from '@/shared/components/form/ExtendDeadlineModal';
 import type { Task } from '../types/task.types';
@@ -282,7 +283,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
       }
       await pmTaskApi.update(projectId, taskKey, payload);
       invalidateProjectTasks();
-      invalidateDetail();
+      invalidateAfterPmTaskUpdate(queryClient, projectId, taskKey);
       toast.success(isAr ? 'تم حفظ التعديلات' : 'Changes saved');
       closeEdit();
     } catch (err) {
@@ -303,8 +304,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
       // Manager tokens use the general task-update endpoint with status_id.
       await pmTaskApi.update(projectId, taskKey, { status_id: statusId });
       invalidateProjectTasks();
-      invalidateDetail();
-      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
+      invalidateAfterPmTaskUpdate(queryClient, projectId, taskKey);
       toast.success(isAr ? 'تم تحديث حالة المهمة' : 'Task status updated');
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المهمة' : 'Failed to update task status'));
@@ -324,7 +324,7 @@ export function useTaskModal(task: Task | null, isAr: boolean, onClose: () => vo
     try {
       await pmTaskApi.extendDeadline(projectId, taskKey, payload);
       invalidateProjectTasks();
-      invalidateDetail();
+      invalidateAfterPmTaskUpdate(queryClient, projectId, taskKey);
       toast.success(isAr ? 'تم تمديد الموعد النهائي' : 'Deadline extended');
       setIsExtendOpen(false);
     } catch (err) {

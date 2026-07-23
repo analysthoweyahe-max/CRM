@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { BadgeDollarSign, Clock, Gift, Sparkles, TrendingDown, Wallet } from 'lucide-react';
 import { Card } from '@/shared/components/ui/Card';
-import { formatMoney } from '../utils/workOverview.utils';
+import { formatMoney, resolveWorkCurrency } from '../utils/workOverview.utils';
 import type { WorkOverviewSalary } from '../types/workOverview.types';
 
 interface WorkOverviewSalaryCardProps {
@@ -17,6 +17,9 @@ export function WorkOverviewSalaryCard({ salary, isAr, isLoading }: WorkOverview
 
   if (!salary) return null;
 
+  const currency = resolveWorkCurrency(salary.currency);
+  const money = (amount: number | null | undefined) => formatMoney(amount, isAr, currency);
+
   return (
     <div>
       <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">
@@ -26,36 +29,36 @@ export function WorkOverviewSalaryCard({ salary, isAr, isLoading }: WorkOverview
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y sm:divide-y-0 divide-x-reverse divide-gray-100 dark:divide-gray-700">
           <MiniStat
             label={isAr ? 'الأساسي' : 'Basic'}
-            value={formatMoney(salary.basicSalary, isAr)}
+            value={money(salary.basicSalary)}
             icon={<BadgeDollarSign size={15} className="text-gray-400" />}
           />
           <MiniStat
             label={isAr ? 'الخصومات' : 'Deductions'}
-            value={formatMoney(salary.deductions, isAr)}
+            value={money(salary.deductions)}
             valueClass="text-red-600 dark:text-red-400"
             icon={<TrendingDown size={15} className="text-red-400" />}
           />
           <MiniStat
             label={isAr ? 'المكافآت' : 'Rewards'}
-            value={formatMoney(salary.rewards, isAr)}
+            value={money(salary.rewards)}
             valueClass="text-[#709028] dark:text-[#A0CD39]"
             icon={<Gift size={15} className="text-[#709028]" />}
           />
           <MiniStat
             label={isAr ? 'الإضافي' : 'Overtime'}
-            value={formatMoney(salary.overtime, isAr)}
+            value={money(salary.overtime)}
             valueClass="text-[#709028] dark:text-[#A0CD39]"
             icon={<Clock size={15} className="text-[#709028]" />}
           />
           <MiniStat
             label={isAr ? 'البونص' : 'Bonus'}
-            value={formatMoney(salary.bonus, isAr)}
+            value={money(salary.bonus)}
             valueClass="text-[#709028] dark:text-[#A0CD39]"
             icon={<Sparkles size={15} className="text-[#709028]" />}
           />
           <MiniStat
             label={isAr ? 'الصافي' : 'Net'}
-            value={formatMoney(salary.netSalary, isAr)}
+            value={money(salary.netSalary)}
             valueClass="font-bold text-gray-900 dark:text-gray-100"
             icon={<Wallet size={15} className="text-[#709028]" />}
           />
