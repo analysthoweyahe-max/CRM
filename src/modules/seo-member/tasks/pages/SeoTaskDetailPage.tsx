@@ -69,7 +69,7 @@ export function SeoTaskDetailPage() {
     setSearchParams({}, { replace: true });
   }, [commentParam, setSearchParams]);
 
-  const canEdit = usePermission('edit-seo-tasks');
+  const canEditPermission = usePermission('edit-seo-tasks');
 
   const detailQuery = useSeoTaskDetail(projectId, taskId);
   const detailRes = detailQuery.data;
@@ -78,6 +78,15 @@ export function SeoTaskDetailPage() {
   const detail = detailRes?.task;
   const tabs = detailRes?.tabs;
   const detailReady = !!projectId && !!taskId && !isForbidden;
+
+  // Teammates can view a colleague's task in full, but only the assignee
+  // (or someone with edit-seo-tasks) may edit/delete anything on it.
+  const isOwnTask = !detail || detail.assignees.length === 0
+    ? true
+    : detail.assignees.some(
+        (a) => (user?.id && a.id === String(user.id)) || (user?.employeeId && a.id === String(user.employeeId)),
+      );
+  const canEdit = canEditPermission && isOwnTask;
 
   const { data: comments = [], isLoading: commentsLoading } = useSeoTaskComments(
     detailReady ? projectId : undefined,
@@ -131,10 +140,10 @@ export function SeoTaskDetailPage() {
       <div className="space-y-5" dir={isAr ? 'rtl' : 'ltr'}>
         <EmptyState
           icon={<Lock size={26} className="text-[#709028] dark:text-[#A0CD39]" />}
-          title={isAr ? 'مهمة شريك — للعرض فقط' : 'Partner task — view only'}
+          title={isAr ? 'ليس لديك صلاحية' : 'Access denied'}
           description={isAr
-            ? 'يمكنك رؤية ملخص مهام زملائك في اللوحة فقط. لا يمكن فتح التفاصيل أو تعديل مهام الشركاء.'
-            : 'You can see a summary of teammates’ tasks on the board only. Partner task details and edits are not available.'}
+            ? 'تعذّر فتح هذه المهمة. تواصل مع المسؤول إذا استمرت المشكلة.'
+            : 'Could not open this task. Contact an administrator if this persists.'}
           action={
             <Button variant="secondary" onClick={goBack}>
               {isAr ? 'العودة إلى مهامي' : 'Back to My Tasks'}
@@ -226,6 +235,7 @@ export function SeoTaskDetailPage() {
               onDeleteSession={id => deleteSessionMutation.mutate(id)}
               creatingSession={createSessionMutation.isPending}
               deletingSession={deleteSessionMutation.isPending}
+              readOnly={!isOwnTask}
             />
           )}
           {activeTab === 'info' && (
@@ -234,8 +244,8 @@ export function SeoTaskDetailPage() {
           {activeTab === 'attachments' && (
             <SeoAttachmentsTab
               attachments={detail?.attachments ?? []}
-              onUploadFiles={uploadFiles}
-              onDelete={deleteAttachment}
+              onUploadFiles={isOwnTask ? uploadFiles : undefined}
+              onDelete={isOwnTask ? deleteAttachment : undefined}
               isUploading={isUploading}
               deletingId={deletingId}
               isAr={isAr}

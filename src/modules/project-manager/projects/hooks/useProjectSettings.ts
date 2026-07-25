@@ -1,13 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { pmProjectsApi } from '../api/project.api';
 import type { PmProjectPayload } from '../types/project.types';
+import { normalizePmProject } from '../utils/normalizePmProject';
 
 export function useProjectSettings(id: string) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ['pm-project-settings', id],
-    queryFn:  () => pmProjectsApi.getSettings(id).then(r => r.data.data),
+    queryFn:  () => pmProjectsApi.getSettings(id).then(r => normalizePmProject(r.data.data)),
   });
 
   async function save(payload: PmProjectPayload) {
@@ -16,7 +17,7 @@ export function useProjectSettings(id: string) {
     queryClient.invalidateQueries({ queryKey: ['pm-project', id] });
     queryClient.invalidateQueries({ queryKey: ['my-projects'] });
     queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
-    return res.data.data;
+    return normalizePmProject(res.data.data);
   }
 
   return { settings: query.data, isLoading: query.isLoading, isError: query.isError, save };

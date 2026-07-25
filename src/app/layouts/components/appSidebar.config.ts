@@ -40,6 +40,8 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
       { key: 'admin-settings', labelAr: 'إعدادات المؤسسة', labelEn: 'Org Settings', icon: Settings,        path: ROUTES.ADMIN.SETTINGS, role: 'super-admin' },
 
+      { key: 'admin-project-types', labelAr: 'أنواع المشاريع', labelEn: 'Project Types', icon: FolderKanban, path: ROUTES.ADMIN.PROJECT_TYPES, role: 'super-admin' },
+
     ],
 
   },
@@ -155,8 +157,6 @@ export const ADMIN_NAV: NavSectionDef[] = [
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests',   icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS,  permission: 'view-pm-projects' },
 
       { key: 'pm-templates', labelAr: 'قوالب مشاريع PM', labelEn: 'PM Project Templates', icon: ListChecks, path: ROUTES.ADMIN.PROJECT_TEMPLATES, role: 'super-admin' },
-
-      { key: 'admin-project-types', labelAr: 'أنواع المشاريع', labelEn: 'Project Types', icon: FolderKanban, path: ROUTES.ADMIN.PROJECT_TYPES, role: 'super-admin' },
 
       { key: 'admin-pm-task-statuses', labelAr: 'حالات مهام PM', labelEn: 'PM Task Statuses', icon: Tags, path: ROUTES.ADMIN.PM_TASK_STATUSES, permission: ['edit-pm-project', 'create-pm-project'] },
 

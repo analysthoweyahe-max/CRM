@@ -4,6 +4,8 @@ import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { Switch }    from '@/shared/components/ui/Switch';
 import { FormField } from '@/shared/components/form/FormField';
+import { Combobox }  from '@/shared/components/form/Combobox';
+import { useDepartments } from '@/modules/hr/employees/hooks/useLookups';
 import type {
   PmProjectTypeItem,
   PmProjectTypePayload,
@@ -26,7 +28,7 @@ interface Props {
 }
 
 const EMPTY = (category: ProjectTypeCategory): FormState => ({
-  name: '', nameAr: '', isActive: true, sortOrder: 0, category,
+  name: '', nameAr: '', isActive: true, sortOrder: 0, category, departmentId: null,
 });
 
 export function ProjectTypeFormModal({
@@ -35,14 +37,21 @@ export function ProjectTypeFormModal({
   const [form, setForm] = useState<FormState>(EMPTY(defaultCategory));
   const isEdit = !!initial;
 
+  const { data: departments = [], isLoading: deptsLoading } = useDepartments();
+  const departmentItems = departments.map((d) => ({
+    id:    String(d.id),
+    label: isAr ? (d.nameAr || d.name) : d.name,
+  }));
+
   useEffect(() => {
     if (!open) return;
     setForm(initial ? {
-      name:       initial.name,
-      nameAr:     initial.nameAr ?? '',
-      isActive:   initial.isActive,
-      sortOrder:  initial.sortOrder,
-      category:   initial.category,
+      name:         initial.name,
+      nameAr:       initial.nameAr ?? '',
+      isActive:     initial.isActive,
+      sortOrder:    initial.sortOrder,
+      category:     initial.category,
+      departmentId: initial.departmentId ?? null,
     } : EMPTY(defaultCategory));
   }, [open, initial, defaultCategory]);
 
@@ -50,16 +59,17 @@ export function ProjectTypeFormModal({
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  const isValid = !!form.name.trim();
+  const isValid = !!form.name.trim() && !!form.departmentId;
 
   function handleSubmit() {
     if (!isValid) return;
     onSubmit({
-      name:      form.name.trim(),
-      nameAr:    form.nameAr?.trim() || null,
-      isActive:  form.isActive,
-      sortOrder: form.sortOrder,
-      category:  form.category,
+      name:         form.name.trim(),
+      nameAr:       form.nameAr?.trim() || null,
+      isActive:     form.isActive,
+      sortOrder:    form.sortOrder,
+      category:     form.category,
+      departmentId: form.departmentId,
     });
   }
 
@@ -83,7 +93,7 @@ export function ProjectTypeFormModal({
     >
       <div className="space-y-5 py-1">
         {!isEdit && (
-          <FormField label={isAr ? 'القسم' : 'Module'} required>
+          <FormField label={isAr ? 'الوحدة' : 'Module'} required>
             <div className="flex gap-2">
               {(['pm', 'seo'] as const).map((cat) => (
                 <button
@@ -103,6 +113,20 @@ export function ProjectTypeFormModal({
             </div>
           </FormField>
         )}
+
+        <FormField label={isAr ? 'القسم' : 'Department'} required>
+          <Combobox
+            items={departmentItems}
+            value={form.departmentId != null ? String(form.departmentId) : ''}
+            onChange={(id) => set('departmentId', id ? Number(id) : null)}
+            disabled={deptsLoading}
+            placeholder={deptsLoading
+              ? (isAr ? 'جاري التحميل...' : 'Loading...')
+              : (isAr ? 'اختر القسم' : 'Select department')}
+            searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
+            noResultsText={isAr ? 'لا نتائج' : 'No results'}
+          />
+        </FormField>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField label={isAr ? 'الاسم بالإنجليزي' : 'English Name'} required>

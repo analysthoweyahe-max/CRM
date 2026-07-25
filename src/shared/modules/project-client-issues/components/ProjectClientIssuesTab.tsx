@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { KanbanBoard } from '@/shared/components/kanban/KanbanBoard';
@@ -17,6 +18,9 @@ interface Props {
 }
 
 export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const issueParam = searchParams.get('issue') ?? searchParams.get('clientIssue');
+
   const {
     issues,
     capabilities,
@@ -43,6 +47,23 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<ClientIssue | null>(null);
 
   const columns = useMemo(() => buildClientIssueColumns(issues, isAr), [issues, isAr]);
+
+  // Deep-link from notification click: ?tab=client-updates&issue=<id>
+  useEffect(() => {
+    if (!issueParam || isLoading || issues.length === 0) return;
+    const found = issues.find(
+      (i) => String(i.id) === issueParam || (i.uuid != null && String(i.uuid) === issueParam),
+    );
+    if (found) setSelected(found);
+  }, [issueParam, issues, isLoading]);
+
+  function clearIssueParam() {
+    if (!searchParams.has('issue') && !searchParams.has('clientIssue')) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('issue');
+    next.delete('clientIssue');
+    setSearchParams(next, { replace: true });
+  }
 
   // Member portals always get create in this workspace (API often omits capabilities).
   // Managers/leaders also keep create when the API flag is missing/true.
@@ -90,11 +111,17 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
     await deleteIssue(deleteTarget);
     setDeleteTarget(null);
     setSelected(null);
+    clearIssueParam();
   }
 
   function openEdit(issue: ClientIssue) {
     setEditing(issue);
     setFormOpen(true);
+  }
+
+  function closeDetail() {
+    setSelected(null);
+    clearIssueParam();
   }
 
   if (isLoading) {
@@ -168,7 +195,7 @@ export function ProjectClientIssuesTab({ projectId, portal, isAr }: Props) {
         canEdit={selectedFromList ? canEditIssue(selectedFromList) : false}
         canDelete={selectedFromList ? canDeleteIssue(selectedFromList) : false}
         canUpdateStatus={selectedFromList ? canUpdateIssueStatus(selectedFromList) : false}
-        onClose={() => setSelected(null)}
+        onClose={closeDetail}
         onEdit={() => selectedFromList && openEdit(selectedFromList)}
         onDelete={() => selectedFromList && setDeleteTarget(selectedFromList)}
         onStatusChange={status => {

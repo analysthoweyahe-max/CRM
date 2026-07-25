@@ -23,6 +23,11 @@ interface Props {
 
 const FALLBACK_TYPES: AdminRequestType[] = ['leave', 'permission', 'support', 'other'];
 
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) {
   const { data: types = [] } = useAdminRequestTypes(namespace);
   const createMutation = useCreateAdminRequest(namespace, isAr);
@@ -30,9 +35,11 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
   const [requestType, setRequestType] = useState('');
   const [title, setTitle]             = useState('');
   const [description, setDescription] = useState('');
-  const [requestDate, setRequestDate] = useState('');
   const [startDate, setStartDate]     = useState('');
   const [endDate, setEndDate]         = useState('');
+
+  // Submission stamp — always today; not editable (audit trail).
+  const requestDate = todayISO();
 
   const comboItems = (types.length
     ? types.map((t) => ({ id: t.value, label: t.label }))
@@ -51,7 +58,6 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
     setRequestType('');
     setTitle('');
     setDescription('');
-    setRequestDate('');
     setStartDate('');
     setEndDate('');
   }
@@ -69,7 +75,8 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
         request_type: requestType,
         title:        title.trim(),
         description:  description.trim() || undefined,
-        request_date: requestDate || undefined,
+        // Always stamp with the real submission day — never user-chosen.
+        request_date: todayISO(),
         start_date:   startDate || undefined,
         end_date:     endDate || undefined,
       },
@@ -134,13 +141,19 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
           />
         </FormField>
 
-        <FormField label={isAr ? 'تاريخ الطلب' : 'Request Date'}>
+        <FormField
+          label={isAr ? 'تاريخ الطلب' : 'Request Date'}
+          hint={isAr
+            ? 'يُسجَّل تلقائياً بتاريخ اليوم — لا يمكن تعديله'
+            : 'Recorded automatically as today — not editable'}
+        >
           <div className="relative">
             <input
               type="date"
               value={requestDate}
-              onChange={(e) => setRequestDate(e.target.value)}
-              className={`${inputCls(false)} pe-10`}
+              readOnly
+              disabled
+              className={`${inputCls(false)} pe-10 opacity-70 cursor-not-allowed`}
             />
             <Calendar size={15} className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>

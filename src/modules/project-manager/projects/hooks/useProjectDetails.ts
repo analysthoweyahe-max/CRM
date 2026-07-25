@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { pmProjectsApi } from '../api/project.api';
+import { normalizePmProjectDetails } from '../utils/normalizePmProject';
 
 export function useProjectDetails(id: string | undefined) {
   const query = useQuery({
     queryKey: ['pm-project', id],
-    queryFn:  () => pmProjectsApi.get(id!).then(r => r.data.data),
+    queryFn:  () => pmProjectsApi.get(id!).then(r => normalizePmProjectDetails(r.data.data)),
     enabled:  !!id,
   });
 

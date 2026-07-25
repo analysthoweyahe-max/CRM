@@ -16,6 +16,17 @@ function tabLabel(item: StatusLookupItem, isAr: boolean): string {
   return isAr ? (item.labelAr ?? item.label) : item.label;
 }
 
+/** Collapse near-duplicate Arabic/English labels (e.g. الآن / الان). */
+function normalizeLabel(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/\s+/g, ' ');
+}
+
 interface Props {
   campaigns:     CampaignViewModel[];
   isAr:          boolean;
@@ -45,7 +56,25 @@ export function CampaignsSection({ campaigns, isAr, onNewCampaign, canCreate = t
       }
     }
 
-    return [...fromApi, ...extras];
+    const combined = [...fromApi, ...extras];
+
+    // Lookup + campaign statuses can share a label under different keys
+    // (e.g. slug mismatch) — keep one tab per label, preferring the key
+    // that actually matches projects so the count badge stays correct.
+    const byLabel = new Map<string, StatusTab>();
+    for (const tab of combined) {
+      const labelKey = normalizeLabel(tab.label);
+      const existing = byLabel.get(labelKey);
+      if (!existing) {
+        byLabel.set(labelKey, tab);
+        continue;
+      }
+      const existingCount = campaigns.filter(c => c.status === existing.key).length;
+      const tabCount = campaigns.filter(c => c.status === tab.key).length;
+      if (tabCount > existingCount) byLabel.set(labelKey, tab);
+    }
+
+    return Array.from(byLabel.values());
   }, [statusOptions, campaigns, isAr]);
 
   const defaultKey = tabs.find(t => t.key === 'in_progress')?.key ?? tabs[0]?.key ?? '';

@@ -6,6 +6,7 @@ import { Switch }   from '@/shared/components/ui/Switch';
 import { Combobox } from '@/shared/components/form/Combobox';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { FormField } from '@/shared/components/form/FormField';
+import { RichTextView } from '@/shared/components/form/RichTextView';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { useAllTemplates, useApplyTemplate } from '../hooks/useProjectTemplates';
 import { TemplateResourceLink } from './TemplateResourceLink';
@@ -89,9 +90,10 @@ export function ApplyTemplateModal({ open, onClose, projectId, projectTypeId, is
         {selectedTemplate && (
           <div className="space-y-1">
             {selectedTemplate.description && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                {selectedTemplate.description}
-              </p>
+              <RichTextView
+                html={selectedTemplate.description}
+                className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed"
+              />
             )}
             <TemplateResourceLink link={selectedTemplate.link} isAr={isAr} />
           </div>

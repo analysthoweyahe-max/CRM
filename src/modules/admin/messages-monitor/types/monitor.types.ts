@@ -22,7 +22,10 @@ export interface MonitoredParty {
 }
 
 export interface MonitoredConversation {
+  /** Namespaced as `${portal}:${rawId}` — conversation ids are only unique within a single portal's table. */
   id:           string;
+  /** Raw backend id, used when calling that portal's messages endpoint. */
+  rawId:        string;
   type:         'direct' | 'group' | string;
   name:         string;
   /** Participants from API — always shown (including when isObserver). */
@@ -33,6 +36,8 @@ export interface MonitoredConversation {
   isObserver:   boolean;
   unreadCount:  number;
   source:       'messenger';
+  /** Which company-messenger scope this conversation came from. */
+  portal:       'seo' | 'pm';
 }
 
 export interface MessengerConversationListResponse {

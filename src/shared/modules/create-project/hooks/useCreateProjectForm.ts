@@ -146,8 +146,13 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
     })),
     [statusOptions, isAr]);
 
-  const employeeItems = useMemo(() =>
-    (employeesQ.data?.data ?? []).map(e => ({
+  const employeeItems = useMemo(() => {
+    const list = employeesQ.data?.data ?? [];
+    // Safety net: the backend's project_type_id-scoped lookup can leak employees
+    // from other departments, so re-filter client-side against the explicitly
+    // selected department (admins only — deptNum is unset otherwise).
+    const scoped = deptNum ? list.filter(e => e.departmentId === deptNum) : list;
+    return scoped.map(e => ({
       id: e.id,
       label: e.name,
       detail: e.email,
@@ -155,8 +160,8 @@ export function useCreateProjectForm({ module, templateId }: UseCreateProjectFor
         .map(v => resolveDisplayText(v, isAr))
         .filter(Boolean)
         .join(' · '),
-    })),
-    [employeesQ.data, isAr]);
+    }));
+  }, [employeesQ.data, deptNum, isAr]);
 
   const managerItems = useMemo(() => {
     const q = managerSearch.trim().toLowerCase();

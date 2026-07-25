@@ -151,7 +151,7 @@ export function SeoMemberProjectDetailsPage() {
   const commentParam = searchParams.get('comment') ?? searchParams.get('commentId');
   const contextTypeParam = searchParams.get('contextType');
   const initialTab: TabKey =
-    tabParam === 'client-updates' ? 'client'
+    tabParam === 'client-updates' || tabParam === 'client' ? 'client'
       : tabParam === 'messages' || tabParam === 'team' || tabParam === 'progress' || tabParam === 'info'
         ? tabParam
         : 'tasks';
@@ -161,7 +161,7 @@ export function SeoMemberProjectDetailsPage() {
 
   useEffect(() => {
     if (tabParam === 'messages') setActiveTab('messages');
-    if (tabParam === 'client-updates') setActiveTab('client');
+    if (tabParam === 'client-updates' || tabParam === 'client') setActiveTab('client');
   }, [tabParam]);
 
   const { data: campaign, isLoading: campaignLoading } = useQuery({

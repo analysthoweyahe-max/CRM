@@ -15,51 +15,68 @@ import type {
 } from '../types/messages.types';
 
 /**
- * Company messenger (DMs + groups).
- * Prefer the chat URL first so each portal page hits its API family,
+ * Company messenger (DMs + groups) is one shared API family split across
+ * three independent scopes — each portal only ever sees its own scope's
+ * conversations, never another portal's.
+ */
+export type MessengerScope = 'seo' | 'pm' | 'employee';
+
+/**
+ * Resolve which messenger scope the current page/user belongs to.
+ * Prefer the chat URL first so each portal page hits its own scope,
  * then fall back to the mapped portal role.
  *
- * /project-manager/... -> /v1/pm/messages
- * /employee/messenger  -> /v1/employee/messenger
- * /messages, /seo-leader|seo-member -> /v1/seo/messages
+ * /project-manager/...  -> pm
+ * /employee/messenger   -> employee
+ * /messages, /seo-leader|seo-member -> seo
  *
  * Do NOT use /employee/messages for company chat - that path is HR support tickets.
  */
-function messengerBase(): string {
+export function messengerScope(): MessengerScope {
   if (typeof window !== 'undefined') {
     const path = window.location.pathname;
     // Whole PM portal (incl. admin/super-admin browsing it) -> PM messenger
-    if (path.startsWith('/project-manager')) return '/v1/pm/messages';
-    if (path.startsWith('/employee/messenger')) return '/v1/employee/messenger';
+    if (path.startsWith('/project-manager')) return 'pm';
+    if (path.startsWith('/employee/messenger')) return 'employee';
     if (
       path === '/messages'
       || path.startsWith('/seo-leader')
       || path.startsWith('/seo-member')
     ) {
-      return '/v1/seo/messages';
+      return 'seo';
     }
   }
 
   const user = authService.getStoredUser();
   // Prefer mapped portal role — check seo-member BEFORE actor===employee
   // (seo members are employee-guard sessions but use the SEO messenger).
-  if (user?.role === 'manager') return '/v1/pm/messages';
+  if (user?.role === 'manager') return 'pm';
   if (
     user?.role === 'seo-leader'
     || user?.role === 'seo-member'
     || user?.role === 'hr'
     || user?.role === 'admin'
   ) {
-    return '/v1/seo/messages';
+    return 'seo';
   }
-  if (user?.role === 'employee') return '/v1/employee/messenger';
-  if (user?.section === 'pm') return '/v1/pm/messages';
-  if (user?.section === 'seo') return '/v1/seo/messages';
-  if (user?.actor === 'employee') return '/v1/employee/messenger';
-  return '/v1/seo/messages';
+  if (user?.role === 'employee') return 'employee';
+  if (user?.section === 'pm') return 'pm';
+  if (user?.section === 'seo') return 'seo';
+  if (user?.actor === 'employee') return 'employee';
+  return 'seo';
+}
+
+function messengerBase(): string {
+  switch (messengerScope()) {
+    case 'pm':       return '/v1/pm/messages';
+    case 'employee': return '/v1/employee/messenger';
+    default:          return '/v1/seo/messages';
+  }
 }
 
 export const seoMessagesApi = {
+  /** Current portal's messenger scope — use to namespace React Query cache keys per portal. */
+  scope: messengerScope,
   listConversations(params?: SeoConversationListParams) {
     return http.get<SeoConversationListResponse>(`${messengerBase()}/conversations`, { params });
   },

@@ -1,5 +1,4 @@
 import { Calendar, MessageSquare, Paperclip } from 'lucide-react';
-import { toast } from 'sonner';
 import type { MyTask } from '../types/myTasks.types';
 import { isEditableMyTask, isTaskOverdue, PRIORITY_BADGE } from '../utils/myTasks.utils';
 import { ImportantLinksDisplay } from '@/shared/components/form/ImportantLinksDisplay';
@@ -15,30 +14,17 @@ export function MyTaskCard({ task, isAr, showProjectName, onOpen }: Props) {
   const overdue  = isTaskOverdue(task);
   const prioCls  = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.normal;
   const assignee = task.assignee;
+  // Partner (teammate) tasks are fully viewable — read-only in the detail
+  // page (no edit/delete/status-change), but not blocked from opening here.
   const isMine   = isEditableMyTask(task);
-
-  function handleClick() {
-    if (!isMine) {
-      toast.info(
-        isAr
-          ? 'يمكنك فقط عرض ملخص مهمة الشريك من اللوحة'
-          : 'You can only view a summary of a partner task on the board',
-      );
-      return;
-    }
-    onOpen(task);
-  }
 
   return (
     <button
       type="button"
-      onClick={handleClick}
-      className={[
-        'w-full text-start rounded-xl p-3.5 shadow-sm border transition-all duration-150',
-        isMine
-          ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/60 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600'
-          : 'bg-gray-50 dark:bg-gray-900/50 border-dashed border-gray-200 dark:border-gray-700 cursor-default opacity-90',
-      ].join(' ')}
+      onClick={() => onOpen(task)}
+      className="w-full text-start rounded-xl p-3.5 shadow-sm border transition-all duration-150
+                 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/60
+                 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600"
     >
       <div className="flex items-center justify-between gap-2 mb-2">
         <span className="text-[11px] text-gray-400 font-mono">#{task.taskNumber}</span>

@@ -31,13 +31,27 @@ export function useMessagesMonitor(isAr: boolean) {
   } = useQuery({
     queryKey: [...CONV_KEY, search],
     queryFn:  async () => {
-      const res = await messagesMonitorApi.listConversations({
-        search: search.trim() || undefined,
-        per_page: 100,
-      });
+      const params = { search: search.trim() || undefined, per_page: 100 };
+      // Super admin "sees everything" — merge SEO + PM company-messenger scopes.
+      // Promise.allSettled so one portal's failure doesn't hide the other's chats.
+      const [seoRes, pmRes] = await Promise.allSettled([
+        messagesMonitorApi.listConversations(params),
+        messagesMonitorApi.listPmConversations(params),
+      ]);
+
+      const seoList = seoRes.status === 'fulfilled'
+        ? normalizeMessengerConversations(extractPaginatedList(seoRes.value.data), 'seo')
+        : [];
+      const pmList = pmRes.status === 'fulfilled'
+        ? normalizeMessengerConversations(extractPaginatedList(pmRes.value.data), 'pm')
+        : [];
+
+      if (seoRes.status === 'rejected' && pmRes.status === 'rejected') {
+        throw seoRes.reason;
+      }
+
       // Keep ALL rows including isObserver=true — no observer filter.
-      const list = normalizeMessengerConversations(extractPaginatedList(res.data));
-      return list.sort((a, b) => {
+      return [...seoList, ...pmList].sort((a, b) => {
         const ta = a.lastMessageAt ? new Date(a.lastMessageAt.replace(' ', 'T')).getTime() : 0;
         const tb = b.lastMessageAt ? new Date(b.lastMessageAt.replace(' ', 'T')).getTime() : 0;
         return tb - ta;
@@ -54,12 +68,16 @@ export function useMessagesMonitor(isAr: boolean) {
   );
 
   const selectedId = activeConversation?.id ?? null;
+  const activeConversationRawId = activeConversation?.rawId ?? null;
 
   const { data: threadMessages = [], isLoading: loadingThread, isError: threadError } = useQuery({
     queryKey: ['admin', 'messages-monitor', 'thread', selectedId],
     queryFn:  async (): Promise<ApiMonitoredMessage[]> => {
-      if (!selectedId) return [];
-      const res = await messagesMonitorApi.listMessages(selectedId, { page: 1, per_page: 30 });
+      if (!selectedId || !activeConversation) return [];
+      const fetchMessages = activeConversation.portal === 'pm'
+        ? messagesMonitorApi.listPmMessages
+        : messagesMonitorApi.listMessages;
+      const res = await fetchMessages(activeConversation.rawId, { page: 1, per_page: 30 });
       return toChronologicalMessages(
         normalizeMonitoredMessages(extractPaginatedList(res.data)).map((m) => ({
           ...m,
@@ -101,16 +119,16 @@ export function useMessagesMonitor(isAr: boolean) {
           ? payload.isObserver
           : undefined,
       });
-      if (conversationId && !prev.some((c) => c.id === conversationId)) {
+      if (conversationId && !prev.some((c) => c.rawId === conversationId)) {
         void qc.invalidateQueries({ queryKey: CONV_KEY });
       }
       return next;
     });
 
-    if (conversationId && conversationId === selectedId) {
+    if (conversationId && conversationId === activeConversationRawId) {
       void qc.invalidateQueries({ queryKey: ['admin', 'messages-monitor', 'thread', selectedId] });
     }
-  }, [qc, search, selectedId]);
+  }, [qc, search, selectedId, activeConversationRawId]);
 
   // Echo.private('user.admin.' + adminUuid).listen('.message.sent', ...)
   useRealtimeMessages(onRealtime);

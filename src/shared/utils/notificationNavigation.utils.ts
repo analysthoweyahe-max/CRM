@@ -286,7 +286,66 @@ function isProjectMessageContext(contextType: string): boolean {
 }
 
 function isClientUpdateContext(contextType: string): boolean {
-  return /client.?update/i.test(contextType);
+  return /client.?update|client.?issue/i.test(contextType);
+}
+
+function readClientIssueId(data: Record<string, unknown>): string | undefined {
+  const nestedIssue = readRecord(data.clientIssue)
+    ?? readRecord(data.client_issue)
+    ?? readRecord(data.issue);
+  const id = readId(
+    data.clientIssueId,
+    data.client_issue_id,
+    data.issueId,
+    data.issue_id,
+    data.messageId,
+    data.message_id,
+    nestedIssue?.id,
+    nestedIssue?.uuid,
+  );
+  return id !== undefined ? String(id) : undefined;
+}
+
+/** Open the project's client-issues tab (and optionally a specific issue drawer). */
+function resolveSeoClientIssuePath(
+  data: Record<string, unknown>,
+  user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined,
+): string | null {
+  const projectId = readId(data.projectId, data.project_id, data.projectUuid, data.project_uuid);
+  if (!projectId) {
+    return user?.role === 'seo-member'
+      ? ROUTES.SEO_MEMBER.MY_PROJECTS
+      : ROUTES.SEO_LEADER.MY_PROJECTS;
+  }
+  const base = user?.role === 'seo-member'
+    ? ROUTES.SEO_MEMBER.DETAILS(String(projectId))
+    : ROUTES.SEO_LEADER.DETAILS(String(projectId));
+  return appendQuery(base, {
+    tab: 'client-updates',
+    issue: readClientIssueId(data),
+  });
+}
+
+function resolvePmClientIssuePath(
+  data: Record<string, unknown>,
+  user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined,
+): string | null {
+  const projectId = readId(data.projectId, data.project_id, data.projectUuid, data.project_uuid);
+  if (!projectId) {
+    return isPmManager(user) || user?.role === 'admin'
+      ? ROUTES.PROJECT_MANAGER.DASHBOARD
+      : ROUTES.EMPLOYEE.MY_PROJECTS;
+  }
+  // Client-issues UI lives on the PM project details page.
+  return appendQuery(ROUTES.PROJECT_MANAGER.DETAILS(String(projectId)), {
+    tab: 'client-updates',
+    issue: readClientIssueId(data),
+  });
+}
+
+function isClientIssueNotification(notification: AppNotification): boolean {
+  const haystack = `${notification.type} ${notification.title} ${notification.body}`.toLowerCase();
+  return /client.?issue|client.?update|مشكلة العميل|متطلبات العميل/.test(haystack);
 }
 
 /** seo_mention → project (and comment/message context when provided). */
@@ -345,16 +404,15 @@ function resolveSeoMentionPath(
   }
 
   if (isClientUpdateContext(contextType)) {
-    if (user?.role === 'seo-leader') {
-      return appendQuery(ROUTES.SEO_LEADER.DETAILS(pid), {
+    return appendQuery(
+      user?.role === 'seo-member'
+        ? ROUTES.SEO_MEMBER.DETAILS(pid)
+        : ROUTES.SEO_LEADER.DETAILS(pid),
+      {
         tab: 'client-updates',
-        message: contextId,
-      });
-    }
-    return appendQuery(ROUTES.SEO_MEMBER.DETAILS(pid), {
-      tab: 'messages',
-      message: contextId,
-    });
+        issue: contextId,
+      },
+    );
   }
 
   return resolveSeoProjectPath(data, user);
@@ -413,14 +471,8 @@ export function resolveNotificationPath(
       return projectId ? resolveProjectMessagesTabPath(String(projectId), user) : null;
     }
 
-    case 'pm_client_update': {
-      const projectId = readId(data.projectId, data.project_id);
-      if (!projectId) return null;
-      if (isPmManager(user)) {
-        return `${ROUTES.PROJECT_MANAGER.DETAILS(String(projectId))}?tab=client-updates`;
-      }
-      return resolveProjectMessagesTabPath(String(projectId), user);
-    }
+    case 'pm_client_update':
+      return resolvePmClientIssuePath(data, user);
 
     case 'seo_project_message': {
       const projectId = readId(data.projectId, data.project_id);
@@ -434,14 +486,8 @@ export function resolveNotificationPath(
       return `${ROUTES.SEO_LEADER.DETAILS(String(projectId))}?tab=messages`;
     }
 
-    case 'seo_client_update': {
-      const projectId = readId(data.projectId, data.project_id);
-      if (!projectId) return null;
-      if (user?.role === 'seo-leader') {
-        return `${ROUTES.SEO_LEADER.DETAILS(String(projectId))}?tab=client-updates`;
-      }
-      return ROUTES.SEO_MEMBER.MESSAGES;
-    }
+    case 'seo_client_update':
+      return resolveSeoClientIssuePath(data, user);
 
     case 'seo_direct_message': {
       const convId = readId(data.conversationId, data.conversation_id);
@@ -550,6 +596,15 @@ export function resolveNotificationPath(
 
   if (isAdminRequestNotification(notification)) {
     return adminRequestPath(user);
+  }
+
+  if (isClientIssueNotification(notification)) {
+    const seo = isSeoUser(user)
+      || type.startsWith('seo_')
+      || /seo/i.test(type);
+    return seo
+      ? resolveSeoClientIssuePath(data, user)
+      : resolvePmClientIssuePath(data, user);
   }
 
   if (isMessageNotification(notification)) {

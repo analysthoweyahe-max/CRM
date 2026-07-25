@@ -9,6 +9,9 @@ export interface PermissionCatalogGroup {
   slugs:   string[];
 }
 
+// Hidden per request — stray/test backend permissions, not meant to show up yet.
+const HIDDEN_OTHER_SLUGS = new Set(['متابعة', 'custom-permission']);
+
 export function useAdminPermissionsPage() {
   const { data: apiPermissions, isLoading } = usePermissionList();
 
@@ -23,7 +26,7 @@ export function useAdminPermissionsPage() {
     const otherSlugs = [...new Set(
       (apiPermissions ?? [])
         .map((p) => p.name)
-        .filter((name) => !PANEL_PERMISSION_SLUGS.has(name)),
+        .filter((name) => !PANEL_PERMISSION_SLUGS.has(name) && !HIDDEN_OTHER_SLUGS.has(name)),
     )].sort();
 
     if (otherSlugs.length > 0) {

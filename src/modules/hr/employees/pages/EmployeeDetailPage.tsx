@@ -12,6 +12,8 @@ import { Button }     from '@/shared/components/ui/Button';
 import { Badge }      from '@/shared/components/ui/Badge';
 import { PermissionTagList } from '@/shared/components/ui/PermissionTagList';
 import { getRoleLabel } from '@/modules/admin/employees/types/adminEmployee.types';
+import { useEmployeeLeaveSummary } from '@/modules/hr/leaves/hooks/useLeaves';
+import { pickAnnualLeaveStats } from '@/modules/hr/leaves/utils/leave.utils';
 import { STATUS_STYLES } from '../data/employeeData';
 import { getAvatarColor, getInitial, mapEmploymentType, formatEmployeeDepartments } from '../types/employee.types';
 import { useEmployee } from '../hooks/useEmployee';
@@ -38,6 +40,10 @@ export function EmployeeDetailPage() {
   const [editOpen,  setEditOpen]    = useState(false);
 
   const { data: emp, isLoading, isError } = useEmployee(id);
+  const { data: leaveSummary, isLoading: leaveLoading } = useEmployeeLeaveSummary(id);
+  const { annual: leaveAnnual, used: leaveUsed, remaining: leaveRemaining } =
+    pickAnnualLeaveStats(leaveSummary);
+  const usedPct = leaveAnnual > 0 ? Math.round((leaveUsed / leaveAnnual) * 100) : 0;
 
   const BackIcon = isAr ? ArrowRight : ArrowLeft;
 
@@ -63,11 +69,6 @@ export function EmployeeDetailPage() {
     { label: isAr ? 'معرف الموظف'      : 'Employee ID',     icon: <Hash size={15} />,         value: emp.employeeNumber ?? emp.id       },
     { label: isAr ? 'تاريخ الانضمام'   : 'Hire Date',       icon: <CalendarDays size={15} />, value: emp.joiningDate ?? '–'            },
   ];
-
-  const leaveAnnual    = 21;
-  const leaveUsed      = 4;
-  const leaveRemaining = leaveAnnual - leaveUsed;
-  const usedPct        = Math.round((leaveUsed / leaveAnnual) * 100);
 
   return (
     <div className="space-y-5">
@@ -149,7 +150,9 @@ export function EmployeeDetailPage() {
               <div className="w-px h-8 bg-gray-200 dark:bg-gray-600" />
               <div className="text-center">
                 <p className="font-bold text-gray-800 dark:text-gray-100">
-                  {leaveRemaining} {isAr ? 'يوم' : 'days'}
+                  {leaveLoading
+                    ? '…'
+                    : `${leaveRemaining} ${isAr ? 'يوم' : 'days'}`}
                 </p>
                 <p className="text-xs mt-0.5 text-gray-500 dark:text-gray-400">
                   {isAr ? 'رصيد الإجازات' : 'Leave Balance'}
@@ -222,23 +225,33 @@ export function EmployeeDetailPage() {
               {isAr ? 'رصيد الإجازات' : 'Leave Balance'}
             </h3>
             <div className="text-center mb-4">
-              <p className="text-4xl font-bold text-gray-800 dark:text-gray-100">{leaveAnnual}</p>
+              {leaveLoading
+                ? <div className="h-10 w-14 mx-auto rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                : <p className="text-4xl font-bold text-gray-800 dark:text-gray-100">{leaveAnnual}</p>}
               <p className="text-xs mt-1 text-gray-400 dark:text-gray-500">
                 {isAr ? 'إجمالي الرصيد السنوي' : 'Total Annual Balance'}
               </p>
             </div>
             <div className="space-y-3">
               <div className="rounded-xl p-4 text-center bg-red-50 dark:bg-red-900/20">
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{leaveUsed}</p>
+                {leaveLoading
+                  ? <div className="h-8 w-10 mx-auto rounded bg-red-200 dark:bg-red-800 animate-pulse" />
+                  : <p className="text-2xl font-bold text-red-600 dark:text-red-400">{leaveUsed}</p>}
                 <p className="text-xs mt-0.5 text-red-400">{isAr ? 'المستخدم' : 'Used'}</p>
               </div>
               <div className="rounded-xl p-4 text-center bg-[#D8EBAE] dark:bg-[#D8EBAE]/10">
-                <p className="text-2xl font-bold text-[#709028] dark:text-[#A0CD39]">{leaveRemaining}</p>
+                {leaveLoading
+                  ? <div className="h-8 w-10 mx-auto rounded bg-[#A0CD39]/40 animate-pulse" />
+                  : <p className="text-2xl font-bold text-[#709028] dark:text-[#A0CD39]">{leaveRemaining}</p>}
                 <p className="text-xs mt-0.5 text-[#709028]/70">{isAr ? 'المتبقي' : 'Remaining'}</p>
               </div>
             </div>
             <p className="text-xs text-center mt-4 text-gray-400 dark:text-gray-500">
-              {isAr ? `تم استخدام ${usedPct}% من الرصيد السنوي` : `${usedPct}% of annual balance used`}
+              {leaveLoading
+                ? '…'
+                : (isAr
+                  ? `تم استخدام ${usedPct}% من الرصيد السنوي`
+                  : `${usedPct}% of annual balance used`)}
             </p>
           </div>
 

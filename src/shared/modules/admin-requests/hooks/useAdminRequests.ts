@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { adminRequestsApiFor } from '../api/adminRequest.api';
+import { normalizeAdminRequest, normalizeAdminRequestList } from '../utils/normalizeAdminRequest';
 import type {
   AdminRequestCreatePayload,
   AdminRequestListParams,
@@ -34,7 +35,13 @@ export function useAdminRequestList(
   const api = adminRequestsApiFor(ns);
   return useQuery({
     queryKey: keys(ns).list(params),
-    queryFn:  () => api.list(params).then((r) => r.data.data),
+    queryFn:  async () => {
+      const page = await api.list(params).then((r) => r.data.data);
+      return {
+        ...page,
+        data: normalizeAdminRequestList(page?.data ?? page),
+      };
+    },
     staleTime: 30_000,
     enabled,
   });
@@ -45,7 +52,8 @@ export function useCreateAdminRequest(ns: AdminRequestNamespace, isAr: boolean) 
   const qc  = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: AdminRequestCreatePayload) => api.create(payload).then((r) => r.data.data),
+    mutationFn: (payload: AdminRequestCreatePayload) =>
+      api.create(payload).then((r) => normalizeAdminRequest(r.data.data) ?? r.data.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: keys(ns).all });
       toast.success(isAr ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully');
@@ -59,7 +67,8 @@ export function useCancelAdminRequest(ns: AdminRequestNamespace, isAr: boolean) 
   const qc  = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => api.cancel(id).then((r) => r.data.data),
+    mutationFn: (id: string) =>
+      api.cancel(id).then((r) => normalizeAdminRequest(r.data.data) ?? r.data.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: keys(ns).all });
       toast.success(isAr ? 'تم إلغاء الطلب' : 'Request cancelled');
@@ -74,7 +83,7 @@ export function useApproveAdminRequest(ns: AdminRequestNamespace, isAr: boolean)
 
   return useMutation({
     mutationFn: ({ id, comment }: { id: string; comment?: string }) =>
-      api.approve(id, comment).then((r) => r.data.data),
+      api.approve(id, comment).then((r) => normalizeAdminRequest(r.data.data) ?? r.data.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: keys(ns).all });
       toast.success(isAr ? 'تمت الموافقة على الطلب' : 'Request approved');
@@ -89,7 +98,7 @@ export function useRejectAdminRequest(ns: AdminRequestNamespace, isAr: boolean) 
 
   return useMutation({
     mutationFn: ({ id, comment }: { id: string; comment?: string }) =>
-      api.reject(id, comment).then((r) => r.data.data),
+      api.reject(id, comment).then((r) => normalizeAdminRequest(r.data.data) ?? r.data.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: keys(ns).all });
       toast.success(isAr ? 'تم رفض الطلب' : 'Request rejected');

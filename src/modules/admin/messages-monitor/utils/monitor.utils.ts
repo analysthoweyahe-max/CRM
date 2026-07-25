@@ -29,7 +29,10 @@ function readParty(raw: unknown): MonitoredParty | null {
 }
 
 /** Do NOT filter by isObserver — observers must remain visible. */
-export function normalizeMessengerConversations(payload: unknown): MonitoredConversation[] {
+export function normalizeMessengerConversations(
+  payload: unknown,
+  portal: 'seo' | 'pm' = 'seo',
+): MonitoredConversation[] {
   if (!Array.isArray(payload)) return [];
 
   return payload
@@ -56,8 +59,11 @@ export function normalizeMessengerConversations(payload: unknown): MonitoredConv
           ?? (parties.length >= 2 ? parties.map((p) => p.name).join(' ↔ ') : parties[0]?.name)
           ?? 'Conversation');
 
+      const rawId = String(raw.id);
+
       return {
-        id:            String(raw.id),
+        id:            `${portal}:${rawId}`,
+        rawId,
         type,
         name,
         parties,
@@ -67,6 +73,7 @@ export function normalizeMessengerConversations(payload: unknown): MonitoredConv
         isObserver:    Boolean(raw.isObserver ?? raw.is_observer),
         unreadCount:   Number(raw.unreadCount ?? raw.unread_count ?? 0) || 0,
         source:        'messenger' as const,
+        portal,
       };
     });
 }
@@ -135,7 +142,7 @@ export function applyRealtimeToConversations(
 
   const body = typeof event.body === 'string' ? event.body : '';
   const now = new Date().toISOString();
-  const idx = list.findIndex((c) => c.id === conversationId);
+  const idx = list.findIndex((c) => c.rawId === conversationId);
 
   if (idx === -1) {
     // Unknown conversation — caller should refetch; keep list as-is

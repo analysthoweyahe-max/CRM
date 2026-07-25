@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { getAvatarColor } from '@/shared/utils';
 import {
   useAdminRequestList,
@@ -33,22 +33,29 @@ function toRequestItem(r: AdminRequest): RequestItem {
   };
 }
 
+/**
+ * SEO manager requests tab.
+ * Loads the full list (no server status filter) and filters client-side so
+ * approved / rejected rows still show even when the backend status filter
+ * only recognises pending / cancelled.
+ */
 export function useSeoRequests(isAr: boolean, enabled = true) {
   const [filter, setFilter] = useState<FilterKey>('all');
 
   const { data, isLoading } = useAdminRequestList(
     'seo',
-    {
-      status:   filter === 'all' ? undefined : filter,
-      per_page: 100,
-    },
+    { per_page: 100 },
     enabled,
   );
 
   const approveMutation = useApproveAdminRequest('seo', isAr);
   const rejectMutation  = useRejectAdminRequest('seo', isAr);
 
-  const visible = (data?.data ?? []).map(toRequestItem);
+  const visible = useMemo(() => {
+    const items = (data?.data ?? []).map(toRequestItem);
+    if (filter === 'all') return items;
+    return items.filter((item) => item.status === filter);
+  }, [data?.data, filter]);
 
   return {
     visible,

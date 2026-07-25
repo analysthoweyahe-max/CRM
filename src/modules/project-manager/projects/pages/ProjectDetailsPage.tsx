@@ -48,6 +48,8 @@ export function ProjectDetailsPage() {
 
   const { project, isLoading, isError, refetch } = useProjectDetails(id);
   const { statuses } = usePmProjectLookups();
+  // Called unconditionally (before any early return below) — Rules of Hooks.
+  const { statuses: taskStatuses } = usePmTaskLookups();
   const canAddTask = usePermission('edit-pm-tasks');
   const canEditProject = usePermission('edit-pm-project');
   const projectKey = project
@@ -81,16 +83,29 @@ export function ProjectDetailsPage() {
     return null;
   }
 
-  async function handleStatusChange(status: string) {
-    const statusId = Number(status);
-    const current = project!.statusId != null ? String(project!.statusId) : project!.status;
-    if (!Number.isFinite(statusId) || status === current || changingStatus) return;
+  async function handleStatusChange(nextStatus: string) {
+    const statusId = Number(nextStatus);
+    const current = project!.statusId != null
+      ? String(project!.statusId)
+      : project!.status;
+    if (!Number.isFinite(statusId) || nextStatus === current || changingStatus) return;
     setChangingStatus(true);
     try {
       await pmProjectsApi.updateStatus(projectKey, statusId);
+      const matched = statuses.find(s => s.value === String(statusId));
+      const nextLabel = matched
+        ? (isAr && matched.labelAr ? matched.labelAr : matched.label)
+        : project!.statusLabel;
+      // Optimistic UI — don't wait on refetch to show the new selection.
+      queryClient.setQueryData(['pm-project', id], (old: typeof project) => {
+        if (!old) return old;
+        return { ...old, statusId, statusLabel: nextLabel };
+      });
       toast.success(isAr ? 'تم تحديث حالة المشروع' : 'Project status updated');
       await refetch();
       queryClient.invalidateQueries({ queryKey: ['pm-project-settings', projectKey] });
+      queryClient.invalidateQueries({ queryKey: ['my-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['pm-dashboard'] });
     } catch (err) {
       toast.error(extractApiError(err) || (isAr ? 'تعذر تحديث حالة المشروع' : 'Failed to update status'));
     } finally {
@@ -124,7 +139,6 @@ export function ProjectDetailsPage() {
   }));
 
   // No progress/task-count fields on the project API yet — computed from the local Kanban tasks for now.
-  const { statuses: taskStatuses } = usePmTaskLookups();
   const completedStatusIds = new Set(
     taskStatuses.filter(s => s.marksCompleted).map(s => s.value),
   );
@@ -202,9 +216,10 @@ export function ProjectDetailsPage() {
           <div className="w-40">
             <Combobox
               items={statusItems}
-              value={project.statusId != null ? String(project.statusId) : project.status}
+              value={project.statusId != null ? String(project.statusId) : ''}
               onChange={handleStatusChange}
               disabled={changingStatus}
+              placeholder={isAr ? 'الحالة' : 'Status'}
               searchPlaceholder={isAr ? 'ابحث...' : 'Search…'}
               noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
             />

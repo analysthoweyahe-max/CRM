@@ -49,6 +49,12 @@ export function ProjectTypeCard({ type, isAr, onEdit, onDelete }: Props) {
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5" dir="ltr">
           {type.slug}
         </p>
+        {type.department && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            {isAr ? 'القسم: ' : 'Department: '}
+            {isAr ? (type.department.nameAr || type.department.name) : type.department.name}
+          </p>
+        )}
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
           {isAr
             ? `الترتيب: ${type.sortOrder} · المشاريع: ${linkedProjects}`

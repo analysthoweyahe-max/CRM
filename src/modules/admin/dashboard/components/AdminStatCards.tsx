@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Users, FolderKanban, FolderOpenDot, CheckCircle2 } from 'lucide-react';
+import { ClipboardList, Users, FolderKanban } from 'lucide-react';
 import { StatCard } from '@/shared/components/ui/StatCard';
 import { ROUTES } from '@/app/router/routes';
 import type { AdminDashboardStats } from '../types/adminDashboard.types';
@@ -43,16 +43,17 @@ function buildPmCards(stats: AdminDashboardStats['pm']): CardDef[] {
       iconColor: 'text-purple-600',
       to: ROUTES.PROJECT_MANAGER.TEAM,
     },
-    {
-      key: 'activeProjects',
-      value: stats.activeProjects,
-      labelAr: 'المشاريع النشطة',
-      labelEn: 'Active Projects',
-      icon: FolderOpenDot,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-      iconColor: 'text-blue-600',
-      to: ROUTES.PROJECT_MANAGER.MY_PROJECTS,
-    },
+    // Hidden per request — keep definition for easy re-enable.
+    // {
+    //   key: 'activeProjects',
+    //   value: stats.activeProjects,
+    //   labelAr: 'المشاريع النشطة',
+    //   labelEn: 'Active Projects',
+    //   icon: FolderOpenDot,
+    //   iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+    //   iconColor: 'text-blue-600',
+    //   to: ROUTES.PROJECT_MANAGER.MY_PROJECTS,
+    // },
   ];
 }
 
@@ -78,16 +79,17 @@ function buildSeoCards(stats: AdminDashboardStats['seo']): CardDef[] {
       iconColor: 'text-purple-600',
       to: ROUTES.SEO_LEADER.TEAM,
     },
-    {
-      key: 'completedProjects',
-      value: stats.completed_projects,
-      labelAr: 'المشاريع المكتملة',
-      labelEn: 'Completed Projects',
-      icon: CheckCircle2,
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
-      iconColor: 'text-emerald-600',
-      to: ROUTES.SEO_LEADER.MY_PROJECTS,
-    },
+    // Hidden per request — keep definition for easy re-enable.
+    // {
+    //   key: 'completedProjects',
+    //   value: stats.completed_projects,
+    //   labelAr: 'المشاريع المكتملة',
+    //   labelEn: 'Completed Projects',
+    //   icon: CheckCircle2,
+    //   iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    //   iconColor: 'text-emerald-600',
+    //   to: ROUTES.SEO_LEADER.MY_PROJECTS,
+    // },
   ];
 }
 

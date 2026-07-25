@@ -1,6 +1,26 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { toast } from 'sonner';
+import type { AxiosError } from 'axios';
 import { useSeoLeaveTypes, useSeoLeaveCreate } from '../hooks/useSeoLeave';
+
+function extractLeaveError(error: unknown, isAr: boolean): string {
+  const axiosError = error as AxiosError<{ message?: string | Record<string, string[]>; errors?: Record<string, string[]> }>;
+  const message = axiosError?.response?.data?.message;
+
+  if (message && typeof message === 'object') {
+    const first = Object.values(message).flat().find(Boolean);
+    if (first) return first;
+  }
+  if (typeof message === 'string' && message) return message;
+
+  const errors = axiosError?.response?.data?.errors;
+  if (errors) {
+    const first = Object.values(errors).flat().find(Boolean);
+    if (first) return first;
+  }
+
+  return isAr ? 'حدث خطأ، حاول مرة أخرى' : 'An error occurred';
+}
 
 export function useSeoLeaveRequestModal(onClose: () => void, isAr: boolean) {
   const { data: types = [] } = useSeoLeaveTypes();
@@ -32,7 +52,7 @@ export function useSeoLeaveRequestModal(onClose: () => void, isAr: boolean) {
       toast.success(isAr ? 'تم تقديم طلب الإجازة بنجاح' : 'Leave request submitted');
       handleClose();
     };
-    const onError = () => toast.error(isAr ? 'حدث خطأ، حاول مرة أخرى' : 'An error occurred');
+    const onError = (error: unknown) => toast.error(extractLeaveError(error, isAr));
 
     if (file) {
       const fd = new FormData();

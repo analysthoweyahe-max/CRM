@@ -84,7 +84,7 @@ export function MultiCombobox({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((o) => !o)}
-        className={`${inputCls(!!error)} flex items-center justify-between gap-2 text-start min-h-[42px] ${
+        className={`${inputCls(!!error)} h-auto! flex items-center justify-between gap-2 text-start min-h-[42px] ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         }`}
       >

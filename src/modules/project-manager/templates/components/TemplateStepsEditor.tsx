@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import type { PmTemplateStep } from '../types/template.types';
 
 const INPUT = [
@@ -84,12 +85,10 @@ export function TemplateStepsEditor({ steps, onChange, isAr }: Props) {
                   </Button>
                 </div>
               </div>
-              <textarea
-                rows={2}
+              <RichTextEditor
                 value={step.description ?? ''}
-                onChange={(e) => update(index, { description: e.target.value })}
+                onChange={(html) => update(index, { description: html })}
                 placeholder={isAr ? 'وصف المرحلة (اختياري)' : 'Step description (optional)'}
-                className={`${INPUT} resize-none`}
                 dir={isAr ? 'rtl' : 'ltr'}
               />
             </li>

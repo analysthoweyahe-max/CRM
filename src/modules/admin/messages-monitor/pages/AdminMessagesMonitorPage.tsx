@@ -23,6 +23,10 @@ function typeLabel(c: MonitoredConversation, isAr: boolean): string {
   return isAr ? 'محادثة مباشرة' : 'Direct';
 }
 
+function portalLabel(portal: MonitoredConversation['portal'], isAr: boolean): string {
+  return portal === 'pm' ? (isAr ? 'البرمجة' : 'PM') : 'SEO';
+}
+
 export function AdminMessagesMonitorPage() {
   const { lang } = useLang();
   const isAr     = lang === 'ar';
@@ -131,6 +135,13 @@ export function AdminMessagesMonitorPage() {
                             </p>
                           )}
                           <div className="flex flex-wrap gap-1 mt-1.5">
+                            <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                              c.portal === 'pm'
+                                ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                : 'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028] dark:text-[#A0CD39]'
+                            }`}>
+                              {portalLabel(c.portal, isAr)}
+                            </span>
                             <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500">
                               {typeLabel(c, isAr)}
                             </span>
@@ -172,6 +183,13 @@ export function AdminMessagesMonitorPage() {
                   <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                     {partiesLabel(activeConversation) || activeConversation.name}
                   </h2>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                    activeConversation.portal === 'pm'
+                      ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                      : 'bg-[#D8EBAE] dark:bg-[#D8EBAE]/10 text-[#709028] dark:text-[#A0CD39]'
+                  }`}>
+                    {portalLabel(activeConversation.portal, isAr)}
+                  </span>
                   {activeConversation.isObserver && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300">
                       {isAr ? 'مراقب' : 'Observer'}

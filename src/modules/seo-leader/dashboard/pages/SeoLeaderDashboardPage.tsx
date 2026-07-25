@@ -1,4 +1,4 @@
-import { FolderKanban, Users, ListChecks, CheckCircle2 } from 'lucide-react';
+import { FolderKanban, Users, ListChecks } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLang }     from '@/app/providers/LanguageProvider';
 import { ROUTES }      from '@/app/router/routes';
@@ -57,6 +57,7 @@ export function SeoLeaderDashboardPage() {
             onClick={() => navigate(ROUTES.SEO_LEADER.TASKS)}
           />
         )}
+        {/* Hidden per request — keep definition for easy re-enable.
         <StatCard
           icon={<CheckCircle2 size={22} className="text-emerald-600" />}
           iconBg="bg-emerald-100 dark:bg-emerald-900/30"
@@ -66,6 +67,7 @@ export function SeoLeaderDashboardPage() {
           isAr={isAr}
           onClick={() => navigate(ROUTES.SEO_LEADER.MY_PROJECTS)}
         />
+        */}
       </div>
 
       {/* Campaigns list */}

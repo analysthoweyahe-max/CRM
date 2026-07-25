@@ -19,9 +19,13 @@ import type {
   UpdateSeoMessagePayload,
 } from '../types/messages.types';
 
+// Base prefix kept unscoped so realtime handlers (applyRealtimeMessage.ts) can
+// invalidate/patch every open portal's cache via a partial-key match.
 const CONV_KEY = ['seo-member', 'messages', 'conversations'] as const;
-const msgKey   = (id: string) => ['seo-member', 'messages', 'messages', id] as const;
-const convDetailKey = (id: string) => ['seo-member', 'messages', 'conversation', id] as const;
+/** Each portal (SEO / PM / employee) only ever reads/writes its own scope's slot. */
+const scopedConvKey = () => [...CONV_KEY, seoMessagesApi.scope()] as const;
+const msgKey   = (id: string) => ['seo-member', 'messages', 'messages', seoMessagesApi.scope(), id] as const;
+const convDetailKey = (id: string) => ['seo-member', 'messages', 'conversation', seoMessagesApi.scope(), id] as const;
 const PAGE_SIZE = 30;
 
 /** Page-1 cache shape (newest page, already chronological). */
@@ -71,7 +75,7 @@ export function useSeoConversations(opts?: { search?: string; type?: SeoConversa
   const echoLive = useEchoLive();
 
   return useQuery({
-    queryKey: [...CONV_KEY, type ?? 'all', search ?? ''],
+    queryKey: [...scopedConvKey(), type ?? 'all', search ?? ''],
     queryFn:  async () => {
       const res = await seoMessagesApi.listConversations({ search, type, per_page: 100 });
       return extractPaginatedList<SeoConversation>(res.data);
@@ -328,7 +332,7 @@ export function useSeoMentionables(
   const q = search?.trim() || undefined;
   return useQuery({
     queryKey: [
-      'seo-member', 'messages', 'mentionables', q ?? '',
+      'seo-member', 'messages', 'mentionables', seoMessagesApi.scope(), q ?? '',
       excludeSelf ? 'no-self' : 'all',
       user?.id ?? '', user?.employeeId ?? '',
     ],

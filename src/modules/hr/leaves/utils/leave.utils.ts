@@ -1,4 +1,4 @@
-import type { ApiLeaveEmployee, ApiLeaveRequest } from '../types/leaves.types';
+import type { ApiLeaveEmployee, ApiLeaveRequest, EmployeeLeaveSummary, EmployeeLeaveSummaryV2 } from '../types/leaves.types';
 
 function readRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -218,4 +218,38 @@ export function formatLeaveDuration(daysCount: number | null | undefined, isAr: 
   if (!Number.isFinite(days) || days <= 0) return '—';
   if (isAr) return `${days} ${days === 1 ? 'يوم' : 'أيام'}`;
   return `${days} ${days === 1 ? 'day' : 'days'}`;
+}
+
+function isBalancesSummary(
+  summary: EmployeeLeaveSummary,
+): summary is EmployeeLeaveSummaryV2 {
+  return 'balances' in summary && Array.isArray(summary.balances);
+}
+
+/** Normalize leave summary (v2 balances list or legacy flat shape) into annual totals. */
+export function pickAnnualLeaveStats(summary: EmployeeLeaveSummary | undefined): {
+  annual: number;
+  used: number;
+  remaining: number;
+} {
+  if (!summary) return { annual: 0, used: 0, remaining: 0 };
+
+  if (isBalancesSummary(summary)) {
+    const annual = summary.balances.find((b) => b.leaveType === 'annual');
+    if (annual) {
+      return { annual: annual.entitled, used: annual.used, remaining: annual.remaining };
+    }
+    const first = summary.balances[0];
+    return {
+      annual:    first?.entitled  ?? 0,
+      used:      first?.used      ?? 0,
+      remaining: first?.remaining ?? 0,
+    };
+  }
+
+  return {
+    annual:    summary.annual_balance ?? 0,
+    used:      summary.used           ?? 0,
+    remaining: summary.remaining      ?? 0,
+  };
 }

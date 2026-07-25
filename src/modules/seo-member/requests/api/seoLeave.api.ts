@@ -20,7 +20,10 @@ export const seoLeaveApi = {
   },
 
   create(payload: FormData | Record<string, string>) {
-    return http.post<SeoLeaveCreateResponse>('/v1/seo/leave', payload);
+    const isFormData = payload instanceof FormData;
+    return http.post<SeoLeaveCreateResponse>('/v1/seo/leave', payload, {
+      headers: isFormData ? { 'Content-Type': undefined } : undefined,
+    });
   },
 
   cancel(id: string) {

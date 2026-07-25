@@ -7,6 +7,7 @@ import { Switch }    from '@/shared/components/ui/Switch';
 import type { ComboboxItem } from '@/shared/components/form/Combobox';
 import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { FormField } from '@/shared/components/form/FormField';
+import { RichTextEditor } from '@/shared/components/form/RichTextEditor';
 import { usePmProjectLookups } from '@/modules/project-manager/projects/hooks/usePmProjectLookups';
 import { createProjectApi } from '@/shared/modules/create-project/api/createProject.api';
 import { projectTypeLabel } from '@/shared/modules/create-project/utils/createProject.utils';
@@ -31,13 +32,6 @@ interface Props {
   fieldErrors?: Record<string, string>;
   onClearFieldError?: (field: string) => void;
 }
-
-const TEXTAREA = [
-  'w-full rounded-lg border border-gray-200 dark:border-gray-600',
-  'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100',
-  'px-3 py-2 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500',
-  'focus:outline-none focus:ring-2 focus:ring-[#A0CD39] focus:border-transparent resize-none',
-].join(' ');
 
 export function TemplateFormModal({
   open, onClose, onSubmit, initial, isLoading, isAr, module = 'pm',
@@ -146,12 +140,11 @@ export function TemplateFormModal({
         </div>
 
         <FormField label={isAr ? 'الوصف' : 'Description'}>
-          <textarea
-            rows={2}
+          <RichTextEditor
             value={description}
-            onChange={(e) => setDesc(e.target.value)}
+            onChange={setDesc}
             placeholder={isAr ? 'وصف مختصر للقالب' : 'Short template description'}
-            className={TEXTAREA}
+            dir={isAr ? 'rtl' : 'ltr'}
           />
         </FormField>
 

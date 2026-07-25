@@ -27,6 +27,8 @@ interface Props {
    * Falls back to summing sessions + task.allocatedHours.
    */
   summary?: Pick<TaskTimeLogSummary, 'totalHours' | 'estimatedHours' | 'remainingHours' | 'progressPercent'> | null;
+  /** View-only mode (e.g. a teammate's task) — hides the timer, add-session, and delete controls. */
+  readOnly?: boolean;
 }
 
 interface AddSessionForm {
@@ -71,6 +73,7 @@ export function TaskDetailTimeTracker({
   onCreateSession, onDeleteSession, creatingSession, deletingSession,
   portal = 'pm',
   summary,
+  readOnly = false,
 }: Props) {
   const canPersist = !!(projectId && taskId);
   const pmCreateSessionMutation = useCreateSession(projectId ?? '', taskId ?? '');
@@ -131,7 +134,7 @@ export function TaskDetailTimeTracker({
 
   return (
     <div className="space-y-5">
-      {canPersist && (
+      {canPersist && !readOnly && (
         <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-5 flex items-center justify-between gap-4">
           <TimerControls portal={portal} projectId={projectId!} taskId={taskId!} title={task.title} isAr={isAr} size="md" />
         </div>
@@ -139,13 +142,15 @@ export function TaskDetailTimeTracker({
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <button
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-1.5 text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 transition-colors"
-          >
-            <Plus size={14} />
-            {isAr ? 'إضافة جلسة يدوياً' : 'Add Session Manually'}
-          </button>
+          {readOnly ? <span /> : (
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center gap-1.5 text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 transition-colors"
+            >
+              <Plus size={14} />
+              {isAr ? 'إضافة جلسة يدوياً' : 'Add Session Manually'}
+            </button>
+          )}
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             {isAr ? 'الجلسات المسجلة' : 'Recorded Sessions'}
           </p>
@@ -179,14 +184,16 @@ export function TaskDetailTimeTracker({
                   </div>
                   <div className="flex items-center gap-5">
                     <span className="text-brand-500 font-medium tabular-nums">{formatHours(s.durationHours)} {isAr ? 'س' : 'h'}</span>
-                    <button
-                      onClick={() => deleteSession(s.id)}
-                      disabled={isDeletingSession}
-                      className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
-                      title={isAr ? 'حذف' : 'Delete'}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {readOnly ? <span className="w-3.5" /> : (
+                      <button
+                        onClick={() => deleteSession(s.id)}
+                        disabled={isDeletingSession}
+                        className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
+                        title={isAr ? 'حذف' : 'Delete'}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

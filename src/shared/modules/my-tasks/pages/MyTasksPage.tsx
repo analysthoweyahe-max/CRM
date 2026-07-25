@@ -39,16 +39,11 @@ export function MyTasksPage() {
     getTaskId,
   } = useMyTasksPage(isAr, { routeProjectId });
 
+  // Teammate ("partner") tasks in the same project are fully viewable —
+  // the detail page itself renders them read-only (no edit/status-change/
+  // delete), so opening them from the board is allowed for everyone.
   function handleOpen(task: MyTask) {
     if (!config || !tasksRole) return;
-    if (!isEditableMyTask(task)) {
-      toast.info(
-        isAr
-          ? 'يمكنك فقط عرض ملخص مهمة الشريك من اللوحة'
-          : 'You can only view a summary of a partner task on the board',
-      );
-      return;
-    }
     const pid = task.project?.id ?? (projectId || undefined);
     if (!pid) return;
     navigate(config.taskDetailPath(pid, getTaskId(task)));

@@ -1,4 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
+import { seoMessagesApi } from '@/modules/seo-member/messages/api/messages.api';
 import type { SeoConversation, SeoMessage } from '@/modules/seo-member/messages/types/messages.types';
 import type { RealtimeMessagePayload } from './messageRealtime.types';
 import {
@@ -21,7 +22,9 @@ import {
 import { conversationLastMessagePreview } from '@/shared/utils/messagePreview.utils';
 
 export const COMPANY_CONV_KEY = ['seo-member', 'messages', 'conversations'] as const;
-export const companyMsgKey = (id: string) => ['seo-member', 'messages', 'messages', id] as const;
+// Must mirror msgKey() in modules/seo-member/messages/hooks/useSeoMessages.ts —
+// each portal (SEO / PM / employee) keeps its own scoped thread cache.
+export const companyMsgKey = (id: string) => ['seo-member', 'messages', 'messages', seoMessagesApi.scope(), id] as const;
 
 type CompanyMessagesCache = {
   messages: SeoMessage[];

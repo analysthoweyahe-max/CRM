@@ -152,8 +152,8 @@ export function CampaignDetailsPage() {
   const taskParam = searchParams.get('task');
   const commentParam = searchParams.get('comment') ?? searchParams.get('commentId');
   const contextTypeParam = searchParams.get('contextType');
-  const initialTab: TabKey = tabParam === 'messages' || tabParam === 'client-updates'
-    ? (tabParam === 'client-updates' ? 'client' : 'messages')
+  const initialTab: TabKey = tabParam === 'messages' || tabParam === 'client-updates' || tabParam === 'client'
+    ? (tabParam === 'client-updates' || tabParam === 'client' ? 'client' : 'messages')
     : 'tasks';
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(taskParam);
@@ -172,7 +172,7 @@ export function CampaignDetailsPage() {
 
   useEffect(() => {
     if (tabParam === 'messages') setActiveTab('messages');
-    if (tabParam === 'client-updates') setActiveTab('client');
+    if (tabParam === 'client-updates' || tabParam === 'client') setActiveTab('client');
   }, [tabParam]);
 
   useEffect(() => {

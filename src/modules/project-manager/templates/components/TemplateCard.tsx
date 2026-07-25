@@ -2,6 +2,7 @@ import { Pencil, Trash2, ListChecks, Star, ExternalLink } from 'lucide-react';
 import { Card }   from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui/Button';
 import { Badge }  from '@/shared/components/ui/Badge';
+import { RichTextView } from '@/shared/components/form/RichTextView';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { isGlobalTemplate } from '../utils/templateFilter';
 import { TemplateNameWithLink } from './TemplateNameWithLink';
@@ -59,9 +60,10 @@ export function TemplateCard({ template, isAr, onEdit, onDelete }: Props) {
           </h3>
         </div>
         {template.description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-            {template.description}
-          </p>
+          <RichTextView
+            html={template.description}
+            className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 [&_*]:inline"
+          />
         )}
         {linkHref && (
           <a
