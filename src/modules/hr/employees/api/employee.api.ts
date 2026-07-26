@@ -74,4 +74,18 @@ export const employeeApi = {
   lookupEmploymentTypes() {
     return http.get<EmploymentTypeLookupResponse>('/v1/employees/lookups/employment-types');
   },
+
+  uploadContract(id: string, file: File) {
+    const formData = new FormData();
+    formData.append('contract', file);
+    return http.post<EmployeeSingleResponse>(`/v1/employees/${id}/contract`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      // File uploads can exceed the global 10s API timeout on slower connections.
+      timeout: 60_000,
+    });
+  },
+
+  removeContract(id: string) {
+    return http.delete<EmployeeSingleResponse>(`/v1/employees/${id}/contract`);
+  },
 };

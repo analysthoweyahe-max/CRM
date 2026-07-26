@@ -4,8 +4,17 @@ import { toast } from 'sonner';
 import { extractApiError } from '@/shared/utils/error.utils';
 import { orgSettingsApi } from '../api/orgSettings.api';
 import type { OrgSettings, UpdateOrgSettingsPayload } from '../types/orgSettings.types';
+import { syncScalarLeaveFields } from '../utils/leaveTypeScalar.utils';
 
 const ORG_SETTINGS_KEY = ['admin', 'org-settings'];
+
+function buildDraft(data: OrgSettings): OrgSettings {
+  return syncScalarLeaveFields({
+    ...data,
+    casualLeave: data.casualLeave ?? 0,
+    leaveTypes:  (data.leaveTypes ?? []).map((t) => ({ ...t, days: t.days ?? 0 })),
+  });
+}
 
 function useOrgSettingsQuery() {
   return useQuery({
@@ -36,11 +45,7 @@ export function useOrgSettingsPage(isAr: boolean) {
 
   useEffect(() => {
     if (!data) return;
-    setDraft({
-      ...data,
-      casualLeave: data.casualLeave ?? 0,
-      leaveTypes:  data.leaveTypes ?? [],
-    });
+    setDraft(buildDraft(data));
   }, [data]);
 
   function set<K extends keyof OrgSettings>(key: K, value: OrgSettings[K]) {
@@ -58,11 +63,7 @@ export function useOrgSettingsPage(isAr: boolean) {
 
   function cancel() {
     if (!data) return;
-    setDraft({
-      ...data,
-      casualLeave: data.casualLeave ?? 0,
-      leaveTypes:  data.leaveTypes ?? [],
-    });
+    setDraft(buildDraft(data));
   }
 
   return { settings: draft, isLoading, set, save, cancel, saving };

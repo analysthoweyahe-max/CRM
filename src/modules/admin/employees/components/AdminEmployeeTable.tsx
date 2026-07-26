@@ -89,7 +89,7 @@ export function AdminEmployeeTable({
       col.accessor('jobTitle',   { header: isAr ? 'المسمى الوظيفي' : 'Job Title' }),
       col.accessor('role', {
         header: isAr ? 'الدور' : 'Role',
-        cell:   info => <Badge label={info.getValue()} variant="gray" />,
+        cell:   info => <Badge label={info.row.original.jobTitle} variant="gray" />,
       }),
       col.accessor('status', {
         header: isAr ? 'الحالة' : 'Status',

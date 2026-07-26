@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 import { useLang }    from '@/app/providers/LanguageProvider';
+import { useAuth }    from '@/modules/auth/context/AuthContext';
 import { ROUTES }     from '@/app/router/routes';
 import { Button }     from '@/shared/components/ui/Button';
 import { Badge }      from '@/shared/components/ui/Badge';
@@ -21,20 +22,31 @@ import { EmployeeDetailEmployment } from '../components/detail/EmployeeDetailEmp
 import { EmployeeDetailPayroll }    from '../components/detail/EmployeeDetailPayroll';
 import { EmployeeDetailAttendance } from '../components/detail/EmployeeDetailAttendance';
 import { EmployeeDetailLeaves }     from '../components/detail/EmployeeDetailLeaves';
+import { EmployeeDetailContract }   from '../components/detail/EmployeeDetailContract';
 import { EditEmployeeModal }        from '../components/edit-modals/EditEmployeeModal';
 import { EmployeeDetailSkeleton }  from '../components/EmployeeDetailSkeleton';
 
-type Tab = 'summary' | 'employment' | 'payroll' | 'attendance' | 'leaves';
+type Tab = 'summary' | 'employment' | 'payroll' | 'attendance' | 'leaves' | 'contract';
 
-const TABS_AR = ['الملخص العام', 'تفاصيل التوظيف', 'سجل الرواتب', 'سجل الحضور', 'سجل الإجازات'];
-const TABS_EN = ['Overview', 'Employment', 'Payroll', 'Attendance', 'Leaves'];
-const TAB_KEYS: Tab[] = ['summary', 'employment', 'payroll', 'attendance', 'leaves'];
+const TABS: { key: Tab; ar: string; en: string }[] = [
+  { key: 'summary',    ar: 'الملخص العام',    en: 'Overview'    },
+  { key: 'employment', ar: 'تفاصيل التوظيف',  en: 'Employment'  },
+  { key: 'payroll',    ar: 'سجل الرواتب',     en: 'Payroll'     },
+  { key: 'attendance', ar: 'سجل الحضور',      en: 'Attendance'  },
+  { key: 'leaves',     ar: 'سجل الإجازات',    en: 'Leaves'      },
+  { key: 'contract',   ar: 'العقد',           en: 'Contract'    },
+];
 
 export function EmployeeDetailPage() {
   const { id }    = useParams<{ id: string }>();
   const { lang }  = useLang();
+  const { user }  = useAuth();
   const navigate  = useNavigate();
   const isAr      = lang === 'ar';
+
+  // PMs/SEO-leaders share this route to view team members — they can see and
+  // download the contract, but only super-admin/HR may upload or remove it.
+  const canManageContract = user?.role === 'admin' || user?.role === 'hr';
 
   const [activeTab, setActiveTab]   = useState<Tab>('summary');
   const [editOpen,  setEditOpen]    = useState(false);
@@ -165,17 +177,17 @@ export function EmployeeDetailPage() {
         {/* Tabs */}
         <div className="border-t border-gray-100 dark:border-gray-700 px-6">
           <div className="flex overflow-x-auto">
-            {TAB_KEYS.map((key, i) => (
+            {TABS.map((tab) => (
               <button
-                key={key}
-                onClick={() => setActiveTab(key)}
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
-                  ${activeTab === key
+                  ${activeTab === tab.key
                     ? 'border-[#A0CD39] text-[#709028] dark:text-[#A0CD39]'
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
               >
-                {isAr ? TABS_AR[i] : TABS_EN[i]}
+                {isAr ? tab.ar : tab.en}
               </button>
             ))}
           </div>
@@ -286,6 +298,14 @@ export function EmployeeDetailPage() {
       {activeTab === 'payroll'    && <EmployeeDetailPayroll    employeeId={emp.id} isAr={isAr} />}
       {activeTab === 'attendance' && <EmployeeDetailAttendance employeeId={emp.id} isAr={isAr} />}
       {activeTab === 'leaves'     && <EmployeeDetailLeaves     employeeId={emp.id} isAr={isAr} />}
+      {activeTab === 'contract' && (
+        <EmployeeDetailContract
+          employeeId={emp.id}
+          contract={emp.contract ?? null}
+          isAr={isAr}
+          canManage={canManageContract}
+        />
+      )}
 
       <EditEmployeeModal
         open={editOpen}

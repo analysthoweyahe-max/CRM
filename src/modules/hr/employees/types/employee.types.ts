@@ -1,3 +1,5 @@
+import type { ContractFile } from '@/shared/types/contract.types';
+
 export type EmployeeStatus  = 'active' | 'inactive' | 'pending';
 export type EmploymentType  = 'full_time' | 'part_time' | 'contract' | 'remote' | 'internship';
 
@@ -49,6 +51,8 @@ export interface ApiEmployee {
   roleManuallyAssigned?: boolean;
   createdAt?:          string;
   updatedAt?:          string;
+  /** Uploaded employment contract file (PDF/image), null when none uploaded yet. */
+  contract?:           ContractFile | null;
 }
 
 // ── List response ─────────────────────────────────────────────────────────────

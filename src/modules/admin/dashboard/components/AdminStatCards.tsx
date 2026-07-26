@@ -43,31 +43,30 @@ function buildPmCards(stats: AdminDashboardStats['pm']): CardDef[] {
       iconColor: 'text-purple-600',
       to: ROUTES.PROJECT_MANAGER.TEAM,
     },
-    // Hidden per request — keep definition for easy re-enable.
-    // {
-    //   key: 'activeProjects',
-    //   value: stats.activeProjects,
-    //   labelAr: 'المشاريع النشطة',
-    //   labelEn: 'Active Projects',
-    //   icon: FolderOpenDot,
-    //   iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-    //   iconColor: 'text-blue-600',
-    //   to: ROUTES.PROJECT_MANAGER.MY_PROJECTS,
-    // },
+    {
+      key: 'totalProjects',
+      value: stats.totalProjects,
+      labelAr: 'إجمالي المشاريع',
+      labelEn: 'Total Projects',
+      icon: FolderKanban,
+      iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20',
+      iconColor: 'text-[#709028] dark:text-[#A0CD39]',
+      to: ROUTES.PROJECT_MANAGER.MY_PROJECTS,
+    },
   ];
 }
 
 function buildSeoCards(stats: AdminDashboardStats['seo']): CardDef[] {
   return [
     {
-      key: 'totalProjects',
-      value: stats.total_projects,
-      labelAr: 'إجمالي المشاريع',
-      labelEn: 'Total Projects',
-      icon: FolderKanban,
-      iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20',
-      iconColor: 'text-[#709028] dark:text-[#A0CD39]',
-      to: ROUTES.SEO_LEADER.MY_PROJECTS,
+      key: 'dailyReports',
+      value: stats.daily_reports,
+      labelAr: 'التقارير اليومية',
+      labelEn: 'Daily Reports',
+      icon: ClipboardList,
+      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+      iconColor: 'text-blue-600',
+      to: ROUTES.SEO_LEADER.REPORTS,
     },
     {
       key: 'activeEmployees',
@@ -78,6 +77,16 @@ function buildSeoCards(stats: AdminDashboardStats['seo']): CardDef[] {
       iconBg: 'bg-purple-100 dark:bg-purple-900/30',
       iconColor: 'text-purple-600',
       to: ROUTES.SEO_LEADER.TEAM,
+    },
+    {
+      key: 'totalProjects',
+      value: stats.total_projects,
+      labelAr: 'إجمالي المشاريع',
+      labelEn: 'Total Projects',
+      icon: FolderKanban,
+      iconBg: 'bg-[#D8EBAE] dark:bg-[#A0CD39]/20',
+      iconColor: 'text-[#709028] dark:text-[#A0CD39]',
+      to: ROUTES.SEO_LEADER.MY_PROJECTS,
     },
     // Hidden per request — keep definition for easy re-enable.
     // {

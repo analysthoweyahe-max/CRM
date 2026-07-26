@@ -160,6 +160,7 @@ function buildEmployeeUser(raw: ApiEmployee): AuthUser {
     sectionLabel: employee.sectionLabel,
     actor:        'employee',
     avatarUrl:    employee.avatar_url,
+    contract:     employee.contract ?? null,
   };
 }
 
@@ -179,6 +180,7 @@ function buildAdminUser(raw: ApiAdmin): AuthUser {
     actor:        'admin',
     avatarUrl:    admin.avatar_url,
     phone:        admin.phone,
+    contract:     admin.contract ?? null,
   };
 }
 

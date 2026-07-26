@@ -44,12 +44,14 @@ export function useAdminDashboard(): AdminDashboardData & { isLoading: boolean }
       teamMembers: pmTeamCount,
       activeTasks: pmDashboard.stats.activeTasks,
       activeProjects: pmDashboard.stats.activeProjects,
+      totalProjects: pmDashboard.stats.totalProjects,
     },
     seo: {
       total_projects: seoDashboard.stats.total_projects,
       active_employees: seoDashboard.stats.active_employees,
       pending_tasks: seoDashboard.stats.pending_tasks,
       completed_projects: seoDashboard.stats.completed_projects,
+      daily_reports: seoDashboard.stats.daily_reports,
     },
   }), [pmDashboard.stats, pmTeamCount, seoDashboard.stats]);
 

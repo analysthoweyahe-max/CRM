@@ -3,6 +3,7 @@ import { Input }     from '@/shared/components/ui/Input';
 import { Switch }    from '@/shared/components/ui/Switch';
 import { FormField } from '@/shared/components/form/FormField';
 import type { OrgLeaveType, OrgSettings } from '../types/orgSettings.types';
+import { LEAVE_TYPE_SCALAR_FIELD } from '../utils/leaveTypeScalar.utils';
 
 interface Props {
   settings: OrgSettings;
@@ -13,11 +14,18 @@ interface Props {
 export function LeavePolicyCard({ settings, onChange, isAr }: Props) {
   const leaveTypes = settings.leaveTypes ?? [];
 
-  function updateLeaveType(value: string, patch: Partial<Pick<OrgLeaveType, 'labelEn' | 'labelAr' | 'tracksBalance'>>) {
+  function updateLeaveType(value: string, patch: Partial<Pick<OrgLeaveType, 'labelEn' | 'labelAr' | 'tracksBalance' | 'days'>>) {
     onChange(
       'leaveTypes',
       leaveTypes.map((t) => (t.value === value ? { ...t, ...patch } : t)),
     );
+
+    // annual/casual/sick also live as top-level scalar fields — keep them in lockstep
+    // with the card's `days` input so both places in the payload agree.
+    if (patch.days !== undefined) {
+      const scalarKey = LEAVE_TYPE_SCALAR_FIELD[value];
+      if (scalarKey) onChange(scalarKey, patch.days);
+    }
   }
 
   return (
@@ -27,18 +35,6 @@ export function LeavePolicyCard({ settings, onChange, isAr }: Props) {
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField label={isAr ? 'الإجازة السنوية (يوم)' : 'Annual Leave (days)'}>
-          <Input type="number" min={0} value={settings.annualLeave}
-            onChange={(e) => onChange('annualLeave', Number(e.target.value))} />
-        </FormField>
-        <FormField label={isAr ? 'الإجازة العرضية (يوم)' : 'Casual Leave (days)'}>
-          <Input type="number" min={0} value={settings.casualLeave ?? 0}
-            onChange={(e) => onChange('casualLeave', Number(e.target.value))} />
-        </FormField>
-        <FormField label={isAr ? 'الإجازة المرضية (يوم)' : 'Sick Leave (days)'}>
-          <Input type="number" min={0} value={settings.sickLeave}
-            onChange={(e) => onChange('sickLeave', Number(e.target.value))} />
-        </FormField>
         <FormField label={isAr ? 'الحد الأقصى للترحيل (يوم)' : 'Max Carryover (days)'}>
           <Input type="number" min={0} value={settings.maxCarryover}
             onChange={(e) => onChange('maxCarryover', Number(e.target.value))} />
@@ -83,7 +79,17 @@ export function LeavePolicyCard({ settings, onChange, isAr }: Props) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <FormField label={isAr ? 'الرصيد (يوم)' : 'Quota (days)'}>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={365}
+                    value={type.days ?? 0}
+                    disabled={!type.tracksBalance}
+                    onChange={(e) => updateLeaveType(type.value, { days: Number(e.target.value) })}
+                  />
+                </FormField>
                 <FormField label={isAr ? 'التسمية (إنجليزي)' : 'Label (English)'}>
                   <Input
                     value={type.labelEn}
@@ -99,6 +105,13 @@ export function LeavePolicyCard({ settings, onChange, isAr }: Props) {
                   />
                 </FormField>
               </div>
+              {!type.tracksBalance && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {isAr
+                    ? 'فعّل "تتبع الرصيد" لتحديد عدد الأيام المسموح بها لهذا النوع.'
+                    : 'Enable "Tracks balance" to set an allotted day count for this type.'}
+                </p>
+              )}
             </div>
           ))}
 

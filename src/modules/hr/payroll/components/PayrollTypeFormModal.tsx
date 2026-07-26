@@ -4,7 +4,6 @@ import { Button }    from '@/shared/components/ui/Button';
 import { Input }     from '@/shared/components/ui/Input';
 import { Switch }    from '@/shared/components/ui/Switch';
 import { FormField } from '@/shared/components/form/FormField';
-import { Combobox }  from '@/shared/components/form/Combobox';
 import type {
   ApiPayrollAdjustmentType,
   CreatePayrollTypePayload,
@@ -48,11 +47,6 @@ export function PayrollTypeFormModal({
 
   const isValid = !!form.name?.trim();
   const codeLocked = !!initial?.isSystem;
-
-  const sourceItems = [
-    { id: 'manual',    label: isAr ? 'يدوي' : 'Manual' },
-    { id: 'automatic', label: isAr ? 'تلقائي' : 'Automatic' },
-  ];
 
   function handleSubmit() {
     if (!isValid) return;
@@ -120,24 +114,13 @@ export function PayrollTypeFormModal({
           )}
         </FormField>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label={isAr ? 'المصدر' : 'Source'}>
-            <Combobox
-              items={sourceItems}
-              value={form.source ?? 'manual'}
-              onChange={(v) => set('source', v as PayrollTypeSource)}
-              searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
-              noResultsText={isAr ? 'لا نتائج' : 'No results'}
-            />
-          </FormField>
-          <FormField label={isAr ? 'ترتيب العرض' : 'Sort Order'}>
-            <Input
-              type="number"
-              value={form.sort_order ?? 0}
-              onChange={(e) => set('sort_order', Number(e.target.value))}
-            />
-          </FormField>
-        </div>
+        <FormField label={isAr ? 'ترتيب العرض' : 'Sort Order'}>
+          <Input
+            type="number"
+            value={form.sort_order ?? 0}
+            onChange={(e) => set('sort_order', Number(e.target.value))}
+          />
+        </FormField>
 
         <div className="flex items-center justify-between gap-4 pt-1">
           <Switch

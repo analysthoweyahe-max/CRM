@@ -14,14 +14,41 @@ interface TablePaginationProps {
   isAr?:     boolean;
 }
 
+type PageItem = number | 'ellipsis-start' | 'ellipsis-end';
+
+const SIBLING_COUNT = 1;
+
+/** Windows the page list to first/last + a neighborhood around the current
+ *  page, collapsing the rest behind ellipses — avoids rendering one button
+ *  per page when there are dozens/hundreds of pages. */
+function buildPageItems(pageIndex: number, pageCount: number): PageItem[] {
+  const maxVisible = SIBLING_COUNT * 2 + 5;
+  if (pageCount <= maxVisible) {
+    return Array.from({ length: pageCount }, (_, i) => i);
+  }
+
+  const left  = Math.max(pageIndex - SIBLING_COUNT, 1);
+  const right = Math.min(pageIndex + SIBLING_COUNT, pageCount - 2);
+
+  const items: PageItem[] = [0];
+  if (left > 1) items.push('ellipsis-start');
+  for (let i = left; i <= right; i++) items.push(i);
+  if (right < pageCount - 2) items.push('ellipsis-end');
+  items.push(pageCount - 1);
+
+  return items;
+}
+
 export function TablePagination({
   pageIndex, pageCount, totalRows, firstRow, lastRow,
   canPrev, canNext, onPrev, onNext, onPage, isAr = false,
 }: TablePaginationProps) {
+  const pageItems = buildPageItems(pageIndex, pageCount);
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-5 py-3.5
                     border-t border-gray-100 dark:border-gray-700">
-      <div className="flex items-center gap-1 overflow-x-auto max-w-full">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={onPrev}
@@ -33,19 +60,28 @@ export function TablePagination({
           <ChevronRight size={16} />
         </button>
 
-        {Array.from({ length: pageCount }, (_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => onPage(i)}
-            className={`shrink-0 w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-              pageIndex === i
-                ? 'bg-[#A0CD39] text-gray-900'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            {i + 1}
-          </button>
+        {pageItems.map((item) => (
+          typeof item === 'number' ? (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onPage(item)}
+              className={`shrink-0 w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                pageIndex === item
+                  ? 'bg-[#A0CD39] text-gray-900'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              {item + 1}
+            </button>
+          ) : (
+            <span
+              key={item}
+              className="shrink-0 w-8 h-8 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 select-none"
+            >
+              …
+            </span>
+          )
         ))}
 
         <button

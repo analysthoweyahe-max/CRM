@@ -1,5 +1,6 @@
 import type { ApiLookup } from '@/modules/hr/employees/types/employee.types';
 import { resolveDisplayText } from '@/modules/hr/employees/types/employee.types';
+import type { ContractFile } from '@/shared/types/contract.types';
 
 /** Fallback select options — `id` is always the English slug sent to the API. */
 export const MANAGER_ROLE_OPTIONS = [
@@ -131,6 +132,8 @@ export interface ApiAdminManager {
   isSuperAdmin?: boolean;
   createdAt?:    string;
   updatedAt?:    string;
+  /** Uploaded employment contract file (PDF/image), null when none uploaded yet. */
+  contract?:     ContractFile | null;
 }
 
 export interface AdminManagerListParams {

@@ -98,9 +98,10 @@ export interface PmDashboardStats {
   dailyReports:   number;
   activeTasks:    number;
   activeProjects: number;
+  totalProjects:  number;
 }
 
-function computeStats(sections: PmProjectSectionVM[]): PmDashboardStats {
+function computeStats(sections: PmProjectSectionVM[], summary?: PmDashboardSummary): PmDashboardStats {
   const allProjects = sections.flatMap(s => s.projects).filter(p => !p.isDraft);
 
   const activeTasks = allProjects
@@ -111,8 +112,12 @@ function computeStats(sections: PmProjectSectionVM[]): PmDashboardStats {
     .filter(p => p.status === 'in_progress' || p.status === 'on_hold')
     .length;
 
+  const totalProjects = summary
+    ? (summary.inProgress ?? 0) + (summary.completed ?? 0) + (summary.onHold ?? 0) + (summary.notStarted ?? 0)
+    : allProjects.length;
+
   // No daily-reports endpoint yet — placeholder until the reports module is wired to a real API.
-  return { dailyReports: 0, activeTasks, activeProjects };
+  return { dailyReports: 0, activeTasks, activeProjects, totalProjects };
 }
 
 export function usePmDashboard() {
@@ -148,7 +153,7 @@ export function usePmDashboard() {
     isError,
     summary: data?.summary ?? EMPTY_SUMMARY,
     sections,
-    stats: computeStats(sections),
+    stats: computeStats(sections, data?.summary),
     checkIn: data?.checkIn ?? null,
   };
 }

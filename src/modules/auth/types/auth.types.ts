@@ -1,4 +1,5 @@
 import type { Role } from '@/shared/types/role.types';
+import type { ContractFile } from '@/shared/types/contract.types';
 
 // ─── Internal / normalized types ────────────────────────────────────────────
 
@@ -38,6 +39,8 @@ export interface AuthUser {
   actor:       AuthActor;
   avatarUrl?:  string;
   phone?:      string | null;
+  /** Uploaded employment contract file (PDF/image), null/undefined when none uploaded yet. */
+  contract?:   ContractFile | null;
 }
 
 export interface AuthState {
@@ -97,6 +100,7 @@ export interface AdminUser {
   avatar_url?:   string;
   phone?:        string | null;
   status?:       string;
+  contract?:     ContractFile | null;
 }
 
 /** @deprecated Use AdminUser — kept for backward compatibility. */
@@ -120,6 +124,7 @@ export interface ApiEmployee {
   sectionLabel?:   string;
   department?:     ApiDepartment;
   status?:         string;
+  contract?:       ContractFile | null;
 }
 
 export interface OtpRequiredResponse {

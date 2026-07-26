@@ -80,7 +80,7 @@ export function AdminEmployeeDetailPage() {
           <PersonalInfoCard employee={employee} isAr={isAr} />
           <EmploymentInfoCard employee={employee} isAr={isAr} />
           <EmployeeRolesCard
-            roles={employee.roles}
+            roles={[employee.jobTitle]}
             permissions={employee.permissions}
             roleManuallyAssigned={employee.roleManuallyAssigned}
             sectionLabel={employee.sectionLabel}

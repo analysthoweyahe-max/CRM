@@ -5,6 +5,7 @@ import { getAvatarColor } from '@/shared/utils';
 import { filterSeoTeamMembers } from '@/shared/modules/team/utils/teamScope.utils';
 import { seoLeaderDashboardApi } from '../api/seoLeaderDashboard.api';
 import { seoTeamApi } from '../../team/api/seoTeam.api';
+import { seoDailyReportsApi } from '../../reports/api/dailyReports.api';
 import { useArchivedSeoProjects } from '../../campaigns/store/seoArchivedStore';
 import type { SeoDashboardProject, SeoManagerStats } from '../types/dashboard.types';
 import type { SeoTeamApiMember } from '../../team/types/seoTeam.types';
@@ -13,6 +14,7 @@ export const SEO_LEADER_DASHBOARD_KEY = ['seo-leader', 'dashboard'] as const;
 export const SEO_LEADER_TEAM_KEY = ['seo-leader', 'team', 'all'] as const;
 
 const TEAM_FETCH_PAGE_SIZE = 100;
+const today = new Date().toISOString().slice(0, 10);
 
 async function fetchAllSeoTeamMembers(): Promise<SeoTeamApiMember[]> {
   const first = await seoTeamApi.getTeam({ per_page: TEAM_FETCH_PAGE_SIZE, page: 1 });
@@ -101,6 +103,12 @@ export function useSeoLeaderDashboard() {
     staleTime: 60_000,
   });
 
+  const dailyReportsQuery = useQuery({
+    queryKey:  ['seo-leader', 'daily-reports', today],
+    queryFn:   () => seoDailyReportsApi.list(today).then(r => r.data.data.total),
+    staleTime: 60_000,
+  });
+
   const sections = dashboardQuery.data?.projects?.sections ?? [];
   const summary  = dashboardQuery.data?.summary;
 
@@ -132,6 +140,7 @@ export function useSeoLeaderDashboard() {
         .reduce((sum, c) => sum + Math.max(0, c.tasks_total - c.tasks_completed), 0),
       completed_projects: summary?.completed
         ?? campaigns.filter(c => c.status === 'completed').length,
+      daily_reports: dailyReportsQuery.data ?? 0,
     };
 
     if (summary) {
@@ -143,7 +152,7 @@ export function useSeoLeaderDashboard() {
     }
 
     return next;
-  }, [campaigns, summary, activeEmployees]);
+  }, [campaigns, summary, activeEmployees, dailyReportsQuery.data]);
 
   return {
     isLoading: dashboardQuery.isLoading,

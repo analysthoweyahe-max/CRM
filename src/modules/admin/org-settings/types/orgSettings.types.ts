@@ -3,6 +3,8 @@ export interface OrgLeaveType {
   labelEn:       string;
   labelAr:       string;
   tracksBalance: boolean;
+  /** Yearly entitlement in days for this leave type. Only meaningful when `tracksBalance` is true. */
+  days:          number;
 }
 
 export interface OrgSettings {

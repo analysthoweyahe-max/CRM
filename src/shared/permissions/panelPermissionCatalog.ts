@@ -38,6 +38,7 @@ export const PANEL_PERMISSION_GROUPS: PermissionGroup[] = [
       { slug: 'create-employee', labelAr: 'إضافة موظف',   labelEn: 'Create Employee' },
       { slug: 'edit-employee',   labelAr: 'تعديل موظف',   labelEn: 'Edit Employee'   },
       { slug: 'delete-employee', labelAr: 'حذف موظف',     labelEn: 'Delete Employee' },
+      { slug: 'manage-employee-documents', labelAr: 'إدارة مستندات الموظف', labelEn: 'Manage Employee Documents' },
     ],
   },
   {

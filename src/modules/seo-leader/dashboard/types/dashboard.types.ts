@@ -91,6 +91,7 @@ export interface SeoManagerStats {
   active_employees:   number;
   pending_tasks:      number;
   completed_projects: number;
+  daily_reports:      number;
 }
 
 export interface PaginatedProjects {

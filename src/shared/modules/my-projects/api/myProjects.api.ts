@@ -25,7 +25,7 @@ export interface MyProjectsListParams {
 function buildListQueryParams(params: MyProjectsListParams): Record<string, string | number> {
   const query: Record<string, string | number> = {};
   if (params.search) query.search = params.search;
-  if (params.status) query.status = params.status;
+  if (params.status) query.status_id = params.status;
   if (params.is_draft === true)  query.is_draft = 1;
   if (params.is_draft === false) query.is_draft = 0;
   if (params.per_page != null) query.per_page = params.per_page;
@@ -208,7 +208,14 @@ export const myProjectsApi = {
       '/v1/seo/projects',
       { params: buildListQueryParams(params) },
     );
-    return { ...res, data: { ...res.data, data: unwrapPaginatedPayload<SeoProject>(res.data) } };
+    const page = unwrapPaginatedPayload<SeoProject>(res.data);
+    // Backend sends tasksTotal (same field name as the dashboard endpoints);
+    // SeoProject's internal contract is tasksAssigned — bridge the two here.
+    const data = page.data.map((p) => ({
+      ...p,
+      tasksAssigned: p.tasksAssigned ?? (p as unknown as { tasksTotal?: number }).tasksTotal,
+    }));
+    return { ...res, data: { ...res.data, data: { ...page, data } } };
   },
 
   /**

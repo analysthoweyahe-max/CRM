@@ -18,7 +18,7 @@ export function PayrollTypeCard({ item, isAr, onEdit, onDelete }: Props) {
 
   const sourceLabel = item.sourceLabel
     || (item.source === 'automatic'
-      ? (isAr ? 'تلقائي' : 'Automatic')
+      ? (isAr ? 'نظامي' : 'System')
       : (isAr ? 'يدوي' : 'Manual'));
 
   return (

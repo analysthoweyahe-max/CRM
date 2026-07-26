@@ -16,6 +16,7 @@ import { useAdminManagerDetail } from '../hooks/useAdminManagerDetail';
 import { toManagerVM } from '../hooks/useAdminManagers';
 import { useDeleteAdmin } from '../hooks/useDeleteAdmin';
 import { DeleteManagerModal } from '../components/DeleteManagerModal';
+import { ManagerContractCard } from '../components/ManagerContractCard';
 import { getManagerStatusLabel, MANAGER_STATUS_OPTIONS, formatManagerDepartments } from '../types/adminManager.types';
 import type { ManagerStatus } from '../types/adminManager.types';
 import { resolveDisplayText } from '@/modules/hr/employees/types/employee.types';
@@ -200,6 +201,8 @@ export function AdminManagerDetailPage() {
           />
         </Card>
       </div>
+
+      <ManagerContractCard manager={raw!} isAr={isAr} />
 
       <DeleteManagerModal
         manager={confirmDelete ? manager : null}

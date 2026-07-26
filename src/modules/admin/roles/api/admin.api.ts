@@ -119,4 +119,28 @@ export const adminApi = {
   assignRole(id: string, payload: AssignAdminRolePayload) {
     return this.update(id, payload);
   },
+
+  uploadContract(id: string, file: File) {
+    const formData = new FormData();
+    formData.append('contract', file);
+    return http.post<AdminManagerDetailResponse>(`/v1/admins/${id}/contract`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      // File uploads can exceed the global 10s API timeout on slower connections.
+      timeout: 60_000,
+    }).then((res) => {
+      if (res.data.data) {
+        res.data.data = normalizeManager(res.data.data);
+      }
+      return res;
+    });
+  },
+
+  removeContract(id: string) {
+    return http.delete<AdminManagerDetailResponse>(`/v1/admins/${id}/contract`).then((res) => {
+      if (res.data.data) {
+        res.data.data = normalizeManager(res.data.data);
+      }
+      return res;
+    });
+  },
 };

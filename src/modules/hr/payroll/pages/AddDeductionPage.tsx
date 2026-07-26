@@ -22,7 +22,7 @@ const INFO = [
   { ar: 'يتم إشعار الموظف تلقائياً عند تسجيل الخصم.',     en: 'The employee is automatically notified when a deduction is registered.' },
   { ar: 'يُحفظ سجل تدقيق لكل عملية خصم.',                  en: 'An audit log is saved for every deduction operation.' },
   { ar: 'لا يتم حذف الخصومات نهائياً للحفاظ على السجل.',   en: 'Deductions are never permanently deleted to preserve the record.' },
-  { ar: 'الخصومات التلقائية تُحسب من سجلات الحضور.',        en: 'Automatic deductions are calculated from attendance records.' },
+  { ar: 'أنواع الخصم النظامية مخفية عن هذا النموذج ولا تُحسب تلقائياً بعد.', en: 'System-marked deduction types are hidden from this form and are not auto-calculated yet.' },
 ];
 
 function buildMonthItems(isAr: boolean): ComboboxItem[] {
