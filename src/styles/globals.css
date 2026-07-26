@@ -37,6 +37,14 @@
   font-size: 18px;
 }
 
+/* Slightly smaller base scale on mobile — since spacing/typography utilities
+   are rem-based, this also shrinks button padding/sizing app-wide. */
+@media (max-width: 640px) {
+  :root {
+    font-size: 12px;
+  }
+}
+
 .dark {
   --scrollbar-track:       #1f2937;
   --scrollbar-thumb:       #4b5563;
