@@ -14,7 +14,7 @@ import { ManagerForm } from '../components/ManagerForm';
 import { useAdminManagerDetail } from '../hooks/useAdminManagerDetail';
 import { useUpdateAdmin } from '../hooks/useAssignAdminRole';
 import { useRoleList } from '../hooks/useRoles';
-import { assignableRoles, permissionsForRole, resolveAssignableRoleName, extractRoleSlug } from '../utils/role.utils';
+import { assignableRoles, permissionsForRoles, resolveAssignableRoleNames, normalizeManagerRoleSlugs, extractRoleSlug } from '../utils/role.utils';
 import { canEditManager, editableRoleNames } from '../utils/managerAccess.utils';
 import type { ApiAdminManager, ManagerFormValues, ManagerStatus, UpdateAdminPayload } from '../types/adminManager.types';
 import { managerDepartmentIds, managerLookupId } from '../types/adminManager.types';
@@ -35,7 +35,7 @@ function toDeptIds(ids: string[]): number[] {
 }
 
 function toFormValues(raw: ApiAdminManager, registered: Set<string> | undefined): ManagerFormValues {
-  const role = extractRoleSlug(raw.roles?.[0]) ?? '';
+  const roles = normalizeManagerRoleSlugs(raw.roles);
   const perms = raw.permissions ?? [];
   const jobTitleId = managerLookupId(raw.jobTitle)
     || managerLookupId(raw.job_title)
@@ -47,7 +47,7 @@ function toFormValues(raw: ApiAdminManager, registered: Set<string> | undefined)
     departmentIds: managerDepartmentIds(raw),
     jobTitleId,
     status:        (raw.status as ManagerStatus) || 'active',
-    role,
+    roles,
     // `undefined` registered set keeps the manager's permissions as-is (HR edit).
     permissions:   filterRegisteredPermissions(perms, registered),
   };
@@ -88,9 +88,9 @@ function buildPartialPayload(
 
   if (current.status !== initial.status) payload.status = current.status;
 
-  const nextRole = resolveAssignableRoleName(current.role);
-  const prevRole = resolveAssignableRoleName(initial.role) ?? initial.role;
-  if (nextRole && nextRole !== prevRole) payload.role = nextRole;
+  const nextRoles = resolveAssignableRoleNames(current.roles);
+  const prevRoles = resolveAssignableRoleNames(initial.roles);
+  if (nextRoles.length > 0 && !arraysEqual(nextRoles, prevRoles)) payload.roles = nextRoles;
 
   const nextDepts = toDeptIds(current.departmentIds);
   const prevDepts = toDeptIds(initial.departmentIds);
@@ -143,7 +143,7 @@ export function AdminManagerEditPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   /** When true, role-default effect must not overwrite manual permission toggles. */
   const [preserveCustomPerms, setPreserveCustomPerms] = useState(false);
-  const lastRoleForDefaults = useRef<string | null>(null);
+  const lastRolesForDefaults = useRef<string[] | null>(null);
 
   const targetRoles = (raw?.roles ?? [])
     .map((r) => extractRoleSlug(r) ?? (typeof r === 'string' ? r : ''))
@@ -161,7 +161,7 @@ export function AdminManagerEditPage() {
     setValues(form);
     setInitial(form);
     setPreserveCustomPerms(true);
-    lastRoleForDefaults.current = form.role || null;
+    lastRolesForDefaults.current = form.roles.length ? form.roles : null;
     setErrors({});
   }, [raw, registered, allPermissions, isSuperAdmin]);
 
@@ -177,24 +177,24 @@ export function AdminManagerEditPage() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [isDirty]);
 
-  // Apply role default permissions only when the role actually changes (not on every render).
+  // Apply role default permissions only when the roles actually change (not on every render).
   useEffect(() => {
-    if (!values?.role || preserveCustomPerms) return;
-    if (lastRoleForDefaults.current === values.role) return;
-    lastRoleForDefaults.current = values.role;
+    if (!values?.roles.length || preserveCustomPerms) return;
+    if (lastRolesForDefaults.current && arraysEqual(lastRolesForDefaults.current, values.roles)) return;
+    lastRolesForDefaults.current = values.roles;
     const defaults = filterRegisteredPermissions(
-      permissionsForRole(managerRoles, values.role),
+      permissionsForRoles(managerRoles, values.roles),
       registered,
     );
     setValues(v => v ? { ...v, permissions: defaults } : v);
-  }, [values?.role, managerRoles, registered, preserveCustomPerms]);
+  }, [values?.roles, managerRoles, registered, preserveCustomPerms]);
 
   function handleChange(patch: Partial<ManagerFormValues>) {
-    if (patch.role !== undefined) {
+    if (patch.roles !== undefined) {
       setPreserveCustomPerms(false);
-      // Allow the role-defaults effect to run for the new role.
-      if (patch.role !== lastRoleForDefaults.current) {
-        lastRoleForDefaults.current = null;
+      // Allow the role-defaults effect to run for the new roles.
+      if (!lastRolesForDefaults.current || !arraysEqual(patch.roles, lastRolesForDefaults.current)) {
+        lastRolesForDefaults.current = null;
       }
     }
     if (patch.permissions !== undefined) {
@@ -223,20 +223,20 @@ export function AdminManagerEditPage() {
   function handleSave() {
     if (!values || !initial || !id || !mayEdit) return;
 
-    const nextRoleSlug = resolveAssignableRoleName(values.role, managerRoles);
-    if (values.role && !nextRoleSlug) {
+    const nextRoleSlugs = resolveAssignableRoleNames(values.roles, managerRoles);
+    if (values.roles.length > 0 && nextRoleSlugs.length === 0) {
       setErrors((prev) => ({
         ...prev,
-        role: isAr ? 'دور غير صالح للتعيين' : 'Invalid role for assignment',
+        roles: isAr ? 'دور غير صالح للتعيين' : 'Invalid role for assignment',
       }));
       toast.error(isAr ? 'اختر دوراً صالحاً' : 'Please select a valid role');
       return;
     }
 
-    if (nextRoleSlug && nextRoleSlug !== (resolveAssignableRoleName(initial.role, managerRoles) ?? initial.role)) {
+    if (nextRoleSlugs.length > 0 && !arraysEqual(nextRoleSlugs, resolveAssignableRoleNames(initial.roles, managerRoles))) {
       const ok = window.confirm(isAr
-        ? 'تغيير الدور سيحدّث صلاحيات الوصول للوحدة. هل تريد المتابعة؟'
-        : 'Changing role will update module access. Continue?');
+        ? 'تغيير الأدوار سيحدّث صلاحيات الوصول للوحدة. هل تريد المتابعة؟'
+        : 'Changing roles will update module access. Continue?');
       if (!ok) return;
     }
 
@@ -335,7 +335,7 @@ export function AdminManagerEditPage() {
     && values.email.trim()
     && values.departmentIds.length > 0
     && values.jobTitleId
-    && values.role
+    && values.roles.length > 0
   );
 
   return (

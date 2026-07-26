@@ -1,27 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/modules/auth/context/AuthContext';
-import { filterPmTeamMembers } from '@/shared/modules/team/utils/teamScope.utils';
-import { fetchAllMembers } from './useProjectTeamPage';
+import { pmTeamApi } from '../api/team.api';
 
 /**
- * Same scoping as the "Work Team" page (excludes SEO-department members and,
- * for non-admins, scopes to the viewer's own team) — the dashboard stat card
- * must always match what "أعضاء الفريق" actually lists, not the raw
- * unfiltered /v1/pm/team total (which can include other departments).
+ * GET /v1/pm/team is scoped server-side to the PM department (SEO excluded),
+ * so its `total` is already the correct count — no client-side recount/filter needed.
  */
 export function usePmTeamCount() {
-  const { user } = useAuth();
-
-  const { data: allMembers } = useQuery({
-    queryKey: ['pm-team-count', 'all-members'],
-    queryFn:  fetchAllMembers,
+  const { data: total } = useQuery({
+    queryKey: ['pm-team-count'],
+    queryFn:  () => pmTeamApi.list({ per_page: 1, page: 1 }).then(res => res.data.data.total),
     staleTime: 60_000,
   });
 
-  if (!allMembers) return 0;
-
-  return filterPmTeamMembers(allMembers, {
-    viewerId: user?.employeeId,
-    isAdmin:  user?.role === 'admin',
-  }).length;
+  return total ?? 0;
 }

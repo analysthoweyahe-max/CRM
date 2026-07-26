@@ -21,6 +21,9 @@ export function ProjectTeamMemberPage() {
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
   const color = member ? getAvatarColor(member.id) : '';
+  const departmentLabel = member
+    ? (isAr ? (member.departmentAr ?? member.department) : member.department)
+    : '';
 
   const stats = member
     ? [
@@ -31,7 +34,7 @@ export function ProjectTeamMemberPage() {
         },
         {
           icon:  <Building2 size={18} className="text-[#A0CD39]" />,
-          value: member.department,
+          value: departmentLabel,
           label: isAr ? 'القسم' : 'Department',
         },
       ]
@@ -45,7 +48,7 @@ export function ProjectTeamMemberPage() {
         { label: isAr ? 'الاسم' : 'Name', value: member.name || dash },
         { label: isAr ? 'البريد الإلكتروني' : 'Email', value: member.email || dash },
         { label: isAr ? 'المسمى الوظيفي' : 'Job Title', value: member.jobTitle || dash },
-        { label: isAr ? 'القسم' : 'Department', value: member.department || dash },
+        { label: isAr ? 'القسم' : 'Department', value: departmentLabel || dash },
         { label: isAr ? 'الحالة' : 'Status', value: member.statusLabel || member.status || dash },
         { label: isAr ? 'المشاريع النشطة' : 'Active Projects', value: String(member.activeProjectsCount ?? dash) },
         {

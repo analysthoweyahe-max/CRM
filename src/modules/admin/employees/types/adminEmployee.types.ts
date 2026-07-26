@@ -32,6 +32,16 @@ export function getRoleLabel(role: string, isAr: boolean): string {
   return ROLE_LABEL[role]?.[isAr ? 'ar' : 'en'] ?? role;
 }
 
+/** Extract the raw role slug (e.g. "hr-manager") from a string or API role object. */
+function resolveRoleSlug(role: unknown): string {
+  if (typeof role === 'string') return role;
+  if (role && typeof role === 'object') {
+    const name = (role as Record<string, unknown>).name ?? (role as Record<string, unknown>).slug;
+    if (typeof name === 'string') return name;
+  }
+  return '';
+}
+
 export interface AdminEmployee {
   id:             string;
   employeeNumber: string;
@@ -100,7 +110,7 @@ function toStatus(emp: ApiEmployee): AdminEmployeeStatus {
 export function toAdminEmployee(emp: ApiEmployee): AdminEmployee {
   const status = toStatus(emp);
   const roles  = (emp.roles ?? [])
-    .map((role) => (typeof role === 'string' ? role : resolveDisplayText(role, true)))
+    .map(resolveRoleSlug)
     .filter(Boolean);
   const userId = resolveIdentifier(
     emp.userId ?? emp.user_id ?? emp.employeeNumber ?? emp.id,

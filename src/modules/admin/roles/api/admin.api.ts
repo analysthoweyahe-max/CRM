@@ -11,7 +11,7 @@ import type {
   AdminManagerListParams,
   ApiAdminManager,
 } from '../types/adminManager.types';
-import { normalizeManagerRoleSlugs, resolveAssignableRoleName } from '../utils/role.utils';
+import { normalizeManagerRoleSlugs, resolveAssignableRoleNames } from '../utils/role.utils';
 
 function asLookup(value: unknown): ApiAdminManager['department'] {
   if (!value || typeof value !== 'object') return null;
@@ -62,15 +62,15 @@ export function normalizeManager(raw: ApiAdminManager): ApiAdminManager {
   };
 }
 
-/** Ensure `role` is always an English slug before hitting the API. */
-function sanitizeRolePayload<T extends { role?: string }>(payload: T): T {
-  if (payload.role == null) return payload;
-  const slug = resolveAssignableRoleName(payload.role);
-  if (!slug) {
-    const { role: _omit, ...rest } = payload;
+/** Ensure `roles` are always English slugs before hitting the API. */
+function sanitizeRolePayload<T extends { roles?: string[] }>(payload: T): T {
+  if (payload.roles == null) return payload;
+  const slugs = resolveAssignableRoleNames(payload.roles);
+  if (slugs.length === 0) {
+    const { roles: _omit, ...rest } = payload;
     return rest as T;
   }
-  return { ...payload, role: slug };
+  return { ...payload, roles: slugs };
 }
 
 export const adminApi = {

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast }               from 'sonner';
-import { useAuth }               from '@/modules/auth/context/AuthContext';
 import { getAvatarColor, matchesSearch } from '@/shared/utils';
 import { downloadTeamExcel }   from '@/shared/modules/team/utils/exportTeam';
 import { filterPmTeamMembers } from '@/shared/modules/team/utils/teamScope.utils';
@@ -27,7 +26,6 @@ export async function fetchAllMembers(): Promise<PmTeamMemberApi[]> {
 }
 
 export function useProjectTeamPage(isAr = true) {
-  const { user } = useAuth();
   const [allMembers,    setAllMembers]    = useState<PmTeamMemberApi[]>([]);
   const [isLoading,     setIsLoading]     = useState(true);
   const [page,          setPage]          = useState(1);
@@ -45,11 +43,8 @@ export function useProjectTeamPage(isAr = true) {
   }, []);
 
   const scopedMembers = useMemo(
-    () => filterPmTeamMembers(allMembers, {
-      viewerId: user?.employeeId,
-      isAdmin:  user?.role === 'admin',
-    }),
-    [allMembers, user?.employeeId, user?.role],
+    () => filterPmTeamMembers(allMembers),
+    [allMembers],
   );
 
   const filtered = useMemo(() => {

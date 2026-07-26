@@ -82,18 +82,11 @@ function membersExposeManager<T extends TeamMemberManagerRef>(members: T[]): boo
   return members.some(m => Boolean(m.managerId ?? m.manager?.id));
 }
 
-export function filterPmTeamMembers<T extends PmTeamScopeFields>(
-  members: T[],
-  options: { viewerId?: string | null; isAdmin?: boolean } = {},
-): T[] {
-  const { viewerId, isAdmin = false } = options;
-  const scopeByManager = !isAdmin && Boolean(viewerId) && membersExposeManager(members);
-
-  return members.filter(member => {
-    if (!isPmScopedMember(member)) return false;
-    if (!scopeByManager) return true;
-    return belongsToViewer(member, viewerId);
-  });
+// GET /v1/pm/team is a department-wide roster (PM department, minus SEO) scoped
+// server-side — same list for every caller. This filter is a defensive-only
+// safety net, not the source of truth for who belongs on the page.
+export function filterPmTeamMembers<T extends PmTeamScopeFields>(members: T[]): T[] {
+  return members.filter(isPmScopedMember);
 }
 
 export function filterSeoTeamMembers<T extends SeoTeamScopeFields>(

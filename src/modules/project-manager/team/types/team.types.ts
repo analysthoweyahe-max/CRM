@@ -6,8 +6,8 @@ export interface PmTeamMemberApi {
   avatarInitial:       string;
   jobTitle:            string;
   department:          string;
-  departmentAr?:       string | null;
-  roles?:              string[];
+  departmentAr:        string | null;
+  roles:               string[];
   managerId?:          string | null;
   manager?:            { id: string; name?: string } | null;
   status:              string;

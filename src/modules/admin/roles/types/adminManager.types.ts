@@ -76,7 +76,7 @@ export function formatManagerDepartments(
 export interface CreateAdminPayload {
   name:             string;
   email:            string;
-  role:             string;
+  roles:            string[];
   department_ids?:  number[];
   job_title_id?:    number | null;
   permissions?:     string[];
@@ -87,7 +87,7 @@ export interface UpdateAdminPayload {
   email?:           string;
   phone?:           string | null;
   status?:          ManagerStatus;
-  role?:            ManagerRole | string;
+  roles?:           Array<ManagerRole | string>;
   department_ids?:  number[];
   job_title_id?:    number | null;
   permissions?:     string[];
@@ -169,6 +169,6 @@ export interface ManagerFormValues {
   departmentIds: string[];
   jobTitleId:    string;
   status:        ManagerStatus;
-  role:          string;
+  roles:         string[];
   permissions:   string[];
 }

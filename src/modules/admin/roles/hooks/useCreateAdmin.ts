@@ -5,7 +5,7 @@ import { useAuth } from '@/modules/auth/context/AuthContext';
 import { adminApi } from '../api/admin.api';
 
 import { HR_CREATABLE_MANAGER_ROLES, type CreateAdminPayload } from '../types/adminManager.types';
-import { resolveAssignableRoleName } from '../utils/role.utils';
+import { resolveAssignableRoleNames } from '../utils/role.utils';
 
 export function useCreateAdmin() {
   const qc = useQueryClient();
@@ -13,18 +13,22 @@ export function useCreateAdmin() {
 
   return useMutation({
     mutationFn: (payload: CreateAdminPayload) => {
-      const role = resolveAssignableRoleName(payload.role);
-      if (!role) {
+      const roles = resolveAssignableRoleNames(payload.roles);
+      if (roles.length === 0) {
         return Promise.reject(new Error('Invalid role'));
       }
 
       if (isSuperAdmin) {
-        return adminApi.create({ ...payload, role });
+        return adminApi.create({ ...payload, roles });
       }
 
       const allowed = HR_CREATABLE_MANAGER_ROLES as readonly string[];
-      const safeRole = allowed.includes(role) ? role : allowed[0];
-      return adminApi.create({ name: payload.name, email: payload.email, role: safeRole });
+      const safeRoles = roles.filter((r) => allowed.includes(r));
+      return adminApi.create({
+        name:  payload.name,
+        email: payload.email,
+        roles: safeRoles.length > 0 ? safeRoles : [allowed[0]],
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'managers'] }),
   });

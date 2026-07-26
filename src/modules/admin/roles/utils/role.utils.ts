@@ -85,6 +85,22 @@ export function resolveAssignableRoleName(
   return slug;
 }
 
+/**
+ * Resolve multiple form/select values to the slugs the backend accepts.
+ * Drops unresolvable entries and `super-admin`; de-duplicates.
+ */
+export function resolveAssignableRoleNames(
+  values: unknown[],
+  availableRoles: ApiRole[] = [],
+): string[] {
+  const slugs: string[] = [];
+  for (const value of values) {
+    const slug = resolveAssignableRoleName(value, availableRoles);
+    if (slug && !slugs.includes(slug)) slugs.push(slug);
+  }
+  return slugs;
+}
+
 export function normalizeRole(raw: unknown): ApiRole | null {
   if (!raw || typeof raw !== 'object') return null;
 
@@ -115,6 +131,15 @@ export function findRoleByName(roles: ApiRole[] | undefined, name: string): ApiR
 
 export function permissionsForRole(roles: ApiRole[] | undefined, roleName: string): string[] {
   return findRoleByName(roles, roleName)?.permissions ?? [];
+}
+
+/** Union of default permissions across all selected roles. */
+export function permissionsForRoles(roles: ApiRole[] | undefined, roleNames: string[]): string[] {
+  const set = new Set<string>();
+  for (const name of roleNames) {
+    for (const slug of permissionsForRole(roles, name)) set.add(slug);
+  }
+  return [...set];
 }
 
 const LOCKED_ASSIGNABLE_ROLES = new Set(['super-admin']);

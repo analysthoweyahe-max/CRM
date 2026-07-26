@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { Combobox } from '@/shared/components/form/Combobox';
+import { MultiCombobox } from '@/shared/components/form/MultiCombobox';
 import { getRoleNameLabel } from '../types/adminRole.types';
 import { MANAGER_ROLE_OPTIONS } from '../types/adminManager.types';
-import { extractRoleSlug } from '../utils/role.utils';
+import { normalizeManagerRoleSlugs } from '../utils/role.utils';
 import type { ApiRole } from '../types/adminRole.types';
 
 interface Props {
-  value:             string;
-  onChange:          (role: string) => void;
+  values:            string[];
+  onChange:          (roles: string[]) => void;
   isAr:              boolean;
   availableRoles?:   ApiRole[];
   /** When set, only these slugs appear. Empty array = no assignable roles (disabled). */
@@ -16,19 +16,22 @@ interface Props {
 }
 
 /**
- * Role dropdown for admin create/edit.
- * Combobox `id` / form value = role.name (English slug, e.g. "hr-manager").
+ * Multi-role select for admin create/edit.
+ * Combobox `id` / form values = role.name (English slug, e.g. "hr-manager").
  * Visible label = localized translation only.
  */
 export function RoleSelect({
-  value,
+  values,
   onChange,
   isAr,
   availableRoles = [],
   allowedRoleNames,
   disabled,
 }: Props) {
-  const normalizedValue = extractRoleSlug(value, availableRoles) ?? value;
+  const normalizedValues = useMemo(
+    () => normalizeManagerRoleSlugs(values, availableRoles),
+    [values, availableRoles],
+  );
 
   const items = useMemo(() => {
     const allowed = allowedRoleNames ? new Set(allowedRoleNames) : null;
@@ -39,37 +42,29 @@ export function RoleSelect({
         label: getRoleNameLabel(r.name, isAr),
       }));
 
-    if (fromApi.length > 0) {
-      if (normalizedValue && !fromApi.some((item) => item.id === normalizedValue)) {
-        return [
-          ...fromApi,
-          { id: normalizedValue, label: getRoleNameLabel(normalizedValue, isAr) },
-        ];
-      }
-      return fromApi;
-    }
+    const base = fromApi.length > 0
+      ? fromApi
+      // Fallback only while /v1/roles is empty — still uses English slugs as ids.
+      : MANAGER_ROLE_OPTIONS
+          .filter((r) => !allowed || allowed.has(r.id))
+          .map((r) => ({ id: r.id, label: isAr ? r.labelAr : r.labelEn }));
 
-    // Fallback only while /v1/roles is empty — still uses English slugs as ids.
-    const fallback = MANAGER_ROLE_OPTIONS
-      .filter((r) => !allowed || allowed.has(r.id))
-      .map((r) => ({ id: r.id, label: isAr ? r.labelAr : r.labelEn }));
+    // Keep currently selected roles visible even if outside the fetched/allowed list.
+    const missing = normalizedValues
+      .filter((slug) => !base.some((item) => item.id === slug))
+      .map((slug) => ({ id: slug, label: getRoleNameLabel(slug, isAr) }));
 
-    if (normalizedValue && !fallback.some((item) => item.id === normalizedValue)) {
-      return [
-        ...fallback,
-        { id: normalizedValue, label: getRoleNameLabel(normalizedValue, isAr) },
-      ];
-    }
-    return fallback;
-  }, [availableRoles, allowedRoleNames, isAr, normalizedValue]);
+    return missing.length > 0 ? [...base, ...missing] : base;
+  }, [availableRoles, allowedRoleNames, isAr, normalizedValues]);
 
   const noAssignable = allowedRoleNames !== undefined && allowedRoleNames.length === 0;
 
   return (
-    <Combobox
+    <MultiCombobox
       items={items}
-      value={normalizedValue}
-      onChange={(slug) => onChange(extractRoleSlug(slug, availableRoles) ?? slug)}
+      values={normalizedValues}
+      onChange={(next) => onChange(normalizeManagerRoleSlugs(next, availableRoles))}
+      placeholder={isAr ? 'اختر دوراً أو أكثر' : 'Select one or more roles'}
       searchPlaceholder={isAr ? 'ابحث...' : 'Search...'}
       noResultsText={isAr ? 'لا نتائج' : 'No results'}
       disabled={disabled || noAssignable || items.length === 0}

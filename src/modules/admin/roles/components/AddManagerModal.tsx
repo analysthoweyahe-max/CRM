@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal }     from '@/shared/components/ui/Modal';
 import { Button }    from '@/shared/components/ui/Button';
 import { ManagerForm } from './ManagerForm';
-import { permissionsForRole, resolveAssignableRoleName } from '../utils/role.utils';
+import { permissionsForRoles, resolveAssignableRoleNames } from '../utils/role.utils';
 import { HR_CREATABLE_MANAGER_ROLES, type CreateAdminPayload, type ManagerFormValues } from '../types/adminManager.types';
 import { usePermissionList } from '@/modules/admin/permissions/hooks/usePermissions';
 import { filterRegisteredPermissions, toPermissionNameSet } from '@/shared/permissions/permissionValidation.utils';
@@ -20,7 +20,7 @@ interface Props {
 }
 
 const EMPTY_VALUES: ManagerFormValues = {
-  name: '', email: '', phone: '', departmentIds: [], jobTitleId: '', status: 'pending', role: '', permissions: [],
+  name: '', email: '', phone: '', departmentIds: [], jobTitleId: '', status: 'pending', roles: [], permissions: [],
 };
 
 function toDeptIds(ids: string[]): number[] {
@@ -56,41 +56,42 @@ export function AddManagerModal({
   useEffect(() => {
     if (!open) return;
     const first = selectableRoles[0]?.name ?? '';
+    const roles = first ? [first] : [];
     setValues({
       ...EMPTY_VALUES,
-      role: first,
-      permissions: first && canCustomizePermissions
-        ? filterRegisteredPermissions(permissionsForRole(selectableRoles, first), registered)
+      roles,
+      permissions: roles.length && canCustomizePermissions
+        ? filterRegisteredPermissions(permissionsForRoles(selectableRoles, roles), registered)
         : [],
     });
   }, [open, selectableRoles, registered, canCustomizePermissions]);
 
   useEffect(() => {
-    if (!values.role || !canCustomizePermissions) return;
+    if (!values.roles.length || !canCustomizePermissions) return;
     setValues(v => ({
       ...v,
-      permissions: filterRegisteredPermissions(permissionsForRole(selectableRoles, values.role), registered),
+      permissions: filterRegisteredPermissions(permissionsForRoles(selectableRoles, values.roles), registered),
     }));
-  }, [values.role, selectableRoles, registered, canCustomizePermissions]);
+  }, [values.roles, selectableRoles, registered, canCustomizePermissions]);
 
   const isValid = !!(
     values.name.trim()
     && values.email.trim()
     && values.departmentIds.length > 0
     && values.jobTitleId
-    && values.role
+    && values.roles.length > 0
     && (!canCustomizePermissions || values.permissions.length > 0)
   );
 
   function handleSubmit() {
     if (!isValid) return;
-    const role = resolveAssignableRoleName(values.role, selectableRoles);
-    if (!role) return;
+    const roles = resolveAssignableRoleNames(values.roles, selectableRoles);
+    if (roles.length === 0) return;
 
     const payload: CreateAdminPayload = {
       name:            values.name.trim(),
       email:           values.email.trim(),
-      role, // English slug only — never label or numeric id
+      roles, // English slugs only — never labels or numeric ids
       department_ids:  toDeptIds(values.departmentIds),
       job_title_id:    Number(values.jobTitleId),
     };

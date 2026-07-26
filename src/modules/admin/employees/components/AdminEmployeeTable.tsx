@@ -5,6 +5,7 @@ import { DataTable } from '@/shared/components/tables/DataTable';
 import { Avatar }    from '@/shared/components/ui/Avatar';
 import { Badge }     from '@/shared/components/ui/Badge';
 import { Button }    from '@/shared/components/ui/Button';
+import { getRoleLabel } from '../types/adminEmployee.types';
 import type { AdminEmployee } from '../types/adminEmployee.types';
 
 const STATUS_VARIANT: Record<AdminEmployee['status'], 'success' | 'error' | 'warning'> = {
@@ -89,7 +90,17 @@ export function AdminEmployeeTable({
       col.accessor('jobTitle',   { header: isAr ? 'المسمى الوظيفي' : 'Job Title' }),
       col.accessor('role', {
         header: isAr ? 'الدور' : 'Role',
-        cell:   info => <Badge label={info.row.original.jobTitle} variant="gray" />,
+        cell:   info => {
+          const roles = info.row.original.roles;
+          if (!roles?.length) return <Badge label={info.getValue() || '—'} variant="gray" />;
+          return (
+            <div className="flex flex-wrap gap-1">
+              {roles.map(r => (
+                <Badge key={r} label={getRoleLabel(r, isAr)} variant="gray" />
+              ))}
+            </div>
+          );
+        },
       }),
       col.accessor('status', {
         header: isAr ? 'الحالة' : 'Status',

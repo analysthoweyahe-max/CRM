@@ -23,8 +23,8 @@ export function canEditManager(editor: EditorContext, targetRoles: string[]): bo
 
   if (!isHrManager(editor)) return false;
 
-  const primary = targetSlugs[0];
-  return !!primary && (HR_CREATABLE_MANAGER_ROLES as readonly string[]).includes(primary);
+  const allowed = HR_CREATABLE_MANAGER_ROLES as readonly string[];
+  return targetSlugs.length > 0 && targetSlugs.every((slug) => allowed.includes(slug));
 }
 
 /**

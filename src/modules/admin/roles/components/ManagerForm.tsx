@@ -211,10 +211,10 @@ export function ManagerForm({
         </FormField>
       </div>
 
-      <FormField label={isAr ? 'الدور' : 'Role'} required error={errors.role}>
+      <FormField label={isAr ? 'الأدوار' : 'Roles'} required error={errors.roles || errors.role}>
         <RoleSelect
-          value={values.role}
-          onChange={role => onChange({ role })}
+          values={values.roles}
+          onChange={roles => onChange({ roles })}
           isAr={isAr}
           availableRoles={availableRoles}
           allowedRoleNames={allowedRoleNames}
