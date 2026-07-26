@@ -1,6 +1,6 @@
 import {
 
-  LayoutDashboard, Users, Clock, Banknote, MessageSquare, Settings,
+  LayoutDashboard, Users, Clock, Banknote, Settings,
 
   UserPlus, FileText, CalendarDays, TrendingDown, Gift, ShieldCheck,
 
@@ -128,8 +128,6 @@ export const ADMIN_NAV: NavSectionDef[] = [
 
       },
 
-      { key: 'hr-messages', labelAr: 'الرسائل',    labelEn: 'Messages', icon: MessageSquare, path: ROUTES.MESSAGES },
-
     ],
 
   },
@@ -147,8 +145,6 @@ export const ADMIN_NAV: NavSectionDef[] = [
       { key: 'pm-dash',    labelAr: 'الرئيسية',                  labelEn: 'Dashboard',          icon: LayoutDashboard, path: ROUTES.PROJECT_MANAGER.DASHBOARD },
 
       { key: 'pm-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',        icon: FolderKanban,    path: ROUTES.PROJECT_MANAGER.MY_PROJECTS, permission: 'view-pm-projects' },
-
-      { key: 'pm-messages', labelAr: 'الرسائل',                  labelEn: 'Messages',           icon: MessageSquare,   path: ROUTES.PROJECT_MANAGER.MESSAGES },
 
       { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',         icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW,      permission: 'create-pm-project' },
 
@@ -179,8 +175,6 @@ export const ADMIN_NAV: NavSectionDef[] = [
       { key: 'seo-dash',    labelAr: 'الرئيسية',                  labelEn: 'Dashboard',           icon: LayoutDashboard, path: ROUTES.SEO_LEADER.DASHBOARD      },
 
       { key: 'seo-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',         icon: FolderKanban,    path: ROUTES.SEO_LEADER.MY_PROJECTS,    permission: 'view-seo-projects' },
-
-      { key: 'seo-messages', labelAr: 'الرسائل',                  labelEn: 'Messages',            icon: MessageSquare,   path: ROUTES.SEO_LEADER.MESSAGES },
 
       { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',          icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW,           permission: 'create-seo-project' },
 
@@ -282,20 +276,6 @@ export const HR_NAV: NavSectionDef[] = [
 
   {
 
-    sectionAr: 'التواصل',
-
-    sectionEn: 'Communication',
-
-    items: [
-
-      { key: 'messages', labelAr: 'الرسائل', labelEn: 'Messages', icon: MessageSquare, path: ROUTES.MESSAGES },
-
-    ],
-
-  },
-
-  {
-
     sectionAr: 'النظام',
 
     sectionEn: 'System',
@@ -362,7 +342,6 @@ export const PM_NAV: NavSectionDef[] = [
       { key: 'pm-dash',    labelAr: 'الرئيسية',                 labelEn: 'Dashboard',         icon: LayoutDashboard, path: ROUTES.PROJECT_MANAGER.DASHBOARD },
       { key: 'pm-projects', labelAr: 'مشاريعي',                 labelEn: 'My Projects',       icon: FolderKanban,    path: ROUTES.PROJECT_MANAGER.MY_PROJECTS, permission: 'view-pm-projects' },
       { key: 'pm-tasks',   labelAr: 'مهامي',                   labelEn: 'My Tasks',          icon: CheckSquare,     path: ROUTES.PROJECT_MANAGER.TASKS,    permission: 'view-pm-tasks' },
-      { key: 'pm-messages', labelAr: 'الرسائل',                labelEn: 'Messages',          icon: MessageSquare,   path: ROUTES.PROJECT_MANAGER.MESSAGES },
       { key: 'pm-new',     labelAr: 'إنشاء مشروع جديد',        labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.PROJECT_MANAGER.NEW,       permission: 'create-pm-project' },
       { key: 'pm-team',    labelAr: 'فريق العمل',               labelEn: 'Team',               icon: Users,           path: ROUTES.PROJECT_MANAGER.TEAM,     permission: 'view-pm-projects' },
       { key: 'pm-reports', labelAr: 'التقارير اليومية والطلبات',labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.PROJECT_MANAGER.REPORTS,  permission: 'view-pm-projects' },
@@ -405,9 +384,7 @@ export const EMPLOYEE_NAV: NavSectionDef[] = [
 
       { key: 'emp-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.EMPLOYEE.TASKS,        permission: 'view-pm-tasks' },
 
-      { key: 'emp-msg',     labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.EMPLOYEE.MESSAGES },
-
-      { key: 'emp-alerts',  labelAr: 'التنبيهات',          labelEn: 'Alerts',         icon: Megaphone,       path: ROUTES.EMPLOYEE.ALERTS        },
+      { key: 'emp-alerts', labelAr: 'التنبيهات',          labelEn: 'Alerts',         icon: Megaphone,       path: ROUTES.EMPLOYEE.ALERTS        },
 
       { key: 'emp-admin-req', labelAr: 'طلباتى',           labelEn: 'My Requests',    icon: ClipboardList,   path: ROUTES.EMPLOYEE.ADMIN_REQUESTS, permission: 'view-requests' },
 
@@ -447,7 +424,6 @@ export const SEO_NAV: NavSectionDef[] = [
       { key: 'seo-dash',    labelAr: 'الرئيسية',                  labelEn: 'Dashboard',         icon: LayoutDashboard, path: ROUTES.SEO_LEADER.DASHBOARD },
       { key: 'seo-projects', labelAr: 'مشاريعي',                  labelEn: 'My Projects',       icon: FolderKanban,    path: ROUTES.SEO_LEADER.MY_PROJECTS, permission: 'view-seo-projects' },
       { key: 'seo-tasks',   labelAr: 'مهامي',                    labelEn: 'My Tasks',          icon: CheckSquare,     path: ROUTES.SEO_LEADER.TASKS,       permission: 'view-seo-tasks' },
-      { key: 'seo-messages', labelAr: 'الرسائل',                 labelEn: 'Messages',          icon: MessageSquare,   path: ROUTES.SEO_LEADER.MESSAGES },
       { key: 'seo-new',     labelAr: 'إنشاء مشروع جديد',          labelEn: 'New Project',        icon: FilePlus2,       path: ROUTES.SEO_LEADER.NEW,         permission: 'create-seo-project' },
       { key: 'seo-team',    labelAr: 'فريق العمل',                labelEn: 'Team',               icon: Users,           path: ROUTES.SEO_LEADER.TEAM,     permission: 'view-seo-projects' },
       { key: 'seo-reports', labelAr: 'التقارير اليومية والطلبات', labelEn: 'Reports & Requests', icon: ClipboardList,   path: ROUTES.SEO_LEADER.REPORTS,  permission: 'view-seo-projects' },
@@ -489,8 +465,6 @@ export const SEO_MEMBER_NAV: NavSectionDef[] = [
       { key: 'seo-m-new',     labelAr: 'إنشاء مشروع جديد', labelEn: 'New Project',    icon: FilePlus2,       path: ROUTES.SEO_MEMBER.NEW,          permission: 'create-seo-project' },
 
       { key: 'seo-m-tasks',   labelAr: 'مهامي',             labelEn: 'My Tasks',       icon: CheckSquare,     path: ROUTES.SEO_MEMBER.TASKS,         permission: 'view-seo-tasks' },
-
-      { key: 'seo-m-messages',labelAr: 'الرسائل',           labelEn: 'Messages',       icon: MessageSquare,   path: ROUTES.SEO_MEMBER.MESSAGES },
 
       { key: 'seo-m-admin-req', labelAr: 'طلباتى',          labelEn: 'My Requests',    icon: ClipboardList,   path: ROUTES.SEO_MEMBER.ADMIN_REQUESTS, permission: 'view-requests' },
 
