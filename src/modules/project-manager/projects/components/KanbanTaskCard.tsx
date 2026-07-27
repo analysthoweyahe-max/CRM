@@ -14,18 +14,20 @@ interface Props {
   isAr:      boolean;
   onOpen:    (task: Task) => void;
   onDelete?: (task: Task) => void;
+  /** When false, show a "Partner" badge (teammate task on the same project). */
+  isPartner?: boolean;
 }
 
-export function KanbanTaskCard({ task, isAr, onOpen, onDelete }: Props) {
+export function KanbanTaskCard({ task, isAr, onOpen, onDelete, isPartner }: Props) {
   const prio = PRIORITY_CONFIG[task.priority];
+  const overdue = Boolean(task.isOverdue || task.isDelayed);
 
   return (
     <div
       onClick={() => onOpen(task)}
       className="group bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm
                  border border-gray-100 dark:border-gray-700/60
-                 cursor-grab active:cursor-grabbing active:opacity-50
-                 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600
+                 cursor-pointer hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600
                  transition-all duration-150 select-none"
     >
       {/* Top: task number + priority badge + delete */}
@@ -46,10 +48,18 @@ export function KanbanTaskCard({ task, isAr, onOpen, onDelete }: Props) {
             </button>
           )}
         </div>
-        <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${prio.badge}`}>
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${prio.dot}`} />
-          {isAr ? prio.ar : prio.en}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {isPartner && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full
+                             bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              {isAr ? 'شريك' : 'Partner'}
+            </span>
+          )}
+          <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${prio.badge}`}>
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${prio.dot}`} />
+            {isAr ? prio.ar : prio.en}
+          </span>
+        </div>
       </div>
 
       {/* Title */}
@@ -72,9 +82,15 @@ export function KanbanTaskCard({ task, isAr, onOpen, onDelete }: Props) {
 
       {/* Footer: due date + assignee */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
+        <div className={`flex items-center gap-1 text-xs shrink-0 ${overdue ? 'text-red-600 font-medium' : 'text-gray-400'}`}>
           <Calendar size={12} />
-          <span>{task.dueDate}</span>
+          <span>
+            {task.dueDate && (
+              isAr
+                ? (overdue ? `متأخرة: ${task.dueDate}` : task.dueDate)
+                : (overdue ? `Overdue: ${task.dueDate}` : task.dueDate)
+            )}
+          </span>
         </div>
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{task.assigneeName}</span>

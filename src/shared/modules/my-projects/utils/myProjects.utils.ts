@@ -178,7 +178,7 @@ export function groupMembershipProjectsIntoSections(
     return {
       key,
       label,
-      defaultExpanded: key === 'in_progress',
+      defaultExpanded: false, // set below based on which section is visible
       total: inSection.length,
       projects: inSection.map(toDashboardCard),
     };
@@ -196,7 +196,13 @@ export function groupMembershipProjectsIntoSections(
     }
   }
 
-  return sections.filter(s => s.total > 0);
+  const expandedKey = sections.some(s => s.key === 'in_progress' && s.total > 0)
+    ? 'in_progress'
+    : (sections.find(s => s.total > 0)?.key ?? 'in_progress');
+
+  return sections
+    .filter(s => s.total > 0)
+    .map(s => ({ ...s, defaultExpanded: s.key === expandedKey }));
 }
 
 /** @deprecated Prefer groupMembershipProjectsIntoSections for employee views. */
@@ -216,7 +222,7 @@ export function groupProjectsIntoSections(
     return {
       key,
       label,
-      defaultExpanded: key === 'in_progress',
+      defaultExpanded: false, // set below based on which section is visible
       total: inSection.length,
       projects: inSection.map((p): DashboardProjectCard => ({
         id:              p.uuid || p.id,
@@ -256,7 +262,13 @@ export function groupProjectsIntoSections(
     }
   }
 
-  return sections.filter(s => s.total > 0);
+  const expandedKey = sections.some(s => s.key === 'in_progress' && s.total > 0)
+    ? 'in_progress'
+    : (sections.find(s => s.total > 0)?.key ?? 'in_progress');
+
+  return sections
+    .filter(s => s.total > 0)
+    .map(s => ({ ...s, defaultExpanded: s.key === expandedKey }));
 }
 
 export function groupSeoProjectsIntoSections(
@@ -275,7 +287,7 @@ export function groupSeoProjectsIntoSections(
     return {
       key,
       label,
-      defaultExpanded: key === 'in_progress',
+      defaultExpanded: false, // set below based on which section is visible
       total: inSection.length,
       projects: inSection.map((p): DashboardProjectCard => ({
         id:              p.uuid || p.id,
@@ -321,5 +333,11 @@ export function groupSeoProjectsIntoSections(
     }
   }
 
-  return sections.filter(s => s.total > 0);
+  const expandedKey = sections.some(s => s.key === 'in_progress' && s.total > 0)
+    ? 'in_progress'
+    : (sections.find(s => s.total > 0)?.key ?? 'in_progress');
+
+  return sections
+    .filter(s => s.total > 0)
+    .map(s => ({ ...s, defaultExpanded: s.key === expandedKey }));
 }

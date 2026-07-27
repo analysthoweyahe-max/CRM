@@ -13,19 +13,26 @@ export function readSeoTaskPhaseId(task: SeoTask): number | undefined {
   return undefined;
 }
 
-/** Flatten phased task groups and inherit group-level phaseId when missing on tasks. */
+function inheritGroupPhase(task: SeoTask, groupPhaseId: number | null, groupPhaseName: string | null): SeoTask {
+  return {
+    ...task,
+    phase: task.phase ?? groupPhaseName,
+    phaseId: readSeoTaskPhaseId(task) ?? (groupPhaseId != null ? Number(groupPhaseId) : null),
+  };
+}
+
+/** Flatten phased/column task groups and inherit group-level phaseId when missing on tasks. */
 export function flattenSeoPhasedTasks(data: PhasedTasksResponse): SeoTask[] {
-  return (data.phases ?? []).flatMap((group) => {
+  const fromPhases = (data.phases ?? []).flatMap((group) => {
     const groupPhaseId = group.phaseId
       ?? (group as { phase_id?: number | null }).phase_id
       ?? null;
     const groupPhaseName = group.phase ?? null;
-    return (group.tasks ?? []).map((task) => ({
-      ...task,
-      phase:    task.phase ?? groupPhaseName,
-      phaseId:  readSeoTaskPhaseId(task) ?? (groupPhaseId != null ? Number(groupPhaseId) : null),
-    }));
+    return (group.tasks ?? []).map((task) => inheritGroupPhase(task, groupPhaseId, groupPhaseName));
   });
+  if (fromPhases.length > 0) return fromPhases;
+
+  return (data.columns ?? []).flatMap((column) => column.tasks ?? []);
 }
 
 export function resolveSeoTaskPhaseColumnKey(task: Task, phases: SeoProjectPhase[]): string {

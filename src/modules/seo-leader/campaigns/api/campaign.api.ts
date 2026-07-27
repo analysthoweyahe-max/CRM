@@ -86,6 +86,9 @@ export interface SeoTask {
   isDelayed?: boolean;
   overdueLabel?: string | null;
   canExtend?: boolean;
+  /** False when the task belongs to a teammate on the same project. */
+  isMine?: boolean;
+  is_mine?: boolean;
 }
 
 export interface SeoTaskPhaseGroup {
@@ -446,9 +449,27 @@ export const campaignApi = {
   /** SEO-employee-scoped project task list — `/v1/seo/manager/tasks` (used
    *  for the manager board) is manager-guarded and 403s for employee tokens,
    *  so member-facing project pages must use this route instead. */
-  getEmployeeTasks(projectId: string | number, params?: { status?: string; search?: string; per_page?: number }) {
+  getEmployeeTasks(
+    projectId: string | number,
+    params?: {
+      status?: string;
+      search?: string;
+      per_page?: number;
+      mine?: boolean;
+      include_partners?: boolean;
+    },
+  ) {
+    const query = params
+      ? {
+        ...params,
+        mine: params.mine === undefined ? undefined : (params.mine ? 1 : 0),
+        include_partners: params.include_partners === undefined
+          ? undefined
+          : (params.include_partners ? 1 : 0),
+      }
+      : undefined;
     return http.get<ApiResponse<PhasedTasksResponse>>(
-      `/v1/seo/employee/projects/${projectId}/tasks`, { params }
+      `/v1/seo/employee/projects/${projectId}/tasks`, { params: query }
     );
   },
 

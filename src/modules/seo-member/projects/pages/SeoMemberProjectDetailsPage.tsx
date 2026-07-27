@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, ExternalLink, Globe, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLang } from '@/app/providers/LanguageProvider';
+import { useAuth } from '@/modules/auth/context/AuthContext';
 import { ROUTES } from '@/app/router/routes';
 import { Button } from '@/shared/components/ui/Button';
 import { Card } from '@/shared/components/ui/Card';
@@ -90,6 +91,29 @@ const PRIORITY_MAP: Record<string, Task['priority']> = {
 export interface SeoMemberTaskVM extends Task {
   rawStatus: string;
   assigneeIds: string[];
+  isMine?: boolean;
+  is_mine?: boolean;
+}
+
+function readSeoMemberTaskIsMine(task: Pick<SeoMemberTaskVM, 'isMine' | 'is_mine'>): boolean {
+  return task.is_mine ?? task.isMine ?? false;
+}
+
+function isEditableSeoMemberTask(task: SeoMemberTaskVM): boolean {
+  if (task.is_mine == null && task.isMine == null) return true;
+  return readSeoMemberTaskIsMine(task);
+}
+
+function resolveSeoMemberTaskIsMine(
+  task: SeoMemberTaskVM,
+  user: { id?: string | null; employeeId?: string | null } | null | undefined,
+): boolean {
+  if (task.is_mine != null || task.isMine != null) return readSeoMemberTaskIsMine(task);
+  if (!task.assigneeId || !user) return false;
+  const sid = String(task.assigneeId);
+  if (user.id && sid === String(user.id)) return true;
+  if (user.employeeId && sid === String(user.employeeId)) return true;
+  return false;
 }
 
 function resolveSeoTaskStatusKey(t: Pick<SeoTask, 'statusId' | 'status'>): string {
@@ -134,6 +158,11 @@ function toLocalTask(
     createdById: createdBy?.id,
     createdByName: createdBy?.name,
     assigneeIds,
+    isMine: t.isMine ?? t.is_mine,
+    is_mine: t.is_mine ?? t.isMine,
+    isOverdue: t.isOverdue,
+    isDelayed: t.isDelayed,
+    overdueLabel: t.overdueLabel ?? null,
   };
 }
 
@@ -141,6 +170,7 @@ function toLocalTask(
 export function SeoMemberProjectDetailsPage() {
   const { lang } = useLang();
   const isAr = lang === 'ar';
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -204,7 +234,11 @@ export function SeoMemberProjectDetailsPage() {
   const { data: rawTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['seo-member-project-tasks', projectKey],
     queryFn: async () => {
-      const r = await campaignApi.getEmployeeTasks(projectKey, { per_page: 100 });
+      const r = await campaignApi.getEmployeeTasks(projectKey, {
+        per_page: 100,
+        mine: true,
+        include_partners: true,
+      });
       return flattenSeoPhasedTasks(r.data.data);
     },
     enabled: !!projectKey,
@@ -217,8 +251,8 @@ export function SeoMemberProjectDetailsPage() {
   );
 
   const tasks = useMemo(
-    () => baseTasks.map(t =>
-      statusOverrides[t.id]
+    () => baseTasks.map(t => {
+      const withOverride = statusOverrides[t.id]
         ? {
           ...t,
           rawStatus: statusOverrides[t.id],
@@ -227,9 +261,11 @@ export function SeoMemberProjectDetailsPage() {
             marksCompletedByKey[statusOverrides[t.id]] ?? false,
           ),
         }
-        : t,
-    ),
-    [baseTasks, statusOverrides, marksCompletedByKey],
+        : t;
+      const isMine = resolveSeoMemberTaskIsMine(withOverride, user);
+      return { ...withOverride, isMine, is_mine: isMine };
+    }),
+    [baseTasks, statusOverrides, marksCompletedByKey, user],
   );
 
   /* Mention deep-link: resolve SeoTaskComment → task detail. */
@@ -361,6 +397,11 @@ export function SeoMemberProjectDetailsPage() {
 
   function handleDrop(taskId: string, toStatusKey: string) {
     const task = tasks.find(t => t.id === taskId || t.uuid === taskId);
+    if (!task) return;
+    if (!isEditableSeoMemberTask(task)) {
+      toast.info(isAr ? 'لا يمكن تحديث مهام الشركاء' : 'Partner tasks cannot be updated');
+      return;
+    }
     setStatusOverrides(prev => ({ ...prev, [taskId]: toStatusKey }));
     myTasksApi
       .updateStatus('seo-employee', projectKey, task ? taskResourceKey(task) : taskId, Number(toStatusKey))
@@ -605,11 +646,20 @@ export function SeoMemberProjectDetailsPage() {
               }
               isAr={isAr}
               getId={(task: Task) => task.id}
-              renderCard={(task: Task) => (
-                <KanbanTaskCard task={task} isAr={isAr} onOpen={handleOpenTask} />
-              )}
+              renderCard={(task: Task) => {
+                const memberTask = task as SeoMemberTaskVM;
+                return (
+                  <KanbanTaskCard
+                    task={task}
+                    isAr={isAr}
+                    isPartner={!isEditableSeoMemberTask(memberTask)}
+                    onOpen={handleOpenTask}
+                  />
+                );
+              }}
               onDrop={viewMode === 'status' ? handleDrop : () => { }}
               draggable={viewMode === 'status'}
+              isItemDraggable={(task: Task) => isEditableSeoMemberTask(task as SeoMemberTaskVM)}
             />
           </>
         )
