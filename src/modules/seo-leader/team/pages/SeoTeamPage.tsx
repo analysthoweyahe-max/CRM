@@ -1,4 +1,4 @@
-import { Download, UserPlus } from 'lucide-react';
+import { Download }              from 'lucide-react';
 import { useLang }               from '@/app/providers/LanguageProvider';
 import { Button }                from '@/shared/components/ui/Button';
 import { SearchInput }           from '@/shared/components/ui/SearchInput';
@@ -6,7 +6,6 @@ import { MemberCard }            from '@/shared/modules/team/components/MemberCa
 import { TeamPageSkeleton }      from '@/shared/modules/team/components/TeamPageSkeleton';
 import { useSeoTeamPage }        from '../hooks/useSeoTeamPage';
 import { SeoMemberProfileModal } from '../components/SeoMemberProfileModal';
-import { SeoInviteModal }        from '../components/SeoInviteModal';
 
 export function SeoTeamPage() {
   const { lang } = useLang();
@@ -17,7 +16,6 @@ export function SeoTeamPage() {
     selected, selectedCount, isAllSelected,
     search, handleSearch,
     toggleAll, toggleOne, clearSelection, toggleActive, exportSelected,
-    showInvite, openInvite, closeInvite, handleInvite,
     profileMember, openProfile, closeProfile,
     isLoading, getColor,
   } = useSeoTeamPage(isAr);
@@ -35,13 +33,6 @@ export function SeoTeamPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {isAr ? 'أعضاء فريق SEO التابعين لك' : 'Your SEO team members across your projects'}
         </p>
-      </div>
-
-      {/* Add member button */}
-      <div className="flex justify-end">
-        <Button variant="primary" startIcon={<UserPlus size={15} />} onClick={openInvite}>
-          {isAr ? 'دعوة عضو جديد' : 'Invite New Member'}
-        </Button>
       </div>
 
       {/* Search */}
@@ -145,13 +136,6 @@ export function SeoTeamPage() {
           </div>
         </div>
       )}
-
-      <SeoInviteModal
-        open={showInvite}
-        onClose={closeInvite}
-        onConfirm={handleInvite}
-        isAr={isAr}
-      />
 
       <SeoMemberProfileModal member={profileMember} onClose={closeProfile} isAr={isAr} />
     </div>

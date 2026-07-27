@@ -5,7 +5,9 @@ import {
 } from '@/shared/utils/projectStatusLookups.utils';
 import { pmProjectLookupsApi } from '../api/project.api';
 
-export function usePmTaskLookups() {
+export function usePmTaskLookups(options: { enabled?: boolean } = {}) {
+  const { enabled = true } = options;
+
   const statuses = useQuery({
     queryKey: ['pm-task-lookups', 'statuses'],
     queryFn: () =>
@@ -13,12 +15,14 @@ export function usePmTaskLookups() {
         toActiveProjectStatusOptions(unwrapProjectStatusArray(r.data.data)),
       ),
     staleTime: Infinity,
+    enabled,
   });
 
   const priorities = useQuery({
     queryKey: ['pm-task-lookups', 'priorities'],
     queryFn: () => pmProjectLookupsApi.taskPriorities().then((r) => r.data.data),
     staleTime: Infinity,
+    enabled,
   });
 
   return {

@@ -6,6 +6,7 @@ import { FormField, inputCls } from '@/shared/components/form/FormField';
 import { Combobox } from '@/shared/components/form/Combobox';
 import {
   useAdminRequestTypes,
+  useAdminRequestVacationTypes,
   useCreateAdminRequest,
 } from '../hooks/useAdminRequests';
 import {
@@ -32,11 +33,16 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
   const { data: types = [] } = useAdminRequestTypes(namespace);
   const createMutation = useCreateAdminRequest(namespace, isAr);
 
-  const [requestType, setRequestType] = useState('');
+  const [requestType, setRequestType]   = useState('');
+  const [vacationType, setVacationType] = useState('');
   const [title, setTitle]             = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate]     = useState('');
   const [endDate, setEndDate]         = useState('');
+
+  const isLeave = requestType === 'leave';
+  const { data: vacationTypes = [], isLoading: loadingVacationTypes } =
+    useAdminRequestVacationTypes(namespace, isLeave);
 
   // Submission stamp — always today; not editable (audit trail).
   const requestDate = todayISO();
@@ -49,17 +55,26 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
       }))
   );
 
+  const vacationComboItems = vacationTypes.map((t) => ({ id: t.value, label: t.label }));
+
   const isValid =
     !!requestType &&
+    (!isLeave || (!!vacationType && !!startDate && !!endDate)) &&
     title.trim().length > 0 &&
     (!startDate || !endDate || endDate >= startDate);
 
   function reset() {
     setRequestType('');
+    setVacationType('');
     setTitle('');
     setDescription('');
     setStartDate('');
     setEndDate('');
+  }
+
+  function handleRequestTypeChange(value: string) {
+    setRequestType(value);
+    if (value !== 'leave') setVacationType('');
   }
 
   function handleClose() {
@@ -79,6 +94,7 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
         request_date: todayISO(),
         start_date:   startDate || undefined,
         end_date:     endDate || undefined,
+        vacation_type: isLeave ? vacationType : undefined,
       },
       {
         onSuccess: () => {
@@ -115,12 +131,32 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
           <Combobox
             items={comboItems}
             value={requestType}
-            onChange={setRequestType}
+            onChange={handleRequestTypeChange}
             placeholder={isAr ? 'اختر نوع الطلب' : 'Select request type'}
             searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
             noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
           />
         </FormField>
+
+        {isLeave && (
+          <FormField
+            label={isAr ? 'نوع الإجازة' : 'Vacation Type'}
+            required
+            hint={isAr
+              ? 'يُحدَّد رصيدك المتبقي وعدد الأيام تلقائياً من النظام عند الموافقة'
+              : 'Your remaining balance and day count are calculated automatically on approval'}
+          >
+            <Combobox
+              items={vacationComboItems}
+              value={vacationType}
+              onChange={setVacationType}
+              disabled={loadingVacationTypes}
+              placeholder={isAr ? 'اختر نوع الإجازة' : 'Select vacation type'}
+              searchPlaceholder={isAr ? 'بحث...' : 'Search...'}
+              noResultsText={isAr ? 'لا توجد نتائج' : 'No results'}
+            />
+          </FormField>
+        )}
 
         <FormField label={isAr ? 'العنوان' : 'Title'} required>
           <input
@@ -160,7 +196,7 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
         </FormField>
 
         <div className="grid grid-cols-2 gap-3">
-          <FormField label={isAr ? 'من تاريخ' : 'Start Date'}>
+          <FormField label={isAr ? 'من تاريخ' : 'Start Date'} required={isLeave}>
             <div className="relative">
               <input
                 type="date"
@@ -171,7 +207,7 @@ export function NewAdminRequestModal({ open, onClose, isAr, namespace }: Props) 
               <Calendar size={15} className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
           </FormField>
-          <FormField label={isAr ? 'إلى تاريخ' : 'End Date'}>
+          <FormField label={isAr ? 'إلى تاريخ' : 'End Date'} required={isLeave}>
             <div className="relative">
               <input
                 type="date"

@@ -16,6 +16,11 @@ export function createAdminRequestsApi(ns: AdminRequestNamespace) {
       return http.get<AdminRequestTypesResponse>(`${base}/lookups/types`);
     },
 
+    /** Vacation/leave sub-types (annual, casual, sick, ...) — only relevant when request_type === 'leave'. */
+    vacationTypes() {
+      return http.get<AdminRequestTypesResponse>(`${base}/lookups/vacation-types`);
+    },
+
     list(params?: AdminRequestListParams) {
       return http.get<AdminRequestListResponse>(base, { params });
     },

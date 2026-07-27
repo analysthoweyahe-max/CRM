@@ -115,6 +115,22 @@ function readExceptionRequestId(data: Record<string, unknown>): string | undefin
   return id !== undefined ? String(id) : undefined;
 }
 
+function resolvePmRequestPath(user: Pick<AuthUser, 'role'> | null | undefined): string | null {
+  if (user?.role === 'manager' || user?.role === 'admin') {
+    return appendQuery(ROUTES.PROJECT_MANAGER.REPORTS, { tab: 'requests' });
+  }
+  if (user?.role === 'employee') return ROUTES.EMPLOYEE.ADMIN_REQUESTS;
+  return null;
+}
+
+function resolveSeoRequestPath(user: Pick<AuthUser, 'role'> | null | undefined): string | null {
+  if (user?.role === 'seo-leader' || user?.role === 'admin') {
+    return appendQuery(ROUTES.SEO_LEADER.REPORTS, { tab: 'requests' });
+  }
+  if (user?.role === 'seo-member') return ROUTES.SEO_MEMBER.ADMIN_REQUESTS;
+  return null;
+}
+
 function adminRequestPath(user: Pick<AuthUser, 'section' | 'role' | 'actor'> | null | undefined): string | null {
   if (user?.role === 'employee')    return ROUTES.EMPLOYEE.ADMIN_REQUESTS;
   if (user?.role === 'seo-member')  return ROUTES.SEO_MEMBER.ADMIN_REQUESTS;
@@ -524,6 +540,14 @@ export function resolveNotificationPath(
       const base = employeeExceptionListPath(user);
       return exceptionId ? appendQuery(base, { exception: exceptionId }) : base;
     }
+
+    case 'pm_request_submitted':
+    case 'pm_request_reviewed':
+      return resolvePmRequestPath(user);
+
+    case 'seo_request_submitted':
+    case 'seo_request_reviewed':
+      return resolveSeoRequestPath(user);
 
     default:
       break;

@@ -83,8 +83,8 @@ export function MyAdminRequestsPage({ namespace }: Props) {
           </h1>
           <p className="text-sm text-gray-400 mt-0.5">
             {isAr
-              ? 'طلبات إدارية لمديرك (إجازة / إذن / دعم / أخرى) — غير مرتبطة برصيد الإجازات'
-              : 'Admin requests to your manager — separate from formal leave balance'}
+              ? 'طلبات إدارية لمديرك (إجازة / إذن / دعم / أخرى) — عند اختيار نوع "إجازة" يُخصم عدد الأيام تلقائياً من رصيدك عند الموافقة'
+              : 'Admin requests to your manager — choosing "Leave" deducts the day count from your balance automatically on approval'}
           </p>
         </div>
         {canCreate && (

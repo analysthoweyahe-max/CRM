@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { extractApiStatus } from '@/shared/utils/error.utils';
 import { useSeoTaskLookups } from '@/modules/seo-leader/campaigns/hooks/useSeoTaskLookups';
+import { usePmTaskLookups } from '@/modules/project-manager/projects/hooks/usePmTaskLookups';
 import { myTasksApi } from '../api/myTasks.api';
 import {
   annotateGroupedTasksOwnership,
@@ -126,6 +127,19 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
   // portals so legacy `pending` columns don't appear next to the catalog.
   const isSeoRole = tasksRole === 'seo-employee' || tasksRole === 'seo-manager';
   const { statusOptions: seoStatusCatalog } = useSeoTaskLookups(isAr, { enabled: isSeoRole });
+
+  // Same reasoning as SEO above — PM task statuses are also admin-configurable,
+  // so fetch the full catalog (GET /v1/seo/employee/task-statuses, shared with
+  // the Project Details Kanban) and backfill empty columns for PM roles too.
+  const isPmRole = tasksRole === 'pm-employee' || tasksRole === 'project-manager';
+  const { statuses: pmStatusCatalogRaw } = usePmTaskLookups({ enabled: isPmRole });
+  const pmStatusCatalog = useMemo(
+    () => pmStatusCatalogRaw.map((s) => ({
+      key: s.value,
+      label: (isAr ? s.labelAr : null) || s.label,
+    })),
+    [pmStatusCatalogRaw, isAr],
+  );
 
   const scopedProjectId = projectId || undefined;
 
@@ -268,7 +282,7 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
     ? stampProjectOnGroupedTasks(rawQueryData, scopedProjectMeta)
     : rawQueryData;
 
-  const statusCatalog = isSeoRole ? seoStatusCatalog : [];
+  const statusCatalog = isSeoRole ? seoStatusCatalog : isPmRole ? pmStatusCatalog : [];
   const withCatalog = rawData && statusCatalog.length > 0
     ? { ...rawData, columns: fillCatalogColumns(rawData.columns, statusCatalog) }
     : rawData;

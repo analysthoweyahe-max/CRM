@@ -23,6 +23,16 @@ function readString(...values: unknown[]): string {
   return '';
 }
 
+/** First finite, non-negative number found across the candidate keys — null when none is usable. */
+function readNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    if (value === null || value === undefined || value === '') continue;
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
 /** Map backend status aliases → canonical UI / filter keys. */
 export function normalizeAdminRequestStatus(raw: unknown): AdminRequestStatus {
   const value = asRecord(raw);
@@ -120,6 +130,10 @@ export function normalizeAdminRequest(raw: unknown): AdminRequest | null {
     reviewedAt:       readString(r.reviewedAt, r.reviewed_at) || null,
     employee:         normalizeEmployee(r.employee ?? r.user ?? r.member),
     actions:          normalizeActions(r.actions, status),
+    vacationType:      readString(r.vacationType, r.vacation_type) || null,
+    vacationTypeLabel: readString(r.vacationTypeLabel, r.vacation_type_label) || null,
+    daysCount:        readNumber(r.daysCount, r.days_count, r.duration_days),
+    remainingBalance: readNumber(r.remainingBalance, r.remaining_balance, r.balanceAfter, r.balance_after),
   };
 }
 

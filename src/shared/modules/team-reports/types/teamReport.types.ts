@@ -35,4 +35,8 @@ export interface RequestItem {
   comment?:      string;
   canApprove?:   boolean;
   canReject?:    boolean;
+  /** Only present for leave/vacation requests — sourced straight from the backend, never computed client-side. */
+  vacationTypeLabel?: string | null;
+  daysCount?:         number | null;
+  remainingBalance?:  number | null;
 }

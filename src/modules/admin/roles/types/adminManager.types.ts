@@ -22,7 +22,7 @@ export const MANAGER_STATUS_OPTIONS: Array<{
   labelEn: string;
   variant: 'success' | 'warning' | 'error' | 'gray';
 }> = [
-  { id: 'pending',   labelAr: 'بانتظار الدعوة', labelEn: 'Pending invitation', variant: 'warning' },
+  { id: 'pending',   labelAr: 'معلق', labelEn: 'Pending invitation', variant: 'warning' },
   { id: 'active',    labelAr: 'نشط',            labelEn: 'Active',             variant: 'success' },
   { id: 'rejected',  labelAr: 'مرفوض',          labelEn: 'Rejected',           variant: 'error'   },
   { id: 'suspended', labelAr: 'موقوف مؤقتاً',   labelEn: 'Suspended',          variant: 'warning' },

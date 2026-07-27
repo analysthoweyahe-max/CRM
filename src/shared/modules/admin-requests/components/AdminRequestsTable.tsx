@@ -47,10 +47,15 @@ export function AdminRequestsTable({
       col.accessor('requestTypeLabel', {
         id:     'type',
         header: isAr ? 'النوع' : 'Type',
-        cell:   (info) => (
-          <span className="font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">
-            {info.getValue()}
-          </span>
+        cell:   ({ row }) => (
+          <div className="whitespace-nowrap">
+            <span className="font-medium text-gray-800 dark:text-gray-200">
+              {row.original.requestTypeLabel}
+            </span>
+            {row.original.vacationTypeLabel && (
+              <p className="text-xs text-gray-400">{row.original.vacationTypeLabel}</p>
+            )}
+          </div>
         ),
       }),
       col.accessor('title', {
@@ -69,9 +74,19 @@ export function AdminRequestsTable({
         id:     'date',
         header: isAr ? 'التاريخ' : 'Date',
         cell:   ({ row }) => (
-          <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap text-sm">
-            {fmtRange(row.original.startDate, row.original.endDate, isAr)}
-          </span>
+          <div className="whitespace-nowrap text-sm">
+            <span className="text-gray-500 dark:text-gray-400">
+              {fmtRange(row.original.startDate, row.original.endDate, isAr)}
+              {row.original.daysCount != null && (
+                <> · {isAr ? `${row.original.daysCount} يوم` : `${row.original.daysCount}d`}</>
+              )}
+            </span>
+            {row.original.remainingBalance != null && (
+              <p className="text-xs text-gray-400">
+                {isAr ? 'الرصيد المتبقي:' : 'Remaining balance:'} {row.original.remainingBalance}
+              </p>
+            )}
+          </div>
         ),
       }),
       col.accessor('status', {

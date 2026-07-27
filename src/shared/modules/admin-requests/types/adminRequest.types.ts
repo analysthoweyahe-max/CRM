@@ -41,6 +41,12 @@ export interface AdminRequest {
   reviewedAt:       string | null;
   employee:         AdminRequestEmployee;
   actions:          AdminRequestActions;
+  /** Only set when requestType === 'leave' — the chosen vacation/leave type (annual, casual, sick, ...). */
+  vacationType:      string | null;
+  vacationTypeLabel: string | null;
+  /** Backend-calculated leave duration & post-approval balance — never computed client-side. */
+  daysCount:        number | null;
+  remainingBalance: number | null;
 }
 
 export interface AdminRequestCreatePayload {
@@ -50,6 +56,8 @@ export interface AdminRequestCreatePayload {
   request_date?: string;
   start_date?:  string;
   end_date?:    string;
+  /** Required by the backend when request_type === 'leave'. */
+  vacation_type?: string;
 }
 
 export interface AdminRequestListParams {

@@ -52,6 +52,19 @@ export function RequestCard({ item, onApprove, onReject, isAr }: Props) {
           &nbsp;·&nbsp;
           {isAr ? 'قُدِّم:' : 'Submitted:'} {item.submittedDate}
         </p>
+        {(item.vacationTypeLabel || item.daysCount != null || item.remainingBalance != null) && (
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            {item.vacationTypeLabel && (
+              <>{isAr ? 'نوع الإجازة:' : 'Vacation type:'} {item.vacationTypeLabel}</>
+            )}
+            {item.daysCount != null && (
+              <>{item.vacationTypeLabel ? ' · ' : ''}{isAr ? 'عدد الأيام:' : 'Days:'} {item.daysCount}</>
+            )}
+            {item.remainingBalance != null && (
+              <>{' · '}{isAr ? 'الرصيد المتبقي:' : 'Remaining balance:'} {item.remainingBalance}</>
+            )}
+          </p>
+        )}
         {item.comment && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {isAr ? 'تعليق:' : 'Note:'} {item.comment}

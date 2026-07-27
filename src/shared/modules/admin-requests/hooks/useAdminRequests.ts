@@ -11,10 +11,11 @@ import type {
 
 function keys(ns: AdminRequestNamespace) {
   return {
-    all:   ['admin-requests', ns] as const,
-    list:  (params?: AdminRequestListParams) => ['admin-requests', ns, 'list', params] as const,
-    types: ['admin-requests', ns, 'types'] as const,
-    show:  (id: string) => ['admin-requests', ns, 'show', id] as const,
+    all:           ['admin-requests', ns] as const,
+    list:          (params?: AdminRequestListParams) => ['admin-requests', ns, 'list', params] as const,
+    types:         ['admin-requests', ns, 'types'] as const,
+    vacationTypes: ['admin-requests', ns, 'vacation-types'] as const,
+    show:          (id: string) => ['admin-requests', ns, 'show', id] as const,
   };
 }
 
@@ -24,6 +25,17 @@ export function useAdminRequestTypes(ns: AdminRequestNamespace) {
     queryKey: keys(ns).types,
     queryFn:  () => api.types().then((r) => r.data.data ?? []),
     staleTime: 5 * 60_000,
+  });
+}
+
+/** Vacation/leave sub-types — only fetched once the user picks request_type === 'leave'. */
+export function useAdminRequestVacationTypes(ns: AdminRequestNamespace, enabled: boolean) {
+  const api = adminRequestsApiFor(ns);
+  return useQuery({
+    queryKey: keys(ns).vacationTypes,
+    queryFn:  () => api.vacationTypes().then((r) => r.data.data ?? []),
+    staleTime: 5 * 60_000,
+    enabled,
   });
 }
 

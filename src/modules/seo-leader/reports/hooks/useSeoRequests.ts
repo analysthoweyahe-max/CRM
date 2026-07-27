@@ -30,6 +30,9 @@ function toRequestItem(r: AdminRequest): RequestItem {
     comment:       r.reviewerComment ?? undefined,
     canApprove:    r.actions?.canApprove ?? r.status === 'pending',
     canReject:     r.actions?.canReject  ?? r.status === 'pending',
+    vacationTypeLabel: r.vacationTypeLabel,
+    daysCount:         r.daysCount,
+    remainingBalance:  r.remainingBalance,
   };
 }
 

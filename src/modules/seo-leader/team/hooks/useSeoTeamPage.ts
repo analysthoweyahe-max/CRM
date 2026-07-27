@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { toast }             from 'sonner';
 import { useAuth }             from '@/modules/auth/context/AuthContext';
-import { SEO_LEADER_TEAM_KEY } from '../../dashboard/hooks/useSeoLeaderDashboard';
 import { seoTeamApi }                    from '../api/seoTeam.api';
 import { getAvatarColor, matchesSearch } from '@/shared/utils';
 import { downloadTeamExcel }             from '@/shared/modules/team/utils/exportTeam';
 import { filterSeoTeamMembers }            from '@/shared/modules/team/utils/teamScope.utils';
-import type { SeoTeamApiMember, SeoTeamInvitePayload } from '../types/seoTeam.types';
+import type { SeoTeamApiMember } from '../types/seoTeam.types';
 
 const PAGE_SIZE       = 4;
 const FETCH_PAGE_SIZE = 100;
@@ -30,15 +28,12 @@ async function fetchAllMembers(): Promise<SeoTeamApiMember[]> {
 
 export function useSeoTeamPage(isAr = true) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [allMembers,    setAllMembers]    = useState<SeoTeamApiMember[]>([]);
   const [isLoading,     setIsLoading]     = useState(true);
   const [page,          setPage]          = useState(1);
   const [search,        setSearch]        = useState('');
-  const [refreshTick,   setRefreshTick]   = useState(0);
   const [selected,      setSelected]      = useState<Set<string>>(new Set());
   const [profileMember, setProfileMember] = useState<SeoTeamApiMember | null>(null);
-  const [showInvite,    setShowInvite]    = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +43,7 @@ export function useSeoTeamPage(isAr = true) {
       .catch(() => { /* leave previous state on error */ })
       .finally(() => { if (!cancelled) setIsLoading(false); });
     return () => { cancelled = true; };
-  }, [refreshTick]);
+  }, []);
 
   const scopedMembers = useMemo(
     () => filterSeoTeamMembers(allMembers, {
@@ -135,20 +130,6 @@ export function useSeoTeamPage(isAr = true) {
     downloadTeamExcel(headers, rows, 'seo-team.xls', isAr ? 'فريق SEO' : 'SEO Team');
   }
 
-  async function handleInvite(payload: SeoTeamInvitePayload) {
-    try {
-      await seoTeamApi.invite(payload);
-      toast.success(isAr ? 'تم إرسال الدعوة بنجاح' : 'Invitation sent successfully');
-      void queryClient.invalidateQueries({ queryKey: SEO_LEADER_TEAM_KEY });
-      setRefreshTick(t => t + 1);
-    } catch (err: unknown) {
-      const res = (err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response?.data;
-      const firstFieldError = res?.errors ? Object.values(res.errors)[0]?.[0] : null;
-      const msg = firstFieldError ?? res?.message ?? (isAr ? 'فشل إرسال الدعوة' : 'Failed to send invitation');
-      throw new Error(msg);
-    }
-  }
-
   return {
     members,
     total,
@@ -165,10 +146,6 @@ export function useSeoTeamPage(isAr = true) {
     clearSelection: () => setSelected(new Set()),
     toggleActive,
     exportSelected,
-    showInvite,
-    openInvite:  () => setShowInvite(true),
-    closeInvite: () => setShowInvite(false),
-    handleInvite,
     profileMember,
     openProfile,
     closeProfile: () => setProfileMember(null),

@@ -51,7 +51,7 @@ export function EmployeeDashboardPage() {
               {isAr ? 'رصيد إجازاتي' : 'My Leave Balance'}
             </h2>
             <button
-              onClick={() => navigate(ROUTES.EMPLOYEE.REQUESTS)}
+              onClick={() => navigate("/employee/admin-requests")}
               className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 transition-colors inline-flex items-center gap-1"
             >
               {isAr ? 'عرض التفاصيل' : 'View Details'}

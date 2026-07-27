@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 type TabKey = 'reports' | 'requests';
 
@@ -21,7 +22,9 @@ export function TeamReportsPageShell({
   requestsContent,
   showRequests = true,
 }: Props) {
-  const [active, setActive] = useState<TabKey>('reports');
+  const [searchParams] = useSearchParams();
+  const initialTab: TabKey = searchParams.get('tab') === 'requests' ? 'requests' : 'reports';
+  const [active, setActive] = useState<TabKey>(initialTab);
   const tabs = showRequests ? TABS : TABS.filter((t) => t.key === 'reports');
   const effective = !showRequests && active === 'requests' ? 'reports' : active;
 
