@@ -35,7 +35,12 @@ function isSeoUser(user: Pick<AuthUser, 'section' | 'role'> | null | undefined):
 }
 
 function isPmManager(user: Pick<AuthUser, 'role'> | null | undefined): boolean {
-  return user?.role === 'manager';
+  return user?.role === 'manager' || user?.role === 'admin';
+}
+
+/** Super-admin browses SEO notifications from the leader's vantage point, never the member's. */
+function isSeoLeaderish(user: Pick<AuthUser, 'role'> | null | undefined): boolean {
+  return user?.role === 'seo-leader' || user?.role === 'admin';
 }
 
 function isTaskNotification(notification: AppNotification): boolean {
@@ -170,7 +175,7 @@ function resolveSeoTaskPath(
 
   const pid = String(projectId);
 
-  if (user?.role === 'seo-leader') {
+  if (isSeoLeaderish(user)) {
     return ROUTES.SEO_LEADER.DETAILS(pid);
   }
 
@@ -274,11 +279,11 @@ function resolveSeoProjectPath(
 ): string | null {
   const projectId = readId(data.projectId, data.project_id, data.projectUuid, data.project_uuid);
   if (!projectId) {
-    if (user?.role === 'seo-leader') return ROUTES.SEO_LEADER.DASHBOARD;
+    if (isSeoLeaderish(user)) return ROUTES.SEO_LEADER.DASHBOARD;
     return ROUTES.SEO_MEMBER.MY_PROJECTS;
   }
   const pid = String(projectId);
-  if (user?.role === 'seo-leader') return ROUTES.SEO_LEADER.DETAILS(pid);
+  if (isSeoLeaderish(user)) return ROUTES.SEO_LEADER.DETAILS(pid);
   return ROUTES.SEO_MEMBER.DETAILS(pid);
 }
 
@@ -348,7 +353,7 @@ function resolvePmClientIssuePath(
 ): string | null {
   const projectId = readId(data.projectId, data.project_id, data.projectUuid, data.project_uuid);
   if (!projectId) {
-    return isPmManager(user) || user?.role === 'admin'
+    return isPmManager(user)
       ? ROUTES.PROJECT_MANAGER.DASHBOARD
       : ROUTES.EMPLOYEE.MY_PROJECTS;
   }
@@ -380,7 +385,7 @@ function resolveSeoMentionPath(
 
   if (isTaskCommentContext(contextType)) {
     if (taskId) {
-      if (user?.role === 'seo-leader') {
+      if (isSeoLeaderish(user)) {
         return appendQuery(ROUTES.SEO_LEADER.DETAILS(pid), {
           task: taskId,
           tab: 'comments',
@@ -394,7 +399,7 @@ function resolveSeoMentionPath(
     }
 
     // No taskId — land on the project; page will resolve comment → task.
-    if (user?.role === 'seo-leader') {
+    if (isSeoLeaderish(user)) {
       return appendQuery(ROUTES.SEO_LEADER.DETAILS(pid), {
         contextType,
         comment: contextId,
@@ -407,7 +412,7 @@ function resolveSeoMentionPath(
   }
 
   if (isProjectMessageContext(contextType)) {
-    if (user?.role === 'seo-leader') {
+    if (isSeoLeaderish(user)) {
       return appendQuery(ROUTES.SEO_LEADER.DETAILS(pid), {
         tab: 'messages',
         message: contextId,

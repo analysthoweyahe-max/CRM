@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/AuthContext';
 import { getAvatarColor } from '@/shared/utils';
+import { pickApiDate } from '@/shared/utils/date.utils';
 import { filterSeoTeamMembers } from '@/shared/modules/team/utils/teamScope.utils';
 import { seoLeaderDashboardApi } from '../api/seoLeaderDashboard.api';
 import { seoTeamApi } from '../../team/api/seoTeam.api';
@@ -73,8 +74,9 @@ function toCampaignVM(p: SeoDashboardProject): CampaignViewModel {
     status:            p.status,
     statusLabel:       p.statusLabel,
     isDraft:           p.isDraft === true,
-    startDate:         p.startDate ?? '',
-    expectedEndDate:   p.expectedEndDate ?? null,
+    startDate:         p.startDate ?? pickApiDate(p, 'startDate', 'start_date') ?? '',
+    expectedEndDate:   p.expectedEndDate
+      ?? pickApiDate(p, 'expectedEndDate', 'expected_end_date', 'end_date', 'endDate', 'deadline'),
     progress:          calcProgress(completed, total, p.progressPercent),
     tasks_completed:   completed,
     tasks_total:       total,

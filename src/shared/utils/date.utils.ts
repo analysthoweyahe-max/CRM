@@ -1,3 +1,20 @@
+/**
+ * Reads the first non-empty string found under any of `keys` on a raw API
+ * object. Backend field names/casing for project start/end dates aren't
+ * confirmed yet on several endpoints — this lets the frontend pick up
+ * whichever variant (camelCase, snake_case, `deadline` vs `endDate`, etc.)
+ * the backend ships without another round of frontend changes.
+ */
+export function pickApiDate(raw: unknown, ...keys: string[]): string | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  for (const key of keys) {
+    const value = r[key];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+  return null;
+}
+
 /** Format date with year/month/day — used in lists and tables */
 export function formatDate(date: string | Date, locale = 'en-US'): string {
   return new Date(date).toLocaleDateString(locale, {

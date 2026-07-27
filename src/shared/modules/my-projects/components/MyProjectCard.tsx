@@ -181,17 +181,15 @@ export function MyProjectCard({ item, config, isAr }: Props) {
         </div>
       </div>
 
-      {(dateStart || dateEnd) && (
-        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
-          <CalendarDays size={13} className="shrink-0" />
-          <span>{formatDateShort(dateStart, isAr)}</span>
-          <span className="text-gray-300 dark:text-gray-600">→</span>
-          <span>{formatDateShort(dateEnd, isAr)}</span>
-          {contractLabel && (
-            <span className="text-gray-400 dark:text-gray-500">· {contractLabel}</span>
-          )}
-        </div>
-      )}
+      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+        <CalendarDays size={13} className="shrink-0" />
+        <span>{formatDateShort(dateStart, isAr)}</span>
+        <span className="text-gray-300 dark:text-gray-600">→</span>
+        <span>{formatDateShort(dateEnd, isAr)}</span>
+        {contractLabel && (
+          <span className="text-gray-400 dark:text-gray-500">· {contractLabel}</span>
+        )}
+      </div>
 
       {progress != null && (
         <div className="space-y-1.5">

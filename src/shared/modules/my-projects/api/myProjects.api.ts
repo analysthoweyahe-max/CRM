@@ -1,6 +1,7 @@
 import { http } from '@/shared/services/http.service';
 import type { ApiResponse } from '@/shared/types/api.types';
 import type { Role } from '@/shared/types/role.types';
+import { pickApiDate } from '@/shared/utils/date.utils';
 import { pmProjectStatusApi } from '@/modules/project-manager/project-statuses/api/pmProjectStatus.api';
 import { seoProjectStatusApi } from '@/modules/admin/seo-project-statuses/api/seoProjectStatus.api';
 import type {
@@ -173,7 +174,14 @@ export const myProjectsApi = {
       { params: buildListQueryParams(params) },
     );
     const page = unwrapPaginatedPayload<PmProject>(res.data);
-    return { ...res, data: { ...res.data, data: page } };
+    // Backend date field names/casing on this endpoint aren't confirmed yet —
+    // fall back to snake_case / alternate keys until it's nailed down.
+    const data = page.data.map((p) => ({
+      ...p,
+      startDate: p.startDate ?? pickApiDate(p, 'startDate', 'start_date'),
+      deadline:  p.deadline ?? pickApiDate(p, 'deadline', 'end_date', 'endDate'),
+    }));
+    return { ...res, data: { ...res.data, data: { ...page, data } } };
   },
 
   /**
@@ -217,6 +225,10 @@ export const myProjectsApi = {
     const data = page.data.map((p) => ({
       ...p,
       tasksAssigned: p.tasksAssigned ?? (p as unknown as { tasksTotal?: number }).tasksTotal,
+      // Backend date field names/casing on this endpoint aren't confirmed yet —
+      // fall back to snake_case / alternate keys until it's nailed down.
+      startDate:       p.startDate ?? pickApiDate(p, 'startDate', 'start_date'),
+      expectedEndDate: p.expectedEndDate ?? pickApiDate(p, 'expectedEndDate', 'expected_end_date', 'end_date', 'endDate', 'deadline'),
     }));
     return { ...res, data: { ...res.data, data: { ...page, data } } };
   },

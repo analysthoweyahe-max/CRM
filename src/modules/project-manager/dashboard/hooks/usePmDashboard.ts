@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAvatarColor } from '@/shared/utils';
+import { pickApiDate } from '@/shared/utils/date.utils';
 import { pmDashboardApi } from '../api/dashboard.api';
 import { pmProjectsApi } from '../../projects/api/project.api';
 import type { PmProjectListItem } from '../../projects/types/project.types';
@@ -58,8 +59,8 @@ function toProjectVM(p: PmDashboardProject): PmProjectVM {
     status:           p.status,
     statusLabel:      p.statusLabel,
     projectTypeLabel: p.projectTypeLabel,
-    startDate:        p.startDate ?? null,
-    deadline:         p.deadline ?? null,
+    startDate:        p.startDate ?? pickApiDate(p, 'startDate', 'start_date'),
+    deadline:         p.deadline ?? pickApiDate(p, 'deadline', 'end_date', 'endDate'),
     tasksCompleted:   p.tasksCompleted,
     tasksTotal:       p.tasksTotal,
     progressPercent:  p.progressPercent,
@@ -85,8 +86,8 @@ function draftToProjectVM(p: PmProjectListItem): PmProjectVM {
     status:           (p.status as PmProjectStatusKey) || 'not_started',
     statusLabel:      p.statusLabel,
     projectTypeLabel: p.projectTypeLabel,
-    startDate:        p.startDate ?? null,
-    deadline:         p.deadline ?? null,
+    startDate:        p.startDate ?? pickApiDate(p, 'startDate', 'start_date'),
+    deadline:         p.deadline ?? pickApiDate(p, 'deadline', 'end_date', 'endDate'),
     tasksCompleted:   0,
     tasksTotal:       0,
     progressPercent:  0,

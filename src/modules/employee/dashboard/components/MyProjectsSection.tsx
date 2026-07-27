@@ -52,14 +52,12 @@ export function MyProjectsSection({ projects, isAr }: Props) {
                     {project.myProjectRole && (
                       <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{project.myProjectRole}</p>
                     )}
-                    {(project.startDate || project.endDate) && (
-                      <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 shrink-0">
-                        <CalendarDays size={11} className="shrink-0" />
-                        {formatDateShort(project.startDate ?? null, isAr)}
-                        <span className="text-gray-300 dark:text-gray-600">→</span>
-                        {formatDateShort(project.endDate ?? null, isAr)}
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                      <CalendarDays size={11} className="shrink-0" />
+                      {formatDateShort(project.startDate ?? null, isAr)}
+                      <span className="text-gray-300 dark:text-gray-600">→</span>
+                      {formatDateShort(project.endDate ?? null, isAr)}
+                    </span>
                   </div>
                 </div>
               </button>
