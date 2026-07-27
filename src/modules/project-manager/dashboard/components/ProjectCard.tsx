@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { FolderOpen }  from 'lucide-react';
+import { CalendarDays, FolderOpen }  from 'lucide-react';
 import { Card }        from '@/shared/components/ui/Card';
 import { Button }      from '@/shared/components/ui/Button';
 import { ROUTES }      from '@/app/router/routes';
@@ -9,6 +9,7 @@ import { TeamAvatars } from '@/shared/components/ui/TeamAvatars';
 import { GithubIcon }  from '@/shared/components/icons/GithubIcon';
 import { translateProjectLookup } from '@/shared/utils/projectLookup.i18n';
 import { ensureHttpUrl } from '@/shared/utils';
+import { formatDateShort } from '@/shared/utils/date.utils';
 
 const STATUS_DOT: Record<PmProjectStatusKey, string> = {
   in_progress: 'bg-[#A0CD39]',
@@ -96,6 +97,15 @@ export function ProjectCard({ project, isAr }: Props) {
           </span>
         </div>
       </div>
+
+      {(project.startDate || project.deadline) && (
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+          <CalendarDays size={13} className="shrink-0" />
+          <span>{formatDateShort(project.startDate, isAr)}</span>
+          <span className="text-gray-300 dark:text-gray-600">→</span>
+          <span>{formatDateShort(project.deadline, isAr)}</span>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

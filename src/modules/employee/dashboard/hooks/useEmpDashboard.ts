@@ -20,6 +20,8 @@ export function useEmpDashboard() {
     name:            project.name,
     status:          project.status,
     statusLabel:     project.statusLabel,
+    startDate:       project.startDate,
+    endDate:         project.endDate,
     tasksTotal:      project.tasksAssigned,
     tasksCompleted:  project.tasksCompleted,
     progressPercent: project.progressPercent,

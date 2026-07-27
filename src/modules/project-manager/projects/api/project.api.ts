@@ -102,10 +102,10 @@ export const pmProjectLookupsApi = {
   employees(params: { project_type_id: number; search?: string }) {
     return http.get<PmAvailableMembersApiResponse>('/v1/pm/projects/lookups/employees', { params });
   },
-  /** Shared employee task-status catalog (drives PM kanban columns). */
+  /** Employee-scoped task-status catalog (drives PM kanban columns). */
   taskStatuses() {
     return http.get<PmLookupApiResponse | { status: string; message: string; data: unknown }>(
-      '/v1/seo/employee/task-statuses',
+      '/v1/pm/employee/task-statuses',
     );
   },
   taskPriorities() {

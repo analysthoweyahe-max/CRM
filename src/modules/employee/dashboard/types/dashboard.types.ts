@@ -9,6 +9,8 @@ export interface EmpProject {
   name:             string;
   status:           string;
   statusLabel?:     string;
+  startDate?:       string | null;
+  endDate?:         string | null;
   tasksTotal?:      number;
   tasksCompleted?:  number;
   progressPercent?: number;

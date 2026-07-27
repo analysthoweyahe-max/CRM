@@ -11,7 +11,7 @@ import { useTaskCard }   from './useTaskCard';
 import type { TaskCardProps } from './TaskCard.types';
 
 export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
-  const { status, priority, title, project, deadline, taskNum } = useTaskCard(task, isAr);
+  const { status, priority, title, project, deadline } = useTaskCard(task, isAr);
   const { getTimer } = useTaskTimers();
   const navigate = useNavigate();
   const isActive = !!getTimer(task.id);
@@ -28,11 +28,10 @@ export function TaskCard({ task, isAr, onDetails }: TaskCardProps) {
       ].join(' ')}
     >
       <div className="space-y-2.5">
-        {/* Row 1: title+id (start→right in RTL) | status badge (end→left in RTL) */}
+        {/* Row 1: title (start→right in RTL) | status badge (end→left in RTL) */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-gray-800 dark:text-gray-100">{title}</span>
-            <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums">{taskNum}</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {(task.isOverdue || task.isDelayed) && (

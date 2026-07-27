@@ -14,6 +14,8 @@ export interface PmDashboardProject {
   statusLabel:      string;
   projectType:      string;
   projectTypeLabel: string;
+  startDate?:       string | null;
+  deadline?:        string | null;
   tasksTotal:       number;
   tasksCompleted:   number;
   progressPercent:  number;

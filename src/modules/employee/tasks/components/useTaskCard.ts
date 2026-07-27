@@ -8,7 +8,6 @@ export function useTaskCard(task: EmployeeTask, isAr: boolean) {
   const title    = isAr ? task.titleAr   : task.titleEn;
   const project  = isAr ? task.projectAr : task.projectEn;
   const deadline = fmtDeadline(task.deadline, isAr);
-  const taskNum  = `#${task.id.toString().padStart(3, '0')}`;
 
   const empTask: EmpTask = {
     id: task.id,
@@ -19,5 +18,5 @@ export function useTaskCard(task: EmployeeTask, isAr: boolean) {
     priority: task.priority,
   };
 
-  return { status, priority, title, project, deadline, taskNum, empTask };
+  return { status, priority, title, project, deadline, empTask };
 }

@@ -41,8 +41,8 @@ export function MyProjectCard({ item, config, isAr }: Props) {
   const projectModule = 'module' in p ? p.module : undefined;
 
   let typeLabel: string | null = null;
-  let dateStart: string | null = null;
-  let dateEnd: string | null = null;
+  let dateStart: string | null;
+  let dateEnd: string | null;
   let contractMonths: number | null = null;
   let managerName: string | null = null;
   let githubLink: string | null = null;
@@ -77,6 +77,8 @@ export function MyProjectCard({ item, config, isAr }: Props) {
   } else {
     const dash = item.project;
     typeLabel  = dash.clientName ?? null;
+    dateStart  = dash.startDate ?? null;
+    dateEnd    = dash.endDate ?? null;
     progress   = calcProgress(dash.tasksCompleted, dash.tasksAssigned, dash.progressPercent);
     tasksDone  = dash.tasksCompleted;
     tasksTotal = dash.tasksAssigned;

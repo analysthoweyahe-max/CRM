@@ -116,6 +116,9 @@ export function normalizeMembershipProject(raw: unknown): EmployeeMembershipProj
     module,
     projectTypeLabel: (r.projectTypeLabel ?? r.project_type_label
       ?? r.campaignTypeLabel ?? r.campaign_type_label ?? null) as string | null,
+    startDate: (r.startDate ?? r.start_date ?? null) as string | null,
+    endDate: (r.endDate ?? r.end_date ?? r.deadline
+      ?? r.expectedEndDate ?? r.expected_end_date ?? null) as string | null,
     progressPercent: r.progressPercent != null ? Number(r.progressPercent)
       : r.progress_percent != null ? Number(r.progress_percent)
       : undefined,
@@ -146,8 +149,8 @@ function toSeoProject(m: EmployeeMembershipProject): SeoProject {
     status:                 m.status,
     statusLabel:            m.statusLabel,
     isDraft:                false,
-    startDate:              null,
-    expectedEndDate:        null,
+    startDate:              m.startDate ?? null,
+    expectedEndDate:        m.endDate ?? null,
     contractDurationMonths: null,
     githubLink:             null,
     driveLink:              null,

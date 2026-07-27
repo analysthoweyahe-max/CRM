@@ -13,6 +13,8 @@ export interface EmployeeMembershipProject {
   myProjectRole?: string | null;
   module:        'seo' | 'pm';
   projectTypeLabel?: string | null;
+  startDate?:    string | null;
+  endDate?:      string | null;
   progressPercent?: number;
   tasksAssigned?:   number;
   tasksCompleted?:  number;
@@ -87,6 +89,8 @@ export interface DashboardProjectCard {
   clientName?:      string;
   status:           ProjectStatus;
   statusLabel:      string;
+  startDate?:       string | null;
+  endDate?:         string | null;
   workspaceUrl:     string;
   tasksUrl?:        string;
   tasksApiUrl?:     string;

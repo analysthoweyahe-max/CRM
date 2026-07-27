@@ -22,6 +22,8 @@ export interface PmProjectVM {
   status:           PmProjectStatusKey;
   statusLabel:      string;
   projectTypeLabel: string;
+  startDate:        string | null;
+  deadline:         string | null;
   tasksCompleted:   number;
   tasksTotal:       number;
   progressPercent:  number;
@@ -56,6 +58,8 @@ function toProjectVM(p: PmDashboardProject): PmProjectVM {
     status:           p.status,
     statusLabel:      p.statusLabel,
     projectTypeLabel: p.projectTypeLabel,
+    startDate:        p.startDate ?? null,
+    deadline:         p.deadline ?? null,
     tasksCompleted:   p.tasksCompleted,
     tasksTotal:       p.tasksTotal,
     progressPercent:  p.progressPercent,
@@ -81,6 +85,8 @@ function draftToProjectVM(p: PmProjectListItem): PmProjectVM {
     status:           (p.status as PmProjectStatusKey) || 'not_started',
     statusLabel:      p.statusLabel,
     projectTypeLabel: p.projectTypeLabel,
+    startDate:        p.startDate ?? null,
+    deadline:         p.deadline ?? null,
     tasksCompleted:   0,
     tasksTotal:       0,
     progressPercent:  0,

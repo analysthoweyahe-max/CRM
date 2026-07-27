@@ -129,7 +129,7 @@ export function useMyTasksPage(isAr: boolean, options: UseMyTasksPageOptions = {
   const { statusOptions: seoStatusCatalog } = useSeoTaskLookups(isAr, { enabled: isSeoRole });
 
   // Same reasoning as SEO above — PM task statuses are also admin-configurable,
-  // so fetch the full catalog (GET /v1/seo/employee/task-statuses, shared with
+  // so fetch the full catalog (GET /v1/pm/employee/task-statuses, shared with
   // the Project Details Kanban) and backfill empty columns for PM roles too.
   const isPmRole = tasksRole === 'pm-employee' || tasksRole === 'project-manager';
   const { statuses: pmStatusCatalogRaw } = usePmTaskLookups({ enabled: isPmRole });
