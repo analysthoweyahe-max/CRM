@@ -505,7 +505,11 @@ function getStoredUser(): AuthUser | null {
 async function fetchProfile(actor: AuthActor): Promise<AuthUser> {
   if (actor === 'employee') {
     const { data } = await authApi.employeeProfile();
-    return buildEmployeeUser(data.data.employee);
+    // Some deployments return the employee fields flat under `data` instead
+    // of nested under `data.employee` — tolerate both like parseLoginProfile does.
+    const record = data.data as unknown as Record<string, unknown>;
+    const employee = isProfileRecord(record.employee) ? asApiEmployee(record.employee) : asApiEmployee(record);
+    return buildEmployeeUser(employee);
   }
   const { data } = await authApi.adminProfile();
   return buildAdminUser(parseAdminProfilePayload(data.data));
