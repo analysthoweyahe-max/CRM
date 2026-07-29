@@ -34,17 +34,19 @@ export function MultiSelectChecklist({
   error,
 }: Props) {
   const [localSearch, setLocalSearch] = useState('');
-  const query = searchable && onSearch ? searchValue : localSearch;
+  // With `onSearch` the caller queries the server, which may match on fields that
+  // aren't rendered here — filtering again locally would hide those hits.
+  const serverSearch = searchable && !!onSearch;
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return items;
-    const q = query.trim().toLowerCase();
+    if (serverSearch || !localSearch.trim()) return items;
+    const q = localSearch.trim().toLowerCase();
     return items.filter(item =>
       item.label.toLowerCase().includes(q) ||
       item.detail?.toLowerCase().includes(q) ||
       item.meta?.toLowerCase().includes(q),
     );
-  }, [items, query]);
+  }, [items, localSearch, serverSearch]);
 
   function toggle(id: string) {
     onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);

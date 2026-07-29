@@ -134,7 +134,8 @@ export interface SeoMessage {
   id: number;
   body: string | null;
   type: string;
-  sender: SeoMessageSender;
+  /** Null for system messages or when the sender account no longer exists. */
+  sender: SeoMessageSender | null;
   isMine: boolean;
   mentions: unknown[];
   attachments: SeoMessageAttachment[];

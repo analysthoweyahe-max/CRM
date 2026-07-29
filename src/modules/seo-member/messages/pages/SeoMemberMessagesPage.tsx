@@ -409,7 +409,7 @@ function SeoMemberChatWindow({
           </p>
         ) : (
           messages.map(msg => {
-            const isOwn = msg.isMine ?? (msg.sender.id === currentUserId);
+            const isOwn = msg.isMine ?? (msg.sender?.id === currentUserId);
             const quoted = replyPreview(msg);
             const msgKey = String(msg.id);
             const isVoice = msg.type === 'voice';
@@ -434,7 +434,7 @@ function SeoMemberChatWindow({
                   ].join(' ')}>
                     {!isOwn && isGroup && (
                       <p className="text-[11px] font-semibold text-[#709028] dark:text-[#A0CD39] mb-0.5">
-                        {msg.sender.name}
+                        {msg.sender?.name || (isAr ? 'مستخدم' : 'User')}
                       </p>
                     )}
 
@@ -602,7 +602,7 @@ function SeoMemberChatWindow({
             <Reply size={14} className="shrink-0 mt-0.5 text-[#709028]" />
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold text-[#709028] truncate">
-                {isAr ? 'الرد على' : 'Replying to'} {replyTo.sender.name}
+                {isAr ? 'الرد على' : 'Replying to'} {replyTo.sender?.name || (isAr ? 'مستخدم' : 'User')}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                 {messageSnippet(replyTo, isAr)}

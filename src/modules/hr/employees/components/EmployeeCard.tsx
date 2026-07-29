@@ -59,8 +59,8 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
                    hover:border-[#A0CD39] hover:-translate-y-0.5 hover:shadow-lg
                    ${selected ? 'border-[#A0CD39] ring-2 ring-[#A0CD39]/20' : 'border-[#F1F5F9] dark:border-gray-700'}`}
       >
-        {onToggleSelect && (
-          <div className="flex items-center px-4 pt-4">
+        <div className="flex items-center justify-between gap-2 px-4 pt-4">
+          {onToggleSelect ? (
             <input
               type="checkbox"
               checked={!!selected}
@@ -68,49 +68,47 @@ export function EmployeeCard({ emp, isAr, onView, onEdit, onDelete, selected, on
               aria-label={isAr ? 'تحديد الموظف' : 'Select employee'}
               className="w-5 h-5 shrink-0 rounded border-gray-300 dark:border-gray-600 text-[#A0CD39] focus:ring-[#A0CD39]/40"
             />
-          </div>
-        )}
+          ) : <span />}
+
+          <span
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                       text-xs font-semibold shrink-0"
+            style={{ background: st.bg, color: st.text }}
+          >
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: st.dot }} />
+            {isAr ? st.labelAr : st.labelEn}
+          </span>
+        </div>
 
         <button
           type="button"
           onClick={() => onView(emp.id)}
           className="flex flex-col text-start flex-1 cursor-pointer"
         >
-          <div className={`flex items-center justify-between gap-3 p-4 ${onToggleSelect ? 'pt-2' : ''}`}>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div
-                className={`w-12 h-12 rounded-full ${getAvatarColor(emp.name)}
-                            flex items-center justify-center shrink-0`}
-              >
-                <span className="text-base font-bold text-white">{getInitial(emp.name)}</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-base font-bold truncate text-gray-800 dark:text-gray-100">
-                  {emp.name}
-                </p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {depts.length > 0 ? depts.map((d, i) => (
-                    <Badge
-                      key={String(d.id)}
-                      label={resolveDisplayText(d, isAr) || String(d.id)}
-                      variant={i === 0 ? 'brand' : 'gray'}
-                      className="!text-[10px]"
-                    />
-                  )) : (
-                    <p className="text-sm truncate text-gray-500 dark:text-gray-400">–</p>
-                  )}
-                </div>
+          <div className="flex items-start gap-2.5 p-4 pt-3">
+            <div
+              className={`w-12 h-12 rounded-full ${getAvatarColor(emp.name)}
+                          flex items-center justify-center shrink-0`}
+            >
+              <span className="text-base font-bold text-white">{getInitial(emp.name)}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-bold leading-snug break-words text-gray-800 dark:text-gray-100">
+                {emp.name}
+              </p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {depts.length > 0 ? depts.map((d, i) => (
+                  <Badge
+                    key={String(d.id)}
+                    label={resolveDisplayText(d, isAr) || String(d.id)}
+                    variant={i === 0 ? 'brand' : 'gray'}
+                    className="!text-[10px]"
+                  />
+                )) : (
+                  <p className="text-sm truncate text-gray-500 dark:text-gray-400">–</p>
+                )}
               </div>
             </div>
-
-            <span
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                         text-xs font-semibold shrink-0"
-              style={{ background: st.bg, color: st.text }}
-            >
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: st.dot }} />
-              {isAr ? st.labelAr : st.labelEn}
-            </span>
           </div>
 
           <div className="h-px mx-4 bg-[#D8EBAE] dark:bg-gray-700" />

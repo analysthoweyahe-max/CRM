@@ -38,7 +38,7 @@ export function TeamPageSkeleton() {
         <Pulse className="h-3 w-52 ms-auto" />
       </div>
       <Pulse className="h-4 w-44 ms-auto" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[0, 1, 2, 3, 4, 5, 6, 7].map(i => <MemberCardSkeleton key={i} />)}
       </div>
       <div className="flex items-center justify-between">

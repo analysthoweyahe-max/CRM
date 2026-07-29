@@ -165,7 +165,8 @@ export function ProjectMessages({ projectId, isAr }: Props) {
         ) : (
           messages.map(msg => {
             const isMine   = msg.isMine;
-            const initial  = msg.sender.avatarInitial ?? msg.sender.name?.[0]?.toUpperCase() ?? '?';
+            const senderName = msg.sender?.name ?? '';
+            const initial  = msg.sender?.avatarInitial ?? senderName[0]?.toUpperCase() ?? '?';
             const imgAttachment = msg.type === 'image' ? msg.attachments?.[0] : null;
             const imgUrl   = imgAttachment ? buildUrl(imgAttachment.url) : null;
 
@@ -204,7 +205,7 @@ export function ProjectMessages({ projectId, isAr }: Props) {
               <div key={msg.id} className="flex justify-start">
                 <div className="max-w-[70%]">
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 ms-1">
-                    {msg.sender.name}
+                    {senderName}
                     <span className="ms-2">{msg.sentTime}</span>
                   </p>
                   {bubble}
@@ -216,12 +217,12 @@ export function ProjectMessages({ projectId, isAr }: Props) {
               <div key={msg.id} className="flex items-end gap-2 justify-end">
                 <div className="max-w-[70%]">
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 text-end me-1">
-                    {msg.sender.name}
+                    {senderName}
                     <span className="ms-2">{msg.sentTime}</span>
                   </p>
                   {bubble}
                 </div>
-                <div className={`w-9 h-9 rounded-full ${avatarColor(msg.sender.name)}
+                <div className={`w-9 h-9 rounded-full ${avatarColor(senderName)}
                                   flex items-center justify-center text-white text-xs
                                   font-semibold shrink-0 self-end`}>
                   {initial}

@@ -34,7 +34,8 @@ export interface PmMessage {
   body:        string;
   type:        string;
   isMine?:     boolean;
-  sender:      PmMessageSender;
+  /** Null for system messages or when the sender account no longer exists. */
+  sender:      PmMessageSender | null;
   attachments: PmMessageAttachment[];
   createdAt?:  string;
   sentAt?:     string;

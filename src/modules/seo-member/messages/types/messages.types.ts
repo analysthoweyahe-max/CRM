@@ -94,7 +94,8 @@ export interface SeoMessage {
   type?:            SeoMessageType;
   durationSeconds?: number | null;
   duration_seconds?: number | null;
-  sender:           SeoMessageSender;
+  /** Null for system messages or when the sender account no longer exists. */
+  sender:           SeoMessageSender | null;
   isMine?:          boolean;
   attachments?:     SeoMessageAttachment[];
   sentAt?:          string;

@@ -106,13 +106,21 @@ export function AppSidebar({ variant, isOpen, onClose, collapsed, onToggleCollap
         {/* ── Logo ── */}
         <div className="flex items-center justify-between px-4 py-5 border-b border-gray-100 dark:border-gray-700/60 overflow-hidden">
           <div className={`flex items-center gap-3 min-w-0 ${collapsed ? 'lg:justify-center lg:w-full' : ''}`}>
-            <img
-              src="/logo.png"
-              alt="Howeyah"
-              className={`object-contain shrink-0 transition-all duration-300 ${
-                collapsed ? 'lg:w-8 lg:h-8 w-20 h-12' : 'w-20 h-12'
-              }`}
-            />
+            <a
+              href="https://howeyah.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0"
+              title="Howeyah"
+            >
+              <img
+                src="/logo.png"
+                alt="Howeyah"
+                className={`object-contain shrink-0 transition-all duration-300 ${
+                  collapsed ? 'lg:w-8 lg:h-8 w-20 h-12' : 'w-20 h-12'
+                }`}
+              />
+            </a>
             <div className={`min-w-0 transition-all duration-200 ${collapsed ? 'lg:hidden' : ''}`}>
               {BRAND_NAME[variant] && (
                 <p className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight whitespace-nowrap">

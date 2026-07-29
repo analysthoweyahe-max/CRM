@@ -26,7 +26,8 @@ export interface RawProjectMessage {
   body:        string;
   type:        string;
   isMine?:     boolean;
-  sender:      { id: string; name: string; avatarInitial: string };
+  /** Null for system messages or when the sender account no longer exists. */
+  sender:      { id: string; name: string; avatarInitial: string } | null;
   attachments: Array<{
     id:       number;
     fileName?: string;
@@ -46,14 +47,16 @@ export function mapProjectMessage(m: RawProjectMessage, currentUserId?: string):
     ?? m.createdAt?.split(' ')[1]?.slice(0, 5)
     ?? '';
 
+  const senderName = m.sender?.name ?? '';
+
   return {
     id:            String(m.id),
-    senderName:    m.sender.name,
-    senderInitial: m.sender.avatarInitial,
-    senderColor:   getAvatarColor(m.sender.name),
+    senderName,
+    senderInitial: m.sender?.avatarInitial ?? senderName.charAt(0).toUpperCase(),
+    senderColor:   getAvatarColor(senderName),
     text:          m.body ?? '',
     time,
-    isOwn:         m.isMine ?? (!!currentUserId && m.sender.id === currentUserId),
+    isOwn:         m.isMine ?? (!!currentUserId && m.sender?.id === currentUserId),
     isRead:        true,
     messageType:   m.type,
     attachments:   (m.attachments ?? []).map(a => ({

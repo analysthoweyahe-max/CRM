@@ -161,10 +161,11 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
                 </p>
               ) : (
                 messages.map(msg => {
-                  const isOwn = msg.sender.id === user?.id;
+                  const isOwn = !!msg.sender && msg.sender.id === user?.id;
+                  const senderName = msg.sender?.name ?? '';
                   return isOwn ? (
                     <div key={msg.id} className="flex flex-col items-end gap-1">
-                      <span className="text-[10px] text-gray-400">{msg.sender.name}  {msg.createdAt}</span>
+                      <span className="text-[10px] text-gray-400">{senderName}  {msg.createdAt}</span>
                       <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-se-sm
                                       bg-[#A0CD39] text-white text-sm leading-relaxed shadow-sm text-start">
                         {msg.body}
@@ -173,12 +174,12 @@ export function ClientUpdatePhaseCard({ projectId, phase, isOpen, onToggle, isAr
                   ) : (
                     <div key={msg.id} className="flex items-start gap-2.5">
                       <Avatar
-                        initial={msg.sender.name.charAt(0)}
-                        color={getAvatarColor(msg.sender.id)}
+                        initial={senderName.charAt(0)}
+                        color={getAvatarColor(msg.sender?.id ?? '')}
                         size="sm"
                       />
                       <div className="space-y-0.5 text-start">
-                        <span className="text-[10px] text-gray-400">{msg.sender.name}  {msg.createdAt}</span>
+                        <span className="text-[10px] text-gray-400">{senderName}  {msg.createdAt}</span>
                         <div className="max-w-[70%] px-3.5 py-2 rounded-2xl rounded-ss-sm
                                         bg-white dark:bg-gray-700
                                         border border-gray-100 dark:border-gray-600

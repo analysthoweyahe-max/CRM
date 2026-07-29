@@ -14,7 +14,8 @@ export interface PmClientMessage {
   id:          number;
   body:        string;
   type:        string;
-  sender:      PmClientMessageSender;
+  /** Null for system messages or when the sender account no longer exists. */
+  sender:      PmClientMessageSender | null;
   attachments: PmClientAttachment[];
   createdAt:   string;
 }
